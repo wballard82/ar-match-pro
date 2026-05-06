@@ -1154,16 +1154,13 @@ function toggleFaq(el){
 </script>
 
 <!-- ══ SUPPORT CHAT WIDGET ══ -->
-<div <!-- SUPPORT CHAT START -->
-id="lp-chat-widget" style="position:fixed;bottom:20px;right:20px;z-index:9000;font-family:'Inter',sans-serif">
-  <!-- FAB -->
+<!-- SUPPORT CHAT START -->
+<div id="lp-chat-widget" style="position:fixed;bottom:20px;right:20px;z-index:9000;font-family:'Inter',sans-serif">
   <button id="lp-chat-fab" onclick="toggleLpChat()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);border:none;cursor:pointer;box-shadow:0 6px 20px rgba(14,165,233,.4);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;position:relative" aria-label="Support chat">
     💬
     <div style="position:absolute;top:2px;right:2px;width:10px;height:10px;background:#10B981;border:2px solid #fff;border-radius:50%"></div>
   </button>
-  <!-- Panel -->
   <div id="lp-chat-panel" style="display:none;position:absolute;bottom:64px;right:0;width:320px;max-width:calc(100vw - 32px);background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.18);border:1px solid #E2E8F0;overflow:hidden;flex-direction:column">
-    <!-- Header -->
     <div style="background:#07111F;padding:14px 16px;display:flex;align-items:center;gap:10px">
       <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-size:14px;flex-shrink:0">🤖</div>
       <div>
@@ -1172,22 +1169,21 @@ id="lp-chat-widget" style="position:fixed;bottom:20px;right:20px;z-index:9000;fo
       </div>
       <button onclick="toggleLpChat()" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;line-height:1">×</button>
     </div>
-    <!-- Messages -->
     <div id="lp-chat-msgs" style="height:260px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;gap:8px;align-items:flex-end">
         <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-size:10px;flex-shrink:0">🤖</div>
-        <div style="background:#F1F5F9;padding:9px 13px;border-radius:4px 14px 14px 14px;font-size:13px;color:#0F172A;line-height:1.5;max-width:240px">Hi! I can answer common questions about AR Match Pro. Pick a topic below.</div>
+        <div style="background:#F1F5F9;padding:9px 13px;border-radius:4px 14px 14px 14px;font-size:13px;color:#0F172A;line-height:1.5;max-width:240px">Hi! Pick a question below and I'll answer instantly.</div>
       </div>
     </div>
-    <!-- Quick questions - clickable only -->
     <div style="padding:10px 12px;border-top:1px solid #E2E8F0;background:#F8FAFC;display:flex;flex-direction:column;gap:5px">
       <div style="font-size:10.5px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">Select a question</div>
       <button onclick="lpChatAsk('What does AR Match Pro do?')" class="lp-chat-btn">What does AR Match Pro do?</button>
-      <button onclick="lpChatAsk('Does AR Match Pro integrate with my ERP?')" class="lp-chat-btn">Does AR Match Pro integrate with my ERP?</button>
-      <button onclick="lpChatAsk('Is my data protected?')" class="lp-chat-btn">Is my data protected?</button>
-      <button onclick="lpChatAsk('What file types are supported?')" class="lp-chat-btn">What file types are supported?</button>
-      <button onclick="lpChatAsk('Which plan should I choose?')" class="lp-chat-btn">Which plan should I choose?</button>
-      <button onclick="lpChatAsk('How do I book a demo?')" class="lp-chat-btn">How do I book a demo?</button>
+      <button onclick="lpChatAsk('ERP integration?')" class="lp-chat-btn">ERP integration?</button>
+      <button onclick="lpChatAsk('Data security?')" class="lp-chat-btn">Data security?</button>
+      <button onclick="lpChatAsk('File types?')" class="lp-chat-btn">File types?</button>
+      <button onclick="lpChatAsk('Which plan?')" class="lp-chat-btn">Which plan?</button>
+      <button onclick="lpChatAsk('Book demo?')" class="lp-chat-btn">Book demo?</button>
+      <button onclick="lpChatAsk('Pricing?')" class="lp-chat-btn">Pricing?</button>
     </div>
   </div>
 </div>
@@ -1197,14 +1193,14 @@ id="lp-chat-widget" style="position:fixed;bottom:20px;right:20px;z-index:9000;fo
 </style>
 
 <script>
-// ── LP CHAT WIDGET ──
 const LP_FAQ={
   "What does AR Match Pro do?":"AR Match Pro automates remittance matching for Accounting and AR teams. It matches payments to invoices by Invoice #, PO #, Sales Order, Delivery, and Tracking — handles multi-invoice payments, flags exceptions, and exports a posting-ready file for SAP or NetSuite. No ERP connection required.",
-  "Does AR Match Pro integrate with my ERP?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP, NetSuite, or QuickBooks, import it into AR Match Pro, run the match, and export a posting file back. No integration, no IT approval, no setup time.",
-  "Is my data protected?":"Yes. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
-  "What file types are supported?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically.",
-  "Which plan should I choose?":"Starter covers Invoice and PO matching for up to 5,000 rows/month. Pro adds unlimited rows, multi-invoice allocation, SO/Delivery/Tracking matching, and SAP/NetSuite exports. Team adds multi-user access. Most accounting teams start on Pro.",
-  "How do I book a demo?":"Click the 'Book a 30-Minute Demo' button anywhere on this page, or go directly to calendly.com/armatchpro to pick a time. We'll walk through a live match with your sample data."
+  "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP, NetSuite, or QuickBooks, import it into AR Match Pro, run the match, and export a posting file back. No integration, no IT approval, no setup time.",
+  "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
+  "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
+  "Which plan?":"Starter ($399/mo) covers Invoice and PO matching for up to 5,000 rows/month — best for individual AR specialists. Pro ($999/mo) adds unlimited rows, multi-invoice allocation, SO/Delivery/Tracking matching, and SAP/NetSuite exports — the right choice for most accounting teams. Team ($1,999/mo) adds multi-user access, audit logs, and CFO reporting.",
+  "Book demo?":"Click 'Try Free Demo' on this page to fill out a quick form and get instant access. Or book a 30-minute live walkthrough at calendly.com/armatchpro — we'll match a real payment with you.",
+  "Pricing?":"Starter is $399/month (1 user, up to 5,000 rows, Invoice + PO matching). Pro is $999/month (unlimited rows, multi-invoice allocation, SAP + NetSuite export, exception dashboard). Team is $1,999/month (3–10 users, audit logs, CFO reporting, dedicated onboarding). All plans cancel anytime."
 };
 let lpChatOpen=false;
 function toggleLpChat(){
@@ -1215,23 +1211,20 @@ function toggleLpChat(){
 }
 function lpChatAsk(q){
   const msgs=document.getElementById('lp-chat-msgs');
-  // User bubble
   const uDiv=document.createElement('div');
   uDiv.style.cssText='display:flex;justify-content:flex-end';
-  uDiv.innerHTML=`<div style="background:linear-gradient(135deg,#0EA5E9,#0284C7);padding:9px 13px;border-radius:14px 4px 14px 14px;font-size:13px;color:#fff;max-width:240px;line-height:1.5">${q}</div>`;
+  uDiv.innerHTML='<div style="background:linear-gradient(135deg,#0EA5E9,#0284C7);padding:9px 13px;border-radius:14px 4px 14px 14px;font-size:13px;color:#fff;max-width:240px;line-height:1.5">'+q+'</div>';
   msgs.appendChild(uDiv);
   msgs.scrollTop=msgs.scrollHeight;
-  // Bot response after short delay
   setTimeout(()=>{
     const ans=LP_FAQ[q]||"Great question! Email us at info@armatchpro.com and we'll respond within 1 business day.";
     const bDiv=document.createElement('div');
     bDiv.style.cssText='display:flex;gap:8px;align-items:flex-end';
-    bDiv.innerHTML=`<div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-size:10px;flex-shrink:0">🤖</div><div style="background:#F1F5F9;padding:9px 13px;border-radius:4px 14px 14px 14px;font-size:13px;color:#0F172A;line-height:1.5;max-width:240px">${ans}</div>`;
+    bDiv.innerHTML='<div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-size:10px;flex-shrink:0">🤖</div><div style="background:#F1F5F9;padding:9px 13px;border-radius:4px 14px 14px 14px;font-size:13px;color:#0F172A;line-height:1.5;max-width:240px">'+ans+'</div>';
     msgs.appendChild(bDiv);
     msgs.scrollTop=msgs.scrollHeight;
   },500);
 }
-
 </script>
 
 <!-- Stripe.js -->
