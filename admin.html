@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR Match Pro — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--p:#0EA5E9;--pd:#0284C7;--g:#10B981;--r:#EF4444;--am:#F59E0B;--navy:#0F172A;--t1:#0F172A;--t2:#475569;--t3:#94A3B8;--bg:#F1F5F9;--surface:#fff;--bdr:#E2E8F0;--bdr2:#CBD5E1;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;--s1:0 1px 3px rgba(0,0,0,.08)}
+/* ── SALES SECTION ── */
+.msg-card{background:var(--surface);border:1px solid var(--bdr);border-radius:9px;margin-bottom:10px;overflow:hidden;transition:.15s}
+.msg-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.msg-hdr{padding:12px 15px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.msg-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex-shrink:0;border:2px solid var(--bdr)}
+.msg-body-wrap{display:none;padding:0 15px 15px}
+.msg-body-wrap.open{display:block}
+.msg-tab-row{display:flex;gap:4px;margin-bottom:10px}
+.msg-tab{padding:5px 11px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bdr);color:var(--t2);transition:.12s}
+.msg-tab.on{border-color:var(--p);background:rgba(14,165,233,.07);color:var(--p)}
+.msg-content-box{background:var(--bg);border:1px solid var(--bdr);border-radius:7px;padding:12px 14px;font-size:13px;line-height:1.8;color:var(--t1);white-space:pre-wrap;position:relative}
+.msg-subj{font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.copy-it{position:absolute;top:8px;right:8px;background:var(--p);color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer}
+.copy-it:hover{background:var(--pd)}
+.content-card{background:var(--surface);border:1px solid var(--bdr);border-radius:9px;padding:16px;margin-bottom:10px;transition:.15s}
+.content-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.obj-card{background:var(--surface);border:1px solid var(--bdr);border-radius:9px;margin-bottom:8px;overflow:hidden}
+.obj-hdr{padding:12px 15px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:13.5px}
+.obj-body{display:none;padding:0 15px 15px;font-size:13px;line-height:1.8;color:var(--t2);white-space:pre-wrap;position:relative}
+.obj-body.open{display:block}
+.pipe-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.pipe-card{background:var(--surface);border:1px solid var(--bdr);border-radius:9px;padding:13px;text-align:center;position:relative}
+.pipe-num{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.pipe-name{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.pipe-count{font-size:22px;font-weight:800;font-family:var(--mono);color:var(--p);margin-top:6px}
+.week-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.week-card{background:var(--surface);border:1.5px solid var(--bdr);border-radius:9px;padding:14px}
+.week-card.w1{border-color:var(--p)}.week-card.w4{border-color:var(--g)}
+.week-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.w1 .week-lbl{color:var(--p)}.w4 .week-lbl{color:var(--g)}
+.week-card ul{list-style:none;font-size:12.5px;line-height:2;color:var(--t1)}
+.lead-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.lead-tbl th{background:var(--bg);padding:8px 12px;text-align:left;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid var(--bdr)}
+.lead-tbl td{padding:9px 12px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+.lead-tbl tr:last-child td{border-bottom:none}
+.s-badge{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+.s-pr{background:#EFF6FF;color:#1D4ED8}.s-co{background:#F5F3FF;color:#5B21B6}
+.s-qu{background:#ECFDF5;color:#065F46}.s-dm{background:#FEF3C7;color:#92400E}
+.s-cl{background:#ECFDF5;color:#065F46}.s-lo{background:#FEF2F2;color:#991B1B}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased}
+#auth-screen{position:fixed;inset:0;background:linear-gradient(135deg,#06101E,#0F172A,#071020);display:flex;align-items:center;justify-content:center;z-index:999;animation:fi .4s ease}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.auth-card{background:#fff;border-radius:16px;width:360px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.auth-header{background:var(--navy);padding:28px;text-align:center}
+.auth-mark{width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:14px;font-weight:800;margin:0 auto 12px;box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.auth-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:4px}
+.auth-sub{font-size:12px;color:rgba(255,255,255,.4)}
+.auth-body{padding:24px}
+.auth-label{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.auth-input{width:100%;padding:10px 13px;border:1.5px solid var(--bdr);border-radius:7px;font-size:14px;font-family:var(--font);outline:none;color:var(--t1);margin-bottom:12px;transition:border .15s}
+.auth-input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(14,165,233,.1)}
+.auth-btn{width:100%;padding:11px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s}
+.auth-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.auth-err{font-size:12px;color:#991B1B;background:#FEF2F2;padding:8px 11px;border-radius:6px;margin-bottom:12px;display:none;border:1px solid rgba(239,68,68,.2)}
+#admin-app{display:none;height:100vh;flex-direction:column}
+.a-top{height:52px;background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0}
+.a-logo{display:flex;align-items:center;gap:8px}
+.a-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:10px;font-weight:800}
+.a-name{font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.a-name span{color:var(--p)}
+.a-badge{font-size:10px;font-weight:700;background:rgba(239,68,68,.2);color:#F87171;padding:2px 8px;border-radius:8px;margin-left:4px}
+.a-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.a-user{font-size:12px;color:rgba(255,255,255,.45)}
+.a-logout{font-size:12px;color:rgba(255,255,255,.5);cursor:pointer;padding:4px 10px;border:1px solid rgba(255,255,255,.15);border-radius:6px;transition:.15s;background:none}
+.a-logout:hover{background:rgba(255,255,255,.08);color:#fff}
+.a-body{display:flex;flex:1;overflow:hidden}
+.a-sidebar{width:200px;background:var(--surface);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0}
+.a-sidebar-sec{padding:14px 8px 4px}
+.a-sl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;padding:0 8px;margin-bottom:5px}
+.a-ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:.13s;color:var(--t2);font-size:13px;font-weight:500;margin-bottom:1px;position:relative}
+.a-ni:hover{background:var(--bg);color:var(--t1)}
+.a-ni.active{background:rgba(14,165,233,.08);color:var(--pd);font-weight:600}
+.a-ni.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--p);border-radius:0 3px 3px 0}
+.a-nbadge{margin-left:auto;background:var(--r);color:#fff;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:8px}
+.a-footer{margin-top:auto;padding:12px;border-top:1px solid var(--bdr);font-size:10px;color:var(--t3);text-align:center;line-height:1.6}
+.a-main{flex:1;overflow:auto;padding:22px}
+.a-panel{display:none}
+.a-panel.active{display:block}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--bdr);border-radius:10px;padding:16px;box-shadow:var(--s1)}
+.stat-label{font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.stat-val{font-size:28px;font-weight:800;font-family:var(--mono);letter-spacing:-1.5px;margin-top:6px;color:var(--t1)}
+.stat-val.b{color:var(--pd)}.stat-val.g{color:var(--g)}.stat-val.am{color:var(--am)}
+.stat-sub{font-size:11px;color:var(--t3);margin-top:3px}
+.card{background:var(--surface);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;box-shadow:var(--s1);margin-bottom:16px}
+.card-h{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:8px;background:var(--bg)}
+.card-t{font-size:13.5px;font-weight:600;color:var(--t1)}
+.card-a{margin-left:auto;display:flex;gap:6px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{position:sticky;top:0;z-index:5}
+th{background:var(--bg);padding:9px 13px;text-align:left;font-size:10.5px;font-weight:700;color:var(--t3);white-space:nowrap;border-bottom:1.5px solid var(--bdr);text-transform:uppercase;letter-spacing:.4px}
+td{padding:10px 13px;border-bottom:1px solid var(--bdr);vertical-align:middle;white-space:nowrap;color:var(--t1)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(14,165,233,.03)}
+.mono{font-family:var(--mono);font-size:12px;color:var(--t2)}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0}
+.b-team{background:#F5F3FF;color:#5B21B6}.b-pro{background:#EFF6FF;color:#1D4ED8}.b-starter{background:#ECFDF5;color:#065F46}.b-demo{background:#FFFBEB;color:#92400E}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.f-label{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.f-input{width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;color:var(--t1);transition:border .15s}
+.f-input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(14,165,233,.09)}
+.f-select{width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;font-family:var(--font);outline:none;color:var(--t1)}
+.f-select:focus{border-color:var(--p)}
+.f-err{font-size:12px;color:#991B1B;background:#FEF2F2;padding:8px 11px;border-radius:6px;margin-bottom:10px;display:none}
+.f-ok{font-size:12px;color:var(--g);background:#ECFDF5;padding:8px 11px;border-radius:6px;margin-bottom:10px;display:none;border:1px solid rgba(16,185,129,.2)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:.13s;font-family:var(--font);white-space:nowrap}
+.btn-p{background:var(--p);color:#fff;border-color:var(--p)}.btn-p:hover{background:var(--pd);border-color:var(--pd)}
+.btn-outline{background:var(--surface);color:var(--t2);border-color:var(--bdr2)}.btn-outline:hover{border-color:var(--p);color:var(--pd)}
+.btn-danger{background:var(--surface);color:#991B1B;border-color:rgba(239,68,68,.3)}.btn-danger:hover{background:#FEF2F2}
+.btn-sm{padding:5px 10px;font-size:11.5px}
+.key-card{background:var(--navy);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.key-code{font-family:var(--mono);font-size:13px;font-weight:500;color:#7DD3FC;letter-spacing:1px;flex:1}
+.key-plan{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.key-plan.team{background:rgba(139,92,246,.2);color:#C4B5FD}.key-plan.pro{background:rgba(14,165,233,.2);color:#7DD3FC}.key-plan.starter{background:rgba(16,185,129,.2);color:#6EE7B7}
+.em{text-align:center;padding:36px 20px;color:var(--t3)}
+.em-icon{font-size:26px;margin-bottom:8px;opacity:.4}
+.em-t{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:4px}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-mark">AR</div>
+      <div class="auth-title">Admin Panel</div>
+      <div class="auth-sub">armatchpro.com · Restricted access</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-err" id="auth-err">Incorrect password. Try again.</div>
+      <div class="auth-label">Admin password</div>
+      <input class="auth-input" type="password" id="auth-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doAuth()">
+      <button class="auth-btn" onclick="doAuth()">Access admin panel →</button>
+      <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:14px">Authorized personnel only. All actions are logged.</div>
+    </div>
+  </div>
+</div>
+
+<div id="admin-app">
+  <div class="a-top">
+    <div class="a-logo">
+      <div class="a-mark">AR</div>
+      <div class="a-name">Match <span>Pro</span></div>
+      <span class="a-badge">ADMIN</span>
+    </div>
+    <div class="a-right">
+      <span class="a-user">admin@armatchpro.com</span>
+      <button class="a-logout" onclick="location.reload()">Sign out</button>
+    </div>
+  </div>
+  <div class="a-body">
+    <div class="a-sidebar">
+      <div class="a-sidebar-sec">
+        <div class="a-sl">Dashboard</div>
+        <div class="a-ni active" onclick="sp('overview',this)">📊 Overview</div>
+      </div>
+      <div class="a-sidebar-sec">
+        <div class="a-sl">Users</div>
+        <div class="a-ni" onclick="sp('users',this)">👥 All users</div>
+        <div class="a-ni" onclick="sp('create-user',this)">➕ Create user</div>
+      </div>
+      <div class="a-sidebar-sec">
+        <div class="a-sl">Sales</div>
+        <div class="a-ni" onclick="sp('leads',this)">🎯 Demo leads <span class="a-nbadge" id="leads-badge">0</span></div>
+        <div class="a-ni" onclick="sp('keys',this)">🔑 License keys</div>
+      </div>
+      <div class="a-sidebar-sec">
+        <div class="a-sl">Sales Machine</div>
+        <div class="a-ni" onclick="sp('pipeline',this)">📊 Pipeline</div>
+        <div class="a-ni" onclick="sp('prospects',this)">🎯 Prospect tracker</div>
+        <div class="a-ni" onclick="sp('outreach',this)">💬 LinkedIn DMs</div>
+        <div class="a-ni" onclick="sp('email-seq',this)">📧 Email sequences</div>
+        <div class="a-ni" onclick="sp('content',this)">📝 Content library</div>
+        <div class="a-ni" onclick="sp('objections',this)">🛡 Objection scripts</div>
+        <div class="a-ni" onclick="sp('demo-guide',this)">🎬 Demo playbook</div>
+      </div>
+      <div class="a-footer">AR Match Pro Admin<br>© 2026 armatchpro.com</div>
+    </div>
+    <div class="a-main">
+
+      <!-- OVERVIEW -->
+      <div id="panel-overview" class="a-panel active">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Overview</div><div style="font-size:13px;color:var(--t3);margin-top:2px">AR Match Pro account summary — live from localStorage</div></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Total users</div><div class="stat-val b" id="stat-users">0</div><div class="stat-sub">Registered accounts</div></div>
+          <div class="stat-card"><div class="stat-label">Demo leads</div><div class="stat-val am" id="stat-leads">0</div><div class="stat-sub">Contact forms submitted</div></div>
+          <div class="stat-card"><div class="stat-label">Pro / Team</div><div class="stat-val g" id="stat-paid">0</div><div class="stat-sub">Paid plan accounts</div></div>
+          <div class="stat-card"><div class="stat-label">Starter / Trial</div><div class="stat-val" id="stat-trial">0</div><div class="stat-sub">Free tier accounts</div></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div class="card-t">Recent activity</div></div>
+          <div style="padding:14px 16px" id="recent-activity"><div class="em"><div class="em-icon">📭</div><div class="em-t">No activity yet</div></div></div>
+        </div>
+      </div>
+
+      <!-- ALL USERS -->
+      <div id="panel-users" class="a-panel">
+        <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px">
+          <div><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">All users</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Manage accounts and plan assignments</div></div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <input type="text" placeholder="⌕ Search name or email…" style="padding:7px 12px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;font-family:var(--font);outline:none;width:220px" oninput="renderUsers(this.value)">
+            <button class="btn btn-p btn-sm" onclick="sp('create-user',document.querySelectorAll('.a-ni')[2])">+ Create user</button>
+          </div>
+        </div>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Created</th><th>Actions</th></tr></thead><tbody id="users-tbody"><tr><td colspan="5"><div class="em"><div class="em-icon">👥</div><div class="em-t">No users yet</div></div></td></tr></tbody></table></div></div>
+      </div>
+
+      <!-- CREATE USER -->
+      <div id="panel-create-user" class="a-panel">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Create user</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Create any account with any plan — no license key needed</div></div>
+        <div class="card" style="max-width:520px">
+          <div class="card-h"><div class="card-t">New account details</div></div>
+          <div style="padding:18px">
+            <div class="f-err" id="cu-err"></div>
+            <div class="f-ok" id="cu-ok"></div>
+            <div class="form-row">
+              <div><div class="f-label">Full name</div><input class="f-input" type="text" id="cu-name" placeholder="Jane Smith"></div>
+              <div><div class="f-label">Work email</div><input class="f-input" type="email" id="cu-email" placeholder="jane@company.com"></div>
+            </div>
+            <div class="form-row">
+              <div><div class="f-label">Temporary password</div><input class="f-input" type="text" id="cu-pass" placeholder="Min 6 characters"></div>
+              <div><div class="f-label">Plan</div><select class="f-select" id="cu-plan"><option value="starter">Starter — $499/mo</option><option value="pro" selected>Pro — $999/mo</option><option value="team">Team — $1,499/mo</option><option value="demo">Demo (free)</option></select></div>
+            </div>
+            <div style="display:flex;gap:8px"><button class="btn btn-p" onclick="createUser()">Create account</button><button class="btn btn-outline" onclick="clearCreateForm()">Clear</button></div>
+            <div style="font-size:11.5px;color:var(--t3);margin-top:12px;line-height:1.6">ℹ️ User can sign in immediately. Send them their email + password securely.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADS -->
+      <div id="panel-leads" class="a-panel">
+        <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px">
+          <div><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Demo leads</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Contact forms submitted via the landing page "Try free demo" button</div></div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="exportLeads()">Export CSV</button>
+            <button class="btn btn-danger btn-sm" onclick="clearLeads()">Clear all</button>
+          </div>
+        </div>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Phone</th><th>Date</th><th>Actions</th></tr></thead><tbody id="leads-tbody"><tr><td colspan="6"><div class="em"><div class="em-icon">🎯</div><div class="em-t">No leads yet</div><div style="font-size:12px;color:var(--t3);margin-top:4px">Leads appear here when someone submits the demo form on your landing page.</div></div></td></tr></tbody></table></div></div>
+      </div>
+
+      <!-- KEYS -->
+      <div id="panel-keys" class="a-panel">
+        <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px">
+          <div><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">License keys</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Send to customers after purchase — entered during registration</div></div>
+          <div style="margin-left:auto"><button class="btn btn-p btn-sm" onclick="generateKey()">+ Generate key</button></div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-h"><div class="card-t">Built-in keys (always valid)</div></div>
+          <div style="padding:14px 16px">
+            <div class="key-card"><div class="key-code">ARMP-STAR-2026-0001</div><span class="key-plan starter">STARTER</span><button class="btn btn-outline btn-sm" onclick="copyKey('ARMP-STAR-2026-0001')">Copy</button></div>
+            <div class="key-card"><div class="key-code">ARMP-PRO0-2026-0001</div><span class="key-plan pro">PRO</span><button class="btn btn-outline btn-sm" onclick="copyKey('ARMP-PRO0-2026-0001')">Copy</button></div>
+            <div class="key-card"><div class="key-code">ARMP-TEAM-2026-0001</div><span class="key-plan team">TEAM</span><button class="btn btn-outline btn-sm" onclick="copyKey('ARMP-TEAM-2026-0001')">Copy</button></div>
+            <div style="font-size:11.5px;color:var(--t3);margin-top:10px;line-height:1.5">These are hardcoded in the app. For unique per-customer keys, use Generate Key.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div class="card-t">Generated keys</div><div class="card-a"><span style="font-size:12px;color:var(--t3)" id="gen-keys-count">0 keys</span></div></div>
+          <div style="padding:14px 16px" id="gen-keys-list"><div class="em"><div class="em-icon">🔑</div><div class="em-t">No generated keys yet</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  
+      <!-- PIPELINE -->
+      <div id="panel-pipeline" class="a-panel">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Sales Pipeline</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Track your path to 10 paying customers</div></div>
+        <div class="pipe-grid">
+          <div class="pipe-card" style="border-color:var(--p)"><div class="pipe-num">Stage 1</div><div class="pipe-name">🎯 Prospect</div><div class="pipe-count" id="pc-prospect">0</div></div>
+          <div class="pipe-card"><div class="pipe-num">Stage 2</div><div class="pipe-name">📨 Contacted</div><div class="pipe-count" id="pc-contacted">0</div></div>
+          <div class="pipe-card" style="border-color:var(--am)"><div class="pipe-num">Stage 3</div><div class="pipe-name">💬 Qualified</div><div class="pipe-count" id="pc-qualified">0</div></div>
+          <div class="pipe-card"><div class="pipe-num">Stage 4</div><div class="pipe-name">🎬 Demo</div><div class="pipe-count" id="pc-demo">0</div></div>
+          <div class="pipe-card" style="border-color:var(--g)"><div class="pipe-num">Stage 5</div><div class="pipe-name">💳 Closed</div><div class="pipe-count" id="pc-closed">0</div></div>
+        </div>
+        <div style="margin-bottom:6px;font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">4-Week Action Plan</div>
+        <div class="week-grid">
+          <div class="week-card w1"><div class="week-lbl">Week 1</div><ul><li>✓ 25 LinkedIn connections</li><li>✓ DM all who accept</li><li>✓ Post 2 articles</li><li>✓ Set up info@ email</li></ul></div>
+          <div class="week-card"><div class="week-lbl" style="color:var(--t3)">Week 2</div><ul><li>✓ 25 cold emails</li><li>✓ Follow up Week 1</li><li>✓ Post 2 articles</li><li>✓ Demo any replies</li></ul></div>
+          <div class="week-card"><div class="week-lbl" style="color:var(--t3)">Week 3</div><ul><li>✓ 25 more outreach</li><li>✓ Breakup emails</li><li>✓ Offer founding rate</li><li>✓ Push demo hard</li></ul></div>
+          <div class="week-card w4"><div class="week-lbl">Week 4</div><ul><li>✓ Close 3–5 deals</li><li>✓ Offer annual plan</li><li>✓ Ask for referrals</li><li>✓ Publish case study</li></ul></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div class="card-t">Ideal Customer Profile (ICP)</div></div>
+          <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+            <div style="background:var(--bg);border-radius:8px;padding:13px"><div style="font-size:10.5px;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Job Titles</div><div style="font-size:12.5px;line-height:2;color:var(--t1)">• AR Manager<br>• Cash Application Manager<br>• Controller<br>• Finance Operations Manager<br>• VP Finance (small team)</div></div>
+            <div style="background:var(--bg);border-radius:8px;padding:13px"><div style="font-size:10.5px;font-weight:700;color:var(--g);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Company Signals</div><div style="font-size:12.5px;line-height:2;color:var(--t1)">• 50–500 employees<br>• SAP, NetSuite, QuickBooks<br>• B2B — sells to businesses<br>• Manufacturing, Distribution<br>• Has an AR/finance team</div></div>
+            <div style="background:var(--bg);border-radius:8px;padding:13px"><div style="font-size:10.5px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Pain Signals</div><div style="font-size:12.5px;line-height:2;color:var(--t1)">• Hiring AR analysts<br>• Posts about manual processes<br>• Uses Excel for cash app<br>• Mentions unapplied cash<br>• SAP without automation</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROSPECT TRACKER -->
+      <div id="panel-prospects" class="a-panel">
+        <div style="margin-bottom:16px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Prospect Tracker</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Track every lead from cold to closed · auto-saves in browser</div></div>
+        <div style="display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap">
+          <input type="text" id="pt-name" placeholder="Full name" style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;font-family:var(--font);outline:none;width:150px">
+          <input type="text" id="pt-title" placeholder="Job title" style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;font-family:var(--font);outline:none;width:150px">
+          <input type="text" id="pt-company" placeholder="Company" style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;font-family:var(--font);outline:none;width:130px">
+          <input type="text" id="pt-contact" placeholder="LinkedIn / Email" style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;font-family:var(--font);outline:none;width:170px">
+          <select id="pt-stage" style="padding:7px 11px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;font-family:var(--font);outline:none">
+            <option>Prospect</option><option>Contacted</option><option>Qualified</option><option>Demo</option><option>Closed</option><option>Lost</option>
+          </select>
+          <button class="btn btn-p btn-sm" onclick="addProspect()">+ Add</button>
+          <button class="btn btn-outline btn-sm" onclick="exportProspects()" style="margin-left:auto">Export CSV</button>
+        </div>
+        <div class="card"><table class="lead-tbl"><thead><tr><th>Name</th><th>Title</th><th>Company</th><th>Contact</th><th>Stage</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody id="pt-tbody"><tr><td colspan="8" style="text-align:center;padding:28px;color:var(--t3)">No prospects yet — add your first above</td></tr></tbody></table></div>
+      </div>
+
+      <!-- LINKEDIN DMs -->
+      <div id="panel-outreach" class="a-panel">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">LinkedIn DMs</div><div style="font-size:13px;color:var(--t3);margin-top:2px">5 persona-specific sequences · connection request + 2 follow-ups · click to expand and copy</div></div>
+        <div id="li-msg-list"></div>
+      </div>
+
+      <!-- EMAIL SEQUENCES -->
+      <div id="panel-email-seq" class="a-panel">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Cold Email Sequences</div><div style="font-size:13px;color:var(--t3);margin-top:2px">3-touch email sequence · proven subject lines · breakup email included</div></div>
+        <div id="email-msg-list"></div>
+      </div>
+
+      <!-- CONTENT LIBRARY -->
+      <div id="panel-content" class="a-panel">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Content Library</div><div style="font-size:13px;color:var(--t3);margin-top:2px">5 ready-to-post LinkedIn articles · click to expand and copy</div></div>
+        <div id="content-list-admin"></div>
+      </div>
+
+      <!-- OBJECTIONS -->
+      <div id="panel-objections" class="a-panel">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Objection Scripts</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Word-for-word responses to every objection you'll hear</div></div>
+        <div id="obj-list-admin"></div>
+      </div>
+
+      <!-- DEMO GUIDE -->
+      <div id="panel-demo-guide" class="a-panel">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Demo Playbook</div><div style="font-size:13px;color:var(--t3);margin-top:2px">20-minute demo that closes · minute by minute</div></div>
+        <div class="card">
+          <div class="card-h"><div class="card-t">The 20-minute demo</div></div>
+          <div style="padding:16px;display:grid;grid-template-columns:60px 1fr;gap:14px 18px">
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">0:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Discovery (2 min) — before you touch the screen</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Before I show you anything — tell me how your team matches remittances today." Every pain they mention is a feature you'll show.</div></div>
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">2:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Load their data (3 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Ask if they have a sample invoice aging export. Import it live. Say: "I'm going to show you this with real invoice data." This is the moment they lean in.</div></div>
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">5:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Run matching (2 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Click Run Matching. When results appear: "This would have taken your team X hours. It just took 8 seconds."</div></div>
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">7:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Show allocation waterfall (3 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">Click a multi-invoice payment. Show it tying to zero. "This is the one that usually takes your team the longest — we handle it automatically."</div></div>
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">10:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Exceptions + decisions (3 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Instead of chasing these manually, your team makes a decision and it flows into your SAP posting file automatically."</div></div>
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">13:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Reporting (2 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Your CFO sees this every morning — cash matched, what's stuck, and why." DSO and STP rate land with controllers.</div></div>
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">15:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Privacy (1 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Your invoice and payment data never leaves your browser. Nothing is uploaded. No IT approval needed." Watch the tension leave the room.</div></div>
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">16:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Pricing + close (4 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Most teams start on Pro — that's the multi-invoice allocation you just saw. At $999/month, if your team saves 10 hours a week, you're already ahead week one." Then be quiet. Let them talk.</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div class="card-t">Founding rate close</div></div>
+          <div style="padding:16px;font-size:13.5px;line-height:1.8;color:var(--t1);background:var(--bg);margin:0;border-radius:0 0 9px 9px">"We're in early access with our first 10 customers. I can offer you the founding rate — locked at <strong>$799/month</strong> for Pro, for life. We're at <strong style="color:var(--r)" id="slot-display">? of 10</strong> slots — want me to hold one?" <input type="number" id="slot-input" value="10" min="0" max="10" style="width:50px;margin:0 6px;padding:3px 7px;border:1.5px solid var(--bdr);border-radius:5px;font-family:var(--mono);font-size:13px" oninput="document.getElementById('slot-display').textContent=this.value+' of 10'"> slots remaining</div>
+        </div>
+      </div>
+</div>
+</div>
+
+<script>
+const ADMIN_PASS='ARMP-MASTER-2026';
+
+function doAuth(){
+  const p=document.getElementById('auth-pass').value;
+  if(p===ADMIN_PASS){
+    document.getElementById('auth-screen').style.display='none';
+    const a=document.getElementById('admin-app');a.style.display='flex';a.style.flexDirection='column';
+    initAdmin();
+  }else{
+    const e=document.getElementById('auth-err');e.style.display='block';
+    document.getElementById('auth-pass').value='';document.getElementById('auth-pass').focus();
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doAuth()});
+
+function getUsers(){return JSON.parse(localStorage.getItem('armp_users')||'{}')}
+function saveUsers(u){localStorage.setItem('armp_users',JSON.stringify(u))}
+function getLeads(){return JSON.parse(localStorage.getItem('armp_leads')||'[]')}
+function getGenKeys(){return JSON.parse(localStorage.getItem('armp_gen_keys')||'[]')}
+
+function initAdmin(){refreshStats();renderUsers('');renderLeads();renderGenKeys()}
+
+function sp(id,el){
+  document.querySelectorAll('.a-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.a-ni').forEach(n=>n.classList.remove('active'));
+  const panel=document.getElementById('panel-'+id);if(panel)panel.classList.add('active');
+  if(el)el.classList.add('active');
+  if(id==='users')renderUsers('');if(id==='leads')renderLeads();if(id==='keys')renderGenKeys();if(id==='overview')refreshStats();
+}
+
+function refreshStats(){
+  const users=Object.values(getUsers());const leads=getLeads();
+  document.getElementById('stat-users').textContent=users.length;
+  document.getElementById('stat-leads').textContent=leads.length;
+  document.getElementById('leads-badge').textContent=leads.length;
+  document.getElementById('stat-paid').textContent=users.filter(u=>u.plan==='pro'||u.plan==='team').length;
+  document.getElementById('stat-trial').textContent=users.filter(u=>u.plan==='starter'||u.plan==='demo').length;
+  const acts=[];
+  Object.entries(getUsers()).forEach(([e,u])=>acts.push({ts:u.created||0,txt:`New account: ${u.name} (${e}) — ${u.plan||'demo'} plan`}));
+  getLeads().forEach(l=>acts.push({ts:new Date(l.ts).getTime(),txt:`Demo lead: ${l.name} from ${l.company} (${l.email})`}));
+  acts.sort((a,b)=>b.ts-a.ts);
+  document.getElementById('recent-activity').innerHTML=acts.length?acts.slice(0,10).map(a=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr)"><div style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:148px">${a.ts?new Date(a.ts).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}</div><div style="font-size:13px;color:var(--t1)">${a.txt}</div></div>`).join(''):'<div class="em"><div class="em-icon">📭</div><div class="em-t">No activity yet</div></div>';
+}
+
+function renderUsers(filter){
+  const entries=Object.entries(getUsers()).filter(([e,u])=>!filter||(u.name+e).toLowerCase().includes(filter.toLowerCase()));
+  const tbody=document.getElementById('users-tbody');
+  if(!entries.length){tbody.innerHTML='<tr><td colspan="5"><div class="em"><div class="em-icon">👥</div><div class="em-t">No users found</div></div></td></tr>';return}
+  tbody.innerHTML=entries.map(([email,u])=>`<tr>
+    <td style="font-weight:500">${u.name}</td><td class="mono">${email}</td>
+    <td><span class="badge b-${u.plan||'demo'}">${(u.plan||'demo').toUpperCase()}</span></td>
+    <td class="mono" style="font-size:11.5px">${u.created?new Date(u.created).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—'}</td>
+    <td><div style="display:flex;gap:5px">
+      <select class="f-select" style="width:110px;padding:4px 8px;font-size:11.5px" onchange="changePlan('${email}',this.value)">
+        <option ${(u.plan||'demo')==='demo'?'selected':''} value="demo">Demo</option>
+        <option ${u.plan==='starter'?'selected':''} value="starter">Starter</option>
+        <option ${u.plan==='pro'?'selected':''} value="pro">Pro</option>
+        <option ${u.plan==='team'?'selected':''} value="team">Team</option>
+      </select>
+      <button class="btn btn-danger btn-sm" onclick="deleteUser('${email}')">Delete</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function changePlan(email,plan){const u=getUsers();if(u[email]){u[email].plan=plan;saveUsers(u);toast('Plan updated: '+email+' → '+plan);refreshStats()}}
+function deleteUser(email){if(!confirm('Delete '+email+'?'))return;const u=getUsers();delete u[email];saveUsers(u);renderUsers('');refreshStats();toast('Deleted: '+email)}
+
+function createUser(){
+  const name=document.getElementById('cu-name').value.trim();
+  const email=document.getElementById('cu-email').value.trim().toLowerCase();
+  const pass=document.getElementById('cu-pass').value;
+  const plan=document.getElementById('cu-plan').value;
+  const err=document.getElementById('cu-err'),ok=document.getElementById('cu-ok');
+  err.style.display='none';ok.style.display='none';
+  if(!name||!email||!pass){err.textContent='Please fill in all fields.';err.style.display='block';return}
+  if(pass.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return}
+  if(!email.includes('@')){err.textContent='Invalid email.';err.style.display='block';return}
+  const users=getUsers();if(users[email]){err.textContent='Account already exists.';err.style.display='block';return}
+  users[email]={name,pass:btoa(pass),avatar:'',plan,created:Date.now(),createdBy:'admin'};
+  saveUsers(users);
+  ok.textContent='✓ Account created: '+name+' ('+email+') — '+plan+' plan.';ok.style.display='block';
+  clearCreateForm();refreshStats();toast('Account created: '+email);
+}
+function clearCreateForm(){['cu-name','cu-email','cu-pass'].forEach(id=>document.getElementById(id).value='');document.getElementById('cu-plan').value='pro';document.getElementById('cu-err').style.display='none';document.getElementById('cu-ok').style.display='none'}
+
+function renderLeads(){
+  const leads=getLeads();const tbody=document.getElementById('leads-tbody');
+  document.getElementById('leads-badge').textContent=leads.length;
+  if(!leads.length){tbody.innerHTML='<tr><td colspan="6"><div class="em"><div class="em-icon">🎯</div><div class="em-t">No leads yet</div><div style="font-size:12px;color:var(--t3);margin-top:4px">Leads appear here when someone submits the demo form on the landing page.</div></div></td></tr>';return}
+  tbody.innerHTML=[...leads].reverse().map((l,i)=>`<tr>
+    <td style="font-weight:500">${l.name}</td>
+    <td class="mono"><a href="mailto:${l.email}" style="color:var(--pd)">${l.email}</a></td>
+    <td>${l.company||'—'}</td><td class="mono">${l.phone||'—'}</td>
+    <td class="mono" style="font-size:11.5px">${new Date(l.ts).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'})}</td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-p btn-sm" onclick="convertLead(${leads.length-1-i})">→ Create user</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteLead(${leads.length-1-i})">×</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function convertLead(idx){const l=getLeads()[idx];if(!l)return;document.getElementById('cu-name').value=l.name;document.getElementById('cu-email').value=l.email;document.getElementById('cu-pass').value='Welcome2026!';sp('create-user',document.querySelectorAll('.a-ni')[2]);toast('Lead pre-filled — review and create account')}
+function deleteLead(idx){if(!confirm('Delete this lead?'))return;const l=getLeads();l.splice(idx,1);localStorage.setItem('armp_leads',JSON.stringify(l));renderLeads();refreshStats();toast('Lead deleted')}
+function clearLeads(){if(!confirm('Delete ALL leads?'))return;localStorage.setItem('armp_leads','[]');renderLeads();refreshStats();toast('All leads cleared')}
+function exportLeads(){
+  const l=getLeads();if(!l.length){toast('No leads to export');return}
+  const csv=[['Name','Email','Company','Phone','Date','Source'],...l.map(x=>[x.name,x.email,x.company||'',x.phone||'',new Date(x.ts).toLocaleDateString('en-US'),x.source||'landing'])].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='armp_leads_'+new Date().toISOString().split('T')[0]+'.csv';a.click();toast('Leads exported');
+}
+
+function renderGenKeys(){
+  const keys=getGenKeys();document.getElementById('gen-keys-count').textContent=keys.length+' keys';
+  const c=document.getElementById('gen-keys-list');
+  c.innerHTML=keys.length?keys.map((k,i)=>`<div class="key-card"><div class="key-code">${k.key}</div><span class="key-plan ${k.plan}">${k.plan.toUpperCase()}</span><div style="font-size:10px;color:rgba(255,255,255,.35);margin-left:6px">${new Date(k.created).toLocaleDateString('en-US')}</div><button class="btn btn-outline btn-sm" onclick="copyKey('${k.key}')">Copy</button><button class="btn btn-danger btn-sm" onclick="deleteKey(${i})">×</button></div>`).join(''):
+    '<div class="em"><div class="em-icon">🔑</div><div class="em-t">No generated keys yet</div></div>';
+}
+
+function generateKey(){
+  const plan=prompt('Plan for this key:\nType: starter, pro, or team','pro');
+  if(!plan||!['starter','pro','team'].includes(plan.toLowerCase())){if(plan!==null)alert('Invalid plan. Use: starter, pro, or team');return}
+  const p=plan.toLowerCase();
+  const rand=Math.random().toString(36).substring(2,6).toUpperCase();
+  const key='ARMP-'+p.toUpperCase().padEnd(4,'0').slice(0,4)+'-2026-'+rand;
+  const keys=getGenKeys();keys.push({key,plan:p,created:Date.now()});
+  localStorage.setItem('armp_gen_keys',JSON.stringify(keys));
+  renderGenKeys();copyKey(key);toast('Key generated + copied: '+key);
+}
+function deleteKey(i){if(!confirm('Delete this key?'))return;const k=getGenKeys();k.splice(i,1);localStorage.setItem('armp_gen_keys',JSON.stringify(k));renderGenKeys();toast('Key deleted')}
+function copyKey(key){navigator.clipboard?.writeText(key).catch(()=>{});toast('Copied: '+key)}
+
+let _tt;
+function toast(msg){
+  let el=document.getElementById('_t');
+  if(!el){el=document.createElement('div');el.id='_t';el.style.cssText='position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:13px;font-family:Inter,sans-serif;font-weight:500;z-index:9999;transition:all .2s;transform:translateY(8px);opacity:0;background:#0F172A;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:320px';document.body.appendChild(el)}
+  el.textContent=msg;setTimeout(()=>{el.style.opacity='1';el.style.transform='translateY(0)'},10);
+  clearTimeout(_tt);_tt=setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(8px)'},3000);
+}
+// ══ SALES MACHINE JS ══
+
+// ── LINKEDIN MESSAGES ──
+const LI_MSGS=[
+  {persona:'AR Manager — SAP',icon:'🏭',tags:'SAP · Manufacturing',
+   msgs:[
+    {touch:'Connection request',body:`Hi {{FirstName}} — I saw you manage AR at {{Company}}. I'm building a remittance matching tool specifically for SAP teams tired of manual cash application. Would love to connect.`},
+    {touch:'First DM (after connect)',subj:'Quick question about remittance matching',body:`Hi {{FirstName}},
+
+Curious — how is your team currently handling remittance matching for payments that reference PO numbers or cover multiple invoices?
+
+We've built AR Match Pro specifically for SAP AR teams — auto-matches by Invoice #, PO #, SO #, and handles multi-invoice allocations that would normally take an analyst 30 minutes each.
+
+Worth a quick look? Happy to share a live demo link — no signup needed.
+
+— Tre`},
+    {touch:'Follow-up DM (Day 4)',subj:'Following up — AR Match Pro',body:`Hi {{FirstName}},
+
+Following up in case this got buried. We're in early access and I wanted to make sure you had the chance to see it before we move to standard pricing.
+
+Here's the live demo: armatchpro.com/app?demo=true
+
+No signup. Takes 5 minutes. Shows exactly how multi-invoice and PO-based payments get handled.
+
+— Tre`}
+   ]},
+  {persona:'Controller — Mid-size company',icon:'📊',tags:'Controller · Finance · B2B',
+   msgs:[
+    {touch:'Connection request',body:`Hi {{FirstName}} — saw your profile while researching finance teams handling B2B payments manually. Building something for controllers who want better cash visibility. Would love to connect.`},
+    {touch:'First DM',subj:'Cash application visibility question',body:`Hi {{FirstName}},
+
+Quick question — do you have real-time visibility into what % of incoming payments are matched vs. sitting unapplied right now?
+
+Most controllers tell me their team tracks this in Excel, which means they're always a day behind on cash visibility.
+
+AR Match Pro gives you a live dashboard: cash matched, automation rate, DSO, unapplied cash risk.
+
+Would a 10-minute look be worth it?
+
+— Tre`},
+    {touch:'Follow-up DM',subj:'Still thinking about it?',body:`Hi {{FirstName}},
+
+Just wanted to leave the door open. If unapplied cash comes up in a team meeting, keep us in mind.
+
+We're offering a founding rate ($799/mo for Pro, locked for life) to our first 10 customers. Happy to hold a slot.
+
+Demo: armatchpro.com/app?demo=true
+
+— Tre`}
+   ]},
+  {persona:'Cash Application Specialist',icon:'💳',tags:'Cash App · AR Analyst',
+   msgs:[
+    {touch:'Connection request',body:`Hi {{FirstName}} — I work with cash application teams on remittance matching automation. Your profile caught my eye — would love to connect and share what we're building.`},
+    {touch:'First DM',subj:'Something your team might actually love',body:`Hi {{FirstName}},
+
+AR Match Pro is browser-based — your team imports the invoice aging and remittance file, hits Run, and it auto-matches by Invoice #, PO #, SO #, and allocates multi-invoice payments. Exceptions flagged automatically. Posting export goes straight to SAP format.
+
+No data leaves your browser. No IT approval. No training needed.
+
+Live demo: armatchpro.com/app?demo=true
+
+— Tre`},
+    {touch:'Follow-up DM',subj:'Did you get a chance to try it?',body:`Hi {{FirstName}},
+
+Just checking in. If you tried the demo and had questions, I'm happy to walk through it live.
+
+If you're not the budget decision-maker, I'd love an intro to your controller or AR manager.
+
+— Tre`}
+   ]},
+  {persona:'Finance Ops — NetSuite',icon:'🔧',tags:'NetSuite · Finance Ops',
+   msgs:[
+    {touch:'Connection request',body:`Hi {{FirstName}} — building a remittance matching tool for NetSuite finance teams. Saw your background in finance ops — would love to connect.`},
+    {touch:'First DM',subj:'Reducing manual work in your AR process',body:`Hi {{FirstName}},
+
+AR Match Pro automates the matching — pulls your invoice aging and remittance file, matches by Invoice, PO, Sales Order, and handles multi-invoice payments automatically. NetSuite export included.
+
+I'd love 10 minutes to show you what it looks like with real data. No pitch deck — just the product.
+
+— Tre`},
+    {touch:'Follow-up DM',subj:'Last follow-up',body:`Hi {{FirstName}},
+
+I'll keep this short — if reducing manual cash application is on your radar this quarter, AR Match Pro is worth 10 minutes.
+
+Demo: armatchpro.com/app?demo=true
+
+— Tre`}
+   ]},
+  {persona:'VP Finance — Growth Company',icon:'📈',tags:'VP Finance · Growth · Series A-C',
+   msgs:[
+    {touch:'Connection request',body:`Hi {{FirstName}} — building a cash application tool for growing B2B companies where the AR team is stretched thin. Would love to connect.`},
+    {touch:'First DM',subj:'One question about your AR team',body:`Hi {{FirstName}},
+
+Quick question: as your company has grown, has remittance matching kept pace — or is your AR team still doing it manually?
+
+Most finance leaders at growth-stage companies have added AR headcount just to handle volume. AR Match Pro automates the matching and gives you CFO metrics (DSO, STP rate, unapplied cash) without adding headcount.
+
+Worth a look?
+
+— Tre`},
+    {touch:'Follow-up DM',subj:'The ROI math',body:`Hi {{FirstName}},
+
+If your team spends 10 hours/week on manual cash application, that's ~$3,000/month in labor. AR Match Pro Pro is $999/month.
+
+The math usually closes itself.
+
+Demo: armatchpro.com/app?demo=true
+
+— Tre`}
+   ]}
+];
+
+const EMAIL_MSGS=[
+  {persona:'AR Manager — SAP (3-touch)',icon:'🏭',tags:'Email · SAP · AR Manager',
+   msgs:[
+    {touch:'Touch 1 — Day 1',subj:'Quick question about remittance matching',body:`Hi {{FirstName}},
+
+Curious — how is {{Company}}'s team currently handling payments that cover multiple invoices or only reference a PO number?
+
+I'm the founder of AR Match Pro — built specifically for SAP AR teams. Auto-matches by Invoice #, PO #, SO #, handles multi-invoice allocations. SAP F-28 posting export included. Nothing to install.
+
+Worth a 10-minute look?
+
+— Tre Ballard, Founder
+info@armatchpro.com`},
+    {touch:'Touch 2 — Day 4',subj:'Re: Quick question about remittance matching',body:`Hi {{FirstName}},
+
+One thing that resonates with SAP AR teams: the multi-invoice allocation. If a customer sends one payment for 6 invoices with only a PO reference, AR Match Pro finds the exact subset combination that ties to zero — automatically.
+
+Live demo (no login): armatchpro.com/app?demo=true
+
+— Tre`},
+    {touch:'Touch 3 — Day 10 (breakup)',subj:'Closing the loop',body:`Hi {{FirstName}},
+
+I'll keep this short — if manual remittance matching isn't a priority right now, totally understand.
+
+Founding rate: $799/month for Pro, locked for life. 3 slots remaining.
+
+Demo: armatchpro.com/app?demo=true
+
+— Tre`}
+   ]},
+  {persona:'Controller — B2B (3-touch)',icon:'📊',tags:'Email · Controller · B2B',
+   msgs:[
+    {touch:'Touch 1 — Day 1',subj:'Cash application visibility question',body:`Hi {{FirstName}},
+
+Do you have real-time visibility into what % of incoming payments are matched vs. sitting unapplied right now?
+
+I built AR Match Pro to solve exactly this: live dashboard showing cash matched, automation rate, DSO, unapplied cash risk. No ERP integration. No IT. Runs in the browser.
+
+Would 10 minutes be worth it?
+
+— Tre Ballard
+Founder, AR Match Pro`},
+    {touch:'Touch 2 — Day 5',subj:'The CFO metrics you actually want',body:`Hi {{FirstName}},
+
+AR Match Pro includes a CFO reporting section: DSO (live), STP rate, unapplied cash %, payment error rate, automation efficiency.
+
+All calculated from your real match data.
+
+Demo: armatchpro.com/app?demo=true
+
+— Tre`},
+    {touch:'Touch 3 — Day 12',subj:'Last note on this',body:`Hi {{FirstName}},
+
+Wrapping up my outreach. Founding pricing ($799/mo, locked) for our first 10 customers. 3 slots left.
+
+Demo: armatchpro.com/app?demo=true
+
+— Tre`}
+   ]}
+];
+
+function buildMsgList(data,containerId){
+  const el=document.getElementById(containerId);if(!el)return;
+  el.innerHTML=data.map((m,mi)=>`
+    <div class="msg-card">
+      <div class="msg-hdr" onclick="toggleMsgCard(${mi},'${containerId}')">
+        <div class="msg-icon" style="background:hsl(${mi*55+200},60%,92%)">${m.icon}</div>
+        <div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:var(--t1)">${m.persona}</div><div style="font-size:11.5px;color:var(--t3)">${m.tags}</div></div>
+        <span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:#EFF6FF;color:#1D4ED8">${m.msgs.length} messages</span>
+        <span style="margin-left:10px;color:var(--t3);font-size:16px" id="${containerId}-arr-${mi}">›</span>
+      </div>
+      <div class="msg-body-wrap" id="${containerId}-body-${mi}">
+        <div class="msg-tab-row">${m.msgs.map((t,ti)=>`<div class="msg-tab ${ti===0?'on':''}" onclick="switchTab('${containerId}',${mi},${ti})">${t.touch}</div>`).join('')}</div>
+        ${m.msgs.map((t,ti)=>`<div id="${containerId}-${mi}-${ti}" style="display:${ti===0?'block':'none'}">
+          ${t.subj?`<div class="msg-subj">Subject line</div><div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px;padding:7px 11px;background:var(--bg);border-radius:6px;border:1px solid var(--bdr)">${t.subj}</div>`:''}
+          <div class="msg-content-box">${escHtml(t.body)}<button class="copy-it" onclick="copyText(event,${JSON.stringify(t.body)})">Copy</button></div>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function copyText(e,txt){e.stopPropagation();navigator.clipboard?.writeText(txt).catch(()=>{});toast('Copied!')}
+function toggleMsgCard(mi,cid){
+  const body=document.getElementById(cid+'-body-'+mi);
+  const arr=document.getElementById(cid+'-arr-'+mi);
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open');
+  if(arr)arr.textContent=isOpen?'›':'⌄';
+}
+function switchTab(cid,mi,ti){
+  const body=document.getElementById(cid+'-body-'+mi);
+  body.querySelectorAll('.msg-tab').forEach((t,i)=>t.classList.toggle('on',i===ti));
+  for(let i=0;i<10;i++){const el=document.getElementById(cid+'-'+mi+'-'+i);if(el)el.style.display=i===ti?'block':'none';}
+}
+
+// ── CONTENT ──
+const CONTENTS=[
+  {title:'Why your AR team is always behind on cash application (and how to fix it)',type:'LinkedIn Article',
+   body:`Cash application is one of the most manual, error-prone steps in AR. Here's why teams struggle:
+
+❌ One payment covers 6 invoices → manual combination research
+❌ Customer references a PO, not an invoice → manual search
+❌ Short pays sit unresolved → unapplied cash builds up
+
+The fix isn't more headcount. It's matching logic that handles the complexity automatically:
+
+1. Match by Invoice # first
+2. Try PO # — group all invoices on that PO
+3. Find the exact subset that ties to zero
+4. Flag exceptions for one-click review
+5. Export a posting file for SAP or NetSuite
+
+Goal: 80%+ of payments apply automatically. Your team handles only exceptions.
+
+What does your team's match rate look like?`},
+  {title:'The unapplied cash problem nobody talks about (until the board meeting)',type:'LinkedIn Article',
+   body:`Your bank balance says $2.4M. Your CFO says you have a cash problem. Both can be true.
+
+Unapplied cash — payments received but not matched to an invoice — creates three real problems:
+
+1. DSO inflation — receivables look worse than reality
+2. Collection errors — chasing invoices already paid
+3. Board meeting surprises — "cash vs. AR" with no clean answer
+
+Target: unapplied cash % below 5%. Above 10% is a process problem.
+
+The fastest fix: automated matching that handles PO-based and multi-invoice payments eliminates 70-80% of unmatched cash at the source.
+
+What's your team's unapplied cash % right now?`},
+  {title:'Manual vs. automated cash application — the numbers your CFO needs to see',type:'LinkedIn Article',
+   body:`The math that gets budget approved for AR automation:
+
+Current state (manual):
+• 2 analysts, 10 hrs/week each = 20 hrs/week
+• Loaded analyst cost: ~$35/hr
+• Monthly cost: ~$3,000
+• Error rate: 8-12%
+
+Automated state:
+• Same team, 80% of payments apply automatically
+• Manual review: 2 hrs/week instead of 20
+• Tool cost: $999/month
+• Error rate: <2%
+
+Net savings: $2,000+/month. Payback period: immediate.
+
+Bonus: reducing DSO by 3 days on $10M AR frees ~$800K in working capital.
+
+If your team is still matching manually — what's blocking automation?`},
+  {title:'5 remittance matching mistakes SAP teams make (and how to avoid them)',type:'LinkedIn Article',
+   body:`The same five mistakes come up every time:
+
+1. Matching only on exact invoice numbers
+Customers send PO numbers. If your logic stops at Invoice #, you're manually researching every PO payment.
+
+2. No subset-sum logic for multi-invoice payments
+One payment, six invoices. Your team manually tests combinations.
+
+3. Letting exceptions age
+Unmatched payments sit for days. DSO climbs.
+
+4. No posting-ready export
+After matching, someone manually keys results into SAP. Errors multiply.
+
+5. Zero CFO visibility
+Your controller doesn't know the match rate until month-end. Surprises happen.
+
+Which of these does your team deal with most?`},
+  {title:'How to reduce unapplied cash in your AR process',type:'Website Article',
+   body:`Unapplied cash is a payment received that hasn't been matched to an invoice in your AR system. It's in your bank. It's not in your aging report.
+
+How to measure it:
+Unapplied cash % = Total unmatched / Total received × 100
+Target: below 5%.
+
+How to reduce it:
+1. Request invoice # on every remittance from customers
+2. Automate the matching pass — Invoice #, then PO #, then amount
+3. Flag exceptions immediately (don't let them age)
+4. Set a 48-hour review SLA for anything unmatched
+
+Fastest fix: automated matching that handles PO-based and multi-invoice payments eliminates 70-80% of unmatched cash at the source.`}
+];
+
+function buildContents(){
+  const el=document.getElementById('content-list-admin');if(!el)return;
+  el.innerHTML=CONTENTS.map((ct,i)=>`
+    <div class="content-card">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${ct.type.includes('LinkedIn')?'#1D4ED8':'#065F46'};margin-bottom:6px">${ct.type}</div>
+      <div style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:10px;line-height:1.3">${ct.title}</div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px">
+        <button class="btn btn-outline btn-sm" onclick="toggleContentAdmin(${i})">▶ View full post</button>
+        <button class="btn btn-outline btn-sm" onclick="copyText(event,${JSON.stringify(ct.title+'\n\n'+ct.body)})">Copy</button>
+      </div>
+      <div id="content-admin-${i}" style="display:none;background:var(--bg);border:1px solid var(--bdr);border-radius:7px;padding:12px 14px;font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--t1);position:relative">
+        ${escHtml(ct.body)}<button class="copy-it" onclick="copyText(event,${JSON.stringify(ct.body)})">Copy</button>
+      </div>
+    </div>`).join('');
+}
+function toggleContentAdmin(i){const el=document.getElementById('content-admin-'+i);el.style.display=el.style.display==='none'?'block':'none';}
+
+// ── OBJECTIONS ──
+const OBJS=[
+  {q:"We already have a process for this.",a:`"Totally — most teams do. Can I ask: is it mostly manual, or automated?"
+
+If manual: "That's exactly our sweet spot. What we replace is the manual research time — PO lookups, multi-invoice combinations, exception chasing. Your process stays the same, it just runs itself."
+
+If automated: "What are you using? Most tools only handle simple invoice matching. We specifically handle PO-based and multi-invoice — the messy stuff that kills match rates."`},
+  {q:"It's too expensive.",a:`"Let me ask — what does your team currently spend on this process?
+
+If analysts spend 8-10 hours/week on manual matching, that's ~$3,000/month in labor. AR Match Pro Pro is $999/month.
+
+You're not spending money — you're reallocating it.
+
+Alternative: Founding rate is $799/month for Pro, locked for life. 3 slots left."`},
+  {q:"We need IT to approve any new tools.",a:`"That's usually the blocker — and it's why we built this the way we did.
+
+AR Match Pro runs entirely in the browser. No installation. No server. No ERP connection. Your team downloads an invoice aging CSV from SAP, drags it in, and runs the match. Nothing touches your systems.
+
+IT doesn't need to approve a browser tab. Your AR manager can start today."`},
+  {q:"We're concerned about data security.",a:`"Smart concern — first thing we always get asked.
+
+Your invoice and payment data never leaves your browser. We don't store it. We don't send it to a server. The matching runs locally, on your machine.
+
+There's nothing for us to breach because we don't have your data. You can verify by running it with no internet connection — it still works."`},
+  {q:"We're not ready to switch tools right now.",a:`"No switching required. AR Match Pro isn't replacing SAP or your ERP.
+
+You export from SAP the same way you do today, import into AR Match Pro, run the match, export a posting file back into SAP.
+
+Your process doesn't change. Your team just doesn't do the matching manually anymore."`},
+  {q:"Can you integrate directly with SAP/NetSuite?",a:`"Not yet — and that's intentional. Direct ERP integration means IT involvement and months of setup.
+
+The file-based approach means your team starts today. The SAP F-28 posting export is already in the format SAP expects.
+
+Direct integration is on the roadmap for Team plan customers. Happy to put you on the list."`},
+  {q:"We already tried automation and it didn't work.",a:`"Tell me more — what did you try and what broke down?
+
+[Listen.]
+
+The most common failure: the tool matched only on exact invoice numbers, but customers send PO references. Or it couldn't handle one payment covering multiple invoices.
+
+That's exactly the gap we built for. Want me to show you specifically how we handle PO-based and multi-invoice cases?"`}
+];
+
+function buildObjsAdmin(){
+  const el=document.getElementById('obj-list-admin');if(!el)return;
+  el.innerHTML=OBJS.map((o,i)=>`
+    <div class="obj-card">
+      <div class="obj-hdr" onclick="toggleObj(${i})">
+        <span>${o.q}</span>
+        <span style="color:var(--t3);font-size:16px" id="obj-arr-${i}">›</span>
+      </div>
+      <div class="obj-body" id="obj-body-${i}">
+        ${escHtml(o.a)}<button class="copy-it" onclick="copyText(event,${JSON.stringify(o.a)})">Copy</button>
+      </div>
+    </div>`).join('');
+}
+function toggleObj(i){
+  const b=document.getElementById('obj-body-'+i);const a=document.getElementById('obj-arr-'+i);
+  b.classList.toggle('open');if(a)a.textContent=b.classList.contains('open')?'⌄':'›';
+}
+
+// ── PROSPECT TRACKER ──
+function getProspects(){return JSON.parse(localStorage.getItem('armp_prospects')||'[]')}
+function saveProspects(p){localStorage.setItem('armp_prospects',JSON.stringify(p))}
+const STAGE_CLS={Prospect:'s-pr',Contacted:'s-co',Qualified:'s-qu',Demo:'s-dm',Closed:'s-cl',Lost:'s-lo'};
+
+function addProspect(){
+  const name=document.getElementById('pt-name').value.trim();
+  const company=document.getElementById('pt-company').value.trim();
+  if(!name||!company){toast('Name and company required');return}
+  const p=getProspects();
+  p.push({id:Date.now(),name,title:document.getElementById('pt-title').value.trim(),company,contact:document.getElementById('pt-contact').value.trim(),stage:document.getElementById('pt-stage').value,notes:'',added:new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'})});
+  saveProspects(p);renderProspects();updatePipeCts();
+  ['pt-name','pt-title','pt-company','pt-contact'].forEach(id=>document.getElementById(id).value='');
+  toast('Added: '+name);
+}
+
+function renderProspects(){
+  const p=getProspects();const tbody=document.getElementById('pt-tbody');
+  if(!p.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--t3)">No prospects yet</td></tr>';return}
+  tbody.innerHTML=p.map((pr,i)=>`<tr>
+    <td style="font-weight:600">${pr.name}</td>
+    <td style="color:var(--t2)">${pr.title||'—'}</td>
+    <td style="font-weight:500">${pr.company}</td>
+    <td style="font-size:12px;color:var(--p)">${pr.contact||'—'}</td>
+    <td><select class="s-badge ${STAGE_CLS[pr.stage]}" style="border:none;font-weight:700;font-size:10.5px;cursor:pointer;padding:2px 8px;border-radius:20px;outline:none;background:inherit;color:inherit" onchange="updateProspectStage(${i},this.value)">
+      ${['Prospect','Contacted','Qualified','Demo','Closed','Lost'].map(s=>`<option ${pr.stage===s?'selected':''} value="${s}">${s}</option>`).join('')}
+    </select></td>
+    <td style="font-size:11.5px;color:var(--t3)">${pr.added}</td>
+    <td><input type="text" value="${(pr.notes||'').replace(/"/g,'&quot;')}" placeholder="Notes…" style="border:1px solid var(--bdr);border-radius:5px;padding:3px 8px;font-size:12px;width:140px;font-family:var(--font);outline:none" oninput="updateProspectNotes(${i},this.value)"></td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteProspect(${i})">×</button></td>
+  </tr>`).join('');
+}
+
+function updateProspectStage(i,v){const p=getProspects();p[i].stage=v;saveProspects(p);renderProspects();updatePipeCts()}
+function updateProspectNotes(i,v){const p=getProspects();p[i].notes=v;saveProspects(p)}
+function deleteProspect(i){if(!confirm('Delete?'))return;const p=getProspects();p.splice(i,1);saveProspects(p);renderProspects();updatePipeCts()}
+function updatePipeCts(){
+  const p=getProspects();
+  ['Prospect','Contacted','Qualified','Demo','Closed'].forEach(s=>{
+    const el=document.getElementById('pc-'+s.toLowerCase());if(el)el.textContent=p.filter(x=>x.stage===s).length;
+  });
+}
+function exportProspects(){
+  const p=getProspects();if(!p.length){toast('No prospects to export');return}
+  const csv=[['Name','Title','Company','Contact','Stage','Notes','Added'],...p.map(x=>[x.name,x.title,x.company,x.contact,x.stage,x.notes,x.added])].map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='armp_prospects_'+new Date().toISOString().split('T')[0]+'.csv';a.click();toast('Exported');
+}
+
+// ── EXTENDED SP for sales panels ──
+// sp() is defined above and handles all panels including sales
+
+// Init on load
+// Sales init merged into initAdmin
+const _origInitAdmin=window.initAdmin||function(){};
+function initAdmin(){
+  refreshStats();renderUsers('');renderLeads();renderGenKeys();
+  renderProspects();updatePipeCts();
+}
+
+</script>
+</body>
+</html>

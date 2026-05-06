@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AR Match Pro — Product Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#0EA5E9;--pd:#0284C7;--g:#10B981;--gd:#059669;--am:#F59E0B;--r:#EF4444;--pu:#8B5CF6;
+  --navy:#050D1A;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;background:#000;font-family:var(--font);-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:16px;gap:14px}
+
+/* ── PLAYER ── */
+.player{width:100%;max-width:880px;aspect-ratio:16/9;position:relative;background:var(--navy);overflow:hidden;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.3),0 32px 100px rgba(0,0,0,.7);cursor:pointer}
+.player::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 50% 0%,rgba(14,165,233,.06),transparent 70%);pointer-events:none}
+
+/* ── GRID BG ── */
+.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(14,165,233,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.04) 1px,transparent 1px);background-size:44px 44px;opacity:0;transition:opacity .6s}
+.grid-bg.show{opacity:1}
+
+/* ── SCENES ── */
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 52px;opacity:0;transition:opacity .55s ease}
+.scene.show{opacity:1}
+
+/* ── PROGRESS ── */
+.prog-wrap{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.08);z-index:20}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));width:0%;transition:width .25s linear;border-radius:0 2px 2px 0}
+
+/* ── CONTROLS ── */
+.ctrl-bar{position:absolute;bottom:8px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:12px;z-index:30;opacity:0;transition:opacity .2s;padding:0 16px}
+.player:hover .ctrl-bar{opacity:1}
+.c-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(10,20,35,.7);backdrop-filter:blur(8px);color:#fff;font-size:13px;cursor:pointer;display:grid;place-items:center;transition:.15s;flex-shrink:0}
+.c-btn:hover{background:rgba(14,165,233,.25);border-color:var(--p)}
+.dots{display:flex;gap:5px}
+.dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:.2s}
+.dot.on{background:#fff;width:16px;border-radius:3px}
+.vol-btn{font-size:11px}
+.time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);min-width:44px;text-align:right}
+
+/* ── VOICE STATUS ── */
+.voice-status{position:absolute;top:12px;right:14px;font-size:10.5px;font-family:var(--mono);color:rgba(255,255,255,.3);display:flex;align-items:center;gap:5px;z-index:25;transition:.3s}
+.voice-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.2);transition:.3s}
+.voice-dot.speaking{background:var(--g);animation:vPulse 1s ease infinite}
+@keyframes vPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+
+/* ── PAUSE OVERLAY ── */
+.pause-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,13,26,.55);z-index:15;opacity:0;pointer-events:none;transition:opacity .2s}
+.pause-overlay.show{opacity:1}
+.pause-icon{font-size:52px;opacity:.7}
+
+/* ── SCENE 0: BRAND ── */
+#s0 .particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#s0 .pt{position:absolute;font-family:var(--mono);font-size:11px;color:rgba(14,165,233,.2);white-space:nowrap;animation:ptFloat 7s ease-in-out infinite}
+.logo-lockup{display:flex;align-items:center;gap:15px;margin-bottom:18px;animation:dropIn .7s cubic-bezier(.34,1.56,.64,1) .3s both}
+@keyframes dropIn{from{opacity:0;transform:translateY(-22px) scale(.88)}to{opacity:1;transform:none}}
+.logo-mark-v{width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(14,165,233,.38);animation:markBreath 3s ease infinite 1s}
+@keyframes markBreath{0%,100%{box-shadow:0 8px 28px rgba(14,165,233,.38)}50%{box-shadow:0 12px 44px rgba(14,165,233,.6),0 0 50px rgba(16,185,129,.18)}}
+.logo-name-v{font-size:32px;font-weight:800;color:#fff;letter-spacing:-.8px}
+.logo-name-v span{color:var(--p)}
+.headline-v{font-size:46px;font-weight:800;color:#fff;letter-spacing:-1.8px;text-align:center;line-height:1.05;animation:dropIn .7s cubic-bezier(.34,1.56,.64,1) .6s both}
+.headline-v .hi{background:linear-gradient(135deg,#7DD3FC,#34D399);-webkit-background-clip:text;color:transparent}
+.sub-v{font-size:16px;color:rgba(255,255,255,.42);text-align:center;max-width:420px;margin-top:14px;line-height:1.65;animation:fadeUp .6s ease 1s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes ptFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+/* ── SCENE 1: PAIN ── */
+#s1{background:linear-gradient(140deg,#110A0A,#060307)}
+.pain-h{font-size:34px;font-weight:800;color:#fff;text-align:center;letter-spacing:-.8px;margin-bottom:6px;line-height:1.1}
+.pain-h em{color:var(--r);font-style:normal}
+.pain-sub{font-size:14px;color:rgba(255,255,255,.38);text-align:center;margin-bottom:28px}
+.pain-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:640px}
+.pain-c{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:11px;padding:14px 16px;display:flex;align-items:flex-start;gap:11px;animation:slideIn .45s ease both}
+.pain-c:nth-child(1){animation-delay:.05s}
+.pain-c:nth-child(2){animation-delay:.18s}
+.pain-c:nth-child(3){animation-delay:.31s}
+.pain-c:nth-child(4){animation-delay:.44s}
+@keyframes slideIn{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+.pain-ico{font-size:20px;flex-shrink:0;margin-top:1px}
+.pain-title{font-size:13.5px;font-weight:700;color:#F87171;margin-bottom:3px}
+.pain-txt{font-size:12.5px;color:rgba(255,255,255,.52);line-height:1.5}
+
+/* ── SCENE 2: SOLUTION ── */
+#s2{background:radial-gradient(ellipse at 28% 55%,#061820,#020C16)}
+.sol-ew{font-size:11px;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;animation:fadeUp .5s ease .15s both}
+.sol-h{font-size:40px;font-weight:800;color:#fff;letter-spacing:-1.5px;text-align:center;line-height:1.05;margin-bottom:14px;animation:fadeUp .5s ease .3s both}
+.sol-h .hi{background:linear-gradient(135deg,#7DD3FC,#34D399);-webkit-background-clip:text;color:transparent}
+.sol-d{font-size:14px;color:rgba(255,255,255,.46);text-align:center;max-width:460px;line-height:1.68;animation:fadeUp .5s ease .45s both}
+.match-vis{display:flex;align-items:center;gap:0;margin-top:26px;width:100%;max-width:600px;animation:fadeUp .5s ease .65s both}
+.mv-invs{flex:1;display:flex;flex-direction:column;gap:7px}
+.mv-inv{background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);border-radius:8px;padding:9px 13px;font-family:var(--mono);font-size:12px;color:#7DD3FC;display:flex;justify-content:space-between;animation:slideRight .35s ease both}
+.mv-inv:nth-child(1){animation-delay:.8s}.mv-inv:nth-child(2){animation-delay:.98s}.mv-inv:nth-child(3){animation-delay:1.16s}
+@keyframes slideRight{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.mv-mid{width:72px;display:flex;flex-direction:column;align-items:center;gap:7px;flex-shrink:0}
+.mv-bolt{font-size:22px;color:var(--g);animation:boltPulse 1.4s ease infinite 1s}
+@keyframes boltPulse{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.25);opacity:1}}
+.mv-badge{background:var(--g);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;animation:fadeUp .4s ease 1.4s both}
+.mv-pay{flex:1;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:16px;text-align:center;align-self:center;animation:slideLeft .4s ease .8s both}
+@keyframes slideLeft{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.mv-pay-amt{font-family:var(--mono);font-size:22px;font-weight:700;color:#34D399}
+.mv-pay-lbl{font-size:11px;color:rgba(255,255,255,.38);margin-top:3px}
+
+/* ── SCENE 3: HOW ── */
+#s3{background:linear-gradient(135deg,#050D1A,#071525)}
+.how-h{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.8px;text-align:center;margin-bottom:32px}
+.how-steps{display:flex;align-items:flex-start;gap:0;width:100%;max-width:680px;position:relative}
+.how-line{position:absolute;top:27px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,var(--p),var(--g));transform-origin:left;animation:lineGrow 1.2s ease .3s both}
+@keyframes lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.how-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:11px;z-index:1;animation:stepPop .45s cubic-bezier(.34,1.56,.64,1) both}
+.how-step:nth-child(2){animation-delay:.25s}.how-step:nth-child(3){animation-delay:.5s}.how-step:nth-child(4){animation-delay:.75s}.how-step:nth-child(5){animation-delay:1s}
+@keyframes stepPop{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.how-ico{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;font-size:20px;box-shadow:0 8px 22px rgba(14,165,233,.28)}
+.how-lbl{font-size:13px;font-weight:700;color:#fff;text-align:center;line-height:1.4}
+.how-desc{font-size:11px;color:rgba(255,255,255,.38);text-align:center;line-height:1.5;max-width:110px}
+
+/* ── SCENE 4: RESULTS ── */
+#s4{background:radial-gradient(ellipse at 55% 40%,#061A0F,#020C14)}
+.res-h{font-size:36px;font-weight:800;color:#fff;letter-spacing:-.8px;text-align:center;margin-bottom:28px}
+.res-h em{color:var(--g);font-style:normal}
+.kpi-row{display:flex;gap:13px;width:100%;max-width:640px}
+.kpi-b{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:20px 16px;text-align:center;animation:kpiPop .55s cubic-bezier(.34,1.56,.64,1) both}
+.kpi-b:nth-child(1){animation-delay:.15s}.kpi-b:nth-child(2){animation-delay:.35s}.kpi-b:nth-child(3){animation-delay:.55s}
+@keyframes kpiPop{from{opacity:0;transform:scale(.65)}to{opacity:1;transform:scale(1)}}
+.kpi-b::before{content:'';display:block;height:2px;border-radius:1px;margin-bottom:14px}
+.kpi-b.gn::before{background:var(--g)}.kpi-b.bl::before{background:var(--p)}.kpi-b.am::before{background:var(--am)}
+.kpi-v{font-family:var(--mono);font-size:38px;font-weight:800;letter-spacing:-2px;line-height:1}
+.kpi-v.gn{color:var(--g)}.kpi-v.bl{color:#7DD3FC}.kpi-v.am{color:var(--am)}
+.kpi-l{font-size:12px;color:rgba(255,255,255,.38);margin-top:8px;line-height:1.45}
+.res-quote{font-size:14px;color:rgba(255,255,255,.4);text-align:center;max-width:440px;margin-top:24px;line-height:1.7;font-style:italic;animation:fadeUp .5s ease 1s both}
+
+/* ── SCENE 5: CTA ── */
+#s5{background:radial-gradient(ellipse 70% 70% at 50% 50%,#071525,#020C16)}
+#s5::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 55% 55% at 50% 50%,rgba(14,165,233,.07),transparent)}
+.cta-ew{font-size:11px;font-weight:700;color:var(--g);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;animation:fadeUp .5s ease .2s both}
+.cta-h{font-size:48px;font-weight:800;color:#fff;letter-spacing:-2px;text-align:center;line-height:1;margin-bottom:14px;animation:fadeUp .5s ease .38s both}
+.cta-h span{background:linear-gradient(135deg,#7DD3FC,#34D399);-webkit-background-clip:text;color:transparent}
+.cta-sub{font-size:16px;color:rgba(255,255,255,.42);text-align:center;margin-bottom:30px;animation:fadeUp .5s ease .55s both}
+.cta-btns-v{display:flex;gap:12px;animation:fadeUp .5s ease .72s both;flex-wrap:wrap;justify-content:center}
+.cta-v-p{padding:14px 28px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 10px 28px rgba(14,165,233,.32);animation:pPulse 2.8s ease infinite 1.2s;text-decoration:none;display:inline-flex}
+@keyframes pPulse{0%,100%{box-shadow:0 10px 28px rgba(14,165,233,.32)}50%{box-shadow:0 16px 44px rgba(14,165,233,.52),0 0 55px rgba(16,185,129,.14)}}
+.cta-v-s{padding:14px 28px;background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.16);border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);text-decoration:none;display:inline-flex}
+.domain-v{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.22);margin-top:20px;animation:fadeUp .5s ease 1.1s both}
+
+/* ── PAGE UI ── */
+.ui-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:880px}
+.ui-btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:.15s;display:flex;align-items:center;gap:6px}
+.ui-p{background:var(--p);color:#fff}.ui-p:hover{background:var(--pd)}
+.ui-o{background:rgba(255,255,255,.09);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.14)}.ui-o:hover{background:rgba(255,255,255,.14)}
+.voice-notice{font-size:11.5px;color:rgba(255,255,255,.3);text-align:center;max-width:520px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div style="font-family:'Inter',sans-serif;font-size:18px;font-weight:800;color:#fff;letter-spacing:-.3px;text-align:center">AR Match Pro <span style="color:var(--p)">·</span> Product Overview</div>
+
+<!-- PLAYER -->
+<div class="player" id="player" onclick="handlePlayerClick()">
+  <div class="grid-bg" id="grid-bg"></div>
+
+  <!-- SCENE 0: Brand -->
+  <div class="scene show" id="s0" style="background:radial-gradient(ellipse at 50% 60%,#0A1929,#030810)">
+    <div class="particles" id="s0">
+      <div class="pt" style="top:14%;left:7%;animation-delay:0s">INV-1001 · $25,000 · PO-9001</div>
+      <div class="pt" style="top:22%;right:8%;animation-delay:1.8s">ACH-882104 · Apex Industrial</div>
+      <div class="pt" style="bottom:28%;left:10%;animation-delay:3.2s">Match rate: 82%</div>
+      <div class="pt" style="bottom:18%;right:9%;animation-delay:1.1s">SAP F-28 export ready</div>
+      <div class="pt" style="top:55%;left:4%;animation-delay:2.4s">$55,000 cleared today</div>
+      <div class="pt" style="top:68%;right:5%;animation-delay:.7s">INV-1003 · Short pay detected</div>
+    </div>
+    <div class="logo-lockup">
+      <div class="logo-mark-v">AR</div>
+      <div class="logo-name-v">Match <span>Pro</span></div>
+    </div>
+    <div class="headline-v">Stop matching <span class="hi">manually.</span></div>
+    <div class="sub-v">Remittance matching, fully automated — no ERP integration required.</div>
+  </div>
+
+  <!-- SCENE 1: Pain -->
+  <div class="scene" id="s1">
+    <div class="pain-h">Your AR team is <em>losing hours</em><br>every single week</div>
+    <div class="pain-sub">The same manual process. Over and over again.</div>
+    <div class="pain-grid">
+      <div class="pain-c"><div class="pain-ico">⏱</div><div><div class="pain-title">30 min per payment</div><div class="pain-txt">Manually researching which invoices a PO payment covers — every time.</div></div></div>
+      <div class="pain-c"><div class="pain-ico">📊</div><div><div class="pain-title">Excel for everything</div><div class="pain-txt">No audit trail. One wrong formula breaks the entire reconciliation.</div></div></div>
+      <div class="pain-c"><div class="pain-ico">💸</div><div><div class="pain-title">Unapplied cash piling up</div><div class="pain-txt">Payments sitting unmatched hurt your DSO and confuse your CFO.</div></div></div>
+      <div class="pain-c"><div class="pain-ico">🔁</div><div><div class="pain-title">Same exceptions, every month</div><div class="pain-txt">Short pays. Unmatched wires. Manual investigation with no end in sight.</div></div></div>
+    </div>
+  </div>
+
+  <!-- SCENE 2: Solution -->
+  <div class="scene" id="s2">
+    <div class="sol-ew">Introducing AR Match Pro</div>
+    <div class="sol-h">One click.<br><span class="hi">Everything matched.</span></div>
+    <div class="sol-d">Import your invoice aging and remittance file. AR Match Pro auto-matches by Invoice #, PO #, Sales Order — and allocates one payment across multiple invoices automatically.</div>
+    <div class="match-vis">
+      <div class="mv-invs">
+        <div class="mv-inv"><span>INV-1001</span><span>$25,000</span></div>
+        <div class="mv-inv"><span>INV-1002</span><span>$15,000</span></div>
+        <div class="mv-inv"><span>INV-1004</span><span>$15,000</span></div>
+      </div>
+      <div class="mv-mid">
+        <div class="mv-bolt">⚡</div>
+        <div class="mv-badge">Auto-matched</div>
+      </div>
+      <div class="mv-pay">
+        <div class="mv-pay-amt">$40,000</div>
+        <div class="mv-pay-lbl">ACH · PO-9001</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 3: How -->
+  <div class="scene" id="s3">
+    <div class="how-h">How it works</div>
+    <div class="how-steps">
+      <div class="how-line"></div>
+      <div class="how-step"><div class="how-ico">📁</div><div class="how-lbl">Import data</div><div class="how-desc">CSV, Excel, PDF or image — drag and drop</div></div>
+      <div class="how-step"><div class="how-ico">⚡</div><div class="how-lbl">Run matching</div><div class="how-desc">Invoice, PO, SO matched in seconds</div></div>
+      <div class="how-step"><div class="how-ico">🚨</div><div class="how-lbl">Review exceptions</div><div class="how-desc">Short pays flagged — one-click decisions</div></div>
+      <div class="how-step"><div class="how-ico">📤</div><div class="how-lbl">Export to SAP</div><div class="how-desc">F-28 posting file — no manual entry</div></div>
+    </div>
+  </div>
+
+  <!-- SCENE 4: Results -->
+  <div class="scene" id="s4">
+    <div class="res-h">Real results, <em>instantly</em></div>
+    <div class="kpi-row">
+      <div class="kpi-b gn"><div class="kpi-v gn">82%</div><div class="kpi-l">Average auto-match rate — industry benchmark is 60%</div></div>
+      <div class="kpi-b bl"><div class="kpi-v bl">8 sec</div><div class="kpi-l">Match a full remittance batch — down from hours</div></div>
+      <div class="kpi-b am"><div class="kpi-v am">$2K+</div><div class="kpi-l">Saved per month in analyst labor costs</div></div>
+    </div>
+    <div class="res-quote">"No installation. No ERP integration. No IT approval. Your team starts today."</div>
+  </div>
+
+  <!-- SCENE 5: CTA -->
+  <div class="scene" id="s5">
+    <div class="cta-ew">Start today — no ERP required</div>
+    <div class="cta-h">AR matching,<br><span>fully automated.</span></div>
+    <div class="cta-sub">Join AR teams eliminating manual cash application.</div>
+    <div class="cta-btns-v">
+      <a class="cta-v-p" href="app.html">Start Pro — $999/mo</a>
+      <a class="cta-v-s" href="https://calendly.com/armatchpro" target="_blank">📅 Book a Demo</a>
+    </div>
+    <div class="domain-v">armatchpro.com</div>
+  </div>
+
+  <!-- PROGRESS + CONTROLS -->
+  <div class="prog-wrap"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="voice-status" id="voice-status"><div class="voice-dot" id="voice-dot"></div><span id="voice-label">Voice ready</span></div>
+  <div class="pause-overlay" id="pause-overlay"><div class="pause-icon">⏸</div></div>
+  <div class="ctrl-bar" style="justify-content:center;gap:10px">
+    <button class="c-btn" id="play-btn" onclick="event.stopPropagation();togglePlay()" style="background:linear-gradient(135deg,var(--p),var(--pd));border-color:var(--p);width:42px;height:42px;font-size:15px">▶</button>
+    <button class="c-btn vol-btn" id="vol-btn" onclick="event.stopPropagation();toggleMute()" title="Toggle voice" style="font-size:13px">🔊</button>
+  </div>
+</div>
+
+<div class="ui-row">
+  <button class="ui-btn ui-p" id="main-btn" onclick="togglePlay()">▶ Play</button>
+
+</div>
+
+
+<script>
+// ── SCENE DATA ──
+const SCENES=[
+  {id:'s0',dur:7000,vo:"Match remittance to invoices in minutes — no ERP integration required. Welcome to AR Match Pro — remittance matching, fully automated."},
+  {id:'s1',dur:10000,vo:"One payment covers six invoices, but the customer only sends a PO number. Your team spends 30 minutes per payment figuring it out. Short pays sit unresolved for weeks. And unapplied cash? Invisible to your CFO until month end."},
+  {id:'s2',dur:9500,vo:"AR Match Pro changes all of that. Import your invoice aging and remittance file. The engine auto-matches by invoice number, PO number, and sales order — and allocates one payment across multiple invoices automatically. In seconds."},
+  {id:'s3',dur:9000,vo:"Drag in your files. Run matching. Review the exceptions your team actually needs to see. Then export a posting file directly to SAP or NetSuite — no manual entry, no ERP integration required."},
+  {id:'s4',dur:8500,vo:"Teams using AR Match Pro see an 82% auto-match rate — well above the industry average. What used to take hours happens in 8 seconds. That's two thousand dollars or more back in your budget every month."},
+  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that can require long implementation and ERP integration, AR Match Pro focuses on fast remittance matching for Accounting and AR teams. No installation. No ERP integration. No IT approval needed. Start today at AR Match Pro dot com."}
+];
+const TOTAL=SCENES.reduce((s,sc)=>s+sc.dur,0);
+
+let cur=0,playing=false,muted=false,elapsed=0,startTs=0,raf=0;
+let synth=window.speechSynthesis,utt=null,voiceReady=false;
+let voiceObj=null;
+
+// ── VOICE SETUP ──
+function pickVoice(){
+  const voices=synth.getVoices();
+  if(!voices.length)return null;
+  // Priority: female English voices
+  const prefs=[
+    v=>v.name==='Samantha',                          // iOS/macOS
+    v=>v.name.includes('Samantha'),
+    v=>v.name==='Microsoft Jenny Online (Natural)',   // Windows
+    v=>v.name.includes('Jenny'),
+    v=>v.name.includes('Zira'),                       // Windows
+    v=>v.name==='Google US English',                  // Chrome Android
+    v=>/female|woman/i.test(v.name)&&v.lang.startsWith('en'),
+    v=>v.lang.startsWith('en-US'),
+    v=>v.lang.startsWith('en'),
+    v=>true
+  ];
+  for(const fn of prefs){const v=voices.find(fn);if(v)return v;}
+  return voices[0];
+}
+function initVoice(){
+  voiceObj=pickVoice();
+  if(voiceObj){
+    voiceReady=true;
+    document.getElementById('voice-label').textContent='';
+    // voice notice hidden
+  }else{
+    document.getElementById('voice-label').textContent='';
+    // voice notice hidden
+  }
+}
+if(synth.onvoiceschanged!==undefined)synth.onvoiceschanged=initVoice;
+setTimeout(initVoice,300);
+
+// ── DOTS ──
+const dotsEl=document.getElementById('dots');
+SCENES.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' on':'');d.onclick=(e)=>{e.stopPropagation();jumpTo(i)};dotsEl.appendChild(d)});
+
+function setDots(n){document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===n))}
+function showScene(n){
+  document.querySelectorAll('.scene').forEach((s,i)=>s.classList.toggle('show',i===n));
+  document.getElementById('grid-bg').classList.toggle('show',n>0);
+  setDots(n);cur=n;
+}
+function jumpTo(n){
+  const newElapsed=SCENES.slice(0,n).reduce((s,sc)=>s+sc.dur,0);
+  elapsed=newElapsed;
+  if(playing){startTs=Date.now()-elapsed;speakScene(n);}
+  showScene(n);updateProg();
+}
+
+// ── VOICE ──
+function speakScene(n){
+  synth.cancel();
+  setTimeout(()=>{
+    if(!playing&&n!==0)return;
+    const utt=new SpeechSynthesisUtterance(SCENES[n].vo);
+    // Select voice
+    if(voiceObj)utt.voice=voiceObj;
+    utt.rate=.78; utt.pitch=1.0; utt.volume=muted?0:1;
+    utt.onstart=()=>{const d=document.getElementById('voice-dot');if(d)d.classList.add('speaking');};
+    utt.onend=()=>{
+      const d=document.getElementById('voice-dot');if(d)d.classList.remove('speaking');
+      if(!playing)return;
+      // Advance to next scene ONLY after speech fully completes
+      const next=n+1;
+      if(next<SCENES.length){
+        cur=next;
+        showScene(next);
+        // Small breath between scenes
+        setTimeout(()=>speakScene(next),400);
+      } else {
+        // All scenes done
+        end();
+      }
+    };
+    utt.onerror=()=>{
+      // On speech error, still advance so we don't get stuck
+      const next=n+1;
+      if(next<SCENES.length){cur=next;showScene(next);setTimeout(()=>speakScene(next),600);}
+      else end();
+    };
+    synth.speak(utt);
+  },100);
+}
+
+// ── PLAYBACK ──
+let speechDone=false;
+
+// Scene is advanced ONLY by speech onend — no time-based interruption
+// tick() only handles the progress bar and final end detection
+function tick(){
+  if(!playing)return;
+  elapsed=Date.now()-startTs;
+  updateProg();
+  // Only check for complete end after all scenes done
+  if(cur>=SCENES.length-1&&!synth.speaking&&elapsed>TOTAL){end();return;}
+  raf=requestAnimationFrame(tick);
+}
+
+function updateProg(){
+  const pct=Math.min(elapsed/TOTAL*100,100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+  const s=Math.floor(elapsed/1000);
+  document.getElementById('time-el').textContent=Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
+}
+
+function play(){
+  playing=true;startTs=Date.now()-elapsed;
+  document.getElementById('play-btn').textContent='⏸';document.getElementById('play-btn').style.background='rgba(255,255,255,.15)';
+  document.getElementById('main-btn').textContent='⏸ Pause';
+  document.getElementById('pause-overlay').classList.remove('show');
+  speakScene(cur);
+  raf=requestAnimationFrame(tick);
+}
+function pause(){
+  playing=false;cancelAnimationFrame(raf);synth.pause();
+  document.getElementById('play-btn').textContent='▶';document.getElementById('play-btn').style.background='linear-gradient(135deg,#0EA5E9,#0284C7)';
+  document.getElementById('main-btn').textContent='▶ Play';
+  document.getElementById('pause-overlay').classList.add('show');
+}
+function end(){
+  playing=false;cancelAnimationFrame(raf);synth.cancel();
+  document.getElementById('play-btn').textContent='↺';document.getElementById('play-btn').style.background='linear-gradient(135deg,#10B981,#059669)';
+  document.getElementById('main-btn').textContent='↺ Replay';
+  document.getElementById('pause-overlay').classList.remove('show');
+  document.getElementById('voice-dot').classList.remove('speaking');
+}
+function togglePlay(){
+  if(!playing&&elapsed>=TOTAL){resetPlayer();setTimeout(play,100);return;}
+  playing?pause():play();
+}
+function handlePlayerClick(){
+  if(!playing&&elapsed<TOTAL)togglePlay();
+  else if(playing)pause();
+}
+function resetPlayer(){
+  synth.cancel();cancelAnimationFrame(raf);playing=false;elapsed=0;
+  showScene(0);updateProg();
+  document.getElementById('play-btn').textContent='▶';document.getElementById('play-btn').style.background='linear-gradient(135deg,#0EA5E9,#0284C7)';
+  document.getElementById('main-btn').textContent='▶ Play';
+  document.getElementById('pause-overlay').classList.remove('show');
+  document.getElementById('voice-dot').classList.remove('speaking');
+}
+function prevScene(){if(cur>0)jumpTo(cur-1);}
+function nextScene(){if(cur<SCENES.length-1)jumpTo(cur+1);}
+function toggleMute(){
+  muted=!muted;
+  document.getElementById('vol-btn').textContent=muted?'🔇':'🔊';
+  if(muted)synth.cancel();
+  else if(playing)speakScene(cur);
+}
+</script>
+</body>
+</html>

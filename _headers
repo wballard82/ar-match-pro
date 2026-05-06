@@ -1,0 +1,17 @@
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/video.html
+  X-Frame-Options: SAMEORIGIN
+
+/app.html
+  X-Frame-Options: SAMEORIGIN
+
+/admin.html
+  X-Frame-Options: SAMEORIGIN
+
+/demo.html
+  X-Frame-Options: SAMEORIGIN
