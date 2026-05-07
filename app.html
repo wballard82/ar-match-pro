@@ -4408,8 +4408,7 @@ function launchApp(user){
   var ls=document.getElementById('login-screen');
   if(ls){ls.style.display='none';}
   const appEl=document.getElementById('app');
-  if(appEl){appEl.style.display='flex';appEl.style.visibility='visible';appEl.classList.add('visible');}
-  document.body.style.overflow='hidden';
+  if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
   IS_MASTER=!!(user.isMaster);
   setUserDisplay(user);
   setPlan(user.plan||'demo');
@@ -6597,6 +6596,13 @@ function cleanupLoginAndOverlays(){
     app.style.pointerEvents='auto';
     app.classList.add('visible');
   }
+  // Activate worklist panel immediately so app has visible content
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
+  var wl=document.getElementById('p-worklist');
+  if(wl) wl.classList.add('active');
+  var sbiWl=document.getElementById('sbi-worklist');
+  if(sbiWl) sbiWl.classList.add('active');
   // Close any stray overlays
   ['imp-modal','upgrade-modal','pricing-modal'].forEach(function(id){
     var el=document.getElementById(id);
@@ -6614,8 +6620,10 @@ function launchApp(user){
   // Hide login screen and show app before any async work
   cleanupLoginAndOverlays();
   try{ _origLaunchApp(user); }finally{ launchApp._running=false; }
+  // Ensure worklist is active and populated (fallback if _origLaunchApp's setTimeout was skipped)
+  setTimeout(function(){ navToWorklist(); }, 10);
   // Rebuild worklist after init
-  setTimeout(function(){ buildWorklist(); }, 50);
+  setTimeout(function(){ buildWorklist(); }, 100);
   // Welcome back + secondary init
   setTimeout(function(){
     var name=user.name?(user.name.split(' ')[0]):'';
