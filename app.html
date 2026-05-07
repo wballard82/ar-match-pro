@@ -2,6 +2,9 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AR Match Pro — Cash Application Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4202,7 +4205,7 @@ function updTop(){
   setEl('kpi-shortpay',spc);
   const excCt=EXC.filter(e=>!e.s||e.s==='Open').length;
   const sbExc=document.getElementById('sb-exc-ct');
-  if(sbExc){sbExc.textContent=excCt;sbExc.style.display=excCt?'inline':'none';}
+  if(sbExc){sbExc.textContent=excCt;sbExc.style.display='none';} // exc count via notif-dot only
   const notifDot=document.getElementById('notif-dot');
   if(notifDot)notifDot.style.display=excCt>0?'block':'none';
   const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
@@ -4584,7 +4587,7 @@ function rExc(){
   const openItems=EXC.filter(ex=>ex.s!=='Resolved'&&ex.s!=='Resolved — rejected');
   const resolvedItems=EXC.filter(ex=>ex.s==='Resolved'||ex.s==='Resolved — rejected');
   const needsAction=EXC.filter(ex=>!ex.s||ex.s==='Open'||ex.s==='In review');
-  if(nb){nb.textContent=needsAction.length;nb.style.display=needsAction.length?'inline':'none';}
+  if(nb){nb.textContent=needsAction.length;nb.style.display='none'; // badge hidden, use notif-dot}
   const rc=document.getElementById('exc-resolved-ct');if(rc)rc.textContent=resolvedItems.length;
   const tf=document.getElementById('exc-type-filter');const tval=tf?tf.value:'';
   const ec=document.getElementById('exc-ct');
@@ -6349,21 +6352,24 @@ function setCfoPeriod(p,btn){
 function updateCfoSummary(){
   var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   var setW=function(id,w){var el=document.getElementById(id);if(el)el.style.width=w;};
-  var tp=PAY.reduce(function(s,p){return s+p.amt;},0);
+  // Period multiplier: month=1x, quarter=3x, ytd=12x (annualized estimation)
+  var periodMult = CFO_PERIOD==='quarter'?3:CFO_PERIOD==='ytd'?12:1;
+  var periodLabel = CFO_PERIOD==='quarter'?'This quarter':CFO_PERIOD==='ytd'?'Year to date':'This month';
+  var tp=PAY.reduce(function(s,p){return s+p.amt;},0)*periodMult;
   var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
-  var ma=matched.reduce(function(s,r){return s+r.pd;},0);
+  var ma=matched.reduce(function(s,r){return s+r.pd;},0)*periodMult;
   var ua=EXC.reduce(function(s,e){return s+e.amt;},0);
   var spc=EXC.filter(function(e){return e.type==='Short pay';});
   var spAmt=spc.reduce(function(s,e){return s+e.amt;},0);
   var rt=tp>0?(ma/tp*100):0;
-  var autoCount=matched.length;
+  var autoCount=matched.length*periodMult;
   var hoursSaved=autoCount*8/60;
   var dollarsSaved=hoursSaved*65;
 
   // Hero: Cash Application Performance
   if(autoCount>0){
-    setEl('cfo-hours-saved','$'+$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate');
-    setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received total');
+    setEl('cfo-hours-saved','$'+$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
+    setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received ('+periodLabel+')');
   } else {
     setEl('cfo-hours-saved','No matches yet');
     setEl('cfo-hero-sub','Import data and run matching to see performance');
