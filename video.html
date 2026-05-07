@@ -411,6 +411,9 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
         <button class="yt-btn" id="play-btn" onclick="event.stopPropagation();togglePlay()" title="Play/Pause (k)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
         </button>
+        <button class="yt-btn" onclick="event.stopPropagation();restartVideo()" title="Restart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        </button>
         <div class="yt-vol-wrap">
           <button class="yt-btn vol-btn" id="vol-btn" onclick="event.stopPropagation();toggleMute()" title="Mute (m)">
             <svg id="vol-icon" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
@@ -591,6 +594,22 @@ function end(){
   document.getElementById('pause-overlay').classList.remove('show');
   document.getElementById('voice-dot').classList.remove('speaking');
 }
+function restartVideo(){
+  synth.cancel();
+  cancelAnimationFrame(raf);
+  elapsed=0;cur=0;playing=false;
+  // Hide all scenes, show first
+  SCENES.forEach((sc,i)=>{
+    const el=document.getElementById(sc.id);
+    if(el){el.classList.toggle('show',i===0);}
+  });
+  updateProg();
+  // Reset play button to play icon
+  const pb=document.getElementById('play-btn');
+  if(pb)pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';
+  // Auto-start after reset
+  setTimeout(play,100);
+}
 function togglePlay(){
   if(!playing&&elapsed>=TOTAL){resetPlayer();setTimeout(play,100);return;}
   playing?pause():play();
@@ -672,18 +691,20 @@ function seekMove(e){
   }
 }
 function setVolume(val){
-  const v=parseFloat(val)/100;
-  muted=(v===0);
-  // Store current volume for use in speakScene
-  window._speechVol=v;
-  // Update current utterance — must cancel and re-speak for Web Speech API to apply
-  if(synth.speaking){
+  const vol=parseFloat(val)/100;
+  muted=(vol===0);
+  window._speechVol=vol;
+  // Apply to current utterance if possible (may not take effect mid-speech)
+  if(utt){try{utt.volume=muted?0:vol;}catch(e){}}
+  // If muting: cancel speech but do NOT pause video playback
+  if(muted&&synth.speaking){
     synth.cancel();
-    if(!muted&&v>0&&playing){
-      setTimeout(()=>{if(playing)speakScene(cur);},80);
-    }
+    // Video continues — silence only
+  } else if(!muted&&!synth.speaking&&playing){
+    // Was muted and now unmuting while playing — restart speech for current scene
+    setTimeout(()=>{if(playing&&!synth.speaking)speakScene(cur);},80);
   }
-  // Update icon
+  // Update icon — do NOT touch playing state
   const icon=document.getElementById('vol-icon');
   if(icon){
     icon.innerHTML=muted
