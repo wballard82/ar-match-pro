@@ -398,6 +398,39 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   .cfo-stat-grid{grid-template-columns:1fr!important}
 }
 
+/* ── MOBILE CENTERING FIXES ── */
+@media(max-width:768px){
+  /* Pricing bottom row: stack vertically and center everything */
+  .pricing-bottom-row{
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+  }
+  /* Trust signals: center as a group */
+  .pricing-trust-signals{
+    justify-content:center!important;
+    width:100%!important;
+  }
+  /* Try Free Demo + Book a Demo buttons (pricing): center */
+  .pricing-bottom-btns{
+    justify-content:center!important;
+    width:100%!important;
+    flex-wrap:wrap!important;
+  }
+  /* Why AR Match Pro section CTA: stack and center both buttons */
+  .diff-cta-row{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    gap:12px!important;
+  }
+  .diff-cta-row button{
+    margin-right:0!important;
+    width:auto!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -542,7 +575,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     </div>
 
     <!-- CTA row -->
-    <div style="text-align:center">
+    <div class="diff-cta-row" style="text-align:center">
       <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:var(--shadow2);margin-right:12px">▶ Try free demo</button>
       <button onclick="window.open('https://calendly.com/armatchpro','_blank')" style="padding:15px 32px;background:#fff;color:var(--navy);border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font)">📅 Book a 30-Minute Demo</button>
     </div>
@@ -808,13 +841,13 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     
     <!-- ROI line -->
     <div style="text-align:center;margin-top:24px;font-size:14px;color:rgba(255,255,255,.4)">💡 If your team spends 10+ hours/week matching payments, <strong style="color:rgba(255,255,255,.65)">AR Match Pro can pay for itself in days.</strong></div>
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08)">
-      <div style="display:flex;gap:24px;flex-wrap:wrap">
+<div class="pricing-bottom-row" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08)">
+      <div class="pricing-trust-signals" style="display:flex;gap:24px;flex-wrap:wrap">
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">🔒 Secure payment via Stripe</div>
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">↩ Cancel anytime</div>
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">⚡ Live in minutes</div>
       </div>
-      <div style="display:flex;gap:12px">
+      <div class="pricing-bottom-btns" style="display:flex;gap:12px">
         <button onclick="openLeadModal()" style="padding:12px 22px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">▶ Try free demo</button>
         <button onclick="window.open('https://calendly.com/armatchpro','_blank')" style="padding:12px 22px;background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">📅 Book a demo</button>
       </div>
