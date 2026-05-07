@@ -4422,6 +4422,7 @@ function setUserDisplay(user){
 function launchApp(user){
   var ls=document.getElementById('login-screen');
   if(ls){ls.style.display='none';}
+  document.body.classList.add('app-active');
   const appEl=document.getElementById('app');
   if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
   IS_MASTER=!!(user.isMaster);
