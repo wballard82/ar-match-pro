@@ -108,21 +108,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
   background:linear-gradient(135deg,#7DD3FC,#34D399);-webkit-background-clip:text;color:transparent;
   z-index:2;animation:loginMergeMP 7.2s cubic-bezier(.65,0,.35,1) infinite;
 }
-@keyframes loginMergeAR{0%,18%{transform:translateX(-132px) rotate(-3deg);opacity:.88}42%,62%{transform:translateX(0) scale(1.45);opacity:.24}78%,100%{transform:translateX(-132px) rotate(-3deg);opacity:.88}}
-@keyframes loginMergeMP{0%,18%{transform:translateX(116px) rotate(3deg);opacity:.78}42%,62%{transform:translateX(0);opacity:1}78%,100%{transform:translateX(116px) rotate(3deg);opacity:.78}}
+@keyframes loginMergeAR{0%,18%{transform:translateX(-160px) rotate(-3deg);opacity:.88}42%,62%{transform:translateX(0) scale(1.55);opacity:.28}78%,100%{transform:translateX(-160px) rotate(-3deg);opacity:.88}}42%,62%{transform:translateX(0) scale(1.45);opacity:.24}78%,100%{transform:translateX(-132px) rotate(-3deg);opacity:.88}}
+@keyframes loginMergeMP{0%,18%{transform:translateX(140px) rotate(3deg);opacity:.78}42%,62%{transform:translateX(0);opacity:1}78%,100%{transform:translateX(140px) rotate(3deg);opacity:.78}}42%,62%{transform:translateX(0);opacity:1}78%,100%{transform:translateX(116px) rotate(3deg);opacity:.78}}
 
 /* Core AR mark */
-.logo-core{
-  position:absolute;top:50%;left:50%;width:62px;height:62px;
-  transform:translate(-50%,-50%);border-radius:18px;
-  background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.3),transparent 30%),
-             linear-gradient(135deg,#0EA5E9 0%,#0284C7 58%,#10B981 100%);
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-weight:800;font-size:18px;color:#fff;z-index:3;
-  box-shadow:0 18px 48px rgba(2,132,199,.34),0 0 44px rgba(14,165,233,.3),inset 0 1px 0 rgba(255,255,255,.32);
-  animation:premiumCoreBreath 4.8s cubic-bezier(.4,0,.2,1) infinite;
-}
-.logo-core::after{content:"";position:absolute;inset:-1px;border-radius:19px;border:1px solid rgba(255,255,255,.26);pointer-events:none}
 @keyframes premiumCoreBreath{
   0%,100%{transform:translate(-50%,-50%) scale(1);box-shadow:0 18px 48px rgba(2,132,199,.28),0 0 40px rgba(14,165,233,.24),inset 0 1px 0 rgba(255,255,255,.3)}
   50%{transform:translate(-50%,-50%) scale(1.03);box-shadow:0 24px 60px rgba(2,132,199,.38),0 0 52px rgba(16,185,129,.28),inset 0 1px 0 rgba(255,255,255,.38)}
@@ -622,7 +611,7 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
 .hover-lift{transition:transform var(--trans),box-shadow var(--trans)}
 .hover-lift:hover{transform:translateY(-2px);box-shadow:var(--s2)}
 
-<style>
+
 .ws-step{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;background:var(--s2);color:var(--t3);border:1px solid var(--bdr)}
 .ws-step.ws-active{background:rgba(14,165,233,.12);color:var(--p);border-color:rgba(14,165,233,.3)}
 .ws-step.ws-done{background:rgba(16,185,129,.12);color:#10B981;border-color:rgba(16,185,129,.3)}
@@ -632,8 +621,6 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
 .conf-high{color:#10B981;font-weight:700}
 .conf-med{color:#F59E0B;font-weight:700}
 .conf-low{color:#EF4444;font-weight:700}
-</style>
-
 </style>
 </head>
 <body>
@@ -648,13 +635,12 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
     <div class="login-fi lfi2">🏦</div>
     <div class="login-fi lfi3">📈</div>
     <div class="login-fi lfi4">💳</div>
-    <div class="login-fi lfi5" style="color:#F59E0B;text-shadow:0 0 12px rgba(245,158,11,.6)">💲</div>
+    <div class="login-fi lfi5" style="background:linear-gradient(135deg,rgba(16,185,129,.25),rgba(16,185,129,.1));border-color:rgba(16,185,129,.4);box-shadow:0 14px 36px rgba(0,0,0,.32),0 0 28px rgba(16,185,129,.35),inset 0 1px 0 rgba(255,255,255,.22)"><span style="font-size:28px;font-weight:900;font-family:Arial,sans-serif;color:#10B981;text-shadow:0 0 14px rgba(16,185,129,.8),0 0 28px rgba(16,185,129,.4)">$</span></div>
     <div class="login-fi lfi6">🔒</div>
     <div class="login-split-logo">
       <div class="login-split-ar">AR</div>
       <div class="login-split-mp">Match Pro</div>
     </div>
-    <div class="logo-core">AR</div>
   </div>
 
   <div class="login-brand">
@@ -820,7 +806,7 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
   </div>
   <div class="sidebar-sec">
     <div class="sl">Cash Application</div>
-    <div class="ni" onclick="sp('engine',this)">
+    <div class="ni" onclick="sp('engine',this);engRefreshSel()">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="6" height="10" rx="1"/><rect x="9" y="3" width="6" height="10" rx="1"/><path d="M4 6h2M4 9h2M10 6h2M10 9h2"/></svg>Cash Application
     </div>
   </div>
@@ -2089,7 +2075,7 @@ async function runMatch(){
   }
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
   overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
-  document.getElementById('eng-notice').style.display='flex';
+  // notification handled by toast
   sp('engine',document.querySelectorAll('.ni')[3]);
   toast(`✓ Done · ${RES.length} results · ${EXC.length} exceptions`);
 }
@@ -2270,8 +2256,8 @@ function buildAllocWaterfall(p,idx){
 
 function toggleEngAlloc(btn,payIdx){
   const isOpen=btn.classList.contains('open');
-  document.querySelectorAll('#eng-tbl .alloc-row').forEach(r=>r.remove());
-  document.querySelectorAll('#eng-tbl .expand-btn.open').forEach(b=>{b.classList.remove('open');b.textContent='Allocation';});
+  document.querySelectorAll('.alloc-row').forEach(r=>r.remove());
+  document.querySelectorAll('.expand-btn.open').forEach(b=>{b.classList.remove('open');b.textContent='Allocation';});
   if(isOpen)return;
   btn.classList.add('open');btn.textContent='Allocation';
   const row=btn.closest('tr');const next=document.createElement('tr');
@@ -2329,6 +2315,8 @@ function rRem(){
   document.getElementById('rem-ct').textContent=PAY.length+' rows';
 }
 function rEng(){
+  // Old engine table replaced by NetSuite-style workspace (engRenderRows)
+  return; // no-op — cash application workspace handles rendering
   const tb=document.getElementById('eng-tb');document.getElementById('eng-ct').textContent=RES.length+' results';
   if(!RES.length){tb.innerHTML='<tr><td colspan="11"><div class="em"><div class="em-icon">⚙️</div><div class="em-t">No results yet</div></div></td></tr>';return}
   // Group results by payment (po or invoice ref) for allocation display
@@ -2645,7 +2633,7 @@ function updTop(){
   if(RES.length||EXC.length){const tp=PAY.reduce((s,p)=>s+p.amt,0),ma=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact').reduce((s,r)=>s+r.pd,0);document.getElementById('ts-rate').textContent=tp>0?(ma/tp*100).toFixed(1)+'%':'—';document.getElementById('ts-exc').textContent=EXC.length}
 }
 function filterDash(t){if(t==='matched')sp('engine',document.querySelectorAll('.ni')[3]);if(t==='exceptions')sp('exceptions',document.querySelectorAll('.ni')[4])}
-function filterByStatus(s){sp('engine',document.querySelectorAll('.ni')[3]);const sel=document.querySelector('#p-engine select');if(sel){sel.value=s;fc('eng-tb',8,s)}}
+function filterByStatus(s){sp('engine',document.querySelectorAll('.ni')[3]);}
 
 // ══════════════════════════════════════════════════════════
 // IMPORT / FILE HANDLING
@@ -2836,11 +2824,7 @@ function setBilling(type,btn){
   document.querySelectorAll('.price').forEach(p=>{p.textContent=p.dataset[type]});
   document.querySelectorAll('.price-sub').forEach(s=>{s.textContent=type==='monthly'?'per month':'per year'});
 }
-function goToCheckout(plan){
-  toast(`Starting ${plan} checkout… (connect Stripe to activate)`);
-  document.getElementById('upgrade-modal').classList.remove('open');
-  document.getElementById('pricing-modal').classList.remove('open');
-}
+// goToCheckout: Stripe version defined above
 
 // ══════════════════════════════════════════════════════════
 // AI CHAT WIDGET
@@ -2952,19 +2936,15 @@ function clearInvData(){
 }
 function clearPayData(){
   if(!confirm('Clear all remittance data? This cannot be undone.'))return;
-  PAY=[];saveToStorage();rPay();updDash();updTop();
+  PAY=[];saveToStorage();rRem();updDash();updTop();
   toast('Remittance data cleared');
 }
 function clearMatchData(){
   if(!confirm('Clear all match results? This cannot be undone.'))return;
-  RES=[];saveToStorage();rMatch();updDash();updTop();
+  RES=[];saveToStorage();rPost();updDash();updTop();
   toast('Match data cleared');
 }
-function clearAllData(){
-  if(!confirm('Clear ALL data (invoices, remittances, matches, exceptions)? This cannot be undone.'))return;
-  INV=[];PAY=[];RES=[];EXC=[];saveToStorage();rAll();updDash();updTop();
-  toast('All data cleared');
-}
+// clearAllData: defined above
 
 
 // ── REMITTANCE ROW CONTROLS ──
@@ -3401,44 +3381,8 @@ function engResetUI(){
   if(emp)emp.style.display='block';
 }
 
-// ── Hook into sp() — refresh selector when panel opens ──
-const _origSp_eng = sp;
-function sp(id, el){
-  _origSp_eng(id, el);
-  if(id==='engine') engRefreshSel();
-}
+// engine nav calls engRefreshSel() directly via onclick
 
-// ══ CLEAR DATA FUNCTIONS (Prompt 4) ══
-function clearInvData(){
-  if(!confirm('Clear all invoice data? This cannot be undone.'))return;
-  INV=[];saveToStorage();rInv();updDash();updTop();
-  toast('Invoice data cleared');
-}
-function clearPayData(){
-  if(!confirm('Clear all remittance data?'))return;
-  PAY=[];saveToStorage();rRem();updDash();updTop();
-  engResetUI();
-  toast('Remittance data cleared');
-}
-function clearMatchData(){
-  if(!confirm('Clear all match results?'))return;
-  RES=[];saveToStorage();rPost();updDash();updTop();
-  toast('Match results cleared');
-}
-
-// ══ REMITTANCE ROW CONTROLS (Prompt 4) ══
-function addRemRowBefore(idx){
-  const blank={a:'',c:'',amt:0,po:'',i:'',so:'',m:'',txId:'',payDate:'',ccy:'USD',dp:false,coa:false,n:'',s:'Pending'};
-  PAY.splice(idx,0,blank);saveToStorage();rRem();
-}
-function addRemRowAfter(){
-  const blank={a:'',c:'',amt:0,po:'',i:'',so:'',m:'',txId:'',payDate:'',ccy:'USD',dp:false,coa:false,n:'',s:'Pending'};
-  PAY.push(blank);saveToStorage();rRem();toast('Row added');
-}
-function delRemRow(idx){
-  if(PAY.length===1&&!confirm('Delete the last row?'))return;
-  PAY.splice(idx,1);saveToStorage();rRem();
-}
 
 </script>
 </body>
