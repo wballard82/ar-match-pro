@@ -2004,12 +2004,10 @@ input:focus, select:focus, textarea:focus { outline: none; }
      ══════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-wrap">
-
     <div class="login-left">
       <div class="login-brand-wrap">
-        <div class="login-eyebrow">Enterprise Cash Application Platform</div>
+        <div class="login-eyebrow" style="font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--pd);text-transform:uppercase">AR Match Pro</div>
       </div>
-
       <div class="login-logo-hero">
         <canvas id="logo-canvas"></canvas>
         <div class="login-orbit"></div>
@@ -2026,21 +2024,27 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <div class="login-split-mp">Match Pro</div>
         </div>
       </div>
-
       <div class="login-tagline">Remittance Matching · Cash Application · AR Automation</div>
-
-      <div class="login-stats">
-        <div class="login-stat">
-          <div class="login-stat-val">95%</div>
-          <div class="login-stat-lbl">Avg match rate</div>
+      <div class="login-stats" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:32px">
+        <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
+          <div style="font-size:22px;margin-bottom:6px">⚡</div>
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">Auto-matching</div>
+          <div style="font-size:11.5px;color:var(--t3);margin-top:2px">Invoice · PO · SO · Amount</div>
         </div>
-        <div class="login-stat">
-          <div class="login-stat-val">80%</div>
-          <div class="login-stat-lbl">Time saved</div>
+        <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
+          <div style="font-size:22px;margin-bottom:6px">🏢</div>
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">SAP · NetSuite</div>
+          <div style="font-size:11.5px;color:var(--t3);margin-top:2px">ERP posting export</div>
         </div>
-        <div class="login-stat">
-          <div class="login-stat-val">∞</div>
-          <div class="login-stat-lbl">Invoice rows</div>
+        <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15)">
+          <div style="font-size:22px;margin-bottom:6px">⚠️</div>
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">Exception detection</div>
+          <div style="font-size:11.5px;color:var(--t3);margin-top:2px">Short pays · Duplicates</div>
+        </div>
+        <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
+          <div style="font-size:22px;margin-bottom:6px">📋</div>
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">Full audit trail</div>
+          <div style="font-size:11.5px;color:var(--t3);margin-top:2px">Every decision logged</div>
         </div>
       </div>
     </div>
@@ -2051,8 +2055,8 @@ input:focus, select:focus, textarea:focus { outline: none; }
       <!-- SIGN IN -->
       <div id="lf-signin" class="lf-section active">
         <div>
-          <div class="login-h2">Welcome back</div>
-          <div class="login-sub">Sign in to AR Match Pro</div>
+          <div class="login-h2">Sign in</div>
+          <div class="login-sub">Enter your credentials to access AR Match Pro</div>
         </div>
         <div class="lf-field">
           <label class="lf-label" for="li-email">Email address</label>
@@ -2062,7 +2066,6 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <label class="lf-label" for="li-pass">Password</label>
           <input class="lf-input" type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         </div>
-        <!-- License key field hidden — auto-detected from account -->
         <input type="hidden" id="li-license" value="">
         <div class="lf-row">
           <div class="lf-check-row">
@@ -2072,9 +2075,9 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <a class="lf-link" onclick="showLfView('forgot')">Forgot password?</a>
         </div>
         <button class="btn-login" onclick="doLogin()">Sign in</button>
-        <div class="lf-divider">or</div>
-        <button class="btn-demo" onclick="demoLogin()">👁 Try demo — no account needed</button>
-        <div class="lf-bottom">No account? <a class="lf-link" onclick="showLfView('register')">Sign up free</a></div>
+        <div class="lf-bottom" style="text-align:center;margin-top:14px">
+          No account? <a class="lf-link" onclick="loginShowPricing()" style="font-weight:700;color:var(--pd)">Sign up free →</a>
+        </div>
         <div class="privacy-badge">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1L2 4v4c0 3.5 2.5 6 6 7 3.5-1 6-3.5 6-7V4L8 1z"/></svg>
           Runs locally · No data uploaded · Private by design
@@ -2100,7 +2103,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <input class="lf-input" type="password" id="reg-pass" placeholder="8+ characters" autocomplete="new-password">
         </div>
         <div class="lf-field">
-          <label class="lf-label">License key (optional)</label>
+          <label class="lf-label">License key <span style="font-weight:400;color:var(--t3)">(from purchase email)</span></label>
           <input class="lf-input" id="reg-license" placeholder="ARMP-XXXX-XXXX">
         </div>
         <button class="btn-login" onclick="doRegister()">Create account</button>
@@ -2123,6 +2126,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
     </div>
   </div>
 </div>
+
 
 <!-- ── Modals ── -->
 <div class="mo-overlay" id="pricing-modal">
@@ -3521,9 +3525,6 @@ input:focus, select:focus, textarea:focus { outline: none; }
               </div>
             </div>
           </div>
-        </div>
-      
-          </div><!-- end cfo-content-wrap -->
         </div>
 
       <!-- ════════════════ AUDIT TRAIL ════════════════ -->
@@ -5823,128 +5824,485 @@ try{
   var _STRIPE_PRICES={starter:'price_1TTbjvK5o648Z7JzPkL4QyOu',pro:'price_1TTbkdK5o648Z7JzuRmA4vVJ',team:'price_1TTblGK5o648Z7Jzg4vSZT01'};
 }catch(e){}
 
+// ═══════════════════════════════════════════════════════════
+// PHASE 6 — COMPLETE STANDALONE OVERRIDES
+// All captures happen BEFORE any redefinition in this block.
+// ═══════════════════════════════════════════════════════════
+
+// Capture originals at block execution time (after all previous blocks have run)
+var _origSetCaTab        = setCaTab;
+var _origEngLoadPayment  = engLoadPayment;
+var _origRAll            = rAll;
+var _origLaunchApp       = launchApp;
+var _origSaveSettings    = saveSettings;
+var _origSp              = sp;
+var _origRunMatch        = runMatch;
+var _origLoadDemoData    = loadDemoData;
+var _origLoadSampleInv   = loadSampleInv;
+var _origLoadSampleRem   = loadSampleRem;
+var _origUpdTop          = updTop;
+var _origUpdDash         = updDash;
 
 // ═══════════════════════════════════════════════════════════
-// WORKLIST + CFO SUMMARY — STANDALONE (no override chains)
+// LOGIN HELPERS
 // ═══════════════════════════════════════════════════════════
+function loginShowPricing(){
+  // Open pricing modal directly from login screen
+  var modal = document.getElementById('pricing-modal');
+  if(modal) modal.style.display='flex';
+}
 
+// ═══════════════════════════════════════════════════════════
+// USER ROLE SYSTEM
+// ═══════════════════════════════════════════════════════════
+var USER_ROLE = localStorage.getItem('armp_role') || 'specialist';
+var CFO_ROLES = ['manager','controller','admin','cfo','finance'];
+
+function saveUserRole(){
+  var sel = document.getElementById('s-role');
+  if(!sel) return;
+  USER_ROLE = sel.value;
+  localStorage.setItem('armp_role', USER_ROLE);
+  applyCfoAccess();
+  toast('Role updated: ' + sel.options[sel.selectedIndex].text);
+  addAudit('Role changed', USER_ROLE);
+}
+
+function applyCfoAccess(){
+  var canSeeCfo = IS_MASTER || CFO_ROLES.indexOf(USER_ROLE) >= 0;
+  var sbiCfo = document.getElementById('sbi-cfo');
+  if(sbiCfo) sbiCfo.style.display = canSeeCfo ? '' : 'none';
+  var gate = document.getElementById('cfo-role-gate');
+  var wrap = document.getElementById('cfo-content-wrap');
+  if(gate) gate.style.display = canSeeCfo ? 'none' : 'block';
+  if(wrap) wrap.style.display = canSeeCfo ? '' : 'none';
+}
+
+function initRole(){
+  var sel = document.getElementById('s-role');
+  if(sel) sel.value = IS_MASTER ? 'admin' : USER_ROLE;
+  applyCfoAccess();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MATCHING ENGINE PRIORITY RULES
+// ═══════════════════════════════════════════════════════════
+var DEFAULT_MP_RULES = [
+  {id:'inv',     label:'Invoice Number',         desc:'Exact invoice # match',               enabled:true},
+  {id:'inv-amt', label:'Invoice + Amount',        desc:'Invoice # with amount tolerance',     enabled:true},
+  {id:'multi',   label:'Multi-Invoice Sum Match', desc:'Subset-sum across multiple invoices', enabled:true},
+  {id:'po',      label:'PO + Amount',             desc:'Purchase order # match',              enabled:true},
+  {id:'so',      label:'Sales Order + Amount',    desc:'Sales order # match',                 enabled:true},
+  {id:'del',     label:'Delivery Number',         desc:'Delivery reference match',            enabled:false},
+  {id:'trk',     label:'Tracking Number',         desc:'Tracking reference match',            enabled:false},
+  {id:'cust',    label:'Customer Account Match',  desc:'Customer name or account number',     enabled:true},
+  {id:'parent',  label:'Parent/Child Customer',   desc:'Parent-child account hierarchy',      enabled:false}
+];
+
+var MP_RULES = (function(){
+  try{ var s=localStorage.getItem('armp_mp_rules'); if(s) return JSON.parse(s); } catch(e){}
+  return DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); });
+})();
+
+function renderMpRules(){
+  var el = document.getElementById('mp-rules-list');
+  if(!el) return;
+  el.innerHTML = MP_RULES.map(function(rule,i){
+    return '<div class="mp-rule-row" id="mpr-'+i+'">' +
+      '<div class="mp-rule-num">'+(i+1)+'</div>' +
+      '<div style="flex:1">' +
+        '<div class="mp-rule-label" style="color:'+(rule.enabled?'var(--t1)':'var(--t3)')+'">'+rule.label+'</div>' +
+        '<div class="mp-rule-desc">'+rule.desc+'</div>' +
+      '</div>' +
+      '<label class="toggle" style="margin-right:8px">' +
+        '<input type="checkbox"'+(rule.enabled?' checked':'')+' onchange="toggleMpRule('+i+',this.checked)">'+
+        '<div class="toggle-slider"></div>' +
+      '</label>' +
+      '<div class="mp-rule-move">' +
+        '<button class="mp-rule-btn" onclick="moveMpRule('+i+',-1)"'+(i===0?' disabled':'')+'>▲</button>' +
+        '<button class="mp-rule-btn" onclick="moveMpRule('+i+',1)"'+(i===MP_RULES.length-1?' disabled':'')+'>▼</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleMpRule(idx,enabled){ MP_RULES[idx].enabled=enabled; renderMpRules(); syncMpCheckboxes(); }
+
+function moveMpRule(idx,dir){
+  var ni=idx+dir;
+  if(ni<0||ni>=MP_RULES.length) return;
+  var t=MP_RULES[idx]; MP_RULES[idx]=MP_RULES[ni]; MP_RULES[ni]=t;
+  renderMpRules();
+}
+
+function saveMpRules(){
+  localStorage.setItem('armp_mp_rules',JSON.stringify(MP_RULES));
+  syncMpCheckboxes();
+  toast('Match priority saved');
+  addAudit('Match priority updated', MP_RULES.filter(function(r){return r.enabled;}).map(function(r){return r.label;}).join(', '));
+}
+
+function resetMpRules(){
+  MP_RULES = DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); });
+  renderMpRules();
+  toast('Priority reset to defaults');
+}
+
+function syncMpCheckboxes(){
+  var invR=MP_RULES.find(function(r){return r.id==='inv';}),
+      poR =MP_RULES.find(function(r){return r.id==='po';}),
+      soR =MP_RULES.find(function(r){return r.id==='so';});
+  var sInv=document.getElementById('s-inv'), sPo=document.getElementById('s-po'), sSo=document.getElementById('s-so');
+  if(sInv&&invR) sInv.checked=invR.enabled;
+  if(sPo&&poR)   sPo.checked=poR.enabled;
+  if(sSo&&soR)   sSo.checked=soR.enabled;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SETTINGS PLANS
+// ═══════════════════════════════════════════════════════════
+function renderSettingsPlans(){
+  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP + NetSuite','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'};
+  var el=document.getElementById('settings-plan-features'); if(el) el.textContent=pf[USER_PLAN]||'';
+  var lvl=PLANS[USER_PLAN]?PLANS[USER_PLAN].level:0;
+  var ub=document.getElementById('settings-upgrade-btn'); if(ub) ub.style.display=lvl>=3?'none':'';
+  var db=document.getElementById('settings-downgrade-btn'); if(db) db.style.display=lvl>0?'':'none';
+}
+
+function showDowngradeModal(){
+  showModal('Downgrade Plan','<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:16px">This is a simulated demo — no actual billing change occurs.<br><br>In production, downgrading would take effect at end of billing period.</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-p btn-sm" onclick="closeModal();toast(\'Downgrade simulated — no billing changed\')">Confirm (demo)</button></div>');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACCOUNT DROPDOWN HELPERS
+// ═══════════════════════════════════════════════════════════
+function buildAcctDropdown(selId, withAll){
+  var sel=document.getElementById(selId); if(!sel) return;
+  var accts={};
+  INV.forEach(function(v){ if(v.a&&v.c) accts[v.a]=v.c; });
+  PAY.forEach(function(p){ if(p.a&&p.c&&!accts[p.a]) accts[p.a]=p.c; });
+  var cur=sel.value;
+  var opts=withAll!==false?'<option value="">All accounts</option>':'<option value="">— Select account —</option>';
+  Object.keys(accts).sort().forEach(function(a){ opts+='<option value="'+a+'"'+(a===cur?' selected':'')+'>'+a+' '+accts[a]+'</option>'; });
+  sel.innerHTML=opts;
+}
+
+function populateAllAcctDropdowns(){
+  buildAcctDropdown('ca-bank-sel',true);
+  buildAcctDropdown('ca-acct-dropdown',true);
+  buildAcctDropdown('exc-acct-dropdown',true);
+}
+
+// ═══════════════════════════════════════════════════════════
+// FBL5N OPEN ITEMS TABLE
+// ═══════════════════════════════════════════════════════════
+function agingChip(due){
+  if(!due) return '<span class="aging-chip aging-na">—</span>';
+  var d=new Date(due+'T00:00:00');
+  var days=Math.floor((new Date()-d)/86400000);
+  if(days<0) return '<span class="aging-chip aging-cur">Current</span>';
+  if(days<=30) return '<span class="aging-chip aging-30">1–30d</span>';
+  if(days<=60) return '<span class="aging-chip aging-60">31–60d</span>';
+  return '<span class="aging-chip aging-90">61+d</span>';
+}
+
+function renderFbl5n(tbodyId, filterAcct, filterCust){
+  var tbody=document.getElementById(tbodyId); if(!tbody) return;
+  var invs=INV.filter(function(v){
+    if(filterAcct && v.a!==filterAcct) return false;
+    if(filterCust && (v.c||'').toLowerCase()!==filterCust.toLowerCase()) return false;
+    return true;
+  });
+  if(!invs.length){
+    tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=invs.map(function(v,i){
+    var matched=RES.find(function(r){ return r.i===v.i; });
+    var applied=matched?matched.pd:0;
+    var balance=v.amt-applied;
+    var ENG_ROW=ENG_ROWS.find(function(r){ return r.inv.i===v.i; });
+    var conf=ENG_ROW?ENG_ROW.conf:(ENG_PAY?engGetConfidence(v,ENG_PAY):0);
+    var status=v.s||'Open';
+    var sb=v.s==='Exact'||v.s==='Applied'?'<span class="badge badge-g">'+status+'</span>':
+            v.s==='Short pay'?'<span class="badge badge-am">'+status+'</span>':
+            v.s==='Overpay'?'<span class="badge badge-r">'+status+'</span>':
+            '<span style="color:var(--t3);font-size:12px">Open</span>';
+    var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>':'—';
+    var sel=ENG_ROW&&ENG_ROW.selected;
+    return '<tr class="'+(sel?'selected-inv':'')+'" onclick="fbl5nRowClick(\''+v.i+'\')" style="cursor:pointer">'+
+      '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+v.i+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
+      '<td class="td-mono" style="font-size:11.5px">'+v.a+'</td>'+
+      '<td style="font-weight:600">'+v.c+'</td>'+
+      '<td class="td-mono" style="color:var(--pd)">'+v.i+'</td>'+
+      '<td class="td-mono">'+fmtDate(v.dt2)+'</td>'+
+      '<td class="td-mono" style="color:'+(v.due&&new Date(v.due+'T00:00:00')<new Date()?'var(--r-t)':'')+'">'+fmtDate(v.due)+'</td>'+
+      '<td>'+agingChip(v.due)+'</td>'+
+      '<td class="td-mono" style="font-size:11.5px">'+(v.po||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:11.5px">'+(v.so||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:11.5px">'+(v.d||'—')+'</td>'+
+      '<td class="td-num">$'+$f(v.amt)+'</td>'+
+      '<td class="td-num" style="color:'+(balance<v.amt*0.5?'var(--am-t)':'')+'">$'+$f(Math.max(0,balance))+'</td>'+
+      '<td class="td-num" style="color:var(--g-t)">'+(applied>0?'$'+$f(applied):'—')+'</td>'+
+      '<td>'+sb+'</td>'+
+      '<td style="text-align:center">'+cd+'</td>'+
+      '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(\''+v.i+'\')">Apply</button></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function fbl5nRowClick(invI){
+  var row=ENG_ROWS.find(function(r){ return r.inv.i===invI; });
+  if(row) engToggleRow(ENG_ROWS.indexOf(row),!row.selected);
+  refreshFbl5n();
+}
+function fbl5nCheckRow(invI,checked){
+  var row=ENG_ROWS.find(function(r){ return r.inv.i===invI; });
+  if(row) engToggleRow(ENG_ROWS.indexOf(row),checked);
+  refreshFbl5n();
+}
+function fbl5nApplyRow(invI){
+  var row=ENG_ROWS.find(function(r){ return r.inv.i===invI; });
+  if(row&&!row.selected){ fbl5nCheckRow(invI,true); }
+  else if(!ENG_PAY){ toast('Select a payment first from the queue above','warn'); }
+}
+function refreshFbl5n(){
+  var acct=(document.getElementById('ca-acct-dropdown')||{}).value||'';
+  var cust=ENG_PAY?ENG_PAY.c:'';
+  renderFbl5n('ca-open-items-body',acct,cust);
+}
+function sortFbl5n(ci){ sortTbl('ca-open-items-tbl',ci); }
+function sortFbl5nExc(ci){ sortTbl('exc-open-items-tbl',ci); }
+
+function caAcctDropdownChange(acct){
+  var labelEl=document.getElementById('ca-bottom-cust-label');
+  if(labelEl){
+    if(acct){
+      var accts={}; INV.forEach(function(v){ if(v.a&&v.c) accts[v.a]=v.c; });
+      labelEl.textContent=acct+(accts[acct]?' — '+accts[acct]:'');
+    } else { labelEl.textContent='— all accounts'; }
+  }
+  renderFbl5n('ca-open-items-body',acct,'');
+}
+
+function excAcctDropdownChange(acct){ renderFbl5n('exc-open-items-body',acct,''); }
+
+// ═══════════════════════════════════════════════════════════
+// INVOICE / REMITTANCE FILTERING
+// ═══════════════════════════════════════════════════════════
+function filterInvAll(q){
+  var af=(document.getElementById('inv-af')||{}).value||'';
+  var sf=(document.getElementById('inv-status-filter')||{}).value||'';
+  var tf=(document.getElementById('inv-type-filter')||{}).value||'';
+  var tbody=document.getElementById('inv-tb'); if(!tbody) return;
+  var ql=q?q.toLowerCase():'';
+  var vis=0;
+  tbody.querySelectorAll('tr').forEach(function(tr){
+    var cells=tr.querySelectorAll('td');
+    if(!cells.length){tr.style.display='';return;}
+    var text=tr.innerText.toLowerCase();
+    var mQ=!ql||text.includes(ql);
+    var mA=!af||(cells[1]&&cells[1].innerText.trim()===af);
+    var sc=(cells[10]&&cells[10].innerText.trim())||'';
+    var mS=!sf||(sf==='open'?(!sc||sc==='—'):sc.includes(sf));
+    var tc=(cells[6]&&cells[6].innerText.trim())||'';
+    var mT=!tf||tc.includes(tf);
+    var show=mQ&&mA&&mS&&mT;
+    tr.style.display=show?'':'none';
+    if(show) vis++;
+  });
+  var ct=document.getElementById('inv-ct'); if(ct&&INV.length) ct.textContent=vis+' of '+INV.length+' rows';
+}
+
+function clearInvFilters(){
+  ['inv-search','inv-status-filter','inv-type-filter'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
+  var af=document.getElementById('inv-af'); if(af)af.value='';
+  var tbody=document.getElementById('inv-tb'); if(tbody) tbody.querySelectorAll('tr').forEach(function(tr){tr.style.display='';});
+  var ct=document.getElementById('inv-ct'); if(ct&&INV.length) ct.textContent=INV.length+' rows · click any cell to edit';
+}
+
+function filterRemAll(q){
+  var mf=(document.getElementById('rem-method-filter')||{}).value||'';
+  var cf=(document.getElementById('rem-ccy-filter')||{}).value||'';
+  var tbody=document.getElementById('rem-tb'); if(!tbody) return;
+  var ql=q?q.toLowerCase():'';
+  tbody.querySelectorAll('tr').forEach(function(tr){
+    var cells=tr.querySelectorAll('td');
+    if(!cells.length){tr.style.display='';return;}
+    var text=tr.innerText.toLowerCase();
+    var mQ=!ql||text.includes(ql);
+    var mc=cells[7]?cells[7].innerText.trim():'';
+    var mM=!mf||mc.toLowerCase().includes(mf.toLowerCase());
+    var cc=cells[8]?cells[8].innerText.trim():'';
+    var mC=!cf||cc===cf;
+    tr.style.display=(mQ&&mM&&mC)?'':'none';
+  });
+}
+
+function clearRemFilters(){
+  ['rem-search','rem-method-filter','rem-ccy-filter'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
+  var tbody=document.getElementById('rem-tb'); if(tbody) tbody.querySelectorAll('tr').forEach(function(tr){tr.style.display='';});
+}
+
+// ═══════════════════════════════════════════════════════════
+// WORKLIST NAVIGATION HELPERS
+// ═══════════════════════════════════════════════════════════
+function wlGoExc(){
+  var btn=document.getElementById('ca-tab-exc');
+  _origSetCaTab('exc',btn);
+  _origSp('cash-app');
+}
+function wlGoMatch(){
+  var btn=document.getElementById('ca-tab-match');
+  _origSetCaTab('match',btn);
+  _origSp('cash-app');
+}
+function wlGoReview(){
+  var btn=document.getElementById('ca-tab-review');
+  _origSetCaTab('review',btn);
+  _origSp('cash-app');
+}
+function wlGoPosting(){ _origSp('posting'); }
+function wlGoAlloc(acct){
+  var idx=PAY.findIndex(function(p){ return p.a===acct; });
+  var btn=document.getElementById('ca-tab-match');
+  _origSetCaTab('match',btn);
+  _origSp('cash-app');
+  if(idx>=0) setTimeout(function(){ var sel=document.getElementById('eng-pay-sel'); if(sel){sel.value=idx; engLoadPayment(idx);} },200);
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUILDWORKLIST
+// ═══════════════════════════════════════════════════════════
 function buildWorklist(){
-  const now = new Date();
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const hour = now.getHours();
-  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const userName = (document.getElementById('tn-uname')||{}).textContent || '';
-  const greetEl = document.getElementById('wl-greeting');
-  if(greetEl) greetEl.textContent = userName ? greet + ', ' + userName : greet;
-  const dateEl = document.getElementById('wl-date');
-  if(dateEl) dateEl.textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ' · Here is what needs your attention today';
+  var now=new Date();
+  var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var hour=now.getHours();
+  var greet=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
 
-  const urgent = EXC.filter(e => !e.s || e.s === 'Open');
-  const shortPays = urgent.filter(e => e.type === 'Short pay');
-  const dups = urgent.filter(e => e.type === 'Duplicate');
-  const unmatched = urgent.filter(e => e.type === 'Unmatched');
-  const unapplied = urgent.filter(e => e.type === 'Unapplied payment');
+  // First name: prefer profile-name-input, fall back to tn-uname
+  var firstName='';
+  var nameInp=document.getElementById('profile-name-input');
+  if(nameInp&&nameInp.value.trim()) firstName=nameInp.value.trim().split(' ')[0];
+  if(!firstName){ var un=document.getElementById('tn-uname'); if(un&&un.textContent&&un.textContent!=='User') firstName=un.textContent.trim().split(' ')[0]; }
 
-  const urgentList = document.getElementById('wl-urgent-list');
-  const urgentCt = document.getElementById('wl-urgent-ct');
-  if(urgentCt){ urgentCt.textContent = urgent.length; urgentCt.style.display = urgent.length ? 'inline-flex' : 'none'; }
+  var greetEl=document.getElementById('wl-greeting');
+  if(greetEl) greetEl.textContent=firstName?greet+', '+firstName:greet;
+  var dateEl=document.getElementById('wl-date');
+  if(dateEl) dateEl.textContent=days[now.getDay()]+', '+months[now.getMonth()]+' '+now.getDate()+' · Here is what needs your attention today';
 
-  if(urgent.length && urgentList){
-    const items = [];
-    if(shortPays.length) items.push({cls:'warn',icon:'💸',title:shortPays.length+' short pay'+(shortPays.length>1?'s':'')+' need resolution',sub:'Total exposure: $'+$f(shortPays.reduce((s,e)=>s+e.amt,0))+' · Contact customers or write off',amt:'$'+$fk(shortPays.reduce((s,e)=>s+e.amt,0)),action:'Resolve',fn:"wlGoExc()"});
-    if(dups.length) items.push({cls:'urgent',icon:'⚠️',title:dups.length+' possible duplicate payment'+(dups.length>1?'s':'')+' detected',sub:'Same reference and amount — verify before posting to avoid double-credit',amt:'$'+$fk(dups.reduce((s,e)=>s+e.amt,0)),action:'Review',fn:"wlGoExc()"});
-    if(unmatched.length) items.push({cls:'urgent',icon:'❓',title:unmatched.length+' payment'+(unmatched.length>1?'s':'')+' with no invoice match',sub:'No matching invoice, PO, or SO found — contact customer or post as unapplied',amt:'$'+$fk(unmatched.reduce((s,e)=>s+e.amt,0)),action:'Review',fn:"wlGoExc()"});
-    if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference — apply to oldest invoice or hold on account',amt:'$'+$fk(unapplied.reduce((s,e)=>s+e.amt,0)),action:'Apply',fn:"wlGoExc()"});
-    urgentList.innerHTML = items.map(item=>`<div class="wl-item ${item.cls}" onclick="${item.fn}"><div class="wl-item-icon">${item.icon}</div><div class="wl-item-body"><div class="wl-item-title">${item.title}</div><div class="wl-item-sub">${item.sub}</div></div><div class="wl-item-amount">${item.amt}</div><div class="wl-item-cta">${item.action} →</div></div>`).join('');
+  // Urgent: exceptions
+  var urgent=EXC.filter(function(e){ return !e.s||e.s==='Open'; });
+  var shortPays=urgent.filter(function(e){ return e.type==='Short pay'; });
+  var dups=urgent.filter(function(e){ return e.type==='Duplicate'; });
+  var unmatched=urgent.filter(function(e){ return e.type==='Unmatched'; });
+  var unapplied=urgent.filter(function(e){ return e.type==='Unapplied payment'; });
+  var urgentList=document.getElementById('wl-urgent-list');
+  var urgentCt=document.getElementById('wl-urgent-ct');
+  if(urgentCt){ urgentCt.textContent=urgent.length; urgentCt.style.display=urgent.length?'inline-flex':'none'; }
+  if(urgent.length&&urgentList){
+    var items=[];
+    if(shortPays.length) items.push({cls:'warn',icon:'💸',title:shortPays.length+' short pay'+(shortPays.length>1?'s':'')+' need resolution',sub:'Total exposure: $'+$f(shortPays.reduce(function(s,e){return s+e.amt;},0))+' · Contact customers or write off',amt:'$'+$fk(shortPays.reduce(function(s,e){return s+e.amt;},0)),action:'Resolve',fn:"wlGoExc()"});
+    if(dups.length) items.push({cls:'urgent',icon:'⚠️',title:dups.length+' possible duplicate payment'+(dups.length>1?'s':'')+' detected',sub:'Same reference and amount — verify before posting',amt:'$'+$fk(dups.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
+    if(unmatched.length) items.push({cls:'urgent',icon:'❓',title:unmatched.length+' payment'+(unmatched.length>1?'s':'')+' with no invoice match',sub:'No matching invoice, PO, or SO found',amt:'$'+$fk(unmatched.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
+    if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference',amt:'$'+$fk(unapplied.reduce(function(s,e){return s+e.amt;},0)),action:'Apply',fn:"wlGoExc()"});
+    urgentList.innerHTML=items.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div><div class="wl-item-amount">'+item.amt+'</div><div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(urgentList){
-    urgentList.innerHTML = '<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'No urgent items')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments matched without issues.':'Import data and run matching to detect exceptions.')+'</div></div>';
+    urgentList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'No urgent items')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments processed without issues.':'Import data and run matching to detect exceptions.')+'</div></div>';
   }
 
-  const unallocated = PAY.filter(p => {
-    const hasResult = RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
-    const hasExc = EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
-    return !hasResult && !hasExc && !p.dp;
+  // Payments to allocate
+  var unalloc=PAY.filter(function(p){
+    var hr=RES.find(function(r){ return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1); });
+    var he=EXC.find(function(e){ return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01; });
+    return !hr&&!he&&!p.dp;
   });
-  const dpays = PAY.filter(p=>p.dp);
-  const allocList = document.getElementById('wl-alloc-list');
-  const allocCt = document.getElementById('wl-alloc-ct');
-  if(allocCt){ allocCt.textContent = unallocated.length+dpays.length; allocCt.style.display = (unallocated.length+dpays.length)?'inline-flex':'none'; }
-
-  if((unallocated.length||dpays.length)&&allocList){
-    const items=[];
-    if(unallocated.length){
-      const byCust={};
-      unallocated.forEach(p=>{const k=p.c||p.a;if(!byCust[k])byCust[k]={c:p.c,a:p.a,payments:[],total:0};byCust[k].payments.push(p);byCust[k].total+=p.amt;});
-      Object.values(byCust).slice(0,5).forEach(cg=>{
-        const acct=(cg.a||'').replace(/'/g,"\\'");
-        items.push({cls:'info',icon:'💳',title:cg.c||cg.a,sub:cg.payments.length+' payment'+(cg.payments.length>1?'s':'')+' waiting · '+(cg.payments[0].m||'ACH'),amt:'$'+$fk(cg.total),action:'Allocate',fn:"wlGoAlloc('"+acct+"')"});
+  var dpays=PAY.filter(function(p){ return p.dp; });
+  var allocList=document.getElementById('wl-alloc-list');
+  var allocCt=document.getElementById('wl-alloc-ct');
+  if(allocCt){ allocCt.textContent=unalloc.length+dpays.length; allocCt.style.display=(unalloc.length+dpays.length)?'inline-flex':'none'; }
+  if((unalloc.length||dpays.length)&&allocList){
+    var itms=[];
+    if(unalloc.length){
+      var byCust={};
+      unalloc.forEach(function(p){ var k=p.c||p.a; if(!byCust[k])byCust[k]={c:p.c,a:p.a,payments:[],total:0}; byCust[k].payments.push(p); byCust[k].total+=p.amt; });
+      Object.values(byCust).slice(0,5).forEach(function(cg){
+        var acctSafe=(cg.a||'').replace(/'/g,"\\'");
+        itms.push({cls:'info',icon:'💳',title:cg.c||cg.a,sub:cg.payments.length+' payment'+(cg.payments.length>1?'s':'')+' waiting · '+(cg.payments[0].m||'ACH'),amt:'$'+$fk(cg.total),action:'Allocate',fn:"wlGoAlloc('"+acctSafe+"')"});
       });
-      if(Object.keys(byCust).length>5) items.push({cls:'info',icon:'💳',title:(Object.keys(byCust).length-5)+' more customers with payments',sub:'Click to open the full allocation workspace',amt:'',action:'Open all',fn:"wlGoMatch()"});
+      if(Object.keys(byCust).length>5) itms.push({cls:'info',icon:'💳',title:(Object.keys(byCust).length-5)+' more customers',sub:'Click to open the allocation workspace',amt:'',action:'Open all',fn:"wlGoMatch()"});
     }
-    if(dpays.length) items.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Down payments — apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce((s,p)=>s+p.amt,0)),action:'Review',fn:"wlGoMatch()"});
-    allocList.innerHTML=items.map(item=>`<div class="wl-item ${item.cls}" onclick="${item.fn}"><div class="wl-item-icon">${item.icon}</div><div class="wl-item-body"><div class="wl-item-title">${item.title}</div><div class="wl-item-sub">${item.sub}</div></div>${item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':''}<div class="wl-item-cta">${item.action} →</div></div>`).join('');
+    if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
+    allocList.innerHTML=itms.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div>'+(item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':'')+' <div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(allocList){
     allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittance data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittance</button></div>')+'</div>';
   }
 
-  const exportReady = RES.filter(r=>(r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported);
-  const exportList = document.getElementById('wl-export-list');
-  const exportCt = document.getElementById('wl-export-ct');
+  // Ready to export
+  var exportReady=RES.filter(function(r){ return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported; });
+  var exportList=document.getElementById('wl-export-list');
+  var exportCt=document.getElementById('wl-export-ct');
   if(exportCt){ exportCt.textContent=exportReady.length; exportCt.style.display=exportReady.length?'inline-flex':'none'; }
-
   if(exportReady.length&&exportList){
-    const totalAmt=exportReady.reduce((s,r)=>s+r.pd,0);
-    const byCust={};exportReady.forEach(r=>{const k=r.c||r.a;if(!byCust[k])byCust[k]={c:r.c,a:r.a,rows:[],total:0};byCust[k].rows.push(r);byCust[k].total+=r.pd;});
-    const custSummary=Object.values(byCust).slice(0,3).map(cg=>cg.c||cg.a).join(', ');
-    exportList.innerHTML=`<div class="wl-item ok" onclick="sp('posting')"><div class="wl-item-icon">📤</div><div class="wl-item-body"><div class="wl-item-title">${exportReady.length} record${exportReady.length>1?'s':''} ready for SAP posting</div><div class="wl-item-sub">${custSummary}${Object.keys(byCust).length>3?' and '+(Object.keys(byCust).length-3)+' more':''} · Download SAP F-28 posting file</div></div><div class="wl-item-amount">$${$fk(totalAmt)}</div><div class="wl-item-cta">Export →</div></div>`;
+    var totalAmt=exportReady.reduce(function(s,r){return s+r.pd;},0);
+    var byCust2={};exportReady.forEach(function(r){ var k=r.c||r.a; if(!byCust2[k])byCust2[k]={c:r.c,a:r.a,rows:[],total:0}; byCust2[k].rows.push(r); byCust2[k].total+=r.pd; });
+    var custSum=Object.values(byCust2).slice(0,3).map(function(cg){return cg.c||cg.a;}).join(', ');
+    exportList.innerHTML='<div class="wl-item ok" onclick="wlGoPosting()"><div class="wl-item-icon">📤</div><div class="wl-item-body"><div class="wl-item-title">'+exportReady.length+' record'+(exportReady.length>1?'s':'')+' ready for SAP posting</div><div class="wl-item-sub">'+custSum+(Object.keys(byCust2).length>3?' and '+(Object.keys(byCust2).length-3)+' more':'')+' · Download SAP F-28 posting file</div></div><div class="wl-item-amount">$'+$fk(totalAmt)+'</div><div class="wl-item-cta">Export →</div></div>';
   } else if(exportList){
     exportList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">📋</div><div class="wl-empty-title">Nothing ready to export</div><div class="wl-empty-sub">Approve allocations in the Cash Application workspace.</div></div>';
   }
 
-  const done = RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
-  const doneSection = document.getElementById('wl-done-section');
-  const doneList = document.getElementById('wl-done-list');
-  const doneCt = document.getElementById('wl-done-ct');
+  // Matched today
+  var done=RES.filter(function(r){ return r.st==='Exact'||r.st==='Subset exact'; });
+  var doneSection=document.getElementById('wl-done-section');
+  var doneList=document.getElementById('wl-done-list');
+  var doneCt=document.getElementById('wl-done-ct');
   if(doneCt) doneCt.textContent=done.length;
   if(doneSection) doneSection.style.display=done.length?'block':'none';
   if(done.length&&doneList){
-    const byCust={};done.forEach(r=>{const k=r.c||r.a;if(!byCust[k])byCust[k]={c:r.c,a:r.a,rows:[],total:0};byCust[k].rows.push(r);byCust[k].total+=r.pd;});
-    doneList.innerHTML=Object.values(byCust).slice(0,4).map(cg=>`<div class="wl-item ok" onclick="wlGoReview()"><div class="wl-item-icon">✅</div><div class="wl-item-body"><div class="wl-item-title">${cg.c||cg.a}</div><div class="wl-item-sub">${cg.rows.length} invoice${cg.rows.length>1?'s':''} matched exactly</div></div><div class="wl-item-amount">$${$fk(cg.total)}</div><div class="wl-item-cta" style="background:var(--g-bg);border-color:rgba(16,185,129,.2);color:var(--g-t)">✓ Done</div></div>`).join('');
+    var byCust3={};done.forEach(function(r){ var k=r.c||r.a; if(!byCust3[k])byCust3[k]={c:r.c,a:r.a,rows:[],total:0}; byCust3[k].rows.push(r); byCust3[k].total+=r.pd; });
+    doneList.innerHTML=Object.values(byCust3).slice(0,4).map(function(cg){ return '<div class="wl-item ok" onclick="wlGoReview()"><div class="wl-item-icon">✅</div><div class="wl-item-body"><div class="wl-item-title">'+cg.c+'</div><div class="wl-item-sub">'+cg.rows.length+' invoice'+(cg.rows.length>1?'s':'')+' matched exactly</div></div><div class="wl-item-amount">$'+$fk(cg.total)+'</div><div class="wl-item-cta" style="background:var(--g-bg);border-color:rgba(16,185,129,.2);color:var(--g-t)">✓ Done</div></div>'; }).join('');
   }
 
-  const pillsEl=document.getElementById('wl-summary-pills');
+  // Summary pills
+  var pillsEl=document.getElementById('wl-summary-pills');
   if(pillsEl){
-    const pills=[];
-    if(urgent.length) pills.push(`<div class="wl-summary-pill urgent" onclick="wlGoExc()">🔴 ${urgent.length} exception${urgent.length>1?'s':''}</div>`);
-    if(unallocated.length) pills.push(`<div class="wl-summary-pill warn" onclick="wlGoMatch()">💳 ${unallocated.length} to allocate</div>`);
-    if(exportReady.length) pills.push(`<div class="wl-summary-pill good" onclick="sp('posting')">📤 ${exportReady.length} ready to export</div>`);
-    if(done.length&&!urgent.length&&!unallocated.length) pills.push(`<div class="wl-summary-pill good">✅ ${done.length} matched today</div>`);
+    var pills=[];
+    if(urgent.length) pills.push('<div class="wl-summary-pill urgent" onclick="wlGoExc()">🔴 '+urgent.length+' exception'+(urgent.length>1?'s':'')+'</div>');
+    if(unalloc.length) pills.push('<div class="wl-summary-pill warn" onclick="wlGoMatch()">💳 '+unalloc.length+' to allocate</div>');
+    if(exportReady.length) pills.push('<div class="wl-summary-pill good" onclick="wlGoPosting()">📤 '+exportReady.length+' ready to export</div>');
+    if(done.length&&!urgent.length&&!unalloc.length) pills.push('<div class="wl-summary-pill good">✅ '+done.length+' matched today</div>');
     pillsEl.innerHTML=pills.join('');
   }
 
-  const wlBadge=document.getElementById('sb-wl-ct');
-  const totalAction=urgent.length+unallocated.length+exportReady.length;
-  if(wlBadge){ wlBadge.textContent=totalAction; wlBadge.style.display=totalAction?'inline-flex':'none'; }
+  // Sidebar badge
+  var wlBadge=document.getElementById('sb-wl-ct');
+  var tot=urgent.length+unalloc.length+exportReady.length;
+  if(wlBadge){ wlBadge.textContent=tot; wlBadge.style.display=tot?'inline-flex':'none'; }
 }
 
-// Navigation helpers for worklist (avoid passing complex strings as onclick)
-function wlGoExc(){ setCaTab('exc',document.getElementById('ca-tab-exc')); sp('cash-app'); }
-function wlGoMatch(){ setCaTab('match',document.getElementById('ca-tab-match')); sp('cash-app'); }
-function wlGoReview(){ setCaTab('review',document.getElementById('ca-tab-review')); sp('cash-app'); }
-function wlGoAlloc(acct){
-  var idx=PAY.findIndex(function(p){return p.a===acct;});
-  setCaTab('match',document.getElementById('ca-tab-match'));
-  sp('cash-app');
-  if(idx>=0) setTimeout(function(){ var sel=document.getElementById('eng-pay-sel'); if(sel){sel.value=idx;engLoadPayment(idx);} },200);
+// ═══════════════════════════════════════════════════════════
+// navToWorklist
+// ═══════════════════════════════════════════════════════════
+function navToWorklist(){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  var wl=document.getElementById('p-worklist');
+  if(wl) wl.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
+  var sbiWl=document.getElementById('sbi-worklist');
+  if(sbiWl) sbiWl.classList.add('active');
+  buildWorklist();
 }
 
-// ── CFO Summary ──
+// ═══════════════════════════════════════════════════════════
+// CFO SUMMARY ENGINE
+// ═══════════════════════════════════════════════════════════
 var CFO_PERIOD='month';
 function setCfoPeriod(p,btn){
   CFO_PERIOD=p;
   document.querySelectorAll('.cfo-period-btn').forEach(function(b){b.classList.remove('active');});
-  if(btn)btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   updateCfoSummary();
 }
 
@@ -5962,35 +6320,38 @@ function updateCfoSummary(){
   var hoursSaved=autoCount*8/60;
   var dollarsSaved=hoursSaved*65;
 
-  if(hoursSaved>0){
-    setEl('cfo-hours-saved',hoursSaved.toFixed(1)+' hours saved this session');
-    setEl('cfo-hero-sub',autoCount+' payments auto-matched × 8 min baseline = '+(autoCount*8)+' minutes of manual work eliminated');
+  // Hero: Cash Application Performance
+  if(autoCount>0){
+    setEl('cfo-hours-saved','$'+$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate');
+    setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received total');
   } else {
     setEl('cfo-hours-saved','No matches yet');
-    setEl('cfo-hero-sub','Import data and run matching to see your ROI');
+    setEl('cfo-hero-sub','Import data and run matching to see performance');
   }
-  setEl('cfo-hero-matched',$fk(ma));
-  setEl('cfo-hero-rate',tp>0?rt.toFixed(1)+'%':'—');
+  setEl('cfo-hero-matched',$fk(tp));       // Cash Received
+  setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'—');
   setEl('cfo-hero-payments',PAY.length);
   setEl('cfo-hero-invoices',matched.length);
 
-  if(dollarsSaved>0){
-    setEl('cfo-savings-headline','$'+$f(dollarsSaved)+' in labor cost saved');
+  // Savings callout: Cash Received vs Cash Matched
+  if(tp>0){
+    setEl('cfo-savings-headline','$'+$fk(ma)+' in cash matched of $'+$fk(tp)+' received');
     var bodyEl=document.getElementById('cfo-savings-body');
-    if(bodyEl)bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched × <strong>8 min</strong> manual baseline × <strong>$65/hr</strong> labor rate = <strong>$'+$f(dollarsSaved)+'</strong> this session.';
+    if(bodyEl) bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched · <strong>'+(tp>0?((ma/tp)*100).toFixed(1)+'%':'—')+'</strong> straight-through rate · <strong>$'+$fk(ua)+'</strong> unapplied';
   } else {
-    setEl('cfo-savings-headline','$0 saved — no data yet');
-    var bodyEl2=document.getElementById('cfo-savings-body');
-    if(bodyEl2)bodyEl2.textContent='Import invoices and remittance, then run matching to calculate your ROI.';
+    setEl('cfo-savings-headline','Import data to see cash flow summary');
+    var be2=document.getElementById('cfo-savings-body');
+    if(be2) be2.textContent='Load sample data or import invoices and remittance to begin.';
   }
 
   setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
-  var stpEl=document.getElementById('cfo-stp-trend');
-  if(stpEl)stpEl.style.color=rt>=80?'var(--g-t)':rt>=50?'var(--am-t)':'var(--r-t)';
-  setEl('cfo-exc-rate',PAY.length>0?(EXC.filter(function(e){return !e.s||e.s==='Open';}).length/PAY.length*100).toFixed(1)+'%':'—');
-  setEl('cfo-exc-count',EXC.filter(function(e){return !e.s||e.s==='Open';}).length+' open exceptions');
+  var stpEl=document.getElementById('cfo-stp-trend'); if(stpEl) stpEl.style.color=rt>=80?'var(--g-t)':rt>=50?'var(--am-t)':'var(--r-t)';
+  var openExcCt=EXC.filter(function(e){return !e.s||e.s==='Open';}).length;
+  setEl('cfo-exc-rate',PAY.length>0?(openExcCt/PAY.length*100).toFixed(1)+'%':'—');
+  setEl('cfo-exc-count',openExcCt+' open exception'+(openExcCt!==1?'s':''));
   setEl('cfo-shortpay-amt','$'+$f(spAmt));
   setEl('cfo-shortpay-count',spc.length+' invoice'+(spc.length!==1?'s':'')+' affected');
+  var spTrend=document.getElementById('cfo-shortpay-trend'); if(spTrend) spTrend.style.color=spc.length>0?'var(--r-t)':'var(--t3)';
   setEl('cfo-unapplied','$'+$f(ua));
   setEl('cfo-total',$fk(tp));
   setEl('cfo-total-sub',INV.length+' invoices · '+PAY.length+' payments');
@@ -6000,523 +6361,167 @@ function updateCfoSummary(){
   setEl('cfo-bar-auto-val',autoCount);
   setEl('cfo-bar-exc-val',EXC.length);
   setEl('cfo-bar-unapp-val',PAY.filter(function(p){return p.coa;}).length);
-
   var total=Math.max(autoCount+EXC.length+PAY.filter(function(p){return p.coa;}).length,1);
   setTimeout(function(){
     setW('cfo-bar-auto',(autoCount/total*100).toFixed(1)+'%');
     setW('cfo-bar-exc',(EXC.length/total*100).toFixed(1)+'%');
     setW('cfo-bar-unapp',(PAY.filter(function(p){return p.coa;}).length/total*100).toFixed(1)+'%');
   },100);
-
+  // Match breakdown
   var cn={};RES.forEach(function(r){cn[r.st]=(cn[r.st]||0)+1;});
   var tt=Object.values(cn).reduce(function(s,v){return s+v;},0)||1;
   var co={Exact:'#10B981','Subset exact':'#3B82F6','Short pay':'#F59E0B',Overpay:'#F97316','Amount match':'#8B5CF6'};
   var mbEl=document.getElementById('cfo-match-breakdown');
-  var mlEl=document.getElementById('cfo-match-total-lbl');
-  if(mlEl)mlEl.textContent=RES.length+' total records';
-  if(mbEl)mbEl.innerHTML=Object.entries(cn).length?Object.entries(cn).map(function(e){var s=e[0],ct=e[1];return '<div class="cfo-bar-row"><div class="cfo-bar-label">'+s+'</div><div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:'+(ct/tt*100).toFixed(1)+'%;background:'+(co[s]||'var(--p)')+'"></div></div><div class="cfo-bar-val">'+ct+'</div></div>';}).join(''):'<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
-
+  var mlEl=document.getElementById('cfo-match-total-lbl'); if(mlEl) mlEl.textContent=RES.length+' total records';
+  if(mbEl) mbEl.innerHTML=Object.entries(cn).length?Object.entries(cn).map(function(e){ return '<div class="cfo-bar-row"><div class="cfo-bar-label">'+e[0]+'</div><div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:'+(e[1]/tt*100).toFixed(1)+'%;background:'+(co[e[0]]||'var(--p)')+'"></div></div><div class="cfo-bar-val">'+e[1]+'</div></div>'; }).join(''):'<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
+  // Exception summary
   var excByType={};EXC.forEach(function(e){excByType[e.type]=excByType[e.type]||{count:0,amt:0};excByType[e.type].count++;excByType[e.type].amt+=e.amt;});
-  var excSumEl=document.getElementById('cfo-exc-summary');
   var excIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦'};
-  if(excSumEl)excSumEl.innerHTML=Object.entries(excByType).length?Object.entries(excByType).map(function(e){var t=e[0],d=e[1];return '<div class="cfo-exc-row"><span style="font-size:16px">'+(excIcon[t]||'⚠️')+'</span><div style="flex:1"><div style="font-weight:700;color:var(--t1)">'+t+'</div><div style="font-size:11px;color:var(--t3)">'+d.count+' case'+(d.count>1?'s':'')+'</div></div><div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$'+$fk(d.amt)+'</div></div>';}).join(''):'<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
+  var excSumEl=document.getElementById('cfo-exc-summary');
+  if(excSumEl) excSumEl.innerHTML=Object.entries(excByType).length?Object.entries(excByType).map(function(e){ return '<div class="cfo-exc-row"><span style="font-size:16px">'+(excIcon[e[0]]||'⚠️')+'</span><div style="flex:1"><div style="font-weight:700;color:var(--t1)">'+e[0]+'</div><div style="font-size:11px;color:var(--t3)">'+e[1].count+' case'+(e[1].count>1?'s':'')+'</div></div><div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$'+$fk(e[1].amt)+'</div></div>'; }).join(''):'<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
 }
 
-// ── Refresh worklist badge (called after match/import operations) ──
-function refreshWlBadge(){
-  var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
-  var unallocated=PAY.filter(function(p){
-    var hasResult=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});
-    var hasExc=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});
-    return !hasResult&&!hasExc&&!p.dp;
-  });
-  var exportReady=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
-  var totalAction=urgent.length+unallocated.length+exportReady.length;
-  var wlBadge=document.getElementById('sb-wl-ct');
-  if(wlBadge){wlBadge.textContent=totalAction;wlBadge.style.display=totalAction?'inline-flex':'none';}
-  var wlPanel=document.getElementById('p-worklist');
-  if(wlPanel&&wlPanel.classList.contains('active'))buildWorklist();
-  var cfoPanel=document.getElementById('p-cfo');
-  if(cfoPanel&&cfoPanel.classList.contains('active'))updateCfoSummary();
+function updateCfoSummaryClean(){ updateCfoSummary(); }
+function refreshWlBadge(){ buildWorklist(); }
+
+// ═══════════════════════════════════════════════════════════
+// OVERRIDDEN FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+function setCaTab(tab,btn){
+  _origSetCaTab(tab,btn);
+  if(tab==='match'){ populateAllAcctDropdowns(); refreshFbl5n(); }
+  else if(tab==='exc'){ buildAcctDropdown('exc-acct-dropdown',true); renderFbl5n('exc-open-items-body','',''); }
 }
 
-// ── Navigate to worklist on login (called from launchApp) ──
-function navToWorklist(){
-  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  var wl=document.getElementById('p-worklist');
-  if(wl)wl.classList.add('active');
-  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
-  var sbiWl=document.getElementById('sbi-worklist');
-  if(sbiWl)sbiWl.classList.add('active');
-  buildWorklist();
-}
-
-// ── sp() extension for new panels (safe — does not override sp) ──
-document.addEventListener('DOMContentLoaded', function(){
-  // Patch the sidebar buttons for worklist and cfo
-  var sbiWl=document.getElementById('sbi-worklist');
-  var sbiCfo=document.getElementById('sbi-cfo');
-  if(sbiWl) sbiWl.onclick=function(){
-    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
-    sbiWl.classList.add('active');
-    var wl=document.getElementById('p-worklist');
-    if(wl)wl.classList.add('active');
-    buildWorklist();
-  };
-  if(sbiCfo) sbiCfo.onclick=function(){
-    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
-    sbiCfo.classList.add('active');
-    var cfo=document.getElementById('p-cfo');
-    if(cfo)cfo.classList.add('active');
-    updateCfoSummary();
-  };
-});
-
-
-
-<script>
-// ═══════════════════════════════════════════════════════════════
-// PHASE 5 REFACTOR — ALL NEW FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
-
-// ── USER ROLE ──
-var USER_ROLE = localStorage.getItem('armp_role') || 'specialist';
-var CFO_ROLES = ['manager','controller','admin','cfo'];
-
-function saveUserRole(){
-  var sel = document.getElementById('s-role');
-  if(!sel) return;
-  USER_ROLE = sel.value;
-  localStorage.setItem('armp_role', USER_ROLE);
-  applyCfoAccess();
-  toast('Role updated: ' + sel.options[sel.selectedIndex].text);
-  addAudit('Role changed', USER_ROLE);
-}
-
-function applyCfoAccess(){
-  var canSeeCfo = IS_MASTER || CFO_ROLES.indexOf(USER_ROLE) >= 0;
-  // sidebar item
-  var sbiCfo = document.getElementById('sbi-cfo');
-  if(sbiCfo) sbiCfo.style.display = canSeeCfo ? '' : 'none';
-  // gate within panel
-  var gate = document.getElementById('cfo-role-gate');
-  var wrap = document.getElementById('cfo-content-wrap');
-  if(gate) gate.style.display = canSeeCfo ? 'none' : 'block';
-  if(wrap) wrap.style.display = canSeeCfo ? '' : 'none';
-}
-
-function initRole(){
-  var sel = document.getElementById('s-role');
-  if(sel){
-    sel.value = IS_MASTER ? 'admin' : USER_ROLE;
-  }
-  applyCfoAccess();
-}
-
-// ── MATCHING ENGINE PRIORITY RULES ──
-var DEFAULT_MP_RULES = [
-  {id:'inv',    label:'Invoice Number',          desc:'Exact invoice # match',                 enabled:true},
-  {id:'inv-amt',label:'Invoice + Amount',         desc:'Invoice # with amount tolerance',       enabled:true},
-  {id:'multi',  label:'Multi-Invoice Sum Match',  desc:'Subset-sum across multiple invoices',   enabled:true},
-  {id:'po',     label:'PO + Amount',              desc:'Purchase order # match',                enabled:true},
-  {id:'so',     label:'Sales Order + Amount',     desc:'Sales order # match',                   enabled:true},
-  {id:'del',    label:'Delivery Number',          desc:'Delivery reference match',              enabled:false},
-  {id:'trk',    label:'Tracking Number',          desc:'Tracking reference match',              enabled:false},
-  {id:'cust',   label:'Customer Account Match',   desc:'Customer name or account number',       enabled:true},
-  {id:'parent', label:'Parent/Child Customer',    desc:'Parent-child account hierarchy',        enabled:false}
-];
-
-var MP_RULES = JSON.parse(localStorage.getItem('armp_mp_rules') || 'null') || DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); });
-
-function renderMpRules(){
-  var el = document.getElementById('mp-rules-list');
-  if(!el) return;
-  el.innerHTML = MP_RULES.map(function(rule, i){
-    return '<div class="mp-rule-row" id="mpr-'+i+'">' +
-      '<div class="mp-rule-num">'+(i+1)+'</div>' +
-      '<div style="flex:1">' +
-        '<div class="mp-rule-label" style="color:'+(rule.enabled?'var(--t1)':'var(--t3)')+'">'+rule.label+'</div>' +
-        '<div class="mp-rule-desc">'+rule.desc+'</div>' +
-      '</div>' +
-      '<label class="toggle" style="margin-right:8px">' +
-        '<input type="checkbox" '+(rule.enabled?'checked':'')+" onchange="toggleMpRule("+i+",this.checked)">" +
-        '<div class="toggle-slider"></div>' +
-      '</label>' +
-      '<div class="mp-rule-move">' +
-        '<button class="mp-rule-btn" onclick="moveMpRule('+i+',-1)" '+(i===0?'disabled':'')+'>▲</button>' +
-        '<button class="mp-rule-btn" onclick="moveMpRule('+i+',1)" '+(i===MP_RULES.length-1?'disabled':'')+'>▼</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function toggleMpRule(idx, enabled){
-  MP_RULES[idx].enabled = enabled;
-  renderMpRules();
-  // sync checkboxes that matching engine uses
-  syncMpCheckboxes();
-}
-
-function moveMpRule(idx, dir){
-  var newIdx = idx + dir;
-  if(newIdx < 0 || newIdx >= MP_RULES.length) return;
-  var tmp = MP_RULES[idx];
-  MP_RULES[idx] = MP_RULES[newIdx];
-  MP_RULES[newIdx] = tmp;
-  renderMpRules();
-}
-
-function saveMpRules(){
-  localStorage.setItem('armp_mp_rules', JSON.stringify(MP_RULES));
-  syncMpCheckboxes();
-  toast('Matching priority saved');
-  addAudit('Match priority updated', MP_RULES.filter(function(r){return r.enabled;}).map(function(r){return r.label;}).join(', '));
-}
-
-function resetMpRules(){
-  MP_RULES = DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); });
-  renderMpRules();
-  toast('Priority reset to defaults');
-}
-
-function syncMpCheckboxes(){
-  // Sync the hidden checkboxes used by runMatch
-  var invRule = MP_RULES.find(function(r){return r.id==='inv';});
-  var poRule = MP_RULES.find(function(r){return r.id==='po';});
-  var soRule = MP_RULES.find(function(r){return r.id==='so';});
-  var invEl = document.getElementById('s-inv');
-  var poEl = document.getElementById('s-po');
-  var soEl = document.getElementById('s-so');
-  if(invEl && invRule) invEl.checked = invRule.enabled;
-  if(poEl && poRule) poEl.checked = poRule.enabled;
-  if(soEl && soRule) soEl.checked = soRule.enabled;
-}
-
-// ── SETTINGS PLANS DISPLAY ──
-function renderSettingsPlans(){
-  var planFeatures = {
-    demo: '50 rows · Invoice & PO only · No export',
-    starter: '5,000 rows/month · Invoice + PO matching · CSV export',
-    pro: 'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP + NetSuite',
-    team: 'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'
-  };
-  var el = document.getElementById('settings-plan-features');
-  if(el) el.textContent = planFeatures[USER_PLAN] || '';
-  var upgradeBtn = document.getElementById('settings-upgrade-btn');
-  var downgradeBtn = document.getElementById('settings-downgrade-btn');
-  var planLevel = PLANS[USER_PLAN] ? PLANS[USER_PLAN].level : 0;
-  if(upgradeBtn) upgradeBtn.style.display = planLevel >= 3 ? 'none' : '';
-  if(downgradeBtn) downgradeBtn.style.display = planLevel > 0 ? '' : 'none';
-}
-
-function showDowngradeModal(){
-  showModal('Downgrade Plan', '<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:16px">This is a simulated demo — no actual billing change will occur.<br><br>In production, downgrading would:<br>• Take effect at the end of your billing period<br>• Restrict access to features above your new plan<br>• Not delete any existing data</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-p btn-sm" onclick="closeModal();toast('Downgrade simulated — no billing changed')">Confirm (demo)</button></div>');
-}
-
-// ── ACCOUNT DROPDOWN HELPERS ──
-function buildAcctDropdown(selId, withAll){
-  var sel = document.getElementById(selId);
-  if(!sel) return;
-  var accts = {};
-  INV.forEach(function(v){ if(v.a && v.c) accts[v.a] = v.c; });
-  PAY.forEach(function(p){ if(p.a && p.c && !accts[p.a]) accts[p.a] = p.c; });
-  var opts = withAll !== false ? '<option value="">All accounts</option>' : '<option value="">— Select account —</option>';
-  Object.keys(accts).sort().forEach(function(a){
-    opts += '<option value="'+a+'">'+a+' '+accts[a]+'</option>';
-  });
-  sel.innerHTML = opts;
-}
-
-function populateAllAcctDropdowns(){
-  buildAcctDropdown('ca-bank-sel', true);
-  buildAcctDropdown('ca-acct-dropdown', true);
-  buildAcctDropdown('exc-acct-dropdown', true);
-}
-
-// ── FBL5N OPEN ITEMS TABLE ──
-function agingChip(due){
-  if(!due) return '<span class="aging-chip aging-na">—</span>';
-  var d = new Date(due+'T00:00:00');
-  var days = Math.floor((new Date() - d) / 86400000);
-  if(days < 0) return '<span class="aging-chip aging-cur">Current</span>';
-  if(days <= 30) return '<span class="aging-chip aging-30">1–30d</span>';
-  if(days <= 60) return '<span class="aging-chip aging-60">31–60d</span>';
-  return '<span class="aging-chip aging-90">61+d</span>';
-}
-
-function renderFbl5n(tbodyId, filterAcct, filterCust){
-  var tbody = document.getElementById(tbodyId);
-  if(!tbody) return;
-  var invs = INV.filter(function(v){
-    if(filterAcct && v.a !== filterAcct) return false;
-    if(filterCust && (v.c||'').toLowerCase() !== filterCust.toLowerCase()) return false;
-    return true;
-  });
-  if(!invs.length){
-    tbody.innerHTML = '<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = invs.map(function(v, i){
-    var matched = RES.find(function(r){ return r.i === v.i; });
-    var applied = matched ? matched.pd : 0;
-    var balance = v.amt - applied;
-    var conf = 0;
-    var ENG_ROW = ENG_ROWS.find(function(r){ return r.inv.i === v.i; });
-    if(ENG_ROW) conf = ENG_ROW.conf;
-    else if(ENG_PAY) conf = engGetConfidence(v, ENG_PAY);
-    var status = v.s || 'Open';
-    var statusBadge = v.s === 'Exact' || v.s === 'Applied' ? '<span class="badge badge-g">'+status+'</span>' :
-                      v.s === 'Short pay' ? '<span class="badge badge-am">'+status+'</span>' :
-                      v.s === 'Overpay' ? '<span class="badge badge-r">'+status+'</span>' :
-                      '<span style="color:var(--t3);font-size:12px">Open</span>';
-    var confDisp = conf > 0 ? '<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>' : '—';
-    return '<tr class="'+(ENG_ROW && ENG_ROW.selected ? 'selected-inv' : '')+'" onclick="fbl5nRowClick('+i+',''+v.i+'')" style="cursor:pointer">' +
-      '<td style="width:32px;padding:4px 6px"><input type="checkbox" '+(ENG_ROW && ENG_ROW.selected?'checked':'')+' onchange="fbl5nCheckRow(''+v.i+'',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>' +
-      '<td class="td-mono" style="font-size:11.5px">'+v.a+'</td>' +
-      '<td style="font-weight:600">'+v.c+'</td>' +
-      '<td class="td-mono" style="color:var(--pd)">'+v.i+'</td>' +
-      '<td class="td-mono">'+fmtDate(v.dt2)+'</td>' +
-      '<td class="td-mono" style="color:'+(new Date(v.due+'T00:00:00') < new Date() ? 'var(--r-t)' : '')+'">'+fmtDate(v.due)+'</td>' +
-      '<td>'+agingChip(v.due)+'</td>' +
-      '<td class="td-mono" style="font-size:11.5px">'+( v.po||'—')+'</td>' +
-      '<td class="td-mono" style="font-size:11.5px">'+(v.so||'—')+'</td>' +
-      '<td class="td-mono" style="font-size:11.5px">'+(v.d||'—')+'</td>' +
-      '<td class="td-num">$'+$f(v.amt)+'</td>' +
-      '<td class="td-num" style="color:'+(balance < v.amt * 0.5 ? 'var(--am-t)' : '')+'">$'+$f(Math.max(0,balance))+'</td>' +
-      '<td class="td-num" style="color:var(--g-t)">'+(applied > 0 ? '$'+$f(applied) : '—')+'</td>' +
-      '<td>'+statusBadge+'</td>' +
-      '<td style="text-align:center">'+confDisp+'</td>' +
-      '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(''+v.i+'')">Apply</button></td>' +
-    '</tr>';
-  }).join('');
-}
-
-function fbl5nRowClick(idx, invI){
-  // Select/deselect in ENG_ROWS
-  var row = ENG_ROWS.find(function(r){ return r.inv.i === invI; });
-  if(row) { engToggleRow(ENG_ROWS.indexOf(row), !row.selected); refreshFbl5n(); }
-}
-
-function fbl5nCheckRow(invI, checked){
-  var row = ENG_ROWS.find(function(r){ return r.inv.i === invI; });
-  if(row) { engToggleRow(ENG_ROWS.indexOf(row), checked); refreshFbl5n(); }
-}
-
-function fbl5nApplyRow(invI){
-  var row = ENG_ROWS.find(function(r){ return r.inv.i === invI; });
-  if(row && !row.selected){ fbl5nCheckRow(invI, true); }
-  else if(!ENG_PAY){ toast('Select a payment first from the queue above','warn'); }
-}
-
-function refreshFbl5n(){
-  var acct = (document.getElementById('ca-acct-dropdown')||{}).value || '';
-  var cust = ENG_PAY ? ENG_PAY.c : '';
-  renderFbl5n('ca-open-items-body', acct, cust);
-}
-
-function sortFbl5n(ci){
-  sortTbl('ca-open-items-tbl', ci);
-}
-
-function sortFbl5nExc(ci){
-  sortTbl('exc-open-items-tbl', ci);
-}
-
-// ── ACCOUNT DROPDOWN CHANGES ──
-function caAcctDropdownChange(acct){
-  var labelEl = document.getElementById('ca-bottom-cust-label');
-  if(labelEl){
-    if(acct){
-      var custName = INV.filter(function(v){ return v.a === acct; }).map(function(v){ return v.c; })[0] || '';
-      labelEl.textContent = acct + (custName ? ' — '+custName : '');
-    } else {
-      labelEl.textContent = '— all accounts';
-    }
-  }
-  renderFbl5n('ca-open-items-body', acct, '');
-}
-
-function excAcctDropdownChange(acct){
-  renderFbl5n('exc-open-items-body', acct, '');
-}
-
-// ── INVOICE FILTERING ──
-function filterInvAll(q){
-  var acctFilter = (document.getElementById('inv-af')||{}).value || '';
-  var statusFilter = (document.getElementById('inv-status-filter')||{}).value || '';
-  var typeFilter = (document.getElementById('inv-type-filter')||{}).value || '';
-  var tbody = document.getElementById('inv-tb');
-  if(!tbody) return;
-  var rows = tbody.querySelectorAll('tr');
-  var ql = q ? q.toLowerCase() : '';
-  var visible = 0;
-  rows.forEach(function(tr){
-    var cells = tr.querySelectorAll('td');
-    if(!cells.length){ tr.style.display=''; return; }
-    var text = tr.innerText.toLowerCase();
-    var matchQ = !ql || text.includes(ql);
-    var acctCell = cells[1] ? cells[1].innerText.trim() : '';
-    var matchAcct = !acctFilter || acctCell === acctFilter;
-    var statCell = cells[10] ? cells[10].innerText.trim() : '';
-    var matchStatus = !statusFilter || (statusFilter === 'open' ? (!statCell || statCell === '—') : statCell.includes(statusFilter));
-    var typeCell = cells[6] ? cells[6].innerText.trim() : '';
-    var matchType = !typeFilter || typeCell.includes(typeFilter);
-    var show = matchQ && matchAcct && matchStatus && matchType;
-    tr.style.display = show ? '' : 'none';
-    if(show) visible++;
-  });
-  var ct = document.getElementById('inv-ct');
-  if(ct) ct.textContent = visible + ' of ' + INV.length + ' rows';
-}
-
-function clearInvFilters(){
-  ['inv-search','inv-status-filter','inv-type-filter'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
-  var af=document.getElementById('inv-af'); if(af)af.value='';
-  var tbody=document.getElementById('inv-tb');
-  if(tbody) tbody.querySelectorAll('tr').forEach(function(tr){tr.style.display='';});
-  var ct=document.getElementById('inv-ct'); if(ct && INV.length) ct.textContent=INV.length+' rows · click any cell to edit';
-}
-
-// ── REMITTANCE FILTERING ──
-function filterRemAll(q){
-  var methodFilter = (document.getElementById('rem-method-filter')||{}).value || '';
-  var ccyFilter = (document.getElementById('rem-ccy-filter')||{}).value || '';
-  var tbody = document.getElementById('rem-tb');
-  if(!tbody) return;
-  var rows = tbody.querySelectorAll('tr');
-  var ql = q ? q.toLowerCase() : '';
-  rows.forEach(function(tr){
-    var cells = tr.querySelectorAll('td');
-    if(!cells.length){ tr.style.display=''; return; }
-    var text = tr.innerText.toLowerCase();
-    var matchQ = !ql || text.includes(ql);
-    var methodCell = cells[7] ? cells[7].innerText.trim() : '';
-    var matchMethod = !methodFilter || methodCell.toLowerCase().includes(methodFilter.toLowerCase());
-    var ccyCell = cells[8] ? cells[8].innerText.trim() : '';
-    var matchCcy = !ccyFilter || ccyCell === ccyFilter;
-    tr.style.display = (matchQ && matchMethod && matchCcy) ? '' : 'none';
-  });
-}
-
-function clearRemFilters(){
-  ['rem-search','rem-method-filter','rem-ccy-filter'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
-  var tbody=document.getElementById('rem-tb');
-  if(tbody) tbody.querySelectorAll('tr').forEach(function(tr){tr.style.display='';});
-}
-
-// ── PATCH setCaTab to also populate open items ──
-var _origSetCaTab = setCaTab;
-function setCaTab(tab, btn){
-  _origSetCaTab(tab, btn);
-  if(tab === 'match'){
-    populateAllAcctDropdowns();
-    refreshFbl5n();
-  } else if(tab === 'exc'){
-    buildAcctDropdown('exc-acct-dropdown', true);
-    renderFbl5n('exc-open-items-body', '', '');
-  }
-}
-
-// ── Patch engLoadPayment to update bottom open items ──
-var _origEngLoadPaymentPhase5 = engLoadPayment;
 function engLoadPayment(idx){
-  _origEngLoadPaymentPhase5(idx);
+  _origEngLoadPayment(idx);
   setTimeout(function(){
-    // Select account in dropdown to match payment
-    if(ENG_PAY && ENG_PAY.a){
-      var sel = document.getElementById('ca-acct-dropdown');
-      if(sel) sel.value = ENG_PAY.a;
-      var lbl = document.getElementById('ca-bottom-cust-label');
-      if(lbl) lbl.textContent = ENG_PAY.a + (ENG_PAY.c ? ' — '+ENG_PAY.c : '');
+    if(ENG_PAY&&ENG_PAY.a){
+      var sel=document.getElementById('ca-acct-dropdown');
+      if(sel) sel.value=ENG_PAY.a;
+      var lbl=document.getElementById('ca-bottom-cust-label');
+      if(lbl){ var accts={}; INV.forEach(function(v){if(v.a&&v.c)accts[v.a]=v.c;}); lbl.textContent=ENG_PAY.a+(accts[ENG_PAY.a]?' — '+accts[ENG_PAY.a]:''); }
     }
     refreshFbl5n();
-  }, 50);
+  },50);
 }
 
-// ── Patch rAll to repopulate dropdowns ──
-var _origRAllPhase5 = rAll;
 function rAll(){
-  _origRAllPhase5();
-  setTimeout(populateAllAcctDropdowns, 100);
+  _origRAll();
+  setTimeout(populateAllAcctDropdowns,100);
+  // Update worklist badge
+  var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
+  var unalloc=PAY.filter(function(p){var hr=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});var he=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});return !hr&&!he&&!p.dp;});
+  var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
+  var tot=urgent.length+unalloc.length+xr.length;
+  var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display=tot?'inline-flex':'none';}
 }
 
-// ── Patch launchApp to init role and rules ──
-var _origLaunchAppPhase5 = launchApp;
-function launchApp(user){
-  _origLaunchAppPhase5(user);
+function loadDemoData(){
+  _origLoadDemoData();
   setTimeout(function(){
-    initRole();
-    renderMpRules();
-    renderSettingsPlans();
+    rAll(); updDash(); updTop();
+    buildWorklist();
     populateAllAcctDropdowns();
-    syncMpCheckboxes();
-  }, 150);
+    renderPayQueue();
+    engRefreshSel();
+    toast('Sample data loaded — click ⚡ Run matching to match payments');
+  },150);
 }
 
-// ── DOMContentLoaded patches ──
-document.addEventListener('DOMContentLoaded', function(){
-  // Fix sidebar cfo and worklist onclick (these are set by DOMContentLoaded in phase3)
-  // Already handled. Just ensure role is applied on page load.
-  initRole();
-  renderMpRules();
-});
+function loadSampleInv(){
+  _origLoadSampleInv();
+  setTimeout(function(){ rAll(); updTop(); populateAllAcctDropdowns(); buildWorklist(); },100);
+}
 
-// ── inv-po-filter and inv-so-filter (legacy compat) ──
-var legacyInvAf = document.getElementById('inv-af');
-if(legacyInvAf) legacyInvAf.addEventListener('change', function(){ filterInvAll(document.getElementById('inv-search').value||''); });
+function loadSampleRem(){
+  _origLoadSampleRem();
+  setTimeout(function(){ rAll(); updTop(); populateAllAcctDropdowns(); renderPayQueue(); engRefreshSel(); buildWorklist(); },100);
+}
 
-// ── SETTINGS save with role ──
-var _origSaveSettings = saveSettings;
+function runMatch(){
+  var result = _origRunMatch.apply(this, arguments);
+  setTimeout(function(){ buildWorklist(); refreshFbl5n(); updReporting(); },600);
+  return result;
+}
+
+function updTop(){
+  _origUpdTop();
+  // Refresh worklist badge on every updTop call
+  var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
+  var unalloc=PAY.filter(function(p){var hr=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});var he=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});return !hr&&!he&&!p.dp;});
+  var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
+  var tot=urgent.length+unalloc.length+xr.length;
+  var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display=tot?'inline-flex':'none';}
+  // If worklist active, rebuild
+  var wlPanel=document.getElementById('p-worklist');
+  if(wlPanel&&wlPanel.classList.contains('active')) buildWorklist();
+  // If CFO active, update
+  var cfoPanel=document.getElementById('p-cfo');
+  if(cfoPanel&&cfoPanel.classList.contains('active')) updateCfoSummary();
+}
+
+function updDash(){
+  _origUpdDash();
+}
+
 function saveSettings(){
-  if(typeof _origSaveSettings === 'function') _origSaveSettings();
+  _origSaveSettings();
   saveUserRole();
   saveMpRules();
   renderSettingsPlans();
 }
 
-// ── CFO savings headline fix (remove ROI language) ──
-function updateCfoSummaryClean(){
-  if(typeof updateCfoSummary === 'function') updateCfoSummary();
-  // Override ROI labels
-  var savingsHl = document.getElementById('cfo-savings-headline');
-  if(savingsHl && savingsHl.textContent.includes('labor cost')){
-    var ma = RES.filter(function(r){ return r.st==='Exact'||r.st==='Subset exact'; }).reduce(function(s,r){ return s+r.pd; },0);
-    savingsHl.textContent = '$'+$fk(ma)+' in cash matched this session';
-  }
-  // Focus metrics: remove ROI section if present
-  var roiSec = document.getElementById('cfo-roi-auto');
-  if(roiSec){
-    var roiCard = roiSec.closest('.card');
-    if(roiCard) roiCard.style.display = 'none';
-  }
-}
-
-// ── Patch sp() for CFO to use clean version ──
-var _origSpPhase5 = sp;
 function sp(id){
-  _origSpPhase5(id);
-  if(id === 'cfo'){
+  // Handle new panels that _origSp doesn't know about
+  if(id==='worklist'){
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
+    var wl=document.getElementById('p-worklist'); if(wl) wl.classList.add('active');
+    var sbiWl=document.getElementById('sbi-worklist'); if(sbiWl) sbiWl.classList.add('active');
+    buildWorklist();
+    return;
+  }
+  if(id==='cfo'){
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
+    var cfoPnl=document.getElementById('p-cfo'); if(cfoPnl) cfoPnl.classList.add('active');
+    var sbiCfo=document.getElementById('sbi-cfo'); if(sbiCfo) sbiCfo.classList.add('active');
     applyCfoAccess();
-    setTimeout(updateCfoSummaryClean, 50);
+    setTimeout(updateCfoSummary,50);
+    return;
   }
-  if(id === 'settings'){
-    setTimeout(function(){
-      initRole();
-      renderMpRules();
-      renderSettingsPlans();
-    }, 50);
-  }
-  if(id === 'cash-app'){
-    setTimeout(function(){
-      populateAllAcctDropdowns();
-      refreshFbl5n();
-    }, 100);
-  }
+  _origSp(id);
+  if(id==='settings') setTimeout(function(){ initRole(); renderMpRules(); renderSettingsPlans(); },50);
+  if(id==='cash-app') setTimeout(function(){ populateAllAcctDropdowns(); refreshFbl5n(); },100);
+  if(id==='reporting') setTimeout(updReporting,50);
 }
 
-</script>
+function launchApp(user){
+  _origLaunchApp(user);
+  // Welcome back toast
+  setTimeout(function(){
+    var name=user.name?(user.name.split(' ')[0]):'';
+    if(name&&!IS_DEMO) toast('Welcome back, '+name+' 👋');
+    initRole();
+    renderMpRules();
+    renderSettingsPlans();
+    populateAllAcctDropdowns();
+    syncMpCheckboxes();
+  },200);
+}
+
+// Sidebar onclick patches via DOMContentLoaded
+document.addEventListener('DOMContentLoaded',function(){
+  var sbiWl=document.getElementById('sbi-worklist');
+  if(sbiWl) sbiWl.onclick=function(){ sp('worklist'); };
+  var sbiCfo=document.getElementById('sbi-cfo');
+  if(sbiCfo) sbiCfo.onclick=function(){ sp('cfo'); };
+  initRole();
+  renderMpRules();
+});
+
 </script>
 
   <!-- Hidden match toggle inputs (used by runMatch engine, controlled by settings) -->
