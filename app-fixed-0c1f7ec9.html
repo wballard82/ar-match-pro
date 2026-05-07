@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AR Match Pro — Cash Application Platform</title>
+<title>AR Match Pro v1778185567</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -2083,7 +2083,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
         </div>
         <div class="privacy-badge">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1L2 4v4c0 3.5 2.5 6 6 7 3.5-1 6-3.5 6-7V4L8 1z"/></svg>
-          Runs locally · No data uploaded · Private by design
+          Runs locally · No data uploaded · Private by design · v1778185567
         </div>
       </div>
 
@@ -3758,6 +3758,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
 </div><!-- end #app -->
 
 <script>
+console.log('AR Match Pro v60736518 — fixed build loading');
 // ── Phase 2 polish additions ──
 function clearAllExceptions(){
   if(!EXC.length){toast('No exceptions to clear');return;}
@@ -4334,7 +4335,7 @@ function doLogin(){
     CURRENT_USER=email;IS_DEMO=false;
     if(remember)localStorage.setItem('armp_remember_email',email);
     localStorage.setItem('armp_session',email);
-    try{launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});}catch(e){showError('Launch error: '+e.message);}
+    try{launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});}catch(e){console.error('FULL STACK:',e.stack);showError('Launch error: '+e.message+' | Check browser console for full trace');}
     return;
   }
   const users=getUsers();
