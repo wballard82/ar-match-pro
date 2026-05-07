@@ -4379,9 +4379,10 @@ function demoLogin(){
 
 function doLogout(){
   localStorage.removeItem('armp_session');
-  document.getElementById('app').classList.remove('visible');
-  document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
+  var app=document.getElementById('app');
+  if(app){ app.classList.remove('visible'); app.style.display='none'; app.style.pointerEvents=''; app.style.visibility=''; app.style.opacity=''; }
+  var ls=document.getElementById('login-screen');
+  if(ls){ ls.style.display=''; ls.style.visibility=''; ls.style.pointerEvents=''; ls.style.zIndex=''; ls.style.opacity=''; }
   INV=[];PAY=[];RES=[];EXC=[];
   IS_DEMO=true;CURRENT_USER='';IS_MASTER=false;
 }
@@ -6580,51 +6581,44 @@ function sp(id){
 }
 
 function cleanupLoginAndOverlays(){
-  // Fully hide login screen and remove it from pointer event flow
+  // Hide login screen completely so it cannot block any clicks
   var ls=document.getElementById('login-screen');
   if(ls){
     ls.style.display='none';
     ls.style.visibility='hidden';
     ls.style.pointerEvents='none';
     ls.style.zIndex='-1';
+    ls.style.opacity='0';
   }
-  // Ensure app is visible and interactive
+  // Make app fully visible and interactive
   var app=document.getElementById('app');
   if(app){
     app.style.display='flex';
     app.style.visibility='visible';
     app.style.pointerEvents='auto';
+    app.style.opacity='1';
     app.classList.add('visible');
   }
-  // Activate worklist panel immediately so app has visible content
-  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
-  var wl=document.getElementById('p-worklist');
-  if(wl) wl.classList.add('active');
-  var sbiWl=document.getElementById('sbi-worklist');
-  if(sbiWl) sbiWl.classList.add('active');
   // Close any stray overlays
-  ['imp-modal','upgrade-modal','pricing-modal'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el) el.classList.remove('open');
-  });
+  var impMo=document.getElementById('imp-modal');
+  if(impMo) impMo.classList.remove('open');
+  var upMo=document.getElementById('upgrade-modal');
+  if(upMo) upMo.classList.remove('open');
+  var prMo=document.getElementById('pricing-modal');
+  if(prMo) prMo.classList.remove('open');
   var excMo=document.getElementById('exc-modal-overlay');
-  if(excMo) excMo.style.display='none';
+  if(excMo){ excMo.style.display='none'; excMo.classList.remove('open'); }
   var mp=document.getElementById('match-progress');
-  if(mp) mp.classList.remove('show');
+  if(mp){ mp.style.display='none'; mp.classList.remove('show'); }
 }
 
 function launchApp(user){
   if(launchApp._running){console.error('launchApp re-entry blocked');return;}
   launchApp._running=true;
-  // Hide login screen and show app before any async work
   cleanupLoginAndOverlays();
   try{ _origLaunchApp(user); }finally{ launchApp._running=false; }
-  // Ensure worklist is active and populated (fallback if _origLaunchApp's setTimeout was skipped)
   setTimeout(function(){ navToWorklist(); }, 10);
-  // Rebuild worklist after init
   setTimeout(function(){ buildWorklist(); }, 100);
-  // Welcome back + secondary init
   setTimeout(function(){
     var name=user.name?(user.name.split(' ')[0]):'';
     if(name&&!IS_DEMO) toast('Welcome back, '+name+' 👋');
