@@ -4025,7 +4025,7 @@ function animateKpiVal(id,newVal){
 
 // Enhanced clearAllExceptions with animation
 const _origClearAllExceptions=clearAllExceptions;
-_legacyClearAllExceptions(){
+function _legacyClearAllExceptions(){
   if(!EXC.length){toast('No exceptions to clear');return;}
   if(!confirm('Clear all '+EXC.length+' exception records? This action cannot be undone.'))return;
   // Animate cards out
@@ -4918,7 +4918,7 @@ function engLoadPayment(idx){
   _engUpdateRightPanel();
 }
 
-_legacyEngUpdateRightPanel(){
+function _legacyEngUpdateRightPanel(){
   if(!ENG_PAY)return;
   const aiRight=document.getElementById('ca-ai-right');
   const excRight=document.getElementById('ca-exc-right');
@@ -4972,7 +4972,7 @@ function engCheckDuplicates(p){
   else if(warn)warn.style.display='none';
 }
 
-_legacyEngBuildAI(p,invs){
+function _legacyEngBuildAI(p,invs){
   const bar=document.getElementById('eng-ai-bar');const list=document.getElementById('eng-ai-list');if(!bar||!list)return;
   const tips=[];
   const dp=invs.filter(v=>v.n&&v.n.toLowerCase().includes('down'));if(dp.length)tips.push(`💡 ${dp.length} invoice(s) may be down payments`);
@@ -5236,7 +5236,7 @@ function setCaTab(tab,btn){
 // ═══════════════════════════════════════
 // REVIEW TAB WORKSPACE
 // ═══════════════════════════════════════
-_legacy_renderWsReview(){
+function _legacy_renderWsReview(){
   const list=document.getElementById('review-list');
   const ct=document.getElementById('review-ct');
   if(!list)return;
@@ -5455,7 +5455,7 @@ function engLoadPaymentForInv(invRef){
 // ═══════════════════════════════════════
 // RECONCILE TAB
 // ═══════════════════════════════════════
-_legacy_renderWsRecon(){
+function _legacy_renderWsRecon(){
   const list=document.getElementById('recon-list');const summary=document.getElementById('recon-summary');if(!list)return;
   const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
   const unmatched=PAY.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
