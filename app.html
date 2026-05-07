@@ -2383,7 +2383,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
         <div class="sb-item active" id="sbi-worklist" onclick="sp('worklist')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h12M2 8h9M2 12h7"/><circle cx="13" cy="12" r="2.5"/><path d="M12 11l1 1 1.5-1.5"/></svg>
           Today's Work
-          <span class="sb-badge" id="sb-wl-ct" style="background:var(--p)">0</span>
+          <span id="sb-wl-ct" style="display:none">0</span>
         </div>
         <div class="sb-item" id="sbi-cash-app" onclick="sp('cash-app')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 8h14M8 1v14"/><circle cx="8" cy="8" r="7"/></svg>
@@ -2446,7 +2446,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
         <div class="wl-header-bar">
           <div>
             <div class="wl-greeting" id="wl-greeting">Good morning</div>
-            <div class="wl-date" id="wl-date">Loading…</div>
+            <div class="wl-date" id="wl-date"></div>
           </div>
           <div style="display:flex;align-items:center;gap:12px">
             <div class="wl-summary-pills" id="wl-summary-pills"></div>
@@ -2938,7 +2938,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
                     </tr>
                   </thead>
                   <tbody id="exc-open-items-body">
-                    <tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">Select an account to view open items</div></div></td></tr>
+                    <tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">No open items — load invoice data to populate</div></div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3277,8 +3277,8 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <!-- Hero savings callout -->
           <div class="cfo-hero">
             <div class="cfo-hero-label">Cash Application Performance</div>
-            <div class="cfo-hero-headline" id="cfo-hours-saved">0 hours saved</div>
-            <div class="cfo-hero-sub" id="cfo-hero-sub">Based on current session match results vs. manual processing baseline</div>
+            <div class="cfo-hero-headline" id="cfo-hours-saved">Cash Application Summary</div>
+            <div class="cfo-hero-sub" id="cfo-hero-sub">Import data and run matching to see performance metrics</div>
             <div class="cfo-hero-metrics">
               <div class="cfo-hero-metric">
                 <div class="cfo-hero-metric-val" id="cfo-hero-matched">$0</div>
@@ -4323,7 +4323,7 @@ function doLogout(){
 function setUserDisplay(user){
   const init=(user.name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
   ['tn-avatar','profile-avatar'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=init;}});
-  const un=document.getElementById('tn-uname');if(un)un.textContent=(user.name||'User').split(' ')[0];
+  const un=document.getElementById('tn-uname');if(un)un.textContent=user.name||'User';
   const pe=document.getElementById('sec-email-disp');if(pe)pe.textContent=IS_DEMO?'demo@armatchpro.com':CURRENT_USER;
   const pi=document.getElementById('profile-name-input');if(pi)pi.value=user.name||'';
   const planBadge=document.getElementById('tn-plan');if(planBadge)planBadge.textContent=PLANS[user.plan||'demo']?.name||'Demo';
@@ -6460,14 +6460,18 @@ function sp(id){
     return;
   }
   _origSp(id);
-  if(id==='settings') setTimeout(function(){ initRole(); renderMpRules(); renderSettingsPlans(); },50);
+  if(id==='settings'){ initRole(); renderMpRules(); renderSettingsPlans(); setTimeout(function(){ renderMpRules(); },100); }
   if(id==='cash-app') setTimeout(function(){ populateAllAcctDropdowns(); refreshFbl5n(); },100);
   if(id==='reporting') setTimeout(updReporting,50);
 }
 
 function launchApp(user){
   _origLaunchApp(user);
-  // Welcome back toast
+  // Call buildWorklist immediately so date/greeting show correctly
+  setTimeout(function(){
+    buildWorklist();
+  }, 50);
+  // Welcome back + init
   setTimeout(function(){
     var name=user.name?(user.name.split(' ')[0]):'';
     if(name&&!IS_DEMO) toast('Welcome back, '+name+' 👋');
@@ -6666,8 +6670,14 @@ function rInv(){
   if(acctTab && acctTab.classList.contains('active')){
     if(typeof renderAcctCustomers === 'function') renderAcctCustomers();
   }
-  // Also populate FBL5N bottom table if Cash App match tab is active
+  // Populate FBL5N tables
   if(typeof refreshFbl5n === 'function') refreshFbl5n();
+  // Also populate exc FBL5N if exc tab is active
+  var excTab = document.getElementById('ws-exc');
+  if(excTab && excTab.classList.contains('active') && typeof renderFbl5n === 'function'){
+    var excAcct = (document.getElementById('exc-acct-dropdown')||{}).value||'';
+    renderFbl5n('exc-open-items-body', excAcct, '');
+  }
   // Reapply column filters after re-render
   invColFilter();
 }
@@ -6677,6 +6687,15 @@ var _patchLoadSampleInvForFilter = loadSampleInv;
 function loadSampleInv(){
   _patchLoadSampleInvForFilter();
   setTimeout(invColFilter, 100);
+  // Refresh Account Open Items if that tab is active
+  setTimeout(function(){
+    var acctTab = document.getElementById('ws-acct');
+    if(acctTab && acctTab.classList.contains('active')){
+      if(typeof renderAcctCustomers === 'function') renderAcctCustomers();
+    }
+    // Also populate FBL5N bottom table
+    if(typeof refreshFbl5n === 'function') refreshFbl5n();
+  }, 150);
 }
 
 </script>
