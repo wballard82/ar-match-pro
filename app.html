@@ -2007,10 +2007,8 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <label class="lf-label" for="li-pass">Password</label>
           <input class="lf-input" type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         </div>
-        <div class="lf-field">
-          <label class="lf-label" for="li-license">License key</label>
-          <input class="lf-input" id="li-license" placeholder="ARMP-XXXX-XXXX" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
+        <!-- License key field hidden — auto-detected from account -->
+        <input type="hidden" id="li-license" value="">
         <div class="lf-row">
           <div class="lf-check-row">
             <input type="checkbox" id="li-remember" autocomplete="off">
@@ -4135,6 +4133,8 @@ function updTop(){
   if(notifDot)notifDot.style.display=excCt>0?'block':'none';
   const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
   const spn2=document.getElementById('settings-plan-name2');if(spn2)spn2.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
+
+  if(typeof refreshWlBadge==='function')refreshWlBadge();
 }
 
 // ── Dashboard ──
@@ -4329,6 +4329,8 @@ function launchApp(user){
   rAll();updDash();updTop();initAuditTbl();
   if(IS_DEMO)toast('Demo mode — click "Load sample data" to get started.');
   addAudit('Login','User: '+(user.name||CURRENT_USER));
+
+  setTimeout(navToWorklist, 0);
 }
 
 function globalSearch(q){
@@ -5777,7 +5779,7 @@ try{
 
 
 // ═══════════════════════════════════════════════════════════
-// WORKLIST (TODAY'S WORK) ENGINE
+// WORKLIST + CFO SUMMARY — STANDALONE (no override chains)
 // ═══════════════════════════════════════════════════════════
 
 function buildWorklist(){
@@ -5786,14 +5788,12 @@ function buildWorklist(){
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const hour = now.getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const userName = document.getElementById('tn-uname')?.textContent || '';
-
+  const userName = (document.getElementById('tn-uname')||{}).textContent || '';
   const greetEl = document.getElementById('wl-greeting');
   if(greetEl) greetEl.textContent = userName ? greet + ', ' + userName : greet;
   const dateEl = document.getElementById('wl-date');
   if(dateEl) dateEl.textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ' · Here is what needs your attention today';
 
-  // ── Urgent: open exceptions needing resolution ──
   const urgent = EXC.filter(e => !e.s || e.s === 'Open');
   const shortPays = urgent.filter(e => e.type === 'Short pay');
   const dups = urgent.filter(e => e.type === 'Duplicate');
@@ -5806,331 +5806,227 @@ function buildWorklist(){
 
   if(urgent.length && urgentList){
     const items = [];
-    if(shortPays.length) items.push({
-      cls:'warn', icon:'💸', label:'Short pays',
-      title: shortPays.length + ' short pay' + (shortPays.length>1?'s':'') + ' need resolution',
-      sub: 'Total exposure: $' + $f(shortPays.reduce((s,e)=>s+e.amt,0)) + ' · Contact customers or write off',
-      amt: '$' + $fk(shortPays.reduce((s,e)=>s+e.amt,0)),
-      action: 'Resolve', fn: "setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')"
-    });
-    if(dups.length) items.push({
-      cls:'urgent', icon:'⚠️', label:'Duplicates',
-      title: dups.length + ' possible duplicate payment' + (dups.length>1?'s':'') + ' detected',
-      sub: 'Same reference and amount — verify before posting to avoid double-credit',
-      amt: '$' + $fk(dups.reduce((s,e)=>s+e.amt,0)),
-      action: 'Review', fn: "setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')"
-    });
-    if(unmatched.length) items.push({
-      cls:'urgent', icon:'❓', label:'Unmatched',
-      title: unmatched.length + ' payment' + (unmatched.length>1?'s':'') + ' with no invoice match',
-      sub: 'No matching invoice, PO, or SO found — contact customer or post as unapplied',
-      amt: '$' + $fk(unmatched.reduce((s,e)=>s+e.amt,0)),
-      action: 'Review', fn: "setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')"
-    });
-    if(unapplied.length) items.push({
-      cls:'warn', icon:'💰', label:'Unapplied',
-      title: unapplied.length + ' unapplied payment' + (unapplied.length>1?'s':''),
-      sub: 'Cash received with no remittance reference — apply to oldest invoice or hold on account',
-      amt: '$' + $fk(unapplied.reduce((s,e)=>s+e.amt,0)),
-      action: 'Apply', fn: "setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')"
-    });
-    urgentList.innerHTML = items.map(item => `
-      <div class="wl-item ${item.cls}" onclick="${item.fn}">
-        <div class="wl-item-icon"><span>${item.icon}</span></div>
-        <div class="wl-item-body">
-          <div class="wl-item-title">${item.title}</div>
-          <div class="wl-item-sub">${item.sub}</div>
-        </div>
-        <div class="wl-item-amount">${item.amt}</div>
-        <div class="wl-item-cta">${item.action} <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6h8M6 3l3 3-3 3"/></svg></div>
-      </div>`).join('');
-  } else if(urgentList && EXC.length===0 && PAY.length>0){
-    urgentList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">No exceptions — clean run</div><div class="wl-empty-sub">All payments matched without issues.</div></div>`;
+    if(shortPays.length) items.push({cls:'warn',icon:'💸',title:shortPays.length+' short pay'+(shortPays.length>1?'s':'')+' need resolution',sub:'Total exposure: $'+$f(shortPays.reduce((s,e)=>s+e.amt,0))+' · Contact customers or write off',amt:'$'+$fk(shortPays.reduce((s,e)=>s+e.amt,0)),action:'Resolve',fn:"wlGoExc()"});
+    if(dups.length) items.push({cls:'urgent',icon:'⚠️',title:dups.length+' possible duplicate payment'+(dups.length>1?'s':'')+' detected',sub:'Same reference and amount — verify before posting to avoid double-credit',amt:'$'+$fk(dups.reduce((s,e)=>s+e.amt,0)),action:'Review',fn:"wlGoExc()"});
+    if(unmatched.length) items.push({cls:'urgent',icon:'❓',title:unmatched.length+' payment'+(unmatched.length>1?'s':'')+' with no invoice match',sub:'No matching invoice, PO, or SO found — contact customer or post as unapplied',amt:'$'+$fk(unmatched.reduce((s,e)=>s+e.amt,0)),action:'Review',fn:"wlGoExc()"});
+    if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference — apply to oldest invoice or hold on account',amt:'$'+$fk(unapplied.reduce((s,e)=>s+e.amt,0)),action:'Apply',fn:"wlGoExc()"});
+    urgentList.innerHTML = items.map(item=>`<div class="wl-item ${item.cls}" onclick="${item.fn}"><div class="wl-item-icon">${item.icon}</div><div class="wl-item-body"><div class="wl-item-title">${item.title}</div><div class="wl-item-sub">${item.sub}</div></div><div class="wl-item-amount">${item.amt}</div><div class="wl-item-cta">${item.action} →</div></div>`).join('');
   } else if(urgentList){
-    urgentList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">No urgent items</div><div class="wl-empty-sub">Import data and run matching to detect exceptions.</div></div>`;
+    urgentList.innerHTML = '<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'No urgent items')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments matched without issues.':'Import data and run matching to detect exceptions.')+'</div></div>';
   }
 
-  // ── Payments to allocate ──
-  const unallocated = PAY.filter(p => {
-    const hasResult = RES.find(r => r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
-    const hasExc = EXC.find(e => e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
-    return !hasResult && !hasExc && !p.dp;
-  });
-  const dpays = PAY.filter(p => p.dp);
-  const allocList = document.getElementById('wl-alloc-list');
-  const allocCt = document.getElementById('wl-alloc-ct');
-  if(allocCt){ allocCt.textContent = unallocated.length + dpays.length; allocCt.style.display = (unallocated.length+dpays.length) ? 'inline-flex' : 'none'; }
-
-  if((unallocated.length || dpays.length) && allocList){
-    const items = [];
-    if(unallocated.length) {
-      // Group by customer
-      const byCust = {};
-      unallocated.forEach(p => { const k = p.c||p.a; if(!byCust[k]) byCust[k]={c:p.c,a:p.a,payments:[],total:0}; byCust[k].payments.push(p); byCust[k].total+=p.amt; });
-      Object.values(byCust).slice(0,5).forEach(cg => {
-        items.push({
-          cls:'info', icon:'💳',
-          title: cg.c || cg.a,
-          sub: cg.payments.length + ' payment' + (cg.payments.length>1?'s':'') + ' waiting · ' + (cg.payments[0].m||'ACH'),
-          amt: '$' + $fk(cg.total),
-          action: 'Allocate',
-          fn: `(function(){const p=PAY.findIndex(x=>x.a==='${(cg.a||'').replace(/'/g,"\'")}');setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app');setTimeout(()=>{if(p>=0){const sel=document.getElementById('eng-pay-sel');if(sel){sel.value=p;engLoadPayment(p);}}},200);})()`
-        });
-      });
-      if(Object.keys(byCust).length > 5) items.push({cls:'info',icon:'💳',title:(Object.keys(byCust).length-5)+' more customers with payments',sub:'Click to open the full allocation workspace',amt:'',action:'Open all',fn:"setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')"});
-    }
-    if(dpays.length) items.push({
-      cls:'warn', icon:'↓',
-      title: dpays.length + ' down payment' + (dpays.length>1?'s':'') + ' received',
-      sub: 'Down payments — apply to open invoices or hold on account',
-      amt: '$' + $fk(dpays.reduce((s,p)=>s+p.amt,0)),
-      action: 'Review', fn: "setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')"
-    });
-    allocList.innerHTML = items.map(item => `
-      <div class="wl-item ${item.cls}" onclick="${item.fn}">
-        <div class="wl-item-icon"><span>${item.icon}</span></div>
-        <div class="wl-item-body">
-          <div class="wl-item-title">${item.title}</div>
-          <div class="wl-item-sub">${item.sub}</div>
-        </div>
-        ${item.amt?`<div class="wl-item-amount">${item.amt}</div>`:''}
-        <div class="wl-item-cta">${item.action} <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6h8M6 3l3 3-3 3"/></svg></div>
-      </div>`).join('');
-  } else if(allocList && !PAY.length){
-    allocList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">📂</div><div class="wl-empty-title">No payments waiting</div><div class="wl-empty-sub">Import remittance data to see payments that need allocation.</div><div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittance</button></div></div>`;
-  } else if(allocList && PAY.length){
-    allocList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">🎉</div><div class="wl-empty-title">All payments allocated</div><div class="wl-empty-sub">Great work — no unallocated payments remaining.</div></div>`;
-  }
-
-  // ── Ready to export ──
-  const exportReady = RES.filter(r => (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc) && !r.exported);
-  const exportList = document.getElementById('wl-export-list');
-  const exportCt = document.getElementById('wl-export-ct');
-  if(exportCt){ exportCt.textContent = exportReady.length; exportCt.style.display = exportReady.length ? 'inline-flex' : 'none'; }
-
-  if(exportReady.length && exportList){
-    const totalAmt = exportReady.reduce((s,r)=>s+r.pd,0);
-    const byCust = {};
-    exportReady.forEach(r=>{ const k=r.c||r.a; if(!byCust[k]) byCust[k]={c:r.c,a:r.a,rows:[],total:0}; byCust[k].rows.push(r); byCust[k].total+=r.pd; });
-    const custSummary = Object.values(byCust).slice(0,3).map(cg=>cg.c||cg.a).join(', ');
-    exportList.innerHTML = `
-      <div class="wl-item ok" onclick="sp('posting')">
-        <div class="wl-item-icon"><span>📤</span></div>
-        <div class="wl-item-body">
-          <div class="wl-item-title">${exportReady.length} record${exportReady.length>1?'s':''} ready for SAP posting</div>
-          <div class="wl-item-sub">${custSummary}${Object.keys(byCust).length>3?' and '+(Object.keys(byCust).length-3)+' more':''} · Download SAP F-28 posting file</div>
-        </div>
-        <div class="wl-item-amount">$${$fk(totalAmt)}</div>
-        <div class="wl-item-cta">Export <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6h8M6 3l3 3-3 3"/></svg></div>
-      </div>`;
-  } else if(exportList){
-    exportList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">📋</div><div class="wl-empty-title">Nothing ready to export</div><div class="wl-empty-sub">Approve allocations in the Cash Application workspace.</div></div>`;
-  }
-
-  // ── Matched today (done items) ──
-  const done = RES.filter(r => r.st==='Exact'||r.st==='Subset exact');
-  const doneSection = document.getElementById('wl-done-section');
-  const doneList = document.getElementById('wl-done-list');
-  const doneCt = document.getElementById('wl-done-ct');
-  if(doneCt) doneCt.textContent = done.length;
-  if(doneSection) doneSection.style.display = done.length ? 'block' : 'none';
-  if(done.length && doneList){
-    const byCust = {};
-    done.forEach(r=>{ const k=r.c||r.a; if(!byCust[k]) byCust[k]={c:r.c,a:r.a,rows:[],total:0}; byCust[k].rows.push(r); byCust[k].total+=r.pd; });
-    doneList.innerHTML = Object.values(byCust).slice(0,4).map(cg=>`
-      <div class="wl-item ok" onclick="setCaTab('review',document.getElementById('ca-tab-review'));sp('cash-app')">
-        <div class="wl-item-icon"><span>✅</span></div>
-        <div class="wl-item-body">
-          <div class="wl-item-title">${cg.c||cg.a}</div>
-          <div class="wl-item-sub">${cg.rows.length} invoice${cg.rows.length>1?'s':''} matched · auto-matched exactly</div>
-        </div>
-        <div class="wl-item-amount">$${$fk(cg.total)}</div>
-        <div class="wl-item-cta" style="background:var(--g-bg);border-color:rgba(16,185,129,.2);color:var(--g-t)">✓ Done</div>
-      </div>`).join('');
-  }
-
-  // ── Summary pills ──
-  const pillsEl = document.getElementById('wl-summary-pills');
-  if(pillsEl){
-    const pills = [];
-    if(urgent.length) pills.push(`<div class="wl-summary-pill urgent" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')">🔴 ${urgent.length} exception${urgent.length>1?'s':''}</div>`);
-    if(unallocated.length) pills.push(`<div class="wl-summary-pill warn" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')">💳 ${unallocated.length} to allocate</div>`);
-    if(exportReady.length) pills.push(`<div class="wl-summary-pill good" onclick="sp('posting')">📤 ${exportReady.length} ready to export</div>`);
-    if(done.length && !urgent.length && !unallocated.length) pills.push(`<div class="wl-summary-pill good">✅ ${done.length} matched today</div>`);
-    pillsEl.innerHTML = pills.join('');
-  }
-
-  // Update worklist badge in sidebar
-  const wlBadge = document.getElementById('sb-wl-ct');
-  const totalAction = urgent.length + unallocated.length + exportReady.length;
-  if(wlBadge){ wlBadge.textContent = totalAction; wlBadge.style.display = totalAction ? 'inline-flex' : 'none'; }
-}
-
-// ═══════════════════════════════════════════════════════════
-// CFO SUMMARY ENGINE
-// ═══════════════════════════════════════════════════════════
-
-let CFO_PERIOD = 'month';
-function setCfoPeriod(p, btn){
-  CFO_PERIOD = p;
-  document.querySelectorAll('.cfo-period-btn').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  updateCfoSummary();
-}
-
-function updateCfoSummary(){
-  const setEl = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
-  const setW = (id, w) => { const el = document.getElementById(id); if(el) el.style.width = w; };
-
-  const tp = PAY.reduce((s,p)=>s+p.amt, 0);
-  const matched = RES.filter(r => r.st==='Exact'||r.st==='Subset exact');
-  const ma = matched.reduce((s,r)=>s+r.pd, 0);
-  const ua = EXC.reduce((s,e)=>s+e.amt, 0);
-  const spc = EXC.filter(e=>e.type==='Short pay');
-  const spAmt = spc.reduce((s,e)=>s+e.amt, 0);
-  const rt = tp > 0 ? (ma/tp*100) : 0;
-  const excRate = tp > 0 ? (EXC.filter(e=>!e.s||e.s==='Open').length / PAY.length * 100) : 0;
-  const autoCount = matched.length;
-
-  // Hours saved calc: 8 min per auto-matched payment
-  const minPerPayment = 8;
-  const hoursSaved = (autoCount * minPerPayment / 60);
-  const laborRate = 65; // $/hr
-  const dollarsSaved = hoursSaved * laborRate;
-
-  // Hero
-  if(hoursSaved > 0){
-    setEl('cfo-hours-saved', hoursSaved.toFixed(1) + ' hours saved this session');
-    setEl('cfo-hero-sub', autoCount + ' payments auto-matched × 8 min baseline = ' + (autoCount*8) + ' minutes of manual work eliminated');
-  } else {
-    setEl('cfo-hours-saved', 'No matches yet');
-    setEl('cfo-hero-sub', 'Import data and run matching to see your ROI');
-  }
-  setEl('cfo-hero-matched', $fk(ma));
-  setEl('cfo-hero-rate', tp>0 ? rt.toFixed(1)+'%' : '—');
-  setEl('cfo-hero-payments', PAY.length);
-  setEl('cfo-hero-invoices', matched.length);
-
-  // Savings callout
-  if(dollarsSaved > 0){
-    setEl('cfo-savings-headline', '$' + $f(dollarsSaved) + ' in labor cost saved');
-    document.getElementById('cfo-savings-body').innerHTML =
-      `<strong>${autoCount} payments</strong> auto-matched × <strong>8 min</strong> manual baseline × <strong>$65/hr</strong> labor = <strong>$${$f(dollarsSaved)}</strong> this session. ` +
-      `At this rate, AR Match Pro pays for itself in <strong>${dollarsSaved > 999 ? Math.ceil(999/dollarsSaved*30)+' days' : 'under a month'}</strong>.`;
-  } else {
-    setEl('cfo-savings-headline', '$0 saved — no data yet');
-    document.getElementById('cfo-savings-body').innerHTML = 'Import invoices and remittance, then run matching to calculate your ROI.';
-  }
-
-  // Metrics
-  setEl('cfo-stp', tp>0 ? rt.toFixed(1)+'%' : '—');
-  const stpTrend = document.getElementById('cfo-stp-trend');
-  if(stpTrend) stpTrend.style.color = rt >= 80 ? 'var(--g-t)' : rt >= 50 ? 'var(--am-t)' : 'var(--r-t)';
-  
-  setEl('cfo-exc-rate', PAY.length>0 ? (EXC.filter(e=>!e.s||e.s==='Open').length/PAY.length*100).toFixed(1)+'%' : '—');
-  setEl('cfo-exc-count', EXC.filter(e=>!e.s||e.s==='Open').length + ' open exceptions');
-  
-  setEl('cfo-shortpay-amt', '$'+$f(spAmt));
-  setEl('cfo-shortpay-count', spc.length + ' invoice' + (spc.length!==1?'s':'') + ' affected');
-  const spTrend = document.getElementById('cfo-shortpay-trend');
-  if(spTrend) spTrend.style.color = spc.length > 0 ? 'var(--r-t)' : 'var(--t3)';
-  
-  setEl('cfo-unapplied', '$'+$f(ua));
-  setEl('cfo-total', $fk(tp));
-  setEl('cfo-total-sub', INV.length+' invoices · '+PAY.length+' payments');
-
-  // ROI bars
-  const total = Math.max(autoCount + EXC.length + PAY.filter(p=>p.coa).length, 1);
-  setEl('cfo-roi-auto', autoCount);
-  setEl('cfo-roi-hours', hoursSaved.toFixed(1)+' hrs');
-  setEl('cfo-roi-dollars', '$'+$f(dollarsSaved));
-  setEl('cfo-bar-auto-val', autoCount);
-  setEl('cfo-bar-exc-val', EXC.length);
-  setEl('cfo-bar-unapp-val', PAY.filter(p=>p.coa).length);
-  setTimeout(()=>{
-    setW('cfo-bar-auto', (autoCount/total*100).toFixed(1)+'%');
-    setW('cfo-bar-exc', (EXC.length/total*100).toFixed(1)+'%');
-    setW('cfo-bar-unapp', (PAY.filter(p=>p.coa).length/total*100).toFixed(1)+'%');
-  }, 100);
-
-  // Match breakdown
-  const cn = {};
-  RES.forEach(r => { cn[r.st] = (cn[r.st]||0)+1; });
-  const tt = Object.values(cn).reduce((s,v)=>s+v,0)||1;
-  const co = {Exact:'#10B981','Subset exact':'#3B82F6','Short pay':'#F59E0B',Overpay:'#F97316','Amount match':'#8B5CF6'};
-  const mbEl = document.getElementById('cfo-match-breakdown');
-  const mlEl = document.getElementById('cfo-match-total-lbl');
-  if(mlEl) mlEl.textContent = RES.length + ' total records';
-  if(mbEl) mbEl.innerHTML = Object.entries(cn).length ? Object.entries(cn).map(([s,ct])=>`
-    <div class="cfo-bar-row">
-      <div class="cfo-bar-label">${s}</div>
-      <div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:${(ct/tt*100).toFixed(1)}%;background:${co[s]||'var(--p)'}"></div></div>
-      <div class="cfo-bar-val">${ct}</div>
-    </div>`).join('') : '<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
-
-  // Exception summary
-  const excByType = {};
-  EXC.forEach(e => { excByType[e.type] = (excByType[e.type]||{count:0,amt:0}); excByType[e.type].count++; excByType[e.type].amt+=e.amt; });
-  const excSumEl = document.getElementById('cfo-exc-summary');
-  const excIcon = {'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦'};
-  if(excSumEl) excSumEl.innerHTML = Object.entries(excByType).length ? Object.entries(excByType).map(([t,d])=>`
-    <div class="cfo-exc-row">
-      <span style="font-size:16px">${excIcon[t]||'⚠️'}</span>
-      <div style="flex:1"><div style="font-weight:700;color:var(--t1)">${t}</div><div style="font-size:11px;color:var(--t3)">${d.count} case${d.count>1?'s':''}</div></div>
-      <div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$${$fk(d.amt)}</div>
-    </div>`).join('') : '<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
-}
-
-// ── Hook into sp() to trigger worklist/cfo builds ──
-const _origSp = sp;
-function sp(id){
-  _origSp(id);
-  const pid = ({engine:'cash-app','cash-app':'cash-app',remittance:'remittance',inv:'invoices',rem:'remittance',posting:'posting',pricing:'settings',audit:'audit'})[id]||id;
-  if(pid==='worklist') buildWorklist();
-  if(pid==='cfo') updateCfoSummary();
-  // Update sidebar for new panels
-  ['worklist','cfo'].forEach(p => {
-    const sbi = document.getElementById('sbi-'+p);
-    if(sbi) sbi.classList.toggle('active', p===pid);
-  });
-}
-
-// ── Hook into updTop/updDash to refresh worklist ──
-const _origUpdTop2 = updTop;
-function updTop(){
-  _origUpdTop2();
-  // Refresh worklist badge
-  const urgent = EXC.filter(e=>!e.s||e.s==='Open');
   const unallocated = PAY.filter(p => {
     const hasResult = RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
     const hasExc = EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
     return !hasResult && !hasExc && !p.dp;
   });
+  const dpays = PAY.filter(p=>p.dp);
+  const allocList = document.getElementById('wl-alloc-list');
+  const allocCt = document.getElementById('wl-alloc-ct');
+  if(allocCt){ allocCt.textContent = unallocated.length+dpays.length; allocCt.style.display = (unallocated.length+dpays.length)?'inline-flex':'none'; }
+
+  if((unallocated.length||dpays.length)&&allocList){
+    const items=[];
+    if(unallocated.length){
+      const byCust={};
+      unallocated.forEach(p=>{const k=p.c||p.a;if(!byCust[k])byCust[k]={c:p.c,a:p.a,payments:[],total:0};byCust[k].payments.push(p);byCust[k].total+=p.amt;});
+      Object.values(byCust).slice(0,5).forEach(cg=>{
+        const acct=(cg.a||'').replace(/'/g,"\\'");
+        items.push({cls:'info',icon:'💳',title:cg.c||cg.a,sub:cg.payments.length+' payment'+(cg.payments.length>1?'s':'')+' waiting · '+(cg.payments[0].m||'ACH'),amt:'$'+$fk(cg.total),action:'Allocate',fn:"wlGoAlloc('"+acct+"')"});
+      });
+      if(Object.keys(byCust).length>5) items.push({cls:'info',icon:'💳',title:(Object.keys(byCust).length-5)+' more customers with payments',sub:'Click to open the full allocation workspace',amt:'',action:'Open all',fn:"wlGoMatch()"});
+    }
+    if(dpays.length) items.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Down payments — apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce((s,p)=>s+p.amt,0)),action:'Review',fn:"wlGoMatch()"});
+    allocList.innerHTML=items.map(item=>`<div class="wl-item ${item.cls}" onclick="${item.fn}"><div class="wl-item-icon">${item.icon}</div><div class="wl-item-body"><div class="wl-item-title">${item.title}</div><div class="wl-item-sub">${item.sub}</div></div>${item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':''}<div class="wl-item-cta">${item.action} →</div></div>`).join('');
+  } else if(allocList){
+    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittance data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittance</button></div>')+'</div>';
+  }
+
   const exportReady = RES.filter(r=>(r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported);
-  const totalAction = urgent.length + unallocated.length + exportReady.length;
-  const wlBadge = document.getElementById('sb-wl-ct');
-  if(wlBadge){ wlBadge.textContent = totalAction; wlBadge.style.display = totalAction ? 'inline-flex' : 'none'; }
-  // If worklist is active, rebuild it
-  const wlPanel = document.getElementById('p-worklist');
-  if(wlPanel && wlPanel.classList.contains('active')) buildWorklist();
-  // If CFO is active, rebuild it
-  const cfoPanel = document.getElementById('p-cfo');
-  if(cfoPanel && cfoPanel.classList.contains('active')) updateCfoSummary();
+  const exportList = document.getElementById('wl-export-list');
+  const exportCt = document.getElementById('wl-export-ct');
+  if(exportCt){ exportCt.textContent=exportReady.length; exportCt.style.display=exportReady.length?'inline-flex':'none'; }
+
+  if(exportReady.length&&exportList){
+    const totalAmt=exportReady.reduce((s,r)=>s+r.pd,0);
+    const byCust={};exportReady.forEach(r=>{const k=r.c||r.a;if(!byCust[k])byCust[k]={c:r.c,a:r.a,rows:[],total:0};byCust[k].rows.push(r);byCust[k].total+=r.pd;});
+    const custSummary=Object.values(byCust).slice(0,3).map(cg=>cg.c||cg.a).join(', ');
+    exportList.innerHTML=`<div class="wl-item ok" onclick="sp('posting')"><div class="wl-item-icon">📤</div><div class="wl-item-body"><div class="wl-item-title">${exportReady.length} record${exportReady.length>1?'s':''} ready for SAP posting</div><div class="wl-item-sub">${custSummary}${Object.keys(byCust).length>3?' and '+(Object.keys(byCust).length-3)+' more':''} · Download SAP F-28 posting file</div></div><div class="wl-item-amount">$${$fk(totalAmt)}</div><div class="wl-item-cta">Export →</div></div>`;
+  } else if(exportList){
+    exportList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">📋</div><div class="wl-empty-title">Nothing ready to export</div><div class="wl-empty-sub">Approve allocations in the Cash Application workspace.</div></div>';
+  }
+
+  const done = RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
+  const doneSection = document.getElementById('wl-done-section');
+  const doneList = document.getElementById('wl-done-list');
+  const doneCt = document.getElementById('wl-done-ct');
+  if(doneCt) doneCt.textContent=done.length;
+  if(doneSection) doneSection.style.display=done.length?'block':'none';
+  if(done.length&&doneList){
+    const byCust={};done.forEach(r=>{const k=r.c||r.a;if(!byCust[k])byCust[k]={c:r.c,a:r.a,rows:[],total:0};byCust[k].rows.push(r);byCust[k].total+=r.pd;});
+    doneList.innerHTML=Object.values(byCust).slice(0,4).map(cg=>`<div class="wl-item ok" onclick="wlGoReview()"><div class="wl-item-icon">✅</div><div class="wl-item-body"><div class="wl-item-title">${cg.c||cg.a}</div><div class="wl-item-sub">${cg.rows.length} invoice${cg.rows.length>1?'s':''} matched exactly</div></div><div class="wl-item-amount">$${$fk(cg.total)}</div><div class="wl-item-cta" style="background:var(--g-bg);border-color:rgba(16,185,129,.2);color:var(--g-t)">✓ Done</div></div>`).join('');
+  }
+
+  const pillsEl=document.getElementById('wl-summary-pills');
+  if(pillsEl){
+    const pills=[];
+    if(urgent.length) pills.push(`<div class="wl-summary-pill urgent" onclick="wlGoExc()">🔴 ${urgent.length} exception${urgent.length>1?'s':''}</div>`);
+    if(unallocated.length) pills.push(`<div class="wl-summary-pill warn" onclick="wlGoMatch()">💳 ${unallocated.length} to allocate</div>`);
+    if(exportReady.length) pills.push(`<div class="wl-summary-pill good" onclick="sp('posting')">📤 ${exportReady.length} ready to export</div>`);
+    if(done.length&&!urgent.length&&!unallocated.length) pills.push(`<div class="wl-summary-pill good">✅ ${done.length} matched today</div>`);
+    pillsEl.innerHTML=pills.join('');
+  }
+
+  const wlBadge=document.getElementById('sb-wl-ct');
+  const totalAction=urgent.length+unallocated.length+exportReady.length;
+  if(wlBadge){ wlBadge.textContent=totalAction; wlBadge.style.display=totalAction?'inline-flex':'none'; }
 }
 
-// ── Override launchApp to land on worklist ──
-const _origLaunchApp2 = launchApp;
-function launchApp(user){
-  _origLaunchApp2(user);
-  // Override: navigate to worklist as default landing
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  const wl = document.getElementById('p-worklist');
-  if(wl) wl.classList.add('active');
-  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
-  const sbiWl = document.getElementById('sbi-worklist');
-  if(sbiWl) sbiWl.classList.add('active');
+// Navigation helpers for worklist (avoid passing complex strings as onclick)
+function wlGoExc(){ setCaTab('exc',document.getElementById('ca-tab-exc')); sp('cash-app'); }
+function wlGoMatch(){ setCaTab('match',document.getElementById('ca-tab-match')); sp('cash-app'); }
+function wlGoReview(){ setCaTab('review',document.getElementById('ca-tab-review')); sp('cash-app'); }
+function wlGoAlloc(acct){
+  var idx=PAY.findIndex(function(p){return p.a===acct;});
+  setCaTab('match',document.getElementById('ca-tab-match'));
+  sp('cash-app');
+  if(idx>=0) setTimeout(function(){ var sel=document.getElementById('eng-pay-sel'); if(sel){sel.value=idx;engLoadPayment(idx);} },200);
+}
+
+// ── CFO Summary ──
+var CFO_PERIOD='month';
+function setCfoPeriod(p,btn){
+  CFO_PERIOD=p;
+  document.querySelectorAll('.cfo-period-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  updateCfoSummary();
+}
+
+function updateCfoSummary(){
+  var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  var setW=function(id,w){var el=document.getElementById(id);if(el)el.style.width=w;};
+  var tp=PAY.reduce(function(s,p){return s+p.amt;},0);
+  var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
+  var ma=matched.reduce(function(s,r){return s+r.pd;},0);
+  var ua=EXC.reduce(function(s,e){return s+e.amt;},0);
+  var spc=EXC.filter(function(e){return e.type==='Short pay';});
+  var spAmt=spc.reduce(function(s,e){return s+e.amt;},0);
+  var rt=tp>0?(ma/tp*100):0;
+  var autoCount=matched.length;
+  var hoursSaved=autoCount*8/60;
+  var dollarsSaved=hoursSaved*65;
+
+  if(hoursSaved>0){
+    setEl('cfo-hours-saved',hoursSaved.toFixed(1)+' hours saved this session');
+    setEl('cfo-hero-sub',autoCount+' payments auto-matched × 8 min baseline = '+(autoCount*8)+' minutes of manual work eliminated');
+  } else {
+    setEl('cfo-hours-saved','No matches yet');
+    setEl('cfo-hero-sub','Import data and run matching to see your ROI');
+  }
+  setEl('cfo-hero-matched',$fk(ma));
+  setEl('cfo-hero-rate',tp>0?rt.toFixed(1)+'%':'—');
+  setEl('cfo-hero-payments',PAY.length);
+  setEl('cfo-hero-invoices',matched.length);
+
+  if(dollarsSaved>0){
+    setEl('cfo-savings-headline','$'+$f(dollarsSaved)+' in labor cost saved');
+    var bodyEl=document.getElementById('cfo-savings-body');
+    if(bodyEl)bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched × <strong>8 min</strong> manual baseline × <strong>$65/hr</strong> labor rate = <strong>$'+$f(dollarsSaved)+'</strong> this session.';
+  } else {
+    setEl('cfo-savings-headline','$0 saved — no data yet');
+    var bodyEl2=document.getElementById('cfo-savings-body');
+    if(bodyEl2)bodyEl2.textContent='Import invoices and remittance, then run matching to calculate your ROI.';
+  }
+
+  setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
+  var stpEl=document.getElementById('cfo-stp-trend');
+  if(stpEl)stpEl.style.color=rt>=80?'var(--g-t)':rt>=50?'var(--am-t)':'var(--r-t)';
+  setEl('cfo-exc-rate',PAY.length>0?(EXC.filter(function(e){return !e.s||e.s==='Open';}).length/PAY.length*100).toFixed(1)+'%':'—');
+  setEl('cfo-exc-count',EXC.filter(function(e){return !e.s||e.s==='Open';}).length+' open exceptions');
+  setEl('cfo-shortpay-amt','$'+$f(spAmt));
+  setEl('cfo-shortpay-count',spc.length+' invoice'+(spc.length!==1?'s':'')+' affected');
+  setEl('cfo-unapplied','$'+$f(ua));
+  setEl('cfo-total',$fk(tp));
+  setEl('cfo-total-sub',INV.length+' invoices · '+PAY.length+' payments');
+  setEl('cfo-roi-auto',autoCount);
+  setEl('cfo-roi-hours',hoursSaved.toFixed(1)+' hrs');
+  setEl('cfo-roi-dollars','$'+$f(dollarsSaved));
+  setEl('cfo-bar-auto-val',autoCount);
+  setEl('cfo-bar-exc-val',EXC.length);
+  setEl('cfo-bar-unapp-val',PAY.filter(function(p){return p.coa;}).length);
+
+  var total=Math.max(autoCount+EXC.length+PAY.filter(function(p){return p.coa;}).length,1);
+  setTimeout(function(){
+    setW('cfo-bar-auto',(autoCount/total*100).toFixed(1)+'%');
+    setW('cfo-bar-exc',(EXC.length/total*100).toFixed(1)+'%');
+    setW('cfo-bar-unapp',(PAY.filter(function(p){return p.coa;}).length/total*100).toFixed(1)+'%');
+  },100);
+
+  var cn={};RES.forEach(function(r){cn[r.st]=(cn[r.st]||0)+1;});
+  var tt=Object.values(cn).reduce(function(s,v){return s+v;},0)||1;
+  var co={Exact:'#10B981','Subset exact':'#3B82F6','Short pay':'#F59E0B',Overpay:'#F97316','Amount match':'#8B5CF6'};
+  var mbEl=document.getElementById('cfo-match-breakdown');
+  var mlEl=document.getElementById('cfo-match-total-lbl');
+  if(mlEl)mlEl.textContent=RES.length+' total records';
+  if(mbEl)mbEl.innerHTML=Object.entries(cn).length?Object.entries(cn).map(function(e){var s=e[0],ct=e[1];return '<div class="cfo-bar-row"><div class="cfo-bar-label">'+s+'</div><div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:'+(ct/tt*100).toFixed(1)+'%;background:'+(co[s]||'var(--p)')+'"></div></div><div class="cfo-bar-val">'+ct+'</div></div>';}).join(''):'<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
+
+  var excByType={};EXC.forEach(function(e){excByType[e.type]=excByType[e.type]||{count:0,amt:0};excByType[e.type].count++;excByType[e.type].amt+=e.amt;});
+  var excSumEl=document.getElementById('cfo-exc-summary');
+  var excIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦'};
+  if(excSumEl)excSumEl.innerHTML=Object.entries(excByType).length?Object.entries(excByType).map(function(e){var t=e[0],d=e[1];return '<div class="cfo-exc-row"><span style="font-size:16px">'+(excIcon[t]||'⚠️')+'</span><div style="flex:1"><div style="font-weight:700;color:var(--t1)">'+t+'</div><div style="font-size:11px;color:var(--t3)">'+d.count+' case'+(d.count>1?'s':'')+'</div></div><div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$'+$fk(d.amt)+'</div></div>';}).join(''):'<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
+}
+
+// ── Refresh worklist badge (called after match/import operations) ──
+function refreshWlBadge(){
+  var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
+  var unallocated=PAY.filter(function(p){
+    var hasResult=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});
+    var hasExc=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});
+    return !hasResult&&!hasExc&&!p.dp;
+  });
+  var exportReady=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
+  var totalAction=urgent.length+unallocated.length+exportReady.length;
+  var wlBadge=document.getElementById('sb-wl-ct');
+  if(wlBadge){wlBadge.textContent=totalAction;wlBadge.style.display=totalAction?'inline-flex':'none';}
+  var wlPanel=document.getElementById('p-worklist');
+  if(wlPanel&&wlPanel.classList.contains('active'))buildWorklist();
+  var cfoPanel=document.getElementById('p-cfo');
+  if(cfoPanel&&cfoPanel.classList.contains('active'))updateCfoSummary();
+}
+
+// ── Navigate to worklist on login (called from launchApp) ──
+function navToWorklist(){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  var wl=document.getElementById('p-worklist');
+  if(wl)wl.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
+  var sbiWl=document.getElementById('sbi-worklist');
+  if(sbiWl)sbiWl.classList.add('active');
   buildWorklist();
 }
+
+// ── sp() extension for new panels (safe — does not override sp) ──
+document.addEventListener('DOMContentLoaded', function(){
+  // Patch the sidebar buttons for worklist and cfo
+  var sbiWl=document.getElementById('sbi-worklist');
+  var sbiCfo=document.getElementById('sbi-cfo');
+  if(sbiWl) sbiWl.onclick=function(){
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
+    sbiWl.classList.add('active');
+    var wl=document.getElementById('p-worklist');
+    if(wl)wl.classList.add('active');
+    buildWorklist();
+  };
+  if(sbiCfo) sbiCfo.onclick=function(){
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
+    sbiCfo.classList.add('active');
+    var cfo=document.getElementById('p-cfo');
+    if(cfo)cfo.classList.add('active');
+    updateCfoSummary();
+  };
+});
 
 
 </script>
