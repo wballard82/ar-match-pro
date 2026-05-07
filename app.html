@@ -117,17 +117,11 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
 #login-screen {
   position: fixed; inset: 0; z-index: 200; overflow: auto;
   display: flex; align-items: center; justify-content: center;
-  transition: none;
   background:
     radial-gradient(ellipse 140% 80% at 65% 35%, rgba(59,130,246,.14) 0%, transparent 55%),
     radial-gradient(ellipse 80% 60% at 8% 85%, rgba(16,185,129,.09) 0%, transparent 50%),
     radial-gradient(ellipse 60% 50% at 90% 10%, rgba(139,92,246,.07) 0%, transparent 45%),
     var(--bg);
-}
-#login-screen[style*="display: none"],
-#login-screen[style*="display:none"] {
-  pointer-events: none !important;
-  visibility: hidden !important;
 }
 
 
@@ -4412,7 +4406,7 @@ function setUserDisplay(user){
 
 function launchApp(user){
   var ls=document.getElementById('login-screen');
-  if(ls){ls.style.cssText='display:none!important;visibility:hidden!important;pointer-events:none!important;z-index:-1!important;';}
+  if(ls){ls.style.display='none';}
   const appEl=document.getElementById('app');
   if(appEl){appEl.style.display='flex';appEl.style.visibility='visible';appEl.classList.add('visible');}
   document.body.style.overflow='hidden';
@@ -6586,24 +6580,43 @@ function sp(id){
   if(id==='reporting') setTimeout(updReporting,50);
 }
 
+function cleanupLoginAndOverlays(){
+  // Fully hide login screen and remove it from pointer event flow
+  var ls=document.getElementById('login-screen');
+  if(ls){
+    ls.style.display='none';
+    ls.style.visibility='hidden';
+    ls.style.pointerEvents='none';
+    ls.style.zIndex='-1';
+  }
+  // Ensure app is visible and interactive
+  var app=document.getElementById('app');
+  if(app){
+    app.style.display='flex';
+    app.style.visibility='visible';
+    app.style.pointerEvents='auto';
+    app.classList.add('visible');
+  }
+  // Close any stray overlays
+  ['imp-modal','upgrade-modal','pricing-modal'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.classList.remove('open');
+  });
+  var excMo=document.getElementById('exc-modal-overlay');
+  if(excMo) excMo.style.display='none';
+  var mp=document.getElementById('match-progress');
+  if(mp) mp.classList.remove('show');
+}
+
 function launchApp(user){
   if(launchApp._running){console.error('launchApp re-entry blocked');return;}
-  // Immediately hide login screen and show app BEFORE any processing
-  var _ls=document.getElementById('login-screen');
-  var _app=document.getElementById('app');
-  if(_ls){_ls.style.cssText='display:none!important;visibility:hidden!important;pointer-events:none!important;z-index:-1!important;';}
-  if(_app){_app.style.display='flex';_app.classList.add('visible');}
   launchApp._running=true;
-  try{ _origLaunchApp(user); }catch(_e){
-    // Non-fatal: app is already showing, just log the error
-    console.warn('launchApp setup error (non-fatal):', _e.message);
-    if(typeof toast==='function') toast('Login warning: '+_e.message.slice(0,60),'warn');
-  }finally{ launchApp._running=false; }
-  // Call buildWorklist immediately so date/greeting show correctly
-  setTimeout(function(){
-    buildWorklist();
-  }, 50);
-  // Welcome back + init
+  // Hide login screen and show app before any async work
+  cleanupLoginAndOverlays();
+  try{ _origLaunchApp(user); }finally{ launchApp._running=false; }
+  // Rebuild worklist after init
+  setTimeout(function(){ buildWorklist(); }, 50);
+  // Welcome back + secondary init
   setTimeout(function(){
     var name=user.name?(user.name.split(' ')[0]):'';
     if(name&&!IS_DEMO) toast('Welcome back, '+name+' 👋');
