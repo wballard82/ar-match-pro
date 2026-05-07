@@ -657,9 +657,9 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
       <!-- SIGN IN -->
       <div id="login-form">
         <div class="login-label">Email</div>
-        <input class="login-input" type="email" id="li-email" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doLogin()">
+        <input class="login-input" type="email" id="li-email" placeholder="you@company.com" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()">
         <div class="login-label">Password</div>
-        <input class="login-input" type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <input class="login-input" type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
           <input type="checkbox" id="li-remember" style="width:15px;height:15px;cursor:pointer;accent-color:var(--p)">
           <label for="li-remember" style="font-size:13px;color:var(--t2);cursor:pointer;user-select:none">Remember me</label>
@@ -691,7 +691,7 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
         <button class="login-btn" onclick="doForgotPassword()">Send reset link →</button>
         <div class="login-switch"><a onclick="showLogin()">← Back to sign in</a></div>
       </div>
-      <div class="plan-hint" id="login-plan-hint">Need a license? <a onclick="goToCheckout('starter')">View pricing →</a></div>
+      
     </div>
   </div>
 </div>
@@ -825,9 +825,7 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
   </div>
   <div class="sidebar-sec">
     <div class="sl">Admin</div>
-    <div class="ni" onclick="sp('pricing',this)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M4 8h2M8 6v4M11 7h1"/></svg>Plans & Pricing
-    </div>
+    
     <div class="ni" onclick="sp('settings',this)">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>Settings
     </div>
@@ -1004,12 +1002,45 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
   <div class="ph">
     <div class="pt">Cash Application</div>
     <div class="ps">NetSuite-style allocation workspace · select payment → allocate invoices → export to posting</div>
-    <div class="ph-actions">
-      <button class="btn btn-outline btn-sm" onclick="runMatch()" title="Run automated matching across all payments">
+  </div>
+  <!-- Top filters bar -->
+  <div style="display:flex;align-items:center;gap:10px;padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--bdr);flex-wrap:wrap;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:6px">
+      <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Bank Account</label>
+      <select id="ca-bank-sel" style="padding:5px 9px;border:1.5px solid var(--bdr);border-radius:var(--r6);font-size:12.5px;font-family:var(--font);color:var(--t1);background:var(--surface);outline:none" onchange="caFilterUpdate()">
+        <option value="">All accounts</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Currency</label>
+      <select id="ca-ccy-sel" style="padding:5px 9px;border:1.5px solid var(--bdr);border-radius:var(--r6);font-size:12.5px;font-family:var(--font);color:var(--t1);background:var(--surface);outline:none" onchange="caFilterUpdate()">
+        <option value="">All</option>
+        <option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Date From</label>
+      <input type="date" id="ca-date-from" style="padding:5px 9px;border:1.5px solid var(--bdr);border-radius:var(--r6);font-size:12.5px;font-family:var(--font);color:var(--t1);background:var(--surface);outline:none" onchange="caFilterUpdate()">
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <label style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Date To</label>
+      <input type="date" id="ca-date-to" style="padding:5px 9px;border:1.5px solid var(--bdr);border-radius:var(--r6);font-size:12.5px;font-family:var(--font);color:var(--t1);background:var(--surface);outline:none" onchange="caFilterUpdate()">
+    </div>
+    <div style="margin-left:auto;display:flex;gap:7px">
+      <button class="btn btn-outline btn-sm" onclick="runMatch()">
         <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="4,2 14,8 4,14"/></svg>
         Auto-match all
       </button>
     </div>
+  </div>
+  <!-- Workspace tabs -->
+  <div style="display:flex;gap:0;background:var(--surface);border-bottom:1px solid var(--bdr);flex-shrink:0;overflow-x:auto">
+    <button id="ca-tab-match" onclick="setCaTab('match')" style="padding:10px 18px;font-size:13px;font-weight:600;border:none;border-bottom:2.5px solid var(--p);background:var(--surface);color:var(--p);cursor:pointer;white-space:nowrap;font-family:var(--font)">To Be Matched</button>
+    <button id="ca-tab-review" onclick="setCaTab('review')" style="padding:10px 18px;font-size:13px;font-weight:600;border:none;border-bottom:2.5px solid transparent;background:var(--surface);color:var(--t2);cursor:pointer;white-space:nowrap;font-family:var(--font)">Review</button>
+    <button id="ca-tab-exc" onclick="setCaTab('exc')" style="padding:10px 18px;font-size:13px;font-weight:600;border:none;border-bottom:2.5px solid transparent;background:var(--surface);color:var(--t2);cursor:pointer;white-space:nowrap;font-family:var(--font)">Exceptions</button>
+    <button id="ca-tab-acct" onclick="setCaTab('acct')" style="padding:10px 18px;font-size:13px;font-weight:600;border:none;border-bottom:2.5px solid transparent;background:var(--surface);color:var(--t2);cursor:pointer;white-space:nowrap;font-family:var(--font)">Account Transaction</button>
+    <button id="ca-tab-je" onclick="setCaTab('je')" style="padding:10px 18px;font-size:13px;font-weight:600;border:none;border-bottom:2.5px solid transparent;background:var(--surface);color:var(--t2);cursor:pointer;white-space:nowrap;font-family:var(--font)">Add Journal Entry</button>
+    <button id="ca-tab-recon" onclick="setCaTab('recon')" style="padding:10px 18px;font-size:13px;font-weight:600;border:none;border-bottom:2.5px solid transparent;background:var(--surface);color:var(--t2);cursor:pointer;white-space:nowrap;font-family:var(--font)">Reconcile Account Statement</button>
   </div>
   <div class="pb" style="display:flex;flex-direction:column;gap:14px">
 
@@ -1084,12 +1115,16 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
       <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--bdr)">
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead><tr style="background:var(--s2)">
-            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr);width:40px"></th>
-            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Invoice #</th>
-            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">PO #</th>
-            <th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Invoice Amt</th>
+            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr);width:34px"></th>
+            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Account</th>
+            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Customer</th>
+            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Invoice</th>
+            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">PO</th>
+            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Sales Order</th>
+            <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Document</th>
+            <th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Amount</th>
+            <th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Balance</th>
             <th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Apply Amount</th>
-            <th style="padding:9px 10px;text-align:right;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Variance</th>
             <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Status</th>
             <th style="padding:9px 10px;text-align:center;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Conf %</th>
             <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bdr)">Exception</th>
@@ -1174,13 +1209,19 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
   <div class="pb" style="padding-top:10px">
     <div class="card" style="margin-bottom:10px">
       <div class="ch"><div class="ct">Export format</div><div class="ca"><button class="btn btn-p btn-sm" onclick="exportPost()"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>Download CSV</button></div></div>
-      <div style="padding:10px 16px"><div class="fps"><div class="fp sel" onclick="selFmt(this)">Generic CSV</div><div class="fp" onclick="selFmt(this)">SAP F-28 ref</div><div class="fp pro-only" onclick="checkFeature('netsuite')">NetSuite journal 🔒</div><div class="fp pro-only" onclick="checkFeature('dynamics')">Dynamics AX 🔒</div></div></div>
+      <div style="padding:10px 16px"><div class="fps">
+  <div class="fp sel" onclick="selFmt(this)">CSV</div>
+  <div class="fp" onclick="selFmt(this)">Excel</div>
+  <div class="fp" onclick="selFmt(this)">SAP</div>
+  <div class="fp" onclick="checkFeature('netsuite');selFmt(this)">NetSuite</div>
+  <div class="fp" onclick="checkFeature('dynamics');selFmt(this)">Dynamics AX</div>
+</div></div>
     </div>
     <div class="card">
       <div class="tb"><div class="tbr"><span class="rc" id="post-ct">0 rows</span></div></div>
       <div class="tw tw-h">
         <table id="post-tbl">
-          <thead><tr><th>Account</th><th>Customer</th><th>Payment date</th><th class="key">Invoice #</th><th class="key">Document #</th><th style="text-align:right" class="key">Post amount</th><th style="text-align:right">Short pay</th><th>Match method</th><th>Approved</th></tr></thead>
+          <thead><tr><th onclick="sortTbl('post-tbl',0)">Account<span class="si2"></span></th><th onclick="sortTbl('post-tbl',1)">Customer<span class="si2"></span></th><th onclick="sortTbl('post-tbl',2)">Payment Date<span class="si2"></span></th><th onclick="sortTbl('post-tbl',3)" class="key">Invoice<span class="si2"></span></th><th onclick="sortTbl('post-tbl',4)">PO<span class="si2"></span></th><th onclick="sortTbl('post-tbl',5)">Sales Order<span class="si2"></span></th><th onclick="sortTbl('post-tbl',6)">Type<span class="si2"></span></th><th onclick="sortTbl('post-tbl',7)" class="key">Document<span class="si2"></span></th><th onclick="sortTbl('post-tbl',8)" style="text-align:right" class="key">Post Amount<span class="si2"></span></th><th onclick="sortTbl('post-tbl',9)" style="text-align:right">Short Pay<span class="si2"></span></th><th onclick="sortTbl('post-tbl',10)">Approved<span class="si2"></span></th></tr></thead>
           <tbody id="post-tb"><tr><td colspan="9"><div class="em"><div class="em-icon">📤</div><div class="em-t">No posting data</div></div></td></tr></tbody>
         </table>
       </div>
@@ -1253,6 +1294,28 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
       <div style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
         <div style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em">Advanced AR Metrics</div>
         <div style="font-size:11px;color:var(--t3)">Calculated from invoice + payment data</div>
+      </div>
+      <!-- Exception Aging row -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
+        <div class="rpt-kpi-card">
+          <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#EF4444,#B91C1C)">⏰</div>
+          <div class="rpt-kpi-label">Exception Aging (Avg Days)</div>
+          <div class="rpt-kpi-val" id="rpt-exc-age">—</div>
+          <div class="rpt-kpi-sub">Avg days open exceptions outstanding</div>
+          <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-exc-age-bar" style="background:var(--r)"></div></div>
+        </div>
+        <div class="rpt-kpi-card">
+          <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#F59E0B,#B45309)">🏷</div>
+          <div class="rpt-kpi-label">Top Issue</div>
+          <div class="rpt-kpi-val" id="rpt-top-issue" style="font-size:18px">—</div>
+          <div class="rpt-kpi-sub" id="rpt-top-issue-desc">No exceptions detected</div>
+        </div>
+        <div class="rpt-kpi-card">
+          <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#10B981,#059669)">💰</div>
+          <div class="rpt-kpi-label">Cash Matched Today</div>
+          <div class="rpt-kpi-val" id="rpt-matched-today" style="color:var(--g)">$0</div>
+          <div class="rpt-kpi-sub">From current match results</div>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
 
@@ -1441,6 +1504,29 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
         </div>
       </div>
 
+      <!-- PLANS & PRICING in Settings -->
+      <div class="card">
+        <div class="ch"><div class="ct">💳 Plans & Pricing</div><div class="ca"><button class="btn btn-outline btn-sm" onclick="showUpgrade('Plans','Choose the plan that fits your team.')">View all plans</button></div></div>
+        <div style="padding:4px 16px 14px">
+          <div class="sr">
+            <div class="slbl"><div class="slbl-t">Current plan</div><div class="sdesc" id="settings-plan-name">Demo</div></div>
+            <button class="btn btn-upgrade btn-sm" onclick="showUpgrade('Upgrade your plan','Unlock unlimited rows, multi-invoice allocation, SAP/NetSuite exports, and team features.')">Upgrade</button>
+          </div>
+          <div class="sr">
+            <div class="slbl"><div class="slbl-t">Starter — $399/month</div><div class="sdesc">1 user · Invoice & PO matching · 5,000 rows · CSV export</div></div>
+            <button class="btn btn-outline btn-sm" onclick="goToCheckout('starter')">Select</button>
+          </div>
+          <div class="sr">
+            <div class="slbl"><div class="slbl-t">Pro — $999/month</div><div class="sdesc">Unlimited rows · Multi-invoice allocation · SAP F-28 · NetSuite export · Priority support</div></div>
+            <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select</button>
+          </div>
+          <div class="sr">
+            <div class="slbl"><div class="slbl-t">Team — $1,999/month</div><div class="sdesc">3–10 users · Roles & permissions · Audit logs · Dedicated onboarding · SLA</div></div>
+            <button class="btn btn-outline btn-sm" onclick="goToCheckout('team')">Select</button>
+          </div>
+        </div>
+      </div>
+
       <!-- SIGN OUT -->
       <div style="display:flex;justify-content:flex-end">
         <button class="btn btn-outline" onclick="doLogout()">
@@ -1495,9 +1581,12 @@ textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pg)}
             <span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--bl-bg);color:var(--bl-t)">XLSX</span>
             <span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--r-bg);color:var(--r-t)">PDF</span>
             <span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--am-bg);color:var(--am-t)">JPG/PNG</span>
+            <span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--pu-bg);color:var(--pu-t)">OFX/QFX</span>
+            <span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--pu-bg);color:var(--pu-t)">BAI2</span>
+            <span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--pu-bg);color:var(--pu-t)">CAMT.053</span>
           </div>
         </div>
-        <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tif,.tiff,.webp" style="display:none" onchange="handleFile(this)">
+        <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tif,.tiff,.webp,.ofx,.qfx,.bai,.bai2,.xml" style="display:none" onchange="handleFile(this)">
         <div id="parse-progress">
           <div class="pp-row"><div class="pp-spin"></div><span id="parse-msg">Processing…</span></div>
           <div class="pp-bw"><div id="parse-bar"></div></div>
@@ -1878,7 +1967,7 @@ window.addEventListener('load',()=>{
 // ══════════════════════════════════════════════════════════
 // REPORTING
 // ══════════════════════════════════════════════════════════
-function updReporting(){
+function _baseUpdReporting(){
   if(!document.getElementById('rpt-matched'))return;
   const now=new Date();
   const asOf=document.getElementById('rpt-as-of');
@@ -2278,7 +2367,7 @@ function toggleRemAlloc(btn,idx){
   row.after(next);
 }
 
-function rRem(){
+function _baseRRem(){
   const tb=document.getElementById('rem-tb');
   if(!PAY.length){tb.innerHTML='<tr><td colspan="14"><div class="em"><div class="em-icon">💳</div><div class="em-t">No remittance data</div></div></td></tr>';document.getElementById('rem-ct').textContent='0 rows';return}
   const mkInp=(val,w,key,idx,type='text')=>{
@@ -2428,15 +2517,6 @@ function confirmExcInv(idx){
   const ex=EXC[idx];if(!ex)return;
   ex.dec='Apply to invoice';ex.appliedToInv=invRef;
   closeModal();finalizeExcResolution(idx,'Apply to invoice');
-}
-function confirmExcAcct(idx){
-  const manual=document.getElementById('exc-acct-manual');
-  const sel=document.getElementById('exc-acct-sel');
-  const acctRef=(manual&&manual.value.trim())||(sel&&sel.value)||'';
-  if(!acctRef){toast('Please select or type an account number','warn');return;}
-  const ex=EXC[idx];if(!ex)return;
-  ex.dec='Post as Unapplied Payment';ex.appliedToAcct=acctRef;
-  closeModal();finalizeExcResolution(idx,'Post as Unapplied Payment');
 }
 function showModal(title,bodyHtml){
   let mo=document.getElementById('exc-modal');
@@ -2679,34 +2759,6 @@ function processImport(){
 function csvDL(rows,fn){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=fn;a.click()}
 function exportTbl(id,hdrs,fn){const tb=document.getElementById(id);const rows=[...tb.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('td')].map(td=>td.innerText.replace(/\n/g,' ').trim()));if(!rows.length||!rows[0][0]){toast('No data','warn');return}csvDL([hdrs,...rows],fn);toast('Exported '+fn)}
 function exportExc(){if(!EXC.length){toast('No exceptions','warn');return}csvDL([EH,...EXC.map(e=>[e.id,e.a,e.c,e.amt,e.ref,e.type,e.detail,e.action,e.dec,e.s])],'exceptions_'+new Date().toISOString().split('T')[0]+'.csv');toast('Exceptions exported')}
-function exportPost(){
-  // Demo users see plan selection before export
-  if(IS_DEMO){
-    showUpgrade('Posting Export','Download your SAP F-28 or NetSuite posting file. Select a plan to activate.');
-    return;
-  }
-  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc);
-  if(!ap.length){toast('No approved results','warn');return}
-  const d=new Date().toISOString().split('T')[0];
-  const excLabel={
-    'Post as Unapplied Payment':'Post to account — unapplied',
-    'Write off':'Write-off — ties to payment',
-    'Bank fee':'Bank fee — ties to payment',
-    'Wire transfer':'Wire memo — ties to payment',
-    'Apply to invoice':'Applied to invoice',
-  };
-  const rows=ap.map(r=>[
-    r.a, r.c, d,
-    r.i||'—', r.d||r.id||'—',
-    r.pd.toFixed(2),
-    (!r.fromExc&&r.vr<-.01)?Math.abs(r.vr).toFixed(2):'0.00',
-    r.fromExc?(excLabel[r.excDec]||r.excDec):r.m,
-    'Yes'
-  ]);
-  csvDL([PH,...rows],'posting_'+d+'.csv');
-  toast('Posting file exported · '+ap.length+' rows (matched + resolved exceptions)');
-}
-
 // ══════════════════════════════════════════════════════════
 // TABLE SORT + FILTER
 // ══════════════════════════════════════════════════════════
@@ -3075,56 +3127,6 @@ function engNavPay(dir){
 }
 
 // ── Render invoice rows ──
-function engRenderRows(){
-  const tbody = document.getElementById('eng-inv-body');
-  if(!tbody) return;
-  if(!ENG_ROWS.length){
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--t3)">
-      No open invoices found for this customer.<br>
-      <small style="font-size:11px">Check that customer names match between invoice and remittance data.</small>
-    </td></tr>`;
-    return;
-  }
-  tbody.innerHTML = ENG_ROWS.map((r,i) => {
-    const inv = r.inv;
-    const disabled = r.alreadyPaid || ENG_LOCKED;
-    const variance = r.selected ? Math.abs(r.applyAmt - inv.amt) : 0;
-    const confClass = r.conf>=80?'conf-high':r.conf>=50?'conf-med':'conf-low';
-    const excBadge = r.excCode
-      ? `<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:${EXC_CODES[r.excCode]?.color||'#94A3B8'}22;color:${EXC_CODES[r.excCode]?.color||'#94A3B8'}">${EXC_CODES[r.excCode]?.label||r.excCode}</span>`
-      : '';
-    return `<tr style="background:${r.selected?'rgba(16,185,129,.06)':''};transition:background .2s" id="eng-row-${i}">
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr)">
-        ${disabled
-          ? `<span title="${r.alreadyPaid?'Already paid':'Locked'}" style="font-size:11px;color:#94A3B8">${r.alreadyPaid?'✗':'🔒'}</span>`
-          : `<input type="checkbox" ${r.selected?'checked':''} onchange="engToggleRow(${i},this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--p)">`}
-      </td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr);font-family:'JetBrains Mono',monospace;font-size:12px">${inv.i||'—'}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.po||'—'}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr);text-align:right;font-family:'JetBrains Mono',monospace">$${$f(inv.amt)}</td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr);text-align:right">
-        <input type="number" min="0" step="0.01" value="${r.applyAmt>0?r.applyAmt:''}" placeholder="0.00"
-          ${disabled||!r.selected?'disabled':''}
-          oninput="engSetAmt(${i},parseFloat(this.value)||0)"
-          style="width:90px;padding:5px 8px;border:1.5px solid ${r.selected&&!disabled?'var(--p)':'var(--bdr)'};border-radius:6px;font-size:12px;font-family:'JetBrains Mono',monospace;text-align:right;background:${r.selected&&!disabled?'var(--bg)':'var(--s2)'};color:var(--t1);outline:none">
-      </td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr);text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:${variance>0?'#F59E0B':'var(--t4)'}">
-        ${r.selected&&variance>0?'$'+$f(variance):'—'}
-      </td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr)">
-        ${r.selected
-          ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(16,185,129,.12);color:#10B981">Applied</span>'
-          : r.alreadyPaid ? '<span style="font-size:11px;color:#94A3B8">Paid</span>'
-          : '<span style="font-size:11px;color:var(--t4)">Open</span>'}
-      </td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr);text-align:center">
-        <span class="${confClass}">${r.conf}%</span>
-      </td>
-      <td style="padding:8px 10px;border-bottom:1px solid var(--bdr)">${excBadge}</td>
-    </tr>`;
-  }).join('');
-}
-
 // ── Toggle row ──
 function engToggleRow(idx, checked){
   if(ENG_LOCKED){toast('Locked — click Reopen to edit','warn');return;}
@@ -3383,6 +3385,240 @@ function engResetUI(){
 
 // engine nav calls engRefreshSel() directly via onclick
 
+
+
+
+// ══════════════════════════════════════════════════════════
+// S7: Cash Application Workspace Tabs
+// ══════════════════════════════════════════════════════════
+let CA_TAB = 'match';
+
+function setCaTab(tab) {
+  CA_TAB = tab;
+  ['match','review','exc','acct','je','recon'].forEach(t => {
+    const btn = document.getElementById('ca-tab-' + t);
+    if (!btn) return;
+    if (t === tab) {
+      btn.style.borderBottomColor = 'var(--p)';
+      btn.style.color = 'var(--p)';
+      btn.style.fontWeight = '700';
+    } else {
+      btn.style.borderBottomColor = 'transparent';
+      btn.style.color = 'var(--t2)';
+      btn.style.fontWeight = '600';
+    }
+  });
+  // Show appropriate content based on tab
+  if (tab === 'exc') {
+    // Redirect to exceptions panel content within cash app
+    const empty = document.getElementById('eng-empty');
+    if (empty) empty.style.display = 'none';
+    toast('Showing exceptions — ' + EXC.filter(e => !e.s || e.s === 'Open').length + ' open');
+  } else if (tab === 'review') {
+    toast('Review — ' + RES.length + ' matched records');
+  } else if (tab === 'je') {
+    toast('Journal Entry — create discrepancy adjustments from the allocation workspace below');
+  } else if (tab === 'recon') {
+    toast('Reconcile — compare bank statement rows to matched payments');
+  } else if (tab === 'acct') {
+    toast('Account Transaction — payment and invoice activity for selected account');
+  }
+}
+
+function caFilterUpdate() {
+  const bank = (document.getElementById('ca-bank-sel') || {}).value || '';
+  const ccy = (document.getElementById('ca-ccy-sel') || {}).value || '';
+  const from = (document.getElementById('ca-date-from') || {}).value || '';
+  const to = (document.getElementById('ca-date-to') || {}).value || '';
+  // Populate bank account dropdown from PAY data
+  const sel = document.getElementById('ca-bank-sel');
+  if (sel && PAY.length) {
+    const accts = [...new Set(PAY.map(p => p.a).filter(Boolean))];
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">All accounts</option>' + accts.map(a => `<option ${a===cur?'selected':''}>${a}</option>`).join('');
+  }
+  // Filter engRefreshSel based on filters
+  if (typeof engRefreshSel === 'function') engRefreshSel();
+}
+
+// ══════════════════════════════════════════════════════════
+// S9: Enhanced engRenderRows with all columns + Balance + Undo
+// ══════════════════════════════════════════════════════════
+// Override engRenderRows to add full column set
+function engRenderRows() {
+  const tbody = document.getElementById('eng-inv-body');
+  if (!tbody) return;
+  if (!ENG_ROWS.length) {
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:28px;color:var(--t3)">
+      No open invoices found for this customer.<br>
+      <small style="font-size:11px">Check that customer names match between invoice and remittance data.</small>
+    </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = ENG_ROWS.map((r, i) => {
+    const inv = r.inv;
+    const disabled = r.alreadyPaid || ENG_LOCKED;
+    const balance = inv.amt - (r.alreadyPaid ? inv.amt : 0);
+    const variance = r.selected ? Math.abs(r.applyAmt - balance) : 0;
+    const confClass = r.conf >= 80 ? 'conf-high' : r.conf >= 50 ? 'conf-med' : 'conf-low';
+    const excBadge = r.excCode
+      ? `<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:${EXC_CODES[r.excCode]?.color||'#94A3B8'}22;color:${EXC_CODES[r.excCode]?.color||'#94A3B8'}">${EXC_CODES[r.excCode]?.label||r.excCode}</span>`
+      : '';
+    const alreadyMsg = r.alreadyPaid ? 'title="This invoice already has payment applied"' : '';
+    return `<tr style="background:${r.selected?'rgba(16,185,129,.06)':r.alreadyPaid?'rgba(148,163,184,.06)':''};opacity:${r.alreadyPaid?.6:1};transition:background .2s" id="eng-row-${i}">
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr)">
+        ${disabled
+          ? `<span ${alreadyMsg} style="font-size:11px;color:#94A3B8;cursor:${r.alreadyPaid?'help':'default'}">${r.alreadyPaid?'✗':'🔒'}</span>`
+          : `<input type="checkbox" ${r.selected?'checked':''} onchange="engToggleRow(${i},this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--p)">`}
+      </td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t2)">${inv.a||'—'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12.5px">${inv.c||'—'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--pd)">${inv.i||'—'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.po||'—'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.so||'—'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.d||'—'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:'JetBrains Mono',monospace">$${$f(inv.amt)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:'JetBrains Mono',monospace;color:${r.alreadyPaid?'var(--r)':r.selected&&balance<inv.amt?'var(--am)':'var(--t1)'}">$${$f(Math.max(0,balance))}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right">
+        <input type="number" min="0" step="0.01" value="${r.applyAmt>0?r.applyAmt:''}" placeholder="0.00"
+          ${disabled||!r.selected?'disabled':''}
+          oninput="engSetAmt(${i},parseFloat(this.value)||0)"
+          style="width:84px;padding:4px 7px;border:1.5px solid ${r.selected&&!disabled?'var(--p)':'var(--bdr)'};border-radius:6px;font-size:12px;font-family:'JetBrains Mono',monospace;text-align:right;background:${r.selected&&!disabled?'var(--bg)':'var(--surface2)'};color:var(--t1);outline:none">
+      </td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr)">
+        ${r.selected
+          ? `<div style="display:flex;align-items:center;gap:4px">
+              <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(16,185,129,.12);color:#10B981">Applied</span>
+              <button onclick="engUndoRow(${i})" title="Undo this allocation" style="font-size:10px;color:var(--t3);background:none;border:1px solid var(--bdr);border-radius:4px;cursor:pointer;padding:1px 5px;font-family:var(--font)" onmouseover="this.style.color='var(--r)'" onmouseout="this.style.color='var(--t3)'">↩</button>
+            </div>`
+          : r.alreadyPaid ? '<span style="font-size:11px;color:#94A3B8">Paid</span>'
+          : '<span style="font-size:11px;color:var(--t3)">Open</span>'}
+      </td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:center">
+        <span class="${confClass}">${r.conf}%</span>
+      </td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr)">${excBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Undo single row allocation without resetting whole match
+function engUndoRow(idx) {
+  if (ENG_LOCKED) { toast('Locked — click Reopen to edit', 'warn'); return; }
+  const r = ENG_ROWS[idx];
+  if (!r) return;
+  engAudit('Undone allocation: ' + r.inv.i + ' · $' + $f(r.applyAmt));
+  r.selected = false;
+  r.applyAmt = 0;
+  engUpdateTotals();
+  engRenderRows();
+  toast('↩ Allocation undone for ' + (r.inv.i || 'invoice'));
+}
+
+// ══════════════════════════════════════════════════════════
+// S13: Exception aging + reporting updates
+// ══════════════════════════════════════════════════════════
+function updExcAging() {
+  const ageEl = document.getElementById('rpt-exc-age');
+  const topEl = document.getElementById('rpt-top-issue');
+  const topDesc = document.getElementById('rpt-top-issue-desc');
+  const todayEl = document.getElementById('rpt-matched-today');
+  if (!ageEl) return;
+
+  // Exception aging
+  const now = new Date();
+  const openExc = EXC.filter(e => !e.s || e.s === 'Open');
+  let avgAge = null;
+  if (openExc.length) {
+    const ages = openExc.map(e => {
+      if (!e.ts) return 1;
+      return Math.max(1, Math.round((now - new Date(e.ts)) / (1000*60*60*24)));
+    });
+    avgAge = Math.round(ages.reduce((a,b) => a+b, 0) / ages.length);
+  }
+  if (ageEl) ageEl.textContent = avgAge !== null ? avgAge + ' days' : '—';
+  const ageBar = document.getElementById('rpt-exc-age-bar');
+  if (ageBar) ageBar.style.width = avgAge ? Math.min(avgAge / 30 * 100, 100) + '%' : '0%';
+
+  // Top issue
+  const cn = {};
+  EXC.forEach(e => { cn[e.type] = (cn[e.type] || 0) + 1; });
+  const top = Object.entries(cn).sort((a,b) => b[1]-a[1])[0];
+  if (topEl) topEl.textContent = top ? top[0].split(' ')[0] : '—';
+  if (topDesc) topDesc.textContent = top ? `${top[0]} — ${top[1]} case${top[1]!==1?'s':''}` : 'No exceptions';
+
+  // Cash matched today
+  const ma = RES.filter(r => r.st==='Exact'||r.st==='Subset exact').reduce((s,r) => s+r.pd, 0);
+  if (todayEl) todayEl.textContent = '$' + $fk(ma);
+
+  // Settings plan name
+  const spn = document.getElementById('settings-plan-name');
+  if (spn) spn.textContent = (PLANS[USER_PLAN]?.name || 'Demo') + ' plan';
+}
+
+// Hook into updReporting
+function updReporting() {
+  _baseUpdReporting();
+  updExcAging();
+}
+
+// ══════════════════════════════════════════════════════════
+// S7: caFilterUpdate — populate bank account on data load
+// ══════════════════════════════════════════════════════════
+// Hook into rRem to refresh bank account filter
+function rRem() {
+  _baseRRem();
+  caFilterUpdate();
+}
+
+// ══════════════════════════════════════════════════════════
+// S6: Updated posting export with new columns
+// ══════════════════════════════════════════════════════════
+function exportPost() {
+  if (IS_DEMO) { showUpgrade('Posting Export', 'Download your posting file. Select a plan to activate.'); return; }
+  const ap = RES.filter(r => r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
+  if (!ap.length) { toast('No approved results', 'warn'); return; }
+  const d = new Date().toISOString().split('T')[0];
+  const typeMap = { 'Direct invoice':'Invoice', 'PO group':'Invoice', 'PO subset':'Invoice',
+    'SO match':'Invoice', 'Amount match':'Invoice', 'Cash Application':'Payment',
+    'Apply to invoice':'Payment', 'Post as Unapplied Payment':'Payment',
+    'Write off':'Adjustment', 'Bank fee':'Adjustment', 'Wire transfer':'Payment' };
+  const PH2 = ['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Short Pay','Approved'];
+  const rows = ap.map(r => {
+    const inv = INV.find(v => v.i === r.i) || {};
+    return [
+      r.a||'', r.c||'', d,
+      r.i||'—', inv.po||r.po||'—', inv.so||r.so||'—',
+      typeMap[r.m]||'Invoice',
+      r.d||r.id||'—',
+      r.pd.toFixed(2),
+      (!r.fromExc&&r.vr<-.01)?Math.abs(r.vr).toFixed(2):'0.00',
+      'Yes'
+    ];
+  });
+  csvDL([PH2, ...rows], 'posting_' + d + '.csv');
+  toast('Posting file exported · ' + ap.length + ' rows');
+}
+
+// ══════════════════════════════════════════════════════════
+// S5: Apply to Invoice / Unapplied — enhanced display
+// ══════════════════════════════════════════════════════════
+// Update confirmExcAcct to show account + customer name
+function confirmExcAcct(idx) {
+  const manual = document.getElementById('exc-acct-manual');
+  const sel = document.getElementById('exc-acct-sel');
+  const acctRef = (manual && manual.value.trim()) || (sel && sel.value) || '';
+  if (!acctRef) { toast('Please select or type an account number', 'warn'); return; }
+  // Find matching customer name
+  const inv = INV.find(v => v.a === acctRef);
+  const custName = inv ? inv.c : PAY.find(p => p.a === acctRef)?.c || '';
+  const ex = EXC[idx]; if (!ex) return;
+  ex.dec = 'Post as Unapplied Payment';
+  ex.appliedToAcct = acctRef;
+  ex.appliedToAcctDisplay = acctRef + (custName ? ' ' + custName : '');
+  closeModal();
+  finalizeExcResolution(idx, 'Post as Unapplied Payment');
+}
 
 </script>
 </body>
