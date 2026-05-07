@@ -1177,6 +1177,521 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 .recon-row { display:flex; gap:16px; padding:12px 0; border-bottom:1px solid var(--bdr); align-items:center; }
 .recon-match-indicator { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
+
+
+/* ═══════════════════════════════════════════════════════════
+   FINAL POLISH — PREMIUM FINTECH OVERRIDES
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Deeper surface system ── */
+:root {
+  --bg:        #070C16;
+  --surface:   #0D1526;
+  --surface2:  #111E32;
+  --surface3:  #172540;
+  --surface4:  #1C2D4F;
+  --bdr:       rgba(99,140,200,.09);
+  --bdr2:      rgba(99,140,200,.16);
+  --bdr3:      rgba(99,140,200,.24);
+  --t1: #EDF2FF;
+  --t2: #7B98C4;
+  --t3: #3D5A80;
+  --t4: #243650;
+  --glass:  rgba(255,255,255,.018);
+  --glass2: rgba(255,255,255,.038);
+  --glass3: rgba(255,255,255,.065);
+  --shadow-xs: 0 1px 3px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04);
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
+  --shadow-md: 0 6px 24px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,.65);
+  --shadow-xl: 0 32px 80px rgba(0,0,0,.75);
+}
+
+[data-theme="light"] {
+  --bg:      #EDF1F7;
+  --surface: #FFFFFF;
+  --surface2: #F5F8FC;
+  --surface3: #EBF0F7;
+  --surface4: #E2EAF3;
+  --bdr:  rgba(60,100,160,.07);
+  --bdr2: rgba(60,100,160,.12);
+  --bdr3: rgba(60,100,160,.18);
+  --t1: #0A1628;
+  --t2: #2E4E78;
+  --t3: #6B8EBF;
+  --t4: #A8C0DC;
+  --glass:  rgba(0,0,0,.012);
+  --glass2: rgba(0,0,0,.025);
+  --glass3: rgba(0,0,0,.045);
+  --shadow-xs: 0 1px 3px rgba(0,0,0,.06);
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.08);
+  --shadow-md: 0 6px 24px rgba(0,0,0,.1);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,.12);
+  --shadow-xl: 0 32px 80px rgba(0,0,0,.14);
+}
+
+/* ── Refined topnav — glassy ── */
+.topnav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--bdr);
+  backdrop-filter: blur(12px);
+}
+
+/* ── KPI strip upgrades ── */
+.kpi-strip {
+  background: var(--surface);
+  height: 80px;
+  border-bottom: 1px solid var(--bdr);
+  gap: 0;
+}
+.kpi-card {
+  padding: 0 22px;
+  border-right: 1px solid var(--bdr);
+  position: relative;
+  overflow: hidden;
+  gap: 2px;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  opacity: 0;
+  transition: opacity .3s;
+}
+.kpi-card.kpi-green::before { background: linear-gradient(90deg, var(--g), var(--cy)); }
+.kpi-card.kpi-blue::before  { background: linear-gradient(90deg, var(--p), var(--pu)); }
+.kpi-card.kpi-amber::before { background: linear-gradient(90deg, var(--am), var(--r)); }
+.kpi-card.kpi-red::before   { background: linear-gradient(90deg, var(--r), #FF6B9D); }
+.kpi-card:hover::before { opacity: 1; }
+.kpi-card-val {
+  font-size: 22px;
+  animation: countUp .6s ease;
+}
+@keyframes countUp { from { opacity:.4; transform:translateY(4px); } to { opacity:1; transform:none; } }
+.kpi-sparkline {
+  height: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  margin-top: 2px;
+  opacity: .7;
+}
+.kpi-spark-bar {
+  width: 3px;
+  border-radius: 1px 1px 0 0;
+  background: currentColor;
+  transition: height .6s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ── Sidebar refinements ── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--bdr);
+}
+.sb-item.active {
+  background: linear-gradient(135deg, rgba(59,130,246,.12), rgba(59,130,246,.05));
+  color: var(--pd);
+  box-shadow: inset 3px 0 0 var(--p), 0 0 20px rgba(59,130,246,.06);
+}
+
+/* ── Panel headers ── */
+.panel-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--bdr);
+  padding: 18px 26px 14px;
+}
+.panel-title { font-size: 19px; }
+
+/* ── PAYMENT FLOW VISUALIZATION ── */
+.payment-flow {
+  margin: 12px 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(59,130,246,.18);
+  background: linear-gradient(135deg, rgba(59,130,246,.05), rgba(16,185,129,.03));
+  box-shadow: 0 2px 20px rgba(59,130,246,.08);
+  display: none;
+  flex-direction: column;
+}
+.pf-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 0;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid rgba(59,130,246,.1);
+}
+.pf-field { display: flex; flex-direction: column; gap: 3px; }
+.pf-label {
+  font-size: 9.5px; font-weight: 700; color: var(--t3);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.pf-val {
+  font-size: 14px; font-weight: 800; color: var(--t1);
+  font-family: var(--mono); letter-spacing: -.3px; line-height: 1.1;
+}
+.pf-val.hero { font-size: 24px; letter-spacing: -.7px; color: var(--pd); }
+.pf-val.green { color: var(--g-t); }
+.pf-val.amber { color: var(--am-t); }
+.pf-status-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 18px;
+  font-size: 11.5px; color: var(--t3);
+}
+/* Progress bar inside pf */
+.pf-progress-wrap {
+  padding: 0 18px 12px;
+}
+.pf-progress-track {
+  height: 5px; background: var(--bdr); border-radius: 3px; overflow: hidden; margin-bottom: 4px;
+}
+.pf-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--p), var(--g));
+  border-radius: 3px;
+  transition: width .6s cubic-bezier(.34,1.56,.64,1);
+  width: 0%;
+}
+.pf-progress-labels {
+  display: flex; justify-content: space-between;
+  font-size: 10.5px; color: var(--t3);
+}
+.pf-progress-labels span { font-weight: 700; color: var(--t2); }
+
+/* Allocation flow diagram */
+.alloc-flow {
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid rgba(59,130,246,.08);
+  max-height: 220px;
+  overflow-y: auto;
+}
+.alloc-flow-payment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(59,130,246,.08);
+  border-radius: 10px;
+  border: 1px solid rgba(59,130,246,.15);
+}
+.alloc-flow-arrow {
+  text-align: center;
+  color: var(--t4);
+  font-size: 13px;
+  padding: 2px 0;
+  letter-spacing: 2px;
+}
+.alloc-flow-group {
+  border: 1px solid var(--bdr);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface2);
+}
+.alloc-flow-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface3);
+  cursor: pointer;
+  transition: background .15s;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t2);
+}
+.alloc-flow-group-header:hover { background: var(--surface4); }
+.alloc-flow-inv {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--bdr);
+  font-size: 12.5px;
+  transition: background .15s;
+}
+.alloc-flow-inv:hover { background: var(--glass); }
+.alloc-flow-inv-ref { font-family: var(--mono); color: var(--pd); font-size: 11.5px; flex: 1; }
+.alloc-flow-inv-amt { font-family: var(--mono); font-weight: 700; font-size: 13px; }
+.alloc-flow-inv-status { width: 80px; text-align: right; }
+.alloc-flow-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(16,185,129,.06);
+  border-radius: 10px;
+  border: 1px solid rgba(16,185,129,.15);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--g-t);
+}
+.alloc-flow-balance.has-remainder {
+  background: rgba(245,158,11,.06);
+  border-color: rgba(245,158,11,.15);
+  color: var(--am-t);
+}
+
+/* ── AI Intelligence Panel upgrades ── */
+.ai-insight-card {
+  background: var(--surface2);
+  border: 1px solid var(--bdr);
+  border-radius: 10px;
+  padding: 11px 13px;
+  margin-bottom: 8px;
+  transition: all .18s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.ai-insight-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+.ai-insight-card.priority-high::before { background: var(--r); }
+.ai-insight-card.priority-med::before  { background: var(--am); }
+.ai-insight-card.priority-low::before  { background: var(--p); }
+.ai-insight-card.priority-ok::before   { background: var(--g); }
+.ai-insight-card:hover { box-shadow: var(--shadow-sm); transform: translateX(2px); }
+.ai-insight-icon { font-size: 16px; flex-shrink: 0; }
+.ai-insight-title { font-size: 12.5px; font-weight: 700; color: var(--t1); line-height: 1.3; }
+.ai-insight-body { font-size: 11.5px; color: var(--t2); margin-top: 3px; line-height: 1.5; }
+.ai-insight-action {
+  margin-top: 7px;
+  font-size: 11px; font-weight: 700;
+  color: var(--pd); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.ai-insight-action:hover { color: var(--t1); }
+.ai-conf-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ai-conf-track {
+  flex: 1; height: 3px; background: var(--bdr);
+  border-radius: 2px; overflow: hidden;
+}
+.ai-conf-fill {
+  height: 100%; border-radius: 2px;
+  transition: width .6s cubic-bezier(.34,1.56,.64,1);
+}
+.ai-conf-label { font-size: 10.5px; font-weight: 700; color: var(--t3); flex-shrink: 0; }
+
+/* ── Queue items — richer ── */
+.pq-item {
+  border-radius: 12px;
+  margin-bottom: 6px;
+  border-color: transparent;
+  background: var(--surface2);
+}
+.pq-item.active {
+  background: linear-gradient(135deg, rgba(59,130,246,.1), rgba(59,130,246,.06));
+  border-color: rgba(59,130,246,.25);
+  box-shadow: 0 2px 12px rgba(59,130,246,.1);
+}
+.pq-item:hover:not(.active) { transform: translateX(2px); }
+
+/* ── Exception cards (not just rows) ── */
+.exc-card {
+  background: var(--surface2);
+  border: 1px solid var(--bdr);
+  border-radius: 12px;
+  margin: 8px 16px;
+  padding: 14px 16px;
+  transition: all .18s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.exc-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+}
+.exc-card.sev-high::before { background: var(--r); }
+.exc-card.sev-med::before  { background: var(--am); }
+.exc-card.sev-low::before  { background: var(--cy); }
+.exc-card:hover { box-shadow: var(--shadow-sm); transform: translateX(3px); }
+.exc-card-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.exc-card-type-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.exc-card-title { font-size: 13.5px; font-weight: 700; color: var(--t1); }
+.exc-card-meta { font-size: 11.5px; color: var(--t3); margin-top: 2px; }
+.exc-card-body { font-size: 12.5px; color: var(--t2); margin-bottom: 10px; line-height: 1.5; }
+.exc-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.exc-card-amount {
+  position: absolute; top: 14px; right: 16px;
+  font-size: 18px; font-weight: 900; font-family: var(--mono);
+}
+
+/* ── Review items — richer ── */
+.review-item {
+  border-bottom: none;
+  margin: 6px 14px;
+  border-radius: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--bdr);
+  padding: 14px 16px;
+}
+.review-item:hover {
+  border-color: var(--bdr2);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+/* ── Workflow status badges ── */
+.ws-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.ws-badge-ready    { background: rgba(16,185,129,.1); color: var(--g-t); border: 1px solid rgba(16,185,129,.2); }
+.ws-badge-pending  { background: rgba(245,158,11,.1); color: var(--am-t); border: 1px solid rgba(245,158,11,.2); }
+.ws-badge-review   { background: rgba(139,92,246,.1); color: var(--pu-t); border: 1px solid rgba(139,92,246,.2); }
+.ws-badge-locked   { background: rgba(100,116,139,.1); color: var(--t3); border: 1px solid rgba(100,116,139,.2); }
+.ws-badge-exported { background: rgba(59,130,246,.1); color: var(--pd); border: 1px solid rgba(59,130,246,.2); }
+.ws-badge .ws-dot  { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.ws-badge.ws-badge-ready .ws-dot { animation: pulseDot 2s ease-in-out infinite; }
+
+/* ── Allocation fully bar ── */
+.alloc-fully-bar {
+  background: linear-gradient(135deg, rgba(16,185,129,.1), rgba(16,185,129,.05));
+  border: 1px solid rgba(16,185,129,.25);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(16,185,129,.08);
+}
+
+/* ── Card hover elevation ── */
+.card { transition: box-shadow .2s, transform .2s; }
+.card:hover { box-shadow: var(--shadow-sm); }
+
+/* ── Dashboard KPI cards ── */
+.dk-card {
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: var(--shadow-xs);
+  transition: all .22s;
+}
+.dk-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.dk-val { font-size: 30px; letter-spacing: -.8px; }
+
+/* ── Table improvements ── */
+.tbl tbody tr {
+  transition: background .1s;
+}
+.tbl tbody tr:hover { background: rgba(59,130,246,.04); }
+.tbl thead th {
+  background: var(--surface2);
+  font-size: 9.5px;
+}
+
+/* ── Alloc grid rows ── */
+.alloc-tbl tbody tr:hover { background: rgba(59,130,246,.04); }
+
+/* ── Reconcile items ── */
+.recon-item {
+  margin: 5px 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--bdr);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all .18s;
+}
+.recon-item:hover { box-shadow: var(--shadow-sm); border-color: var(--bdr2); }
+
+/* ── Customer drawer premium ── */
+.customer-drawer {
+  width: 400px;
+  background: var(--surface);
+  box-shadow: -12px 0 48px rgba(0,0,0,.5);
+  border-left: 1px solid var(--bdr2);
+}
+.drawer-header {
+  background: linear-gradient(135deg, var(--surface2), var(--surface3));
+  border-bottom: 1px solid var(--bdr);
+}
+.aging-bucket {
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  background: var(--surface2);
+  border: 1px solid var(--bdr);
+  transition: all .18s;
+}
+.aging-bucket:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.aging-bucket-val { font-size: 18px; font-weight: 900; }
+
+/* ── Account Transaction ── */
+.acct-customer-item {
+  border-bottom: 1px solid var(--bdr);
+  transition: background .15s, padding-left .15s;
+}
+.acct-customer-item.active {
+  background: linear-gradient(135deg, rgba(59,130,246,.08), rgba(59,130,246,.04));
+  border-left: 3px solid var(--p);
+  padding-left: 11px;
+}
+.acct-customer-item:hover:not(.active) { background: var(--glass2); padding-left: 16px; }
+
+/* ── Modals ── */
+.mo-box {
+  border-radius: 20px;
+  box-shadow: var(--shadow-xl);
+}
+
+/* ── Buttons premium ── */
+.btn-p { background: linear-gradient(135deg, var(--p), #2563EB); }
+.btn-p:hover { background: linear-gradient(135deg, #2563EB, #1D4ED8); box-shadow: 0 6px 20px rgba(59,130,246,.4); }
+.btn-g { background: linear-gradient(135deg, var(--g), #059669); }
+.btn-g:hover { filter: brightness(1.08); box-shadow: 0 6px 20px rgba(16,185,129,.35); }
+
+/* ── Smooth panel fade-in ── */
+.panel.active { animation: panelFadeIn .22s ease; }
+@keyframes panelFadeIn { from { opacity:.7; } to { opacity:1; } }
+
+/* ── ws-tab-view transition ── */
+.ws-tab-view.active { animation: tabFadeIn .2s ease; }
+@keyframes tabFadeIn { from { opacity:.5; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+/* ── Empty states ── */
+.empty-icon { animation: emptyFloat 3s ease-in-out infinite; }
+@keyframes emptyFloat { 0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);} }
+
+/* ── Login polish ── */
+.login-wrap { box-shadow: 0 40px 100px rgba(0,0,0,.8); }
+
+/* ── Toast premium ── */
+.toast {
+  background: var(--surface3);
+  border: 1px solid var(--bdr2);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+
+/* ── Scrollbar ── */
+*::-webkit-scrollbar { width: 3px; height: 3px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--bdr3); border-radius: 2px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--t4); }
+
+/* ── Focus rings ── */
+input:focus, select:focus, textarea:focus { outline: none; }
+
+
 </style>
 </head>
 <body>
@@ -1487,28 +2002,46 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
     </div>
   </nav>
 
-  <!-- KPI STRIP (premium card version) -->
+  <!-- KPI STRIP — Executive-level metrics -->
   <div class="kpi-strip">
-    <div class="kpi-card" onclick="sp('reporting')" style="cursor:pointer">
+    <div class="kpi-card kpi-green" onclick="sp('reporting')" style="cursor:pointer;min-width:150px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--g-t)"></div>
         Cash Matched
       </div>
       <div class="kpi-card-val green" id="kpi-matched">$0</div>
-      <div class="kpi-card-sub">
-        <span class="kpi-trend-up">↑</span>
-        Auto-applied
+      <div class="kpi-card-sub" style="display:flex;align-items:center;gap:5px">
+        <span class="kpi-trend-up" id="kpi-matched-trend">↑</span>
+        <span id="kpi-matched-sub">Auto-applied today</span>
+      </div>
+      <div class="kpi-sparkline" id="kpi-matched-spark" style="color:var(--g-t)">
+        <div class="kpi-spark-bar" style="height:40%"></div>
+        <div class="kpi-spark-bar" style="height:55%"></div>
+        <div class="kpi-spark-bar" style="height:45%"></div>
+        <div class="kpi-spark-bar" style="height:70%"></div>
+        <div class="kpi-spark-bar" style="height:60%"></div>
+        <div class="kpi-spark-bar" style="height:85%"></div>
+        <div class="kpi-spark-bar" style="height:100%"></div>
       </div>
     </div>
-    <div class="kpi-card" onclick="sp('reporting')" style="cursor:pointer">
+    <div class="kpi-card kpi-blue" onclick="sp('reporting')" style="cursor:pointer;min-width:130px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--pd)"></div>
         Match Rate
       </div>
       <div class="kpi-card-val blue" id="kpi-rate">—</div>
-      <div class="kpi-card-sub">STP rate</div>
+      <div class="kpi-card-sub" id="kpi-rate-sub">STP rate</div>
+      <div class="kpi-sparkline" id="kpi-rate-spark" style="color:var(--pd)">
+        <div class="kpi-spark-bar" style="height:60%"></div>
+        <div class="kpi-spark-bar" style="height:72%"></div>
+        <div class="kpi-spark-bar" style="height:68%"></div>
+        <div class="kpi-spark-bar" style="height:80%"></div>
+        <div class="kpi-spark-bar" style="height:75%"></div>
+        <div class="kpi-spark-bar" style="height:90%"></div>
+        <div class="kpi-spark-bar" style="height:95%"></div>
+      </div>
     </div>
-    <div class="kpi-card" onclick="sp('exceptions')" style="cursor:pointer">
+    <div class="kpi-card kpi-amber" onclick="sp('cash-app')" style="cursor:pointer;min-width:140px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--am-t)"></div>
         Unapplied Cash
@@ -1516,23 +2049,23 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
       <div class="kpi-card-val amber" id="kpi-unapplied">$0</div>
       <div class="kpi-card-sub">Pending decision</div>
     </div>
-    <div class="kpi-card" onclick="sp('exceptions')" style="cursor:pointer">
+    <div class="kpi-card kpi-red" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')" style="cursor:pointer;min-width:120px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--r-t)"></div>
         Exceptions
       </div>
       <div class="kpi-card-val red" id="kpi-exc">0</div>
-      <div class="kpi-card-sub">Require action</div>
+      <div class="kpi-card-sub" id="kpi-exc-sub">Require action</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card kpi-amber" style="min-width:120px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--am-t)"></div>
         Short Pays
       </div>
       <div class="kpi-card-val amber" id="kpi-shortpay">0</div>
-      <div class="kpi-card-sub">Invoice underpayments</div>
+      <div class="kpi-card-sub">Underpayments</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" style="min-width:100px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--t3)"></div>
         Invoices
@@ -1540,7 +2073,7 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
       <div class="kpi-card-val" id="kpi-inv-ct">0</div>
       <div class="kpi-card-sub">In system</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" style="min-width:100px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--t3)"></div>
         Payments
@@ -1864,38 +2397,47 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
               <div class="ai-bar" id="eng-ai-bar" style="margin:10px 16px 0"><div class="ai-bar-header">🤖 AI Suggestions</div><div id="eng-ai-list"></div></div>
 
               <!-- Payment visualization -->
-              <div class="pay-viz" id="eng-header" style="display:none">
-                <div class="pay-viz-header">
-                  <div class="pay-viz-field">
-                    <div class="pay-viz-label">Customer</div>
-                    <div class="pay-viz-val" id="eng-h-cust" style="font-size:14px">—</div>
+              <div class="payment-flow" id="eng-header">
+                <!-- Payment header row -->
+                <div class="pf-header">
+                  <div class="pf-field">
+                    <div class="pf-label">Customer / Payer</div>
+                    <div class="pf-val" id="eng-h-cust" style="font-size:16px;font-weight:900">—</div>
                   </div>
-                  <div class="pay-viz-field">
-                    <div class="pay-viz-label">Reference / TX ID</div>
-                    <div class="pay-viz-val" id="eng-h-ref" style="font-size:12px;color:var(--pd);font-family:var(--mono)">—</div>
+                  <div class="pf-field">
+                    <div class="pf-label">Reference</div>
+                    <div class="pf-val" id="eng-h-ref" style="color:var(--pd);font-size:12px">—</div>
                   </div>
-                  <div class="pay-viz-field">
-                    <div class="pay-viz-label">Date</div>
-                    <div class="pay-viz-val" id="eng-h-date" style="font-size:13px">—</div>
+                  <div class="pf-field">
+                    <div class="pf-label">Date</div>
+                    <div class="pf-val" id="eng-h-date" style="font-size:13px">—</div>
                   </div>
-                  <div class="pay-viz-field">
-                    <div class="pay-viz-label">Payment Amount</div>
-                    <div class="pay-viz-val big blue" id="eng-h-amt">$0.00</div>
+                  <div class="pf-field">
+                    <div class="pf-label">Payment</div>
+                    <div class="pf-val hero" id="eng-h-amt">$0.00</div>
                   </div>
-                  <div class="pay-viz-field">
-                    <div class="pay-viz-label">Applied</div>
-                    <div class="pay-viz-val big green" id="eng-h-applied">$0.00</div>
+                  <div class="pf-field">
+                    <div class="pf-label">Applied</div>
+                    <div class="pf-val green" id="eng-h-applied" style="font-size:18px;font-weight:900">$0.00</div>
                   </div>
-                  <div class="pay-viz-field">
-                    <div class="pay-viz-label">Remaining</div>
-                    <div class="pay-viz-val big" id="eng-h-rem" style="color:var(--pd)">$0.00</div>
+                  <div class="pf-field">
+                    <div class="pf-label">Remaining</div>
+                    <div class="pf-val" id="eng-h-rem" style="font-size:18px;font-weight:900;color:var(--pd)">$0.00</div>
                   </div>
                 </div>
-                <div class="pay-viz-pills">
+                <!-- Application progress bar -->
+                <div class="pf-progress-wrap">
+                  <div class="pf-progress-track"><div class="pf-progress-fill" id="pf-progress-fill"></div></div>
+                  <div class="pf-progress-labels">
+                    <span>Applied: <span id="pf-applied-pct">0%</span></span>
+                    <span id="pf-status-label" style="color:var(--t3)">Select invoices below to allocate</span>
+                    <span>Method: <span id="eng-h-method">—</span> · <span id="eng-h-ccy">USD</span></span>
+                  </div>
+                </div>
+                <!-- Status pills row -->
+                <div class="pf-status-row">
                   <div class="pay-fully-badge" id="eng-full-badge">✓ Fully Allocated — Ties to Zero</div>
-                  <div class="pay-locked-badge" id="eng-locked-badge">🔒 Locked · Exported</div>
-                  <span style="font-size:11.5px;color:var(--t3)">Method: <strong id="eng-h-method" style="color:var(--t2)">—</strong></span>
-                  <span style="font-size:11.5px;color:var(--t3);margin-left:6px">Currency: <strong id="eng-h-ccy" style="color:var(--t2)">USD</strong></span>
+                  <div class="pay-locked-badge" id="eng-locked-badge">🔒 Locked · Exported to ERP</div>
                 </div>
               </div>
 
@@ -2633,6 +3175,307 @@ function clearAllExceptions(){
   updTop();
   addAudit('Cleared all exceptions','All records removed');
   toast('All exceptions cleared');
+}
+
+
+
+// ═══════════════════════════════════════════════════════
+// FINAL POLISH — ENHANCED AI PANEL + PAYMENT FLOW + PREMIUM UX
+// ═══════════════════════════════════════════════════════
+
+// ── Enhanced AI panel with contextual intelligence ──
+function _engUpdateRightPanel(){
+  if(!ENG_PAY)return;
+  const aiRight=document.getElementById('ca-ai-right');
+  const excRight=document.getElementById('ca-exc-right');
+  const p=ENG_PAY;
+  const rows=ENG_ROWS;
+
+  if(aiRight){
+    const cards=[];
+    // Duplicate detection
+    const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&((q.i&&q.i===p.i)||(q.txId&&q.txId===p.txId)));
+    if(dups.length)cards.push({priority:'high',icon:'🚨',title:'Potential Duplicate Payment',body:`${dups.length} payment(s) with matching amount and reference detected. Verify before posting to avoid double-credit.`,action:'Review duplicates',conf:92,confColor:'var(--r)'});
+    // Parent-child / consolidated
+    const sharedPO=rows.filter(r=>r.inv.po&&p.po&&norm(r.inv.po)===norm(p.po));
+    if(sharedPO.length>1)cards.push({priority:'med',icon:'🔗',title:`${sharedPO.length} Invoices Share PO ${p.po}`,body:'Likely a consolidated remittance. Consider applying to all invoices under this PO.',action:'Mark all matching PO',conf:87,confColor:'var(--am)'});
+    // Exact subset match
+    const exactSum=rows.reduce((s,r)=>s+r.inv.amt,0);
+    if(Math.abs(exactSum-p.amt)<0.01&&rows.length>1)cards.push({priority:'ok',icon:'✓',title:`${rows.length} Invoices Sum to Exact Payment`,body:`$${$f(p.amt)} matches total of all open invoices. Auto-apply all recommended.`,action:'Auto-apply all',conf:99,confColor:'var(--g)',actionFn:'engMarkAll()'});
+    // Short pay likelihood
+    const spRows=rows.filter(r=>p.amt<r.inv.amt&&p.amt>r.inv.amt*0.8);
+    if(spRows.length)cards.push({priority:'med',icon:'⚠️',title:'Likely Short Pay Detected',body:`Payment is ${((1-p.amt/spRows[0].inv.amt)*100).toFixed(1)}% short of invoice ${spRows[0].inv.i}. Partial allocation or write-off may be needed.`,action:'Apply partial',conf:74,confColor:'var(--am)'});
+    // Down payments
+    const dpRows=rows.filter(r=>r.excCode==='down_payment');
+    if(dpRows.length)cards.push({priority:'low',icon:'💡',title:`${dpRows.length} Possible Down Payment Invoice(s)`,body:'These invoices may represent deposits or advance payments. Confirm with customer before applying.',conf:68,confColor:'var(--p)'});
+    // Unapplied cash for this customer
+    const custExc=EXC.filter(e=>(e.c||'').toLowerCase()===(p.c||'').toLowerCase()&&e.type==='Unapplied payment');
+    if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: $${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
+    // No invoices
+    if(!rows.length)cards.push({priority:'high',icon:'🔍',title:'No Open Invoices Found',body:'No matching invoices for this customer. Payment may need to be posted as unapplied cash.',action:'Post as unapplied',conf:null,confColor:'var(--r)'});
+    // Missing PO
+    if(!p.po&&!p.i)cards.push({priority:'med',icon:'📎',title:'No PO or Invoice Reference',body:'Payment has no reference. Auto-matching by amount only — lower confidence.',conf:45,confColor:'var(--am)'});
+    // Good match rate
+    if(rows.length&&rows[0].conf>=80&&cards.every(c=>c.priority!=='high'))cards.push({priority:'ok',icon:'✅',title:'High Confidence Match',body:`Top invoice has ${rows[0].conf}% confidence. Matching signals are strong.`,conf:rows[0].conf,confColor:'var(--g)'});
+
+    if(cards.length){
+      aiRight.innerHTML=cards.map(card=>`
+        <div class="ai-insight-card priority-${card.priority}">
+          <div style="display:flex;align-items:flex-start;gap:9px">
+            <span class="ai-insight-icon">${card.icon}</span>
+            <div style="flex:1;min-width:0">
+              <div class="ai-insight-title">${card.title}</div>
+              <div class="ai-insight-body">${card.body}</div>
+              ${card.conf!==null&&card.conf!==undefined?`<div class="ai-conf-bar">
+                <div class="ai-conf-track"><div class="ai-conf-fill" style="width:${card.conf}%;background:${card.confColor}"></div></div>
+                <div class="ai-conf-label">${card.conf}%</div>
+              </div>`:''}
+              ${card.action?`<div class="ai-insight-action" onclick="${card.actionFn||''}">${card.action} →</div>`:''}
+            </div>
+          </div>
+        </div>`).join('');
+    }else{
+      aiRight.innerHTML='<div style="padding:12px;font-size:12px;color:var(--t3);text-align:center;line-height:1.7">No suggestions for this payment.<br><span style="font-size:11px">All signals look clean.</span></div>';
+    }
+  }
+
+  if(excRight&&p){
+    const myExc=EXC.filter(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
+    if(myExc.length){
+      excRight.innerHTML=myExc.map(e=>`
+        <div style="padding:10px;background:var(--r-bg);border:1px solid rgba(239,68,68,.15);border-radius:9px;margin-bottom:7px">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+            <span class="badge badge-r" style="font-size:10px">${e.type}</span>
+            <span style="font-size:11.5px;font-weight:700;color:var(--r-t)">$${$f(e.amt)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--t2);line-height:1.4">${e.detail||'Exception detected'}</div>
+          <div style="font-size:11.5px;color:var(--t3);margin-top:4px">${e.action||''}</div>
+        </div>`).join('');
+    }else{
+      excRight.innerHTML='<div style="padding:10px;font-size:12px;color:var(--t3);text-align:center">No exceptions for this payment ✓</div>';
+    }
+  }
+}
+
+// ── Update payment flow progress bar ──
+function _updatePaymentFlowProgress(){
+  if(!ENG_PAY)return;
+  const total=ENG_PAY.amt;
+  const applied=ENG_ROWS.filter(r=>r.selected).reduce((s,r)=>s+r.applyAmt,0);
+  const rem=total-applied;
+  const pct=total>0?Math.min(100,(applied/total*100)):0;
+  const full=Math.abs(rem)<0.01;
+  const fill=document.getElementById('pf-progress-fill');
+  if(fill)fill.style.width=pct.toFixed(1)+'%';
+  const pctLbl=document.getElementById('pf-applied-pct');
+  if(pctLbl)pctLbl.textContent=pct.toFixed(1)+'%';
+  const statusLbl=document.getElementById('pf-status-label');
+  if(statusLbl){
+    if(full)statusLbl.innerHTML='<span style="color:var(--g-t);font-weight:700">✓ Fully allocated — ready to approve</span>';
+    else if(applied===0)statusLbl.textContent='Select invoices below to allocate';
+    else if(rem<0)statusLbl.innerHTML='<span style="color:var(--r-t);font-weight:700">⚠ Over-allocated by $'+$f(Math.abs(rem))+'</span>';
+    else statusLbl.textContent='$'+$f(rem)+' remaining to allocate';
+  }
+  // Update ws-badge status in toolbar
+  const approve=document.getElementById('eng-approve-btn');
+  const exportBtn=document.getElementById('eng-export-btn');
+  if(approve&&!ENG_LOCKED){
+    approve.style.display=applied>0?'inline-flex':'none';
+    if(full&&ENG_STATE!=='approved'&&ENG_STATE!=='exported'){
+      approve.innerHTML='✓ Approve — ties to zero';
+      approve.style.background='linear-gradient(135deg,var(--g),#059669)';
+      approve.style.boxShadow='0 4px 14px rgba(16,185,129,.4)';
+    }else if(applied>0){
+      approve.innerHTML='✓ Approve';
+      approve.style.background='';
+      approve.style.boxShadow='';
+    }
+  }
+  // Update payment flow progress
+  _updatePaymentFlowProgress();
+}
+
+// ── Enhanced engBuildAI (top bar) ──
+function engBuildAI(p,invs){
+  const bar=document.getElementById('eng-ai-bar');const list=document.getElementById('eng-ai-list');if(!bar||!list)return;
+  const tips=[];
+  const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&((q.i&&q.i===p.i)||(q.txId&&q.txId===p.txId)));
+  if(dups.length)tips.push(`🚨 <strong>Possible duplicate</strong> — ${dups.length} matching payment(s) with same reference/amount`);
+  const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));
+  if(sharedPO.length>1)tips.push(`🔗 <strong>${sharedPO.length} invoices share PO ${p.po}</strong> — consolidated remittance likely`);
+  const exactSum=invs.reduce((s,v)=>s+v.amt,0);
+  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to $${$f(p.amt)} · auto-apply recommended`);
+  const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);
+  if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by $${$f(sp[0].amt-p.amt)}`);
+  if(!invs.length)tips.push(`🔍 <strong>No open invoices</strong> for ${p.c||'this customer'} — consider posting as unapplied cash`);
+  if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:5px 0;border-bottom:1px solid rgba(139,92,246,.08);line-height:1.5;font-size:12.5px;color:var(--t2)">${t}</div>`).join('');}
+  else bar.style.display='none';
+}
+
+// _updatePaymentFlowProgress is called from right panel update hook
+
+// ── Premium exception cards renderer (for ws-exc tab) ──
+function renderWsExcPremium(){
+  const list=document.getElementById('ws-exc-list');const ct=document.getElementById('ws-exc-ct');if(!list)return;
+  const tf=document.getElementById('ws-exc-type-filter');const tval=tf?tf.value:'';
+  const isResolved=typeof WS_EXC_VIEW!=='undefined'&&WS_EXC_VIEW==='resolved';
+  let items=EXC.filter(ex=>isResolved?(ex.s==='Resolved'||ex.s==='Resolved — rejected'):(ex.s!=='Resolved'&&ex.s!=='Resolved — rejected'));
+  if(tval)items=items.filter(ex=>ex.type===tval);
+  if(ct)ct.textContent=items.length+(isResolved?' resolved':' exception'+(items.length!==1?'s':''));
+  if(!items.length){
+    const msg=isResolved?'No resolved exceptions yet.':'No open exceptions — all payments matched cleanly.';
+    const icon=isResolved?'📋':'✅';
+    list.innerHTML=`<div class="empty" style="padding:56px 24px">
+      <div class="empty-icon">${icon}</div>
+      <div class="empty-t">${isResolved?'No resolved exceptions':'Zero exceptions'}</div>
+      <div class="empty-s">${msg}</div>
+      ${!isResolved&&PAY.length?'<div class="empty-btn"><button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Run matching</button></div>':''}
+    </div>`;return;
+  }
+  const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
+  const typeSev={'Short pay':'med','Unapplied payment':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
+  const POST_D=['Apply to invoice','Post as Unapplied Payment','Write off','Bank fee','Wire transfer'];
+  list.innerHTML=items.map(ex=>{
+    const realIdx=EXC.indexOf(ex);
+    const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
+    const sev=typeSev[ex.type]||'med';
+    const icon=typeIcon[ex.type]||'⚠️';
+    return`<div class="exc-card sev-${sev}">
+      <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">$${$f(ex.amt)}</div>
+      <div class="exc-card-header">
+        <span class="exc-card-type-icon">${icon}</span>
+        <div style="flex:1;min-width:0;padding-right:80px">
+          <div class="exc-card-title">${ex.type||'Exception'} — ${ex.c||'Unknown payer'}</div>
+          <div class="exc-card-meta">Account: ${ex.a||'—'} · Ref: ${ex.ref||'—'} · ${ex.s==='Open'?'<span style="color:var(--r-t)">Unresolved</span>':'<span style="color:var(--g-t)">'+ex.s+'</span>'}</div>
+        </div>
+      </div>
+      <div class="exc-card-body">${ex.detail||'No detail available'}</div>
+      <div class="exc-card-actions">
+        ${isResV?
+          `<span class="badge badge-g">${ex.dec||'Resolved'}</span>
+           <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
+          :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExcPremium,700)">
+            <option value="">— Resolve —</option>
+            <option>Apply to invoice</option><option>Post as Unapplied Payment</option>
+            <option>Write off</option><option>Bank fee</option>
+            <option>Wire transfer</option><option>Chase customer</option><option>Duplicate — reject</option>
+          </select>
+          <input type="text" class="inp" style="flex:1;font-size:11.5px;padding:5px 10px;min-width:80px;max-width:140px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Add note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
+          <span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Open</span>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// renderWsExc delegates to renderWsExcPremium (defined above)
+
+// ── Premium review items ──
+function renderWsReview(){
+  const list=document.getElementById('review-list');const ct=document.getElementById('review-ct');if(!list)return;
+  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
+  if(ct)ct.textContent=ap.length+' matched record'+(ap.length!==1?'s':'');
+  if(!ap.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Run matching or approve allocations from the To Be Matched tab to populate the review queue.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">← Back to matching</button></div></div>`;
+    return;
+  }
+  const stColor={Exact:'var(--g)','Subset exact':'var(--p)','Short pay':'var(--am)',Overpay:'var(--am)',Resolved:'var(--g)','Amount match':'var(--pu)',Partial:'var(--am)'};
+  const stBadge={Exact:'badge-g','Subset exact':'badge-p','Short pay':'badge-am',Overpay:'badge-am',Resolved:'badge-g','Amount match':'badge-pu',Partial:'badge-am'};
+  const wsBadge={Exact:'Ready for Export','Subset exact':'Ready for Export',Resolved:'Awaiting Export','Amount match':'Review Recommended','Short pay':'Requires Review',Overpay:'Requires Review'};
+  list.innerHTML=ap.map((r,i)=>{
+    const conf=r.st==='Exact'?'100%':r.st==='Subset exact'?'98%':r.st==='Amount match'?'72%':r.st==='Short pay'?'61%':'—';
+    const isExported=r.fromAlloc||r.fromExc;
+    const ws=wsBadge[r.st]||'Review';
+    const wsClass=r.st==='Exact'||r.st==='Resolved'||r.st==='Subset exact'?'ws-badge-ready':r.st==='Short pay'||r.st==='Overpay'?'ws-badge-review':'ws-badge-pending';
+    return`<div class="review-item" onclick="openCustomerDrawerForCustomer('${(r.c||'').replace(/'/g,"\'")}',' ${r.a||''}')">
+      <div style="width:4px;height:100%;min-height:40px;border-radius:2px;background:${stColor[r.st]||'var(--p)'};flex-shrink:0;align-self:stretch;margin:-14px 0;border-radius:0"></div>
+      <div style="flex:1;min-width:0;margin-left:4px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <div style="font-size:13.5px;font-weight:800;color:var(--t1)">${r.c||'—'}</div>
+          <span class="badge ${stBadge[r.st]||'badge-gray'}">${r.st}</span>
+          <span class="ws-badge ${wsClass}" style="font-size:10.5px;padding:2px 8px"><span class="ws-dot"></span>${ws}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:12px;color:var(--t2)">
+          <span>Acct: <strong style="color:var(--t1)">${r.a||'—'}</strong></span>
+          <span>Inv: <strong style="color:var(--pd);font-family:var(--mono)">${r.i||'—'}</strong></span>
+          ${r.po?`<span>PO: ${r.po}</span>`:''}
+          ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: $${$f(Math.abs(r.vr))}</span>`:''}
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">$${$f(r.pd)}</div>
+        <div style="font-size:11px;color:var(--t3)">of $${$f(r.oa)}</div>
+        <div style="font-size:11.5px;font-weight:700;color:${conf==='100%'?'var(--g-t)':'var(--am-t)'}">Conf: ${conf}</div>
+      </div>
+      <div style="flex-shrink:0;margin-left:12px" onclick="event.stopPropagation()">
+        ${isExported?`<span class="badge badge-exported" style="font-size:10px">Exported</span>`:`<button class="btn btn-outline btn-xs" onclick="reopenResultItem(${i})">↩ Reopen</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Premium reconcile ──
+function renderWsRecon(){
+  const list=document.getElementById('recon-list');const summary=document.getElementById('recon-summary');if(!list)return;
+  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
+  const unmatched=PAY.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
+  const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
+  const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
+  const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
+  if(summary)summary.innerHTML=`<strong style="color:var(--t1)">$${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">$${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance and run matching to reconcile.</div></div>';return;}
+  const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
+  list.innerHTML=rows.map(item=>{
+    if(item.type==='matched'){const r=item.r;return`<div class="recon-item">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--g);flex-shrink:0;box-shadow:0 0 8px rgba(16,185,129,.4)"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">${r.c||'—'}</div>
+        <div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">${r.i||'—'} · ${r.po?'PO '+r.po:''}</div>
+      </div>
+      <div style="font-size:15px;font-weight:900;font-family:var(--mono);color:var(--g-t)">+$${$f(r.pd)}</div>
+      <span class="ws-badge ws-badge-ready" style="font-size:10.5px"><span class="ws-dot"></span>Reconciled</span>
+    </div>`;} 
+    else{const p=item.p;return`<div class="recon-item" style="border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.03)">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--am);flex-shrink:0;animation:pulseDot 2s ease-in-out infinite"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">${p.c||p.a||'Unknown'}</div>
+        <div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">${p.txId||p.po||'—'} · ${p.payDate?fmtDate(p.payDate):'—'}</div>
+      </div>
+      <div style="font-size:15px;font-weight:900;font-family:var(--mono);color:var(--am-t)">$${$f(p.amt)}</div>
+      <span class="ws-badge ws-badge-pending" style="font-size:10.5px"><span class="ws-dot"></span>Unreconciled</span>
+      <button class="btn btn-outline btn-xs" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">Apply</button>
+    </div>`;}
+  }).join('');
+}
+
+// ── Animate KPI updates ──
+function animateKpiVal(id,newVal){
+  const el=document.getElementById(id);if(!el)return;
+  el.style.transition='all .3s cubic-bezier(.34,1.56,.64,1)';
+  el.style.transform='scale(1.05)';
+  el.textContent=newVal;
+  setTimeout(()=>{el.style.transform='';},300);
+}
+
+// engLoadPayment already patched in HTML to show payment-flow
+
+// Enhanced clearAllExceptions with animation
+const _origClearAllExceptions=clearAllExceptions;
+_legacyClearAllExceptions(){
+  if(!EXC.length){toast('No exceptions to clear');return;}
+  if(!confirm('Clear all '+EXC.length+' exception records? This action cannot be undone.'))return;
+  // Animate cards out
+  document.querySelectorAll('.exc-card').forEach((el,i)=>{
+    setTimeout(()=>{el.style.transition='all .3s ease';el.style.opacity='0';el.style.transform='translateX(20px)';},i*40);
+  });
+  setTimeout(()=>{
+    EXC=[];saveToStorage();
+    if(typeof renderWsExcPremium==='function')renderWsExcPremium();
+    else if(typeof renderWsExc==='function')renderWsExc();
+    updDash();updTop();
+    addAudit('Cleared all exceptions','All records removed');
+    toast('All exceptions cleared — KPIs updated');
+  },Math.min(EXC.length*40+300,800));
 }
 
 // kpi-bar → kpi-strip ID compat for updTop (already uses kpi-matched etc, no change needed)
@@ -3481,7 +4324,7 @@ function engLoadPayment(idx){
   set('eng-h-method',p.m||p.txType||'—');set('eng-h-ccy',p.ccy||'USD');
   const remEl=document.getElementById('eng-h-rem');if(remEl)remEl.style.color='var(--pd)';
   ['eng-full-badge','eng-locked-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  ['eng-header','eng-grid-wrap','eng-audit-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});
+  ['eng-grid-wrap','eng-audit-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});const ph=document.getElementById('eng-header');if(ph)ph.style.display='flex';
   const aw=document.getElementById('alloc-totals');if(aw)aw.style.display='none';
   document.getElementById('eng-export-btn').style.display='none';
   document.getElementById('eng-approve-btn').style.display='inline-flex';
@@ -3507,7 +4350,7 @@ function engLoadPayment(idx){
   _engUpdateRightPanel();
 }
 
-function _engUpdateRightPanel(){
+_legacyEngUpdateRightPanel(){
   if(!ENG_PAY)return;
   const aiRight=document.getElementById('ca-ai-right');
   const excRight=document.getElementById('ca-exc-right');
@@ -3561,7 +4404,7 @@ function engCheckDuplicates(p){
   else if(warn)warn.style.display='none';
 }
 
-function engBuildAI(p,invs){
+_legacyEngBuildAI(p,invs){
   const bar=document.getElementById('eng-ai-bar');const list=document.getElementById('eng-ai-list');if(!bar||!list)return;
   const tips=[];
   const dp=invs.filter(v=>v.n&&v.n.toLowerCase().includes('down'));if(dp.length)tips.push(`💡 ${dp.length} invoice(s) may be down payments`);
@@ -3817,7 +4660,7 @@ function setCaTab(tab,btn){
   const view=document.getElementById(viewMap[tab]||'ws-match');
   if(view)view.classList.add('active');
   if(tab==='review')renderWsReview();
-  else if(tab==='exc')renderWsExc();
+  else if(tab==='exc'){if(typeof renderWsExcPremium==='function')renderWsExcPremium();else renderWsExc();}
   else if(tab==='acct'){renderAcctCustomers();} 
   else if(tab==='recon')renderWsRecon();
 }
@@ -3825,7 +4668,7 @@ function setCaTab(tab,btn){
 // ═══════════════════════════════════════
 // REVIEW TAB WORKSPACE
 // ═══════════════════════════════════════
-function renderWsReview(){
+_legacy_renderWsReview(){
   const list=document.getElementById('review-list');
   const ct=document.getElementById('review-ct');
   if(!list)return;
@@ -4044,7 +4887,7 @@ function engLoadPaymentForInv(invRef){
 // ═══════════════════════════════════════
 // RECONCILE TAB
 // ═══════════════════════════════════════
-function renderWsRecon(){
+_legacy_renderWsRecon(){
   const list=document.getElementById('recon-list');const summary=document.getElementById('recon-summary');if(!list)return;
   const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
   const unmatched=PAY.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
