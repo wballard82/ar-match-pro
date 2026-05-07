@@ -6461,13 +6461,13 @@ function refreshWlBadge(){
 // OVERRIDDEN FUNCTIONS
 // ═══════════════════════════════════════════════════════════
 
-function setCaTab(tab,btn){
+setCaTab = function(tab,btn){
   _origSetCaTab(tab,btn);
   if(tab==='match'){ populateAllAcctDropdowns(); refreshFbl5n(); }
   else if(tab==='exc'){ buildAcctDropdown('exc-acct-dropdown',true); renderFbl5n('exc-open-items-body','',''); }
-}
+};
 
-function engLoadPayment(idx){
+engLoadPayment = function(idx){
   _origEngLoadPayment(idx);
   setTimeout(function(){
     if(ENG_PAY&&ENG_PAY.a){
@@ -6478,9 +6478,9 @@ function engLoadPayment(idx){
     }
     refreshFbl5n();
   },50);
-}
+};
 
-function rAll(){
+rAll = function(){
   _origRAll();
   setTimeout(populateAllAcctDropdowns,100);
   // Update worklist badge
@@ -6489,9 +6489,9 @@ function rAll(){
   var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
   var tot=urgent.length+unalloc.length+xr.length;
   var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display='none';} // badge permanently hidden
-}
+};
 
-function loadDemoData(){
+loadDemoData = function(){
   _origLoadDemoData();
   setTimeout(function(){
     rAll(); updDash(); updTop();
@@ -6501,25 +6501,25 @@ function loadDemoData(){
     engRefreshSel();
     toast('Sample data loaded — click ⚡ Run matching to match payments');
   },150);
-}
+};
 
-function loadSampleInv(){
+loadSampleInv = function(){
   _origLoadSampleInv();
   setTimeout(function(){ rAll(); updTop(); populateAllAcctDropdowns(); buildWorklist(); },100);
-}
+};
 
-function loadSampleRem(){
+loadSampleRem = function(){
   _origLoadSampleRem();
   setTimeout(function(){ rAll(); updTop(); populateAllAcctDropdowns(); renderPayQueue(); engRefreshSel(); buildWorklist(); },100);
-}
+};
 
-function runMatch(){
+runMatch = function(){
   var result = _origRunMatch.apply(this, arguments);
   setTimeout(function(){ buildWorklist(); refreshFbl5n(); updReporting(); },600);
   return result;
-}
+};
 
-function updTop(){
+updTop = function(){
   _origUpdTop();
   // Refresh worklist badge on every updTop call
   var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
@@ -6533,11 +6533,11 @@ function updTop(){
   // If CFO active, update
   var cfoPanel=document.getElementById('p-cfo');
   if(cfoPanel&&cfoPanel.classList.contains('active')) updateCfoSummary();
-}
+};
 
-function updDash(){
+updDash = function(){
   _origUpdDash();
-}
+};
 
 function syncProfileName(){
   // Sync first+last fields into the hidden combined field
@@ -6554,7 +6554,7 @@ function syncProfileName(){
   ['tn-avatar','profile-avatar'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=init;});
 }
 
-function saveSettings(){
+saveSettings = function(){
   // Sync first+last before saving
   syncProfileName();
   _origSaveSettings();
@@ -6568,9 +6568,9 @@ function saveSettings(){
     if(users[CURRENT_USER]){users[CURRENT_USER].name=full;var u=users;localStorage.setItem('armp_users',JSON.stringify(u));}
   }
   toast('Settings saved');
-}
+};
 
-function sp(id){
+sp = function(id){
   // Handle new panels that _origSp doesn't know about
   if(id==='worklist'){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
@@ -6593,7 +6593,7 @@ function sp(id){
   if(id==='settings'){ initRole(); renderMpRules(); renderSettingsPlans(); setTimeout(function(){ renderMpRules(); },100); }
   if(id==='cash-app') setTimeout(function(){ populateAllAcctDropdowns(); refreshFbl5n(); },100);
   if(id==='reporting') setTimeout(updReporting,50);
-}
+};
 
 function cleanupLoginAndOverlays(){
   // Add body class for CSS-level login screen suppression
@@ -6629,7 +6629,7 @@ function cleanupLoginAndOverlays(){
   if(mp){ mp.style.display='none'; mp.classList.remove('show'); }
 }
 
-function launchApp(user){
+launchApp = function(user){
   if(launchApp._running){console.error('launchApp re-entry blocked');return;}
   launchApp._running=true;
   cleanupLoginAndOverlays();
@@ -6645,7 +6645,7 @@ function launchApp(user){
     populateAllAcctDropdowns();
     syncMpCheckboxes();
   },200);
-}
+};
 
 // Sidebar onclick patches via DOMContentLoaded
 document.addEventListener('DOMContentLoaded',function(){
@@ -6818,17 +6818,17 @@ function reviewItemInlineToggle(evt, rowEl){
 // ── Ensure INV data auto-populates Account Open Items tab ──
 // Override setCaTab so that switching to 'acct' renders with current INV data
 var _patchSetCaTabForAcct = setCaTab;
-function setCaTab(tab, btn){
+setCaTab = function(tab, btn){
   _patchSetCaTabForAcct(tab, btn);
   if(tab==='acct'){
     // Refresh customer list with current INV
     if(typeof renderAcctCustomers === 'function') renderAcctCustomers();
   }
-}
+};
 
 // ── Patch rInv to also refresh Account Open Items if it's active ──
 var _patchRInv = rInv;
-function rInv(){
+rInv = function(){
   _patchRInv();
   var acctTab = document.getElementById('ws-acct');
   if(acctTab && acctTab.classList.contains('active')){
@@ -6844,11 +6844,11 @@ function rInv(){
   }
   // Reapply column filters after re-render
   invColFilter();
-}
+};
 
 // ── Override loadDemoData/loadSampleInv to trigger invColFilter after render ──
 var _patchLoadSampleInvForFilter = loadSampleInv;
-function loadSampleInv(){
+loadSampleInv = function(){
   _patchLoadSampleInvForFilter();
   setTimeout(invColFilter, 100);
   // Refresh Account Open Items if that tab is active
@@ -6860,7 +6860,7 @@ function loadSampleInv(){
     // Also populate FBL5N bottom table
     if(typeof refreshFbl5n === 'function') refreshFbl5n();
   }, 150);
-}
+};
 
 // ── excAcctManualSearch: live account lookup for Post as Unapplied Cash ──
 function excAcctManualSearch(q){
