@@ -5579,8 +5579,8 @@ function closeCustomerDrawer(){
 
 // ── Cash App top filters ──
 function caFilterUpdate(){
-  const sel=document.getElementById('ca-bank-sel');
-  if(sel&&PAY.length){const accts=[...new Set(PAY.map(p=>p.a).filter(Boolean))];const cur=sel.value;sel.innerHTML='<option value="">All accounts</option>'+accts.map(a=>`<option ${a===cur?'selected':''}>${a}</option>`).join('');}
+  // NOTE: ca-bank-sel is a BANK account selector (JP Morgan, BofA) — never overwrite it
+  // Only refresh the payment queue when filters change
   if(typeof engRefreshSel==='function')engRefreshSel();
 }
 </script>
@@ -6027,7 +6027,7 @@ function buildAcctDropdown(selId, withAll){
 }
 
 function populateAllAcctDropdowns(){
-  buildAcctDropdown('ca-bank-sel',true);
+  // ca-bank-sel is STATIC (JP Morgan, BofA) — never rebuild it from customer data
   buildAcctDropdown('ca-acct-dropdown',true);
   buildAcctDropdown('exc-acct-dropdown',true);
 }
@@ -6319,7 +6319,7 @@ function buildWorklist(){
   // Sidebar badge
   var wlBadge=document.getElementById('sb-wl-ct');
   var tot=urgent.length+unalloc.length+exportReady.length;
-  if(wlBadge){ wlBadge.textContent=tot; wlBadge.style.display=tot?'inline-flex':'none'; }
+  if(wlBadge){ wlBadge.textContent=tot; wlBadge.style.display='none'; } // badge permanently hidden
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -6458,7 +6458,7 @@ function rAll(){
   var unalloc=PAY.filter(function(p){var hr=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});var he=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});return !hr&&!he&&!p.dp;});
   var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
   var tot=urgent.length+unalloc.length+xr.length;
-  var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display=tot?'inline-flex':'none';}
+  var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display='none';} // badge permanently hidden
 }
 
 function loadDemoData(){
@@ -6496,7 +6496,7 @@ function updTop(){
   var unalloc=PAY.filter(function(p){var hr=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});var he=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});return !hr&&!he&&!p.dp;});
   var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
   var tot=urgent.length+unalloc.length+xr.length;
-  var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display=tot?'inline-flex':'none';}
+  var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display='none';} // badge permanently hidden
   // If worklist active, rebuild
   var wlPanel=document.getElementById('p-worklist');
   if(wlPanel&&wlPanel.classList.contains('active')) buildWorklist();
@@ -6736,7 +6736,7 @@ function reviewItemInlineToggle(evt, rowEl){
       '<span style="font-size:11.5px;color:var(--t3)">Match method: <strong style="color:var(--t2)">'+(r.m||'—')+'</strong></span>'+
       (pay.payDate?'<span style="font-size:11.5px;color:var(--t3);margin-left:8px">Payment date: <strong style="color:var(--t2)">'+fmtDate(pay.payDate)+'</strong></span>':'') +
       '<div style="margin-left:auto;display:flex;gap:6px">'+
-        '<button class="btn btn-outline btn-xs" onclick="reviewItemInlineToggle(event,document.querySelector('.review-item-expanded'))">Collapse ↑</button>'+
+        '<button class="btn btn-outline btn-xs" onclick="closeReviewInlineDetail()">Collapse ↑</button>'+
         (r.fromAlloc||r.fromExc?'<span class="badge badge-exported">Exported</span>':'<button class="btn btn-outline btn-xs" onclick="reopenResultItem('+idx+');document.getElementById('review-inline-detail').remove()">↩ Reopen</button>')+
       '</div>'+
     '</div>';
@@ -6841,6 +6841,16 @@ function excAcctManualSelect(acct, custName){
   if(inp) inp.value = acct;
   if(preview) preview.innerHTML='<span style="color:var(--g-t)">✓ '+acct+' — '+custName+'</span>';
   if(sugg) sugg.style.display='none';
+}
+
+// Close the inline review detail panel
+function closeReviewInlineDetail(){
+  var d = document.getElementById('review-inline-detail');
+  if(d) d.remove();
+  document.querySelectorAll('.review-item-expanded').forEach(function(el){
+    el.classList.remove('review-item-expanded');
+  });
+  _reviewOpenIdx = -1;
 }
 
 </script>
