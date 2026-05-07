@@ -4211,7 +4211,6 @@ function updTop(){
   const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
   const spn2=document.getElementById('settings-plan-name2');if(spn2)spn2.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
 
-  if(typeof refreshWlBadge==='function')refreshWlBadge();
 }
 
 // ── Dashboard ──
@@ -6431,7 +6430,12 @@ function updateCfoSummary(){
 }
 
 function updateCfoSummaryClean(){ updateCfoSummary(); }
-function refreshWlBadge(){ buildWorklist(); }
+function refreshWlBadge(){
+  // Update worklist badge count only - buildWorklist is called by updTop when panel is active
+  var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
+  var badge=document.getElementById('sb-wl-ct');
+  if(badge){badge.textContent=urgent.length;badge.style.display='none';} // hidden; count via notif-dot
+}
 
 // ═══════════════════════════════════════════════════════════
 // OVERRIDDEN FUNCTIONS
@@ -6572,7 +6576,9 @@ function sp(id){
 }
 
 function launchApp(user){
-  _origLaunchApp(user);
+  if(launchApp._running){console.error('launchApp re-entry blocked');return;}
+  launchApp._running=true;
+  try{ _origLaunchApp(user); }finally{ launchApp._running=false; }
   // Call buildWorklist immediately so date/greeting show correctly
   setTimeout(function(){
     buildWorklist();
