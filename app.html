@@ -2687,8 +2687,12 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <!-- Filters -->
           <div class="ca-filters" style="flex-shrink:0">
             <div class="ca-filter-item">
-              <span class="ca-filter-label">Account</span>
-              <select id="ca-bank-sel" class="ca-filter-sel" onchange="caFilterUpdate()"><option value="">All accounts</option></select>
+              <span class="ca-filter-label">Bank Account</span>
+              <select id="ca-bank-sel" class="ca-filter-sel" onchange="caFilterUpdate()">
+                <option value="">All bank accounts</option>
+                <option value="JPM-1234567890">JP Morgan — 1234567890</option>
+                <option value="BOA-9876543210">Bank of America — 9876543210</option>
+              </select>
             </div>
             <div class="ca-filter-item">
               <span class="ca-filter-label">Currency</span>
@@ -3399,7 +3403,58 @@ input:focus, select:focus, textarea:focus { outline: none; }
           </div>
 
           <!-- ROI calculation breakdown -->
-          
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Return on Investment — Labor Cost &amp; Hours Saved</div>
+                <div class="card-sub">Based on 8 min/payment manual baseline · $65/hr fully-loaded AR rate</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
+                <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
+                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Payments Auto-Matched</div>
+                  <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-auto">0</div>
+                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">vs. manual matching</div>
+                </div>
+                <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
+                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Hours Saved</div>
+                  <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-hours">0 hrs</div>
+                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">at 8 min per payment</div>
+                </div>
+                <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
+                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Labor Cost Saved</div>
+                  <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-dollars">$0</div>
+                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">at $65/hr loaded rate</div>
+                </div>
+                <div style="padding:16px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.2);border-radius:12px">
+                  <div style="font-size:10px;font-weight:700;color:var(--pd);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI Multiple</div>
+                  <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-multiple">—</div>
+                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">labor savings / subscription</div>
+                </div>
+              </div>
+              <div class="cfo-bar-chart">
+                <div class="cfo-bar-row">
+                  <div class="cfo-bar-label">Auto-matched</div>
+                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-auto" style="width:0%;background:linear-gradient(90deg,var(--g),var(--cy))"></div></div>
+                  <div class="cfo-bar-val" id="cfo-bar-auto-val">0</div>
+                </div>
+                <div class="cfo-bar-row">
+                  <div class="cfo-bar-label">Exceptions (manual)</div>
+                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-exc" style="width:0%;background:linear-gradient(90deg,var(--am),var(--r))"></div></div>
+                  <div class="cfo-bar-val" id="cfo-bar-exc-val">0</div>
+                </div>
+                <div class="cfo-bar-row">
+                  <div class="cfo-bar-label">Unapplied (pending)</div>
+                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-unapp" style="width:0%;background:linear-gradient(90deg,var(--cy),var(--p))"></div></div>
+                  <div class="cfo-bar-val" id="cfo-bar-unapp-val">0</div>
+                </div>
+              </div>
+              <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6">
+                * 8 minutes is the industry average for manual invoice-to-payment matching. Labor cost assumes $65/hr fully-loaded AR specialist rate. ROI multiple = labor cost saved ÷ Pro plan cost ($999/mo). Actual results will vary.
+              </div>
+            </div>
+          </div>
 
         </div>
       </div><!-- cfo-content-wrap -->
@@ -3535,9 +3590,15 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <div class="settings-section">
             <div class="settings-section-title">Account</div>
             <div class="settings-row">
-              <div><div class="settings-label">Name</div></div>
-              <input class="inp" id="profile-name-input" placeholder="Your name" style="width:220px;font-size:12.5px">
+              <div><div class="settings-label">First Name</div></div>
+              <input class="inp" id="profile-firstname-input" placeholder="First name" style="width:220px;font-size:12.5px" oninput="syncProfileName()">
             </div>
+            <div class="settings-row">
+              <div><div class="settings-label">Last Name</div></div>
+              <input class="inp" id="profile-lastname-input" placeholder="Last name" style="width:220px;font-size:12.5px" oninput="syncProfileName()">
+            </div>
+            <!-- hidden combined field for legacy compatibility -->
+            <input type="hidden" id="profile-name-input" value="">
             <div class="settings-row">
               <div><div class="settings-label">Email</div><div class="settings-desc" id="sec-email-disp"></div></div>
               <span id="profile-plan-badge"></span>
@@ -4325,7 +4386,14 @@ function setUserDisplay(user){
   ['tn-avatar','profile-avatar'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=init;}});
   const un=document.getElementById('tn-uname');if(un)un.textContent=user.name||'User';
   const pe=document.getElementById('sec-email-disp');if(pe)pe.textContent=IS_DEMO?'demo@armatchpro.com':CURRENT_USER;
-  const pi=document.getElementById('profile-name-input');if(pi)pi.value=user.name||'';
+  // Split full name into first/last for new fields
+  const nameParts=(user.name||'').trim().split(/\s+/);
+  const fn=document.getElementById('profile-firstname-input');
+  const ln=document.getElementById('profile-lastname-input');
+  const pi=document.getElementById('profile-name-input');
+  if(fn) fn.value=nameParts[0]||'';
+  if(ln) ln.value=nameParts.slice(1).join(' ')||'';
+  if(pi) pi.value=user.name||'';
   const planBadge=document.getElementById('tn-plan');if(planBadge)planBadge.textContent=PLANS[user.plan||'demo']?.name||'Demo';
   const ppb=document.getElementById('profile-plan-badge');
   if(ppb)ppb.innerHTML=`<span class="badge ${user.plan==='pro'?'badge-p':user.plan==='team'?'badge-pu':user.plan==='starter'?'badge-g':'badge-am'}" style="font-size:11px">${PLANS[user.plan||'demo']?.name||'Demo'} plan</span>`;
@@ -4750,7 +4818,11 @@ function resolveException(idx,dec){
     showModal('Post as Unapplied Cash',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select account to post unapplied cash:</div>
       ${opts?`<select id="exc-acct-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:8px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
         <option value="">— Select account —</option>${opts}</select><div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:8px">— or enter manually —</div>`:''}
-      <input type="text" id="exc-acct-manual" placeholder="Account # (manual)" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:14px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
+      <div style="position:relative;margin-bottom:14px">
+        <input type="text" id="exc-acct-manual" placeholder="Account # or customer name…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none" oninput="excAcctManualSearch(this.value)">
+        <div id="exc-acct-preview" style="font-size:11.5px;color:var(--g-t);margin-top:4px;padding-left:2px;min-height:18px"></div>
+        <div id="exc-acct-suggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:20;display:none;max-height:180px;overflow-y:auto"></div>
+      </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-p btn-sm" onclick="confirmExcAcct(${idx})">Post as unapplied</button>
         <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
@@ -6148,10 +6220,11 @@ function buildWorklist(){
   var hour=now.getHours();
   var greet=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
 
-  // First name: prefer profile-name-input, fall back to tn-uname
+  // First name: prefer profile-firstname-input, fall back to combined, then tn-uname
   var firstName='';
-  var nameInp=document.getElementById('profile-name-input');
-  if(nameInp&&nameInp.value.trim()) firstName=nameInp.value.trim().split(' ')[0];
+  var fnInp=document.getElementById('profile-firstname-input');
+  if(fnInp&&fnInp.value.trim()) firstName=fnInp.value.trim();
+  if(!firstName){ var nameInp=document.getElementById('profile-name-input'); if(nameInp&&nameInp.value.trim()) firstName=nameInp.value.trim().split(' ')[0]; }
   if(!firstName){ var un=document.getElementById('tn-uname'); if(un&&un.textContent&&un.textContent!=='User') firstName=un.textContent.trim().split(' ')[0]; }
 
   var greetEl=document.getElementById('wl-greeting');
@@ -6325,6 +6398,9 @@ function updateCfoSummary(){
   setEl('cfo-roi-auto',autoCount);
   setEl('cfo-roi-hours',hoursSaved.toFixed(1)+' hrs');
   setEl('cfo-roi-dollars','$'+$f(dollarsSaved));
+  // ROI multiple = labor savings / Pro plan cost ($999/mo)
+  var roiMultiple = dollarsSaved > 0 ? (dollarsSaved/999).toFixed(1)+'x' : '—';
+  setEl('cfo-roi-multiple', roiMultiple);
   setEl('cfo-bar-auto-val',autoCount);
   setEl('cfo-bar-exc-val',EXC.length);
   setEl('cfo-bar-unapp-val',PAY.filter(function(p){return p.coa;}).length);
@@ -6433,11 +6509,35 @@ function updDash(){
   _origUpdDash();
 }
 
+function syncProfileName(){
+  // Sync first+last fields into the hidden combined field
+  var fn=(document.getElementById('profile-firstname-input')||{}).value||'';
+  var ln=(document.getElementById('profile-lastname-input')||{}).value||'';
+  var full=(fn+' '+ln).trim();
+  var pi=document.getElementById('profile-name-input');
+  if(pi) pi.value=full;
+  // Update topnav immediately
+  var un=document.getElementById('tn-uname');
+  if(un) un.textContent=full||'User';
+  // Update avatar initials
+  var init=full.split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'?';
+  ['tn-avatar','profile-avatar'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=init;});
+}
+
 function saveSettings(){
+  // Sync first+last before saving
+  syncProfileName();
   _origSaveSettings();
   saveUserRole();
   saveMpRules();
   renderSettingsPlans();
+  // Persist name to user storage
+  var full=(document.getElementById('profile-name-input')||{}).value||'';
+  if(CURRENT_USER&&full){
+    var users=getUsers();
+    if(users[CURRENT_USER]){users[CURRENT_USER].name=full;var u=users;localStorage.setItem('armp_users',JSON.stringify(u));}
+  }
+  toast('Settings saved');
 }
 
 function sp(id){
@@ -6696,6 +6796,51 @@ function loadSampleInv(){
     // Also populate FBL5N bottom table
     if(typeof refreshFbl5n === 'function') refreshFbl5n();
   }, 150);
+}
+
+// ── excAcctManualSearch: live account lookup for Post as Unapplied Cash ──
+function excAcctManualSearch(q){
+  var preview = document.getElementById('exc-acct-preview');
+  var sugg = document.getElementById('exc-acct-suggestions');
+  if(!preview||!sugg) return;
+  if(!q){ preview.textContent=''; sugg.style.display='none'; return; }
+  var ql = q.toLowerCase();
+  // Build account map
+  var acctMap={};
+  INV.forEach(function(v){ if(v.a&&v.c) acctMap[v.a]=v.c; });
+  PAY.forEach(function(p){ if(p.a&&p.c&&!acctMap[p.a]) acctMap[p.a]=p.c; });
+  // Check for exact account match
+  if(acctMap[q]){
+    preview.innerHTML='<span style="color:var(--g-t)">✓ '+q+' — '+acctMap[q]+'</span>';
+    sugg.style.display='none';
+    return;
+  }
+  // Search partial matches
+  var matches = Object.keys(acctMap).filter(function(a){
+    return a.toLowerCase().includes(ql) || (acctMap[a]||'').toLowerCase().includes(ql);
+  }).slice(0,8);
+  if(!matches.length){
+    preview.textContent='';
+    sugg.style.display='none';
+    return;
+  }
+  sugg.innerHTML = matches.map(function(a){
+    return '<div onclick="excAcctManualSelect(''+a+'',''+acctMap[a].replace(/'/g,"&apos;")+'')" '+
+      'style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--bdr);font-size:13px;transition:background .12s" '+
+      'onmouseover="this.style.background='var(--glass2)'" onmouseout="this.style.background=''">'+
+      '<strong style="color:var(--pd)">'+a+'</strong> — '+acctMap[a]+
+    '</div>';
+  }).join('');
+  sugg.style.display='block';
+}
+
+function excAcctManualSelect(acct, custName){
+  var inp = document.getElementById('exc-acct-manual');
+  var preview = document.getElementById('exc-acct-preview');
+  var sugg = document.getElementById('exc-acct-suggestions');
+  if(inp) inp.value = acct;
+  if(preview) preview.innerHTML='<span style="color:var(--g-t)">✓ '+acct+' — '+custName+'</span>';
+  if(sugg) sugg.style.display='none';
 }
 
 </script>
