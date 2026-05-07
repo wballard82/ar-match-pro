@@ -4074,7 +4074,7 @@ function _legacyClearAllExceptions(){
 
 // kpi-bar → kpi-strip ID compat for updTop (already uses kpi-matched etc, no change needed)
 // Override updTop to also update kpi-strip sub-labels
-const _origUpdTop = typeof updTop === 'function' ? updTop : null;
+// _origUpdTop captured in block 6 override section
 </script>
 <script>
 // ══════════════════════════════════════════════════════════
@@ -4587,7 +4587,7 @@ function rExc(){
   const openItems=EXC.filter(ex=>ex.s!=='Resolved'&&ex.s!=='Resolved — rejected');
   const resolvedItems=EXC.filter(ex=>ex.s==='Resolved'||ex.s==='Resolved — rejected');
   const needsAction=EXC.filter(ex=>!ex.s||ex.s==='Open'||ex.s==='In review');
-  if(nb){nb.textContent=needsAction.length;nb.style.display='none'; // badge hidden, use notif-dot}
+  if(nb){nb.textContent=needsAction.length;nb.style.display='none';} // badge hidden, use notif-dot
   const rc=document.getElementById('exc-resolved-ct');if(rc)rc.textContent=resolvedItems.length;
   const tf=document.getElementById('exc-type-filter');const tval=tf?tf.value:'';
   const ec=document.getElementById('exc-ct');
@@ -6743,7 +6743,7 @@ function reviewItemInlineToggle(evt, rowEl){
       (pay.payDate?'<span style="font-size:11.5px;color:var(--t3);margin-left:8px">Payment date: <strong style="color:var(--t2)">'+fmtDate(pay.payDate)+'</strong></span>':'') +
       '<div style="margin-left:auto;display:flex;gap:6px">'+
         '<button class="btn btn-outline btn-xs" onclick="closeReviewInlineDetail()">Collapse ↑</button>'+
-        (r.fromAlloc||r.fromExc?'<span class="badge badge-exported">Exported</span>':'<button class="btn btn-outline btn-xs" onclick="reopenResultItem('+idx+');document.getElementById('review-inline-detail').remove()">↩ Reopen</button>')+
+        (r.fromAlloc||r.fromExc?'<span class="badge badge-exported">Exported</span>':'<button class="btn btn-outline btn-xs" onclick="reopenResultItem('+idx+');closeReviewInlineDetail()">↩ Reopen</button>')+
       '</div>'+
     '</div>';
   
@@ -6830,13 +6830,16 @@ function excAcctManualSearch(q){
     sugg.style.display='none';
     return;
   }
-  sugg.innerHTML = matches.map(function(a){
-    return '<div onclick="excAcctManualSelect(''+a+'',''+acctMap[a].replace(/'/g,"&apos;")+'')" '+
-      'style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--bdr);font-size:13px;transition:background .12s" '+
-      'onmouseover="this.style.background='var(--glass2)'" onmouseout="this.style.background=''">'+
-      '<strong style="color:var(--pd)">'+a+'</strong> — '+acctMap[a]+
-    '</div>';
-  }).join('');
+  sugg.innerHTML = '';
+  matches.forEach(function(a){
+    var div = document.createElement('div');
+    div.style.cssText = 'padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--bdr);font-size:13px;transition:background .12s';
+    div.innerHTML = '<strong style="color:var(--pd)">' + a + '</strong> — ' + (acctMap[a]||'');
+    div.addEventListener('mouseover', function(){ this.style.background='var(--glass2)'; });
+    div.addEventListener('mouseout', function(){ this.style.background=''; });
+    div.addEventListener('click', function(){ excAcctManualSelect(a, acctMap[a]||''); });
+    sugg.appendChild(div);
+  });
   sugg.style.display='block';
 }
 
