@@ -1925,6 +1925,61 @@ input:focus, select:focus, textarea:focus { outline: none; }
 }
 .cfo-period-btn.active { background: var(--surface); color: var(--t1); box-shadow: var(--shadow-xs); }
 
+
+/* ── REFACTOR PHASE: horizontal splits, account view, match priority ── */
+.ca-hsplit { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
+.ca-top-half { flex:0 0 auto; min-height:220px; max-height:55%; display:flex; flex-direction:column; overflow:hidden; border-bottom:2px solid var(--bdr2); }
+.ca-bottom-half { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:180px; }
+.ca-bottom-header { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:var(--surface2); border-bottom:1px solid var(--bdr); flex-shrink:0; }
+.ca-bottom-title { font-size:10px; font-weight:800; color:var(--t3); text-transform:uppercase; letter-spacing:.1em; display:flex; align-items:center; gap:8px; }
+.ca-bottom-tbl-wrap { flex:1; overflow:auto; }
+.ca-acct-sel { padding:5px 10px; border:1.5px solid var(--bdr); border-radius:8px; font-size:12.5px; font-family:var(--font); color:var(--t1); background:var(--surface2); outline:none; min-width:220px; }
+.ca-acct-sel:focus { border-color:var(--p); }
+
+/* Exceptions horizontal split */
+.exc-hsplit { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
+.exc-top-half { flex:0 0 auto; min-height:220px; max-height:55%; overflow-y:auto; border-bottom:2px solid var(--bdr2); }
+.exc-bottom-half { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:180px; }
+
+/* FBL5N-style open items table */
+.fbl5n-tbl { width:100%; border-collapse:collapse; font-size:12px; }
+.fbl5n-tbl thead th { padding:8px 10px; text-align:left; font-size:9.5px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.06em; background:var(--surface2); border-bottom:1px solid var(--bdr); position:sticky; top:0; z-index:2; white-space:nowrap; cursor:pointer; }
+.fbl5n-tbl thead th:hover { color:var(--t1); }
+.fbl5n-tbl tbody td { padding:7px 10px; border-bottom:1px solid var(--bdr); vertical-align:middle; white-space:nowrap; }
+.fbl5n-tbl tbody tr:hover { background:rgba(59,130,246,.04); }
+.fbl5n-tbl tbody tr.selected-inv { background:rgba(16,185,129,.07) !important; }
+.fbl5n-tbl .td-num { text-align:right; font-family:var(--mono); font-weight:600; }
+.aging-chip { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10.5px; font-weight:700; }
+.aging-cur { background:var(--g-bg); color:var(--g-t); }
+.aging-30  { background:var(--am-bg); color:var(--am-t); }
+.aging-60  { background:rgba(249,115,22,.12); color:#FB923C; }
+.aging-90  { background:var(--r-bg); color:var(--r-t); }
+.aging-na  { background:var(--bdr); color:var(--t3); }
+
+/* Match priority reorder */
+.mp-rule-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--surface2); border:1px solid var(--bdr); border-radius:10px; margin-bottom:6px; cursor:default; transition:all .15s; }
+.mp-rule-row:hover { border-color:var(--bdr2); box-shadow:var(--shadow-xs); }
+.mp-rule-num { width:24px; height:24px; border-radius:50%; background:var(--pg); color:var(--pd); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.mp-rule-label { flex:1; font-size:13px; font-weight:600; color:var(--t1); }
+.mp-rule-desc { font-size:11px; color:var(--t3); }
+.mp-rule-move { display:flex; flex-direction:column; gap:2px; }
+.mp-rule-btn { width:22px; height:18px; border:1px solid var(--bdr); border-radius:4px; background:transparent; cursor:pointer; color:var(--t3); font-size:11px; display:flex; align-items:center; justify-content:center; transition:all .12s; font-family:var(--font); }
+.mp-rule-btn:hover { background:var(--glass2); color:var(--t1); border-color:var(--bdr2); }
+.mp-rule-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+/* Column filter inputs below header */
+.col-filter-row th { padding:4px 6px !important; background:var(--surface3) !important; }
+.col-filter-inp { width:100%; padding:3px 6px; font-size:11px; background:var(--bg); border:1px solid var(--bdr); border-radius:4px; color:var(--t1); font-family:var(--font); outline:none; }
+.col-filter-inp:focus { border-color:var(--p); }
+.col-filter-sel { width:100%; padding:3px 4px; font-size:11px; background:var(--bg); border:1px solid var(--bdr); border-radius:4px; color:var(--t1); font-family:var(--font); outline:none; }
+
+/* Role badge */
+.role-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; background:var(--pu-bg); color:var(--pu-t); border:1px solid rgba(139,92,246,.2); }
+
+/* Resize handle */
+.resize-handle { height:6px; background:transparent; cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.resize-handle::after { content:''; width:40px; height:2px; border-radius:1px; background:var(--bdr2); }
+.resize-handle:hover::after { background:var(--p); }
 </style>
 </head>
 <body>
@@ -2603,11 +2658,11 @@ input:focus, select:focus, textarea:focus { outline: none; }
 
       <!-- ════════════════ CASH APPLICATION ════════════════ -->
       <div class="panel" id="p-cash-app">
-        <div class="panel-header" style="padding:14px 24px 10px">
+        <div class="panel-header" style="padding:12px 20px 10px">
           <div class="panel-header-row">
             <div>
               <div class="panel-title" style="font-size:17px">Cash Application</div>
-              <div class="panel-sub">Select payment → allocate → approve → export</div>
+              <div class="panel-sub">Select payment → allocate invoices → approve → export to ERP</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center">
               <button class="btn btn-outline btn-sm" onclick="openImport('inv')">+ Invoices</button>
@@ -2626,21 +2681,18 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <button class="ca-tab" id="ca-tab-recon" onclick="setCaTab('recon',this)">Reconcile</button>
         </div>
 
-        <!-- ── TAB: TO BE MATCHED (default allocation workspace) ── -->
-        <div class="ws-tab-view active" id="ws-match">
-          <!-- Top filters -->
-          <div class="ca-filters">
+        <!-- ── TAB: TO BE MATCHED (horizontal split) ── -->
+        <div class="ws-tab-view active" id="ws-match" style="flex-direction:column">
+          <!-- Filters -->
+          <div class="ca-filters" style="flex-shrink:0">
             <div class="ca-filter-item">
               <span class="ca-filter-label">Account</span>
-              <select id="ca-bank-sel" class="ca-filter-sel" onchange="caFilterUpdate()">
-                <option value="">All accounts</option>
-              </select>
+              <select id="ca-bank-sel" class="ca-filter-sel" onchange="caFilterUpdate()"><option value="">All accounts</option></select>
             </div>
             <div class="ca-filter-item">
               <span class="ca-filter-label">Currency</span>
               <select id="ca-ccy-sel" class="ca-filter-sel" onchange="caFilterUpdate()">
-                <option value="">All</option>
-                <option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option>
+                <option value="">All</option><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option>
               </select>
             </div>
             <div class="ca-filter-item">
@@ -2653,180 +2705,172 @@ input:focus, select:focus, textarea:focus { outline: none; }
             </div>
           </div>
 
-          <!-- Three-panel workspace -->
-          <div class="ca-workspace">
-            <!-- LEFT: Payment Queue -->
-            <div class="ca-queue">
-              <div class="ca-queue-header">
-                <div class="ca-queue-title">
-                  <span>Payment Queue</span>
-                  <span id="pq-count" style="font-size:11px;color:var(--t3)">(0)</span>
+          <!-- Horizontal split workspace -->
+          <div class="ca-hsplit">
+            <!-- TOP HALF: three-panel allocation workspace -->
+            <div class="ca-top-half">
+              <div class="ca-workspace" style="flex:1;overflow:hidden">
+                <!-- LEFT: Payment Queue -->
+                <div class="ca-queue">
+                  <div class="ca-queue-header">
+                    <div class="ca-queue-title">
+                      <span>Payment Queue</span>
+                      <span id="pq-count" style="font-size:11px;color:var(--t3)">(0)</span>
+                    </div>
+                    <div class="ca-queue-search" style="margin-top:6px">
+                      <input type="text" placeholder="Search payments…" oninput="filterPayQueue(this.value)">
+                    </div>
+                    <div class="pq-filters" style="margin-top:6px">
+                      <button class="pq-filter-btn active" onclick="setPayFilter('all',this)">All</button>
+                      <button class="pq-filter-btn" onclick="setPayFilter('unmatched',this)">Unmatched</button>
+                      <button class="pq-filter-btn" onclick="setPayFilter('matched',this)">Matched</button>
+                    </div>
+                  </div>
+                  <div class="ca-queue-list" id="pq-list">
+                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div></div>
+                  </div>
                 </div>
-                <div class="ca-queue-search">
-                  <input type="text" placeholder="Search payments…" oninput="filterPayQueue(this.value)">
-                </div>
-                <div class="pq-filters">
-                  <button class="pq-filter-btn active" onclick="setPayFilter('all',this)">All</button>
-                  <button class="pq-filter-btn" onclick="setPayFilter('unmatched',this)">Unmatched</button>
-                  <button class="pq-filter-btn" onclick="setPayFilter('matched',this)">Matched</button>
-                </div>
-              </div>
-              <div class="ca-queue-list" id="pq-list">
-                <div class="empty" style="padding:28px 12px">
-                  <div class="empty-icon">💳</div>
-                  <div class="empty-t">No payments</div>
-                  <div class="empty-s">Import remittance data.</div>
-                  <div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div>
-                </div>
-              </div>
-            </div>
 
-            <!-- CENTER: Allocation workspace -->
-            <div class="ca-center">
-              <div class="ca-toolbar">
-                <div class="ca-toolbar-group">
-                  <label style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Payment</label>
-                  <select id="eng-pay-sel" class="ca-filter-sel" style="min-width:260px;font-size:12.5px" onchange="engLoadPayment(this.value)">
-                    <option value="">— Select a payment to allocate —</option>
+                <!-- CENTER: Allocation controls -->
+                <div class="ca-center" style="overflow:hidden">
+                  <div class="ca-toolbar">
+                    <div class="ca-toolbar-group">
+                      <label style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Payment</label>
+                      <select id="eng-pay-sel" class="ca-filter-sel" style="min-width:240px;font-size:12px" onchange="engLoadPayment(this.value)">
+                        <option value="">— Select a payment —</option>
+                      </select>
+                      <button class="btn btn-ghost btn-xs" onclick="engNavPay(-1)">◀</button>
+                      <button class="btn btn-ghost btn-xs" onclick="engNavPay(1)">▶</button>
+                    </div>
+                    <div class="ca-toolbar-sep"></div>
+                    <div class="ca-toolbar-group">
+                      <button class="btn btn-outline btn-sm" onclick="engMarkAll()">Mark all</button>
+                      <button class="btn btn-outline btn-sm" onclick="engClearAll()">Clear</button>
+                      <button class="btn btn-outline btn-sm" onclick="engAutoOldest()">↓ Oldest first</button>
+                      <button class="btn btn-outline btn-sm" onclick="engAutoSuggest()">🤖 AI suggest</button>
+                    </div>
+                    <div class="ca-toolbar-sep"></div>
+                    <div class="ws-steps">
+                      <div class="ws-step ws-active" id="eng-ws-suggested"><div class="ws-dot"></div>Suggested</div>
+                      <div class="ws-step" id="eng-ws-approved"><div class="ws-dot"></div>Approved</div>
+                      <div class="ws-step" id="eng-ws-exported"><div class="ws-dot"></div>Exported</div>
+                    </div>
+                    <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
+                      <button class="btn btn-g btn-sm" id="eng-approve-btn" onclick="engApprove()" style="display:none">✓ Approve</button>
+                      <button class="btn btn-p btn-sm" id="eng-export-btn" onclick="engExport()" style="display:none">↓ Export &amp; lock</button>
+                      <button class="btn btn-outline btn-sm" onclick="engReopen()">↩ Reopen</button>
+                    </div>
+                  </div>
+
+                  <div class="eng-warn dup" id="eng-dup-warn">⚠️ <span id="eng-dup-msg">Duplicate payment detected</span></div>
+                  <div class="eng-warn sp" id="eng-short-pay-warn">⚠️ Short pay detected</div>
+                  <div class="ai-bar" id="eng-ai-bar" style="margin:8px 12px 0"><div class="ai-bar-header">🤖 AI Suggestions</div><div id="eng-ai-list"></div></div>
+
+                  <!-- Payment header -->
+                  <div class="payment-flow" id="eng-header" style="margin:8px 12px">
+                    <div class="pf-header" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr">
+                      <div class="pf-field"><div class="pf-label">Customer</div><div class="pf-val" id="eng-h-cust" style="font-size:14px;font-weight:900">—</div></div>
+                      <div class="pf-field"><div class="pf-label">Reference</div><div class="pf-val" id="eng-h-ref" style="color:var(--pd);font-size:12px">—</div></div>
+                      <div class="pf-field"><div class="pf-label">Date</div><div class="pf-val" id="eng-h-date" style="font-size:13px">—</div></div>
+                      <div class="pf-field"><div class="pf-label">Payment</div><div class="pf-val hero" id="eng-h-amt">$0.00</div></div>
+                      <div class="pf-field"><div class="pf-label">Applied</div><div class="pf-val green" id="eng-h-applied" style="font-size:16px;font-weight:900">$0.00</div></div>
+                      <div class="pf-field"><div class="pf-label">Remaining</div><div class="pf-val" id="eng-h-rem" style="font-size:16px;font-weight:900;color:var(--pd)">$0.00</div></div>
+                    </div>
+                    <div class="pf-progress-wrap">
+                      <div class="pf-progress-track"><div class="pf-progress-fill" id="pf-progress-fill"></div></div>
+                      <div class="pf-progress-labels"><span>Applied: <span id="pf-applied-pct">0%</span></span><span id="pf-status-label" style="color:var(--t3)">Select invoices below</span><span>Method: <span id="eng-h-method">—</span> · <span id="eng-h-ccy">USD</span></span></div>
+                    </div>
+                    <div class="pf-status-row">
+                      <div class="pay-fully-badge" id="eng-full-badge">✓ Fully Allocated</div>
+                      <div class="pay-locked-badge" id="eng-locked-badge">🔒 Locked · Exported</div>
+                    </div>
+                  </div>
+
+                  <div class="empty" id="eng-empty" style="padding:24px">
+                    <div class="empty-icon">💳</div>
+                    <div class="empty-t">Select a payment to allocate</div>
+                    <div class="empty-s">Choose from the queue on the left.</div>
+                    <div class="empty-btn" style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittance</button><button class="btn btn-p btn-sm" onclick="loadDemoData()">Load demo data</button></div>
+                  </div>
+
+                  <div class="alloc-fully-bar" id="alloc-fully">✅ Payment fully allocated — click Approve</div>
+
+                  <div id="eng-audit-wrap" style="display:none;flex-shrink:0">
+                    <div style="padding:6px 14px;background:var(--surface2);border-top:1px solid var(--bdr)"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">Allocation Audit</div></div>
+                    <div id="eng-audit-list" style="padding:4px 14px;max-height:70px;overflow-y:auto;background:var(--surface)"></div>
+                  </div>
+
+                  <div class="alloc-totals" id="alloc-totals" style="display:none">
+                    <div class="at-field"><div class="at-label">Payment</div><div class="at-val" id="at-payment">$0.00</div></div>
+                    <div class="at-field"><div class="at-label">Applied</div><div class="at-val" style="color:var(--g-t)" id="at-applied">$0.00</div></div>
+                    <div class="at-field"><div class="at-label">Remaining</div><div class="at-val" id="at-rem">$0.00</div></div>
+                  </div>
+                </div>
+
+                <!-- RIGHT: Intelligence panel -->
+                <div class="ca-right">
+                  <div class="ca-right-scroll">
+                    <div class="ca-right-section">
+                      <div class="ca-right-section-hdr"><div class="ca-right-section-title">🤖 AI Suggestions</div></div>
+                      <div class="ca-right-section-body" id="ca-ai-right"><div style="font-size:12px;color:var(--t3);line-height:1.6">Select a payment for AI suggestions.</div></div>
+                    </div>
+                    <div class="ca-right-section">
+                      <div class="ca-right-section-hdr"><div class="ca-right-section-title">⚠️ Exceptions</div></div>
+                      <div class="ca-right-section-body" id="ca-exc-right"><div style="font-size:12px;color:var(--t3)">No exceptions for current payment.</div></div>
+                    </div>
+                    <div class="ca-right-section" style="flex:1;overflow:hidden">
+                      <div class="ca-right-section-hdr"><div class="ca-right-section-title">📋 Audit Trail</div></div>
+                      <div class="ca-right-section-body" id="eng-audit-right" style="max-height:200px;overflow-y:auto"><div style="font-size:12px;color:var(--t3)">Actions appear here.</div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div><!-- end ca-top-half -->
+
+            <!-- BOTTOM HALF: SAP FBL5N-style customer open items -->
+            <div class="ca-bottom-half">
+              <div class="ca-bottom-header">
+                <div class="ca-bottom-title">
+                  📋 Customer Open Items
+                  <span style="font-weight:500;color:var(--t3);text-transform:none;letter-spacing:0;font-size:11px" id="ca-bottom-cust-label">— select account or payment</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account</span>
+                  <select id="ca-acct-dropdown" class="ca-acct-sel" onchange="caAcctDropdownChange(this.value)">
+                    <option value="">All accounts</option>
                   </select>
-                  <button class="btn btn-ghost btn-xs" onclick="engNavPay(-1)" title="Previous">◀</button>
-                  <button class="btn btn-ghost btn-xs" onclick="engNavPay(1)" title="Next">▶</button>
-                </div>
-                <div class="ca-toolbar-sep"></div>
-                <div class="ca-toolbar-group">
-                  <button class="btn btn-outline btn-sm" onclick="engMarkAll()">Mark all</button>
-                  <button class="btn btn-outline btn-sm" onclick="engClearAll()">Clear all</button>
-                  <button class="btn btn-outline btn-sm" onclick="engAutoOldest()">↓ Oldest first</button>
-                  <button class="btn btn-outline btn-sm" onclick="engAutoSuggest()">🤖 AI suggest</button>
-                </div>
-                <div class="ca-toolbar-sep"></div>
-                <div class="ws-steps">
-                  <div class="ws-step ws-active" id="eng-ws-suggested"><div class="ws-dot"></div>Suggested</div>
-                  <div class="ws-step" id="eng-ws-approved"><div class="ws-dot"></div>Approved</div>
-                  <div class="ws-step" id="eng-ws-exported"><div class="ws-dot"></div>Exported</div>
-                </div>
-                <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
-                  <button class="btn btn-g btn-sm" id="eng-approve-btn" onclick="engApprove()" style="display:none">✓ Approve</button>
-                  <button class="btn btn-p btn-sm" id="eng-export-btn" onclick="engExport()" style="display:none">↓ Export &amp; lock</button>
-                  <button class="btn btn-outline btn-sm" onclick="engReopen()">↩ Reopen</button>
+                  <button class="btn btn-ghost btn-xs" onclick="caAcctDropdownChange(document.getElementById('ca-acct-dropdown').value)">↻ Refresh</button>
                 </div>
               </div>
-
-              <div class="eng-warn dup" id="eng-dup-warn">⚠️ <span id="eng-dup-msg">Duplicate payment detected</span></div>
-              <div class="eng-warn sp" id="eng-short-pay-warn">⚠️ Short pay detected — apply amount less than invoice balance</div>
-              <div class="ai-bar" id="eng-ai-bar" style="margin:10px 16px 0"><div class="ai-bar-header">🤖 AI Suggestions</div><div id="eng-ai-list"></div></div>
-
-              <!-- Payment visualization -->
-              <div class="payment-flow" id="eng-header">
-                <!-- Payment header row -->
-                <div class="pf-header">
-                  <div class="pf-field">
-                    <div class="pf-label">Customer / Payer</div>
-                    <div class="pf-val" id="eng-h-cust" style="font-size:16px;font-weight:900">—</div>
-                  </div>
-                  <div class="pf-field">
-                    <div class="pf-label">Reference</div>
-                    <div class="pf-val" id="eng-h-ref" style="color:var(--pd);font-size:12px">—</div>
-                  </div>
-                  <div class="pf-field">
-                    <div class="pf-label">Date</div>
-                    <div class="pf-val" id="eng-h-date" style="font-size:13px">—</div>
-                  </div>
-                  <div class="pf-field">
-                    <div class="pf-label">Payment</div>
-                    <div class="pf-val hero" id="eng-h-amt">$0.00</div>
-                  </div>
-                  <div class="pf-field">
-                    <div class="pf-label">Applied</div>
-                    <div class="pf-val green" id="eng-h-applied" style="font-size:18px;font-weight:900">$0.00</div>
-                  </div>
-                  <div class="pf-field">
-                    <div class="pf-label">Remaining</div>
-                    <div class="pf-val" id="eng-h-rem" style="font-size:18px;font-weight:900;color:var(--pd)">$0.00</div>
-                  </div>
-                </div>
-                <!-- Application progress bar -->
-                <div class="pf-progress-wrap">
-                  <div class="pf-progress-track"><div class="pf-progress-fill" id="pf-progress-fill"></div></div>
-                  <div class="pf-progress-labels">
-                    <span>Applied: <span id="pf-applied-pct">0%</span></span>
-                    <span id="pf-status-label" style="color:var(--t3)">Select invoices below to allocate</span>
-                    <span>Method: <span id="eng-h-method">—</span> · <span id="eng-h-ccy">USD</span></span>
-                  </div>
-                </div>
-                <!-- Status pills row -->
-                <div class="pf-status-row">
-                  <div class="pay-fully-badge" id="eng-full-badge">✓ Fully Allocated — Ties to Zero</div>
-                  <div class="pay-locked-badge" id="eng-locked-badge">🔒 Locked · Exported to ERP</div>
-                </div>
-              </div>
-
-              <div class="empty" id="eng-empty">
-                <div class="empty-icon">💳</div>
-                <div class="empty-t">Select a payment to allocate</div>
-                <div class="empty-s">Choose from the payment queue, or import remittance data to begin.</div>
-                <div class="empty-btn" style="display:flex;gap:8px">
-                  <button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittance</button>
-                  <button class="btn btn-p btn-sm" onclick="loadDemoData()">Load demo data</button>
-                </div>
-              </div>
-
-              <div class="alloc-fully-bar" id="alloc-fully">✅ Payment fully allocated — click Approve to confirm</div>
-
-              <div class="alloc-grid-wrap" id="eng-grid-wrap">
-                <table class="alloc-tbl" style="margin-top:12px">
-                  <thead><tr>
-                    <th style="width:32px"></th>
-                    <th>Account</th><th>Customer</th><th>Invoice</th><th>PO</th>
-                    <th>Sales Order</th><th>Document</th>
-                    <th style="text-align:right">Amount</th><th style="text-align:right">Balance</th>
-                    <th style="text-align:right">Apply Amount</th><th>Status</th>
-                    <th style="text-align:center">Conf%</th><th>Exception</th>
-                  </tr></thead>
-                  <tbody id="eng-inv-body">
-                    <tr><td colspan="13"><div class="empty" style="padding:24px"><div class="empty-icon">📄</div><div class="empty-t">No invoices loaded</div></div></td></tr>
+              <div class="ca-bottom-tbl-wrap">
+                <table class="fbl5n-tbl" id="ca-open-items-tbl">
+                  <thead>
+                    <tr>
+                      <th style="width:32px"></th>
+                      <th onclick="sortFbl5n(0)">Account<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(1)">Customer<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(2)">Invoice #<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(3)">Inv Date<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(4)">Due Date<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(5)">Aging<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(6)">PO #<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(7)">Sales Order<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(8)">Document #<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(9)" style="text-align:right">Orig Amt<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(10)" style="text-align:right">Open Balance<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(11)" style="text-align:right">Applied<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(12)">Status<span class="si2"></span></th>
+                      <th style="text-align:center">Conf%</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ca-open-items-body">
+                    <tr><td colspan="16"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
                   </tbody>
                 </table>
               </div>
-
-              <div class="alloc-totals" id="alloc-totals" style="display:none">
-                <div class="at-field"><div class="at-label">Payment</div><div class="at-val" id="at-payment">$0.00</div></div>
-                <div class="at-field"><div class="at-label">Applied</div><div class="at-val" style="color:var(--g-t)" id="at-applied">$0.00</div></div>
-                <div class="at-field"><div class="at-label">Remaining</div><div class="at-val" id="at-rem">$0.00</div></div>
-              </div>
-
-              <div id="eng-audit-wrap" style="display:none;flex-shrink:0">
-                <div style="padding:8px 18px;background:var(--surface2);border-top:1px solid var(--bdr)">
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">Allocation Audit</div>
-                </div>
-                <div id="eng-audit-list" style="padding:4px 18px;max-height:90px;overflow-y:auto;background:var(--surface)"></div>
-              </div>
-            </div>
-
-            <!-- RIGHT: Intelligence panel -->
-            <div class="ca-right">
-              <div class="ca-right-scroll">
-                <div class="ca-right-section">
-                  <div class="ca-right-section-hdr"><div class="ca-right-section-title">🤖 AI Suggestions</div></div>
-                  <div class="ca-right-section-body" id="ca-ai-right">
-                    <div style="font-size:12px;color:var(--t3);line-height:1.6">Select a payment to see AI-powered suggestions.</div>
-                  </div>
-                </div>
-                <div class="ca-right-section">
-                  <div class="ca-right-section-hdr"><div class="ca-right-section-title">⚠️ Exceptions</div></div>
-                  <div class="ca-right-section-body" id="ca-exc-right">
-                    <div style="font-size:12px;color:var(--t3);line-height:1.6">No exceptions for current payment.</div>
-                  </div>
-                </div>
-                <div class="ca-right-section" style="flex:1;overflow:hidden">
-                  <div class="ca-right-section-hdr"><div class="ca-right-section-title">📋 Audit Trail</div></div>
-                  <div class="ca-right-section-body" id="eng-audit-right" style="max-height:260px;overflow-y:auto">
-                    <div style="font-size:12px;color:var(--t3)">Actions appear here.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            </div><!-- end ca-bottom-half -->
+          </div><!-- end ca-hsplit -->
         </div><!-- end ws-match -->
 
         <!-- ── TAB: REVIEW ── -->
@@ -2838,34 +2882,65 @@ input:focus, select:focus, textarea:focus { outline: none; }
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting file</button>
             </div>
           </div>
-          <div style="flex:1;overflow-y:auto">
-            <div id="review-list">
-              <div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Run matching or approve allocations from the To Be Matched tab.</div></div>
-            </div>
-          </div>
+          <div style="flex:1;overflow-y:auto"><div id="review-list"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Run matching or approve allocations.</div></div></div></div>
         </div>
 
-        <!-- ── TAB: EXCEPTIONS ── -->
-        <div class="ws-tab-view" id="ws-exc">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0;flex-wrap:wrap;gap:8px">
-            <div style="display:flex;align-items:center;gap:12px">
-              <span style="font-size:12px;color:var(--t3)" id="ws-exc-ct">0 exceptions</span>
-              <select class="sel" id="ws-exc-type-filter" onchange="renderWsExc()" style="font-size:12px">
-                <option value="">All types</option>
-                <option>Short pay</option><option>Unapplied payment</option><option>Unmatched</option>
-                <option>Duplicate</option><option>Missing PO</option><option>Bank fee</option>
-              </select>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-outline btn-sm" id="ws-exc-tab-open" onclick="setWsExcView('open',this)">Open</button>
-              <button class="btn btn-outline btn-sm" id="ws-exc-tab-resolved" onclick="setWsExcView('resolved',this)">Resolved</button>
-              <button class="btn btn-r btn-sm" onclick="clearAllExceptions()">Clear all</button>
-              <button class="btn btn-outline btn-sm" onclick="exportExc()">Export CSV</button>
-            </div>
-          </div>
-          <div style="flex:1;overflow-y:auto">
-            <div id="ws-exc-list">
-              <div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect short pays and unmatched payments.</div></div>
+        <!-- ── TAB: EXCEPTIONS (in cash-app) ── -->
+        <div class="ws-tab-view" id="ws-exc" style="flex-direction:column">
+          <div class="exc-hsplit">
+            <!-- TOP: Exception queue -->
+            <div class="exc-top-half">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-wrap:wrap;gap:8px;flex-shrink:0">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:12px;color:var(--t3)" id="ws-exc-ct">0 exceptions</span>
+                  <select class="sel" id="ws-exc-type-filter" onchange="renderWsExcPremium()" style="font-size:12px">
+                    <option value="">All types</option>
+                    <option>Short pay</option><option>Unapplied payment</option><option>Unmatched</option>
+                    <option>Duplicate</option><option>Missing PO</option><option>Bank fee</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-outline btn-sm" id="ws-exc-tab-open" onclick="setWsExcView('open',this)">Open</button>
+                  <button class="btn btn-outline btn-sm" id="ws-exc-tab-resolved" onclick="setWsExcView('resolved',this)">Resolved</button>
+                  <button class="btn btn-r btn-sm" onclick="clearAllExceptions()">Clear all</button>
+                  <button class="btn btn-outline btn-sm" onclick="exportExc()">Export CSV</button>
+                </div>
+              </div>
+              <div id="ws-exc-list"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect issues.</div></div></div>
+            </div><!-- end exc-top-half -->
+
+            <!-- BOTTOM: FBL5N view for exception context -->
+            <div class="exc-bottom-half">
+              <div class="ca-bottom-header">
+                <div class="ca-bottom-title">📋 Account Open Items — Exception Context</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account</span>
+                  <select id="exc-acct-dropdown" class="ca-acct-sel" onchange="excAcctDropdownChange(this.value)">
+                    <option value="">All accounts</option>
+                  </select>
+                </div>
+              </div>
+              <div class="ca-bottom-tbl-wrap">
+                <table class="fbl5n-tbl" id="exc-open-items-tbl">
+                  <thead>
+                    <tr>
+                      <th onclick="sortFbl5nExc(0)">Account<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(1)">Customer<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(2)">Invoice #<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(3)">Inv Date<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(4)">Due Date<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(5)">Aging<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(6)">PO #<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(7)" style="text-align:right">Orig Amt<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(8)" style="text-align:right">Open Balance<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(9)">Status<span class="si2"></span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="exc-open-items-body">
+                    <tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">Select an account to view open items</div></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -2873,70 +2948,38 @@ input:focus, select:focus, textarea:focus { outline: none; }
         <!-- ── TAB: ACCOUNT TRANSACTION ── -->
         <div class="ws-tab-view" id="ws-acct">
           <div class="acct-ws">
-            <!-- Customer list -->
             <div class="acct-left">
               <div style="padding:10px 14px;border-bottom:1px solid var(--bdr);background:var(--surface2)">
                 <input class="inp" placeholder="Search customers…" oninput="filterAcctCustomers(this.value)" style="width:100%;font-size:12px">
               </div>
-              <div id="acct-customer-list">
-                <div class="empty" style="padding:24px 12px"><div class="empty-icon">👥</div><div class="empty-t">No customers</div><div class="empty-s">Import invoices to see customer accounts.</div></div>
-              </div>
+              <div id="acct-customer-list"><div class="empty" style="padding:24px 12px"><div class="empty-icon">👥</div><div class="empty-t">No customers</div><div class="empty-s">Import invoices to see accounts.</div></div></div>
             </div>
-            <!-- Account detail -->
             <div class="acct-right">
-              <div id="acct-detail-empty" class="empty">
-                <div class="empty-icon">🏢</div>
-                <div class="empty-t">Select a customer</div>
-                <div class="empty-s">Click a customer from the list to see their full AR account activity.</div>
-              </div>
+              <div id="acct-detail-empty" class="empty"><div class="empty-icon">🏢</div><div class="empty-t">Select a customer</div><div class="empty-s">Click a customer to view their full AR account activity.</div></div>
               <div id="acct-detail" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-                <!-- Account header -->
-                <div id="acct-header" style="padding:16px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
+                <div id="acct-header" style="padding:14px 18px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                    <div>
-                      <div style="font-size:17px;font-weight:800;color:var(--t1)" id="acct-cust-name">—</div>
-                      <div style="font-size:12px;color:var(--t3);margin-top:2px" id="acct-cust-id">—</div>
-                    </div>
+                    <div><div style="font-size:17px;font-weight:800;color:var(--t1)" id="acct-cust-name">—</div><div style="font-size:12px;color:var(--t3);margin-top:2px" id="acct-cust-id">—</div></div>
                     <button class="btn btn-outline btn-sm" onclick="openCustomerDrawer()">View full account</button>
                   </div>
-                  <!-- Aging buckets inline -->
-                  <div class="aging-grid" id="acct-aging-grid">
-                  </div>
+                  <div class="aging-grid" id="acct-aging-grid"></div>
                 </div>
-                <!-- Invoices for this customer -->
                 <div style="flex:1;overflow-y:auto">
-                  <div style="padding:10px 16px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);background:var(--surface2)">Open Invoices &amp; Activity</div>
-                  <table class="tbl" id="acct-inv-tbl" style="font-size:12px">
+                  <div style="padding:8px 14px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);background:var(--surface2)">Open Invoices &amp; Activity</div>
+                  <table class="fbl5n-tbl" id="acct-inv-tbl">
                     <thead>
                       <tr>
-                        <th onclick="sortTbl('acct-inv-tbl',0)">Invoice #<span class="si2"></span></th>
-                        <th onclick="sortTbl('acct-inv-tbl',1)">Invoice Date<span class="si2"></span></th>
-                        <th onclick="sortTbl('acct-inv-tbl',2)">Due Date<span class="si2"></span></th>
-                        <th onclick="sortTbl('acct-inv-tbl',3)">PO #<span class="si2"></span></th>
-                        <th onclick="sortTbl('acct-inv-tbl',4)">Sales Order<span class="si2"></span></th>
-                        <th onclick="sortTbl('acct-inv-tbl',5)" style="text-align:right">Amount<span class="si2"></span></th>
-                        <th onclick="sortTbl('acct-inv-tbl',6)" style="text-align:right">Balance<span class="si2"></span></th>
-                        <th onclick="sortTbl('acct-inv-tbl',7)">Aging<span class="si2"></span></th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th>Invoice #</th><th>Inv Date</th><th>Due Date</th><th>PO #</th><th>Sales Order</th>
+                        <th style="text-align:right">Amount</th><th style="text-align:right">Balance</th>
+                        <th>Aging</th><th>Status</th><th>Action</th>
                       </tr>
                     </thead>
-                    <tbody id="acct-inv-body">
-                      <tr><td colspan="10"><div class="empty" style="padding:20px"><div class="empty-t">No invoices</div></div></td></tr>
-                    </tbody>
+                    <tbody id="acct-inv-body"><tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">No invoices</div></div></td></tr></tbody>
                   </table>
-                  <!-- Payments for this customer -->
-                  <div style="padding:10px 16px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);border-top:2px solid var(--bdr);background:var(--surface2);margin-top:4px">Payment History</div>
-                  <table class="tbl" id="acct-pay-tbl" style="font-size:12px">
-                    <thead>
-                      <tr>
-                        <th>TX ID</th><th>Date</th><th style="text-align:right">Amount</th>
-                        <th>Method</th><th>PO Ref</th><th>Invoice Ref</th><th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody id="acct-pay-body">
-                      <tr><td colspan="7"><div class="empty" style="padding:20px"><div class="empty-t">No payments</div></div></td></tr>
-                    </tbody>
+                  <div style="padding:8px 14px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);border-top:2px solid var(--bdr);background:var(--surface2);margin-top:4px">Payment History</div>
+                  <table class="fbl5n-tbl" id="acct-pay-tbl">
+                    <thead><tr><th>TX ID</th><th>Date</th><th style="text-align:right">Amount</th><th>Method</th><th>PO Ref</th><th>Invoice Ref</th><th>Status</th></tr></thead>
+                    <tbody id="acct-pay-body"><tr><td colspan="7"><div class="empty" style="padding:16px"><div class="empty-t">No payments</div></div></td></tr></tbody>
                   </table>
                 </div>
               </div>
@@ -2953,15 +2996,12 @@ input:focus, select:focus, textarea:focus { outline: none; }
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
           </div>
-          <div style="flex:1;overflow-y:auto;padding:20px">
-            <div id="recon-list">
-              <div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No reconciliation data</div><div class="empty-s">Run matching to compare bank statement rows to invoice data.</div></div>
-            </div>
-          </div>
+          <div style="flex:1;overflow-y:auto;padding:12px 16px"><div id="recon-list"><div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No reconciliation data</div><div class="empty-s">Import data and run matching to reconcile.</div></div></div></div>
         </div>
 
       </div><!-- end p-cash-app -->
 
+      
       <div class="panel" id="p-exceptions">
         <div class="panel-header">
           <div class="panel-header-row">
@@ -3031,12 +3071,20 @@ input:focus, select:focus, textarea:focus { outline: none; }
           </div>
         </div>
         <div class="panel-body" style="padding:0">
-          <div class="filter-bar" style="padding:10px 20px;border-bottom:1px solid var(--bdr);margin:0;background:var(--surface2)">
-            <input class="inp" id="inv-search" placeholder="Search…" oninput="searchTbl('inv-tb',this.value)" style="width:180px;font-size:12.5px">
-            <select class="sel" id="inv-af" onchange="fc('inv-tb',1,this.value)" style="font-size:12.5px"><option value="">All accounts</option></select>
-            <select class="sel" id="inv-po-filter" onchange="fc('inv-tb',3,this.value)" style="font-size:12.5px"><option value="">All PO #</option></select>
-            <select class="sel" id="inv-so-filter" onchange="fc('inv-tb',4,this.value)" style="font-size:12.5px"><option value="">All Sales Orders</option></select>
-            <button class="btn btn-ghost btn-sm" onclick="clearInvFilters()">Clear filters</button>
+          <div class="filter-bar" style="padding:8px 20px;border-bottom:1px solid var(--bdr);margin:0;background:var(--surface2);flex-wrap:wrap;gap:6px">
+            <input class="inp" id="inv-search" placeholder="🔍 Search all columns…" oninput="filterInvAll(this.value)" style="width:200px;font-size:12.5px">
+            <select class="sel" id="inv-af" onchange="filterInvAll(document.getElementById('inv-search').value)" style="font-size:12.5px"><option value="">All accounts</option></select>
+            <select class="sel" id="inv-status-filter" onchange="filterInvAll(document.getElementById('inv-search').value)" style="font-size:12.5px">
+              <option value="">All statuses</option>
+              <option value="open">Open</option><option value="Exact">Matched</option>
+              <option value="Short pay">Short pay</option><option value="Overpay">Overpay</option>
+            </select>
+            <select class="sel" id="inv-type-filter" onchange="filterInvAll(document.getElementById('inv-search').value)" style="font-size:12.5px">
+              <option value="">All types</option>
+              <option>RV</option><option>DZ</option><option>Credit</option><option>Down Payment</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="clearInvFilters()">Clear</button>
+            <span style="font-size:12px;color:var(--t3);margin-left:auto" id="inv-ct">0 rows</span>
           </div>
           <div class="tbl-wrap" style="border:none;border-radius:0">
             <table class="tbl" id="inv-tbl">
@@ -3083,12 +3131,22 @@ input:focus, select:focus, textarea:focus { outline: none; }
           </div>
         </div>
         <div class="panel-body" style="padding:0">
-          <div style="padding:10px 20px;border-bottom:1px solid var(--bdr);display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--surface2)">
-            <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Supported formats:</span>
-            <span class="fmt-badge blue">CSV</span><span class="fmt-badge blue">Excel</span>
-            <span class="fmt-badge green">PDF</span><span class="fmt-badge purple">OFX/QFX</span>
-            <span class="fmt-badge purple">BAI2</span><span class="fmt-badge purple">CAMT.053</span>
-            <input class="inp" placeholder="Search…" oninput="searchTbl('rem-tb',this.value)" style="margin-left:auto;width:160px;font-size:12.5px">
+          <div style="padding:8px 20px;border-bottom:1px solid var(--bdr);display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--surface2)">
+            <input class="inp" placeholder="🔍 Search all columns…" oninput="filterRemAll(this.value)" id="rem-search" style="width:200px;font-size:12.5px">
+            <select class="sel" id="rem-method-filter" onchange="filterRemAll(document.getElementById('rem-search').value||'')" style="font-size:12.5px">
+              <option value="">All methods</option>
+              <option>ACH</option><option>Wire</option><option>Check</option>
+            </select>
+            <select class="sel" id="rem-ccy-filter" onchange="filterRemAll(document.getElementById('rem-search').value||'')" style="font-size:12.5px">
+              <option value="">All currencies</option>
+              <option>USD</option><option>EUR</option><option>GBP</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="clearRemFilters()">Clear</button>
+            <div style="margin-left:auto;display:flex;gap:4px;flex-wrap:wrap">
+              <span class="fmt-badge blue">CSV</span><span class="fmt-badge blue">Excel</span>
+              <span class="fmt-badge green">PDF</span><span class="fmt-badge purple">OFX/QFX</span>
+              <span class="fmt-badge purple">BAI2</span><span class="fmt-badge purple">CAMT.053</span>
+            </div>
           </div>
           <div class="tbl-wrap" style="border:none;border-radius:0">
             <table class="tbl" id="rem-tbl">
@@ -3123,7 +3181,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <div class="panel-header-row">
             <div>
               <div class="panel-title">Posting Export</div>
-              <div class="panel-sub">SAP F-28 · NetSuite · Dynamics AX · Columns: Account · Customer · Invoice · PO · SO · Amount</div>
+              <div class="panel-sub">Ready for ERP posting — SAP · NetSuite · Dynamics AX</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span id="post-ct" style="font-size:12.5px;color:var(--t3)">0 rows</span>
@@ -3179,7 +3237,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <div class="panel-header-row">
             <div>
               <div class="panel-title">CFO Summary</div>
-              <div class="panel-sub">Executive overview · ROI analysis · Time saved · Match performance</div>
+              <div class="panel-sub">Executive metrics · Cash matched · Aging exposure · Exception status · Export readiness</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center">
               <div class="cfo-period-selector">
@@ -3192,10 +3250,18 @@ input:focus, select:focus, textarea:focus { outline: none; }
           </div>
         </div>
         <div class="panel-body">
+          <div id="cfo-role-gate" style="display:none;padding:40px;text-align:center">
+            <div style="font-size:32px;margin-bottom:12px">🔒</div>
+            <div style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:6px">CFO Summary — Restricted Access</div>
+            <div style="font-size:13px;color:var(--t3);max-width:360px;margin:0 auto;line-height:1.6">CFO Summary is available to AR Managers, Controllers, CFOs, and Admins. Change your role in Settings to access this view.</div>
+            <button class="btn btn-outline btn-sm" onclick="sp('settings')" style="margin-top:16px">Go to Settings →</button>
+          </div>
+          <div id="cfo-content-wrap">
+          
 
           <!-- Hero savings callout -->
           <div class="cfo-hero">
-            <div class="cfo-hero-label">Return on Investment</div>
+            <div class="cfo-hero-label">Cash Application Performance</div>
             <div class="cfo-hero-headline" id="cfo-hours-saved">0 hours saved</div>
             <div class="cfo-hero-sub" id="cfo-hero-sub">Based on current session match results vs. manual processing baseline</div>
             <div class="cfo-hero-metrics">
@@ -3222,7 +3288,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <div class="cfo-savings-callout" id="cfo-savings-callout">
             <div class="cfo-savings-icon">💰</div>
             <div>
-              <div class="cfo-savings-headline" id="cfo-savings-headline">$0 in labor cost saved</div>
+              <div class="cfo-savings-headline" id="cfo-savings-headline">$0 in cash matched this session</div>
               <div class="cfo-savings-body" id="cfo-savings-body">
                 Import invoices and remittance, then run matching to calculate savings.
               </div>
@@ -3456,7 +3522,9 @@ input:focus, select:focus, textarea:focus { outline: none; }
             </div>
           </div>
         </div>
-      </div>
+      
+          </div><!-- end cfo-content-wrap -->
+        </div>
 
       <!-- ════════════════ AUDIT TRAIL ════════════════ -->
       <div class="panel" id="p-audit">
@@ -3492,10 +3560,11 @@ input:focus, select:focus, textarea:focus { outline: none; }
       <div class="panel" id="p-settings">
         <div class="panel-header">
           <div class="panel-title">Settings</div>
-          <div class="panel-sub">Account · Matching engine · Appearance · Plans & Pricing</div>
+          <div class="panel-sub">Account · Role · Matching engine · Appearance · Plans &amp; Pricing</div>
         </div>
-        <div class="panel-body" style="max-width:680px">
+        <div class="panel-body" style="max-width:720px">
 
+          <!-- Account -->
           <div class="settings-section">
             <div class="settings-section-title">Account</div>
             <div class="settings-row">
@@ -3503,11 +3572,17 @@ input:focus, select:focus, textarea:focus { outline: none; }
               <input class="inp" id="profile-name-input" placeholder="Your name" style="width:220px;font-size:12.5px">
             </div>
             <div class="settings-row">
-              <div>
-                <div class="settings-label">Email</div>
-                <div class="settings-desc" id="sec-email-disp"></div>
-              </div>
+              <div><div class="settings-label">Email</div><div class="settings-desc" id="sec-email-disp"></div></div>
               <span id="profile-plan-badge"></span>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-label">Role</div><div class="settings-desc">Controls access to CFO Summary and admin features</div></div>
+              <select class="sel" id="s-role" onchange="saveUserRole()" style="font-size:12.5px;min-width:180px">
+                <option value="specialist">AR Specialist</option>
+                <option value="manager">AR Manager</option>
+                <option value="controller">Controller / CFO</option>
+                <option value="admin">Admin</option>
+              </select>
             </div>
             <div class="settings-row">
               <div><div class="settings-label">Current Plan</div></div>
@@ -3515,94 +3590,65 @@ input:focus, select:focus, textarea:focus { outline: none; }
             </div>
           </div>
 
+          <!-- Matching Engine Priority -->
           <div class="settings-section">
-            <div class="settings-section-title">Matching Engine</div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label">Invoice # matching</div>
-                <div class="settings-desc">Match payments by exact invoice reference</div>
-              </div>
-              <label class="toggle"><input type="checkbox" id="s-inv" checked><div class="toggle-slider"></div></label>
+            <div class="settings-section-title">Matching Engine — Priority Order</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:12px">Drag to reorder · use arrows to move rules · toggle to enable/disable · higher priority runs first</div>
+            <div id="mp-rules-list"></div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn btn-p btn-sm" onclick="saveMpRules()">Save priority order</button>
+              <button class="btn btn-outline btn-sm" onclick="resetMpRules()">Reset defaults</button>
             </div>
+          </div>
+
+          <!-- Amount tolerance -->
+          <div class="settings-section">
+            <div class="settings-section-title">Matching Parameters</div>
             <div class="settings-row">
-              <div>
-                <div class="settings-label">PO # matching</div>
-                <div class="settings-desc">Match by purchase order number</div>
-              </div>
-              <label class="toggle"><input type="checkbox" id="s-po" checked><div class="toggle-slider"></div></label>
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label">Sales Order matching</div>
-                <div class="settings-desc">Match by SO reference number</div>
-              </div>
-              <label class="toggle"><input type="checkbox" id="s-so" checked><div class="toggle-slider"></div></label>
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label">Amount tolerance ($)</div>
-                <div class="settings-desc">Max variance for exact match</div>
-              </div>
+              <div><div class="settings-label">Amount tolerance ($)</div><div class="settings-desc">Max variance to still consider an exact match</div></div>
               <input class="inp" type="number" id="s-tol" value="1" min="0" max="100" step="0.5" style="width:80px;font-size:12.5px;text-align:right">
             </div>
           </div>
 
+          <!-- Appearance -->
           <div class="settings-section">
             <div class="settings-section-title">Appearance</div>
             <div class="settings-row">
-              <div>
-                <div class="settings-label">Dark mode</div>
-                <div class="settings-desc">Use dark theme across the app</div>
-              </div>
+              <div><div class="settings-label">Dark mode</div><div class="settings-desc">Use dark theme across the app</div></div>
               <label class="toggle"><input type="checkbox" id="s-dm" checked onchange="toggleDark()"><div class="toggle-slider"></div></label>
             </div>
           </div>
 
+          <!-- Plans -->
           <div class="settings-section">
             <div class="settings-section-title">💳 Plans &amp; Pricing</div>
-            <div style="margin-bottom:16px;padding:14px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:14px;display:flex;align-items:center;justify-content:space-between">
+            <div style="padding:16px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div>
                 <div style="font-size:14px;font-weight:700;color:var(--t1)">Current plan</div>
-                <div style="font-size:12.5px;color:var(--t3)" id="settings-plan-name2">Demo plan</div>
+                <div style="font-size:12.5px;color:var(--t3);margin-top:2px" id="settings-plan-name2">Demo plan</div>
+                <div style="font-size:11.5px;color:var(--t3);margin-top:3px" id="settings-plan-features"></div>
               </div>
-              <button class="btn btn-upgrade btn-sm" onclick="showUpgrade('Upgrade your plan','Unlock unlimited rows, multi-invoice allocation, SAP/NetSuite exports.')">Upgrade</button>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-outline btn-sm" id="settings-downgrade-btn" onclick="showDowngradeModal()" style="display:none">Downgrade</button>
+                <button class="btn btn-upgrade btn-sm" id="settings-upgrade-btn" onclick="showUpgrade('Upgrade your plan','')">Upgrade</button>
+              </div>
             </div>
-            <div style="display:grid;gap:10px">
-              <div style="padding:14px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px;display:flex;align-items:center;justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:700;color:var(--t1)">Starter — $399/month</div>
-                  <div style="font-size:12px;color:var(--t3);margin-top:2px">1 user · Invoice & PO matching · 5,000 rows · CSV export</div>
-                </div>
-                <button class="btn btn-outline btn-sm" onclick="goToCheckout('starter')">Select</button>
-              </div>
-              <div style="padding:14px 18px;background:var(--pg);border:1.5px solid rgba(59,130,246,.3);border-radius:12px;display:flex;align-items:center;justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:700;color:var(--t1)">Pro — $999/month ⭐ Most Popular</div>
-                  <div style="font-size:12px;color:var(--t3);margin-top:2px">Unlimited rows · Multi-invoice allocation · SAP F-28 · NetSuite · Priority support</div>
-                </div>
-                <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select</button>
-              </div>
-              <div style="padding:14px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px;display:flex;align-items:center;justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:700;color:var(--t1)">Team — $1,999/month</div>
-                  <div style="font-size:12px;color:var(--t3);margin-top:2px">3–10 users · Roles & permissions · Audit logs · Dedicated onboarding · SLA</div>
-                </div>
-                <button class="btn btn-outline btn-sm" onclick="goToCheckout('team')">Select</button>
-              </div>
+            <div style="font-size:12px;color:var(--t3);text-align:center">
+              Questions? <a href="mailto:info@armatchpro.com" style="color:var(--pd)">info@armatchpro.com</a> · <a href="https://calendly.com/armatchpro" target="_blank" style="color:var(--pd)">Book a demo</a>
             </div>
           </div>
 
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:16px;border-top:1px solid var(--bdr)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:16px;border-top:1px solid var(--bdr)">
             <button class="btn btn-ghost" onclick="clearAllData()" style="color:var(--r-t)">Clear all data</button>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline" onclick="doLogout()">Sign out</button>
               <button class="btn btn-p" onclick="saveSettings()">Save settings</button>
             </div>
           </div>
-
         </div>
       </div>
 
+      
     </div><!-- end .main -->
   </div><!-- end .app-body -->
 
@@ -6029,6 +6075,461 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// PHASE 5 REFACTOR — ALL NEW FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+
+// ── USER ROLE ──
+var USER_ROLE = localStorage.getItem('armp_role') || 'specialist';
+var CFO_ROLES = ['manager','controller','admin','cfo'];
+
+function saveUserRole(){
+  var sel = document.getElementById('s-role');
+  if(!sel) return;
+  USER_ROLE = sel.value;
+  localStorage.setItem('armp_role', USER_ROLE);
+  applyCfoAccess();
+  toast('Role updated: ' + sel.options[sel.selectedIndex].text);
+  addAudit('Role changed', USER_ROLE);
+}
+
+function applyCfoAccess(){
+  var canSeeCfo = IS_MASTER || CFO_ROLES.indexOf(USER_ROLE) >= 0;
+  // sidebar item
+  var sbiCfo = document.getElementById('sbi-cfo');
+  if(sbiCfo) sbiCfo.style.display = canSeeCfo ? '' : 'none';
+  // gate within panel
+  var gate = document.getElementById('cfo-role-gate');
+  var wrap = document.getElementById('cfo-content-wrap');
+  if(gate) gate.style.display = canSeeCfo ? 'none' : 'block';
+  if(wrap) wrap.style.display = canSeeCfo ? '' : 'none';
+}
+
+function initRole(){
+  var sel = document.getElementById('s-role');
+  if(sel){
+    sel.value = IS_MASTER ? 'admin' : USER_ROLE;
+  }
+  applyCfoAccess();
+}
+
+// ── MATCHING ENGINE PRIORITY RULES ──
+var DEFAULT_MP_RULES = [
+  {id:'inv',    label:'Invoice Number',          desc:'Exact invoice # match',                 enabled:true},
+  {id:'inv-amt',label:'Invoice + Amount',         desc:'Invoice # with amount tolerance',       enabled:true},
+  {id:'multi',  label:'Multi-Invoice Sum Match',  desc:'Subset-sum across multiple invoices',   enabled:true},
+  {id:'po',     label:'PO + Amount',              desc:'Purchase order # match',                enabled:true},
+  {id:'so',     label:'Sales Order + Amount',     desc:'Sales order # match',                   enabled:true},
+  {id:'del',    label:'Delivery Number',          desc:'Delivery reference match',              enabled:false},
+  {id:'trk',    label:'Tracking Number',          desc:'Tracking reference match',              enabled:false},
+  {id:'cust',   label:'Customer Account Match',   desc:'Customer name or account number',       enabled:true},
+  {id:'parent', label:'Parent/Child Customer',    desc:'Parent-child account hierarchy',        enabled:false}
+];
+
+var MP_RULES = JSON.parse(localStorage.getItem('armp_mp_rules') || 'null') || DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); });
+
+function renderMpRules(){
+  var el = document.getElementById('mp-rules-list');
+  if(!el) return;
+  el.innerHTML = MP_RULES.map(function(rule, i){
+    return '<div class="mp-rule-row" id="mpr-'+i+'">' +
+      '<div class="mp-rule-num">'+(i+1)+'</div>' +
+      '<div style="flex:1">' +
+        '<div class="mp-rule-label" style="color:'+(rule.enabled?'var(--t1)':'var(--t3)')+'">'+rule.label+'</div>' +
+        '<div class="mp-rule-desc">'+rule.desc+'</div>' +
+      '</div>' +
+      '<label class="toggle" style="margin-right:8px">' +
+        '<input type="checkbox" '+(rule.enabled?'checked':'')+" onchange="toggleMpRule("+i+",this.checked)">" +
+        '<div class="toggle-slider"></div>' +
+      '</label>' +
+      '<div class="mp-rule-move">' +
+        '<button class="mp-rule-btn" onclick="moveMpRule('+i+',-1)" '+(i===0?'disabled':'')+'>▲</button>' +
+        '<button class="mp-rule-btn" onclick="moveMpRule('+i+',1)" '+(i===MP_RULES.length-1?'disabled':'')+'>▼</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleMpRule(idx, enabled){
+  MP_RULES[idx].enabled = enabled;
+  renderMpRules();
+  // sync checkboxes that matching engine uses
+  syncMpCheckboxes();
+}
+
+function moveMpRule(idx, dir){
+  var newIdx = idx + dir;
+  if(newIdx < 0 || newIdx >= MP_RULES.length) return;
+  var tmp = MP_RULES[idx];
+  MP_RULES[idx] = MP_RULES[newIdx];
+  MP_RULES[newIdx] = tmp;
+  renderMpRules();
+}
+
+function saveMpRules(){
+  localStorage.setItem('armp_mp_rules', JSON.stringify(MP_RULES));
+  syncMpCheckboxes();
+  toast('Matching priority saved');
+  addAudit('Match priority updated', MP_RULES.filter(function(r){return r.enabled;}).map(function(r){return r.label;}).join(', '));
+}
+
+function resetMpRules(){
+  MP_RULES = DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); });
+  renderMpRules();
+  toast('Priority reset to defaults');
+}
+
+function syncMpCheckboxes(){
+  // Sync the hidden checkboxes used by runMatch
+  var invRule = MP_RULES.find(function(r){return r.id==='inv';});
+  var poRule = MP_RULES.find(function(r){return r.id==='po';});
+  var soRule = MP_RULES.find(function(r){return r.id==='so';});
+  var invEl = document.getElementById('s-inv');
+  var poEl = document.getElementById('s-po');
+  var soEl = document.getElementById('s-so');
+  if(invEl && invRule) invEl.checked = invRule.enabled;
+  if(poEl && poRule) poEl.checked = poRule.enabled;
+  if(soEl && soRule) soEl.checked = soRule.enabled;
+}
+
+// ── SETTINGS PLANS DISPLAY ──
+function renderSettingsPlans(){
+  var planFeatures = {
+    demo: '50 rows · Invoice & PO only · No export',
+    starter: '5,000 rows/month · Invoice + PO matching · CSV export',
+    pro: 'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP + NetSuite',
+    team: 'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'
+  };
+  var el = document.getElementById('settings-plan-features');
+  if(el) el.textContent = planFeatures[USER_PLAN] || '';
+  var upgradeBtn = document.getElementById('settings-upgrade-btn');
+  var downgradeBtn = document.getElementById('settings-downgrade-btn');
+  var planLevel = PLANS[USER_PLAN] ? PLANS[USER_PLAN].level : 0;
+  if(upgradeBtn) upgradeBtn.style.display = planLevel >= 3 ? 'none' : '';
+  if(downgradeBtn) downgradeBtn.style.display = planLevel > 0 ? '' : 'none';
+}
+
+function showDowngradeModal(){
+  showModal('Downgrade Plan', '<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:16px">This is a simulated demo — no actual billing change will occur.<br><br>In production, downgrading would:<br>• Take effect at the end of your billing period<br>• Restrict access to features above your new plan<br>• Not delete any existing data</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-p btn-sm" onclick="closeModal();toast('Downgrade simulated — no billing changed')">Confirm (demo)</button></div>');
+}
+
+// ── ACCOUNT DROPDOWN HELPERS ──
+function buildAcctDropdown(selId, withAll){
+  var sel = document.getElementById(selId);
+  if(!sel) return;
+  var accts = {};
+  INV.forEach(function(v){ if(v.a && v.c) accts[v.a] = v.c; });
+  PAY.forEach(function(p){ if(p.a && p.c && !accts[p.a]) accts[p.a] = p.c; });
+  var opts = withAll !== false ? '<option value="">All accounts</option>' : '<option value="">— Select account —</option>';
+  Object.keys(accts).sort().forEach(function(a){
+    opts += '<option value="'+a+'">'+a+' '+accts[a]+'</option>';
+  });
+  sel.innerHTML = opts;
+}
+
+function populateAllAcctDropdowns(){
+  buildAcctDropdown('ca-bank-sel', true);
+  buildAcctDropdown('ca-acct-dropdown', true);
+  buildAcctDropdown('exc-acct-dropdown', true);
+}
+
+// ── FBL5N OPEN ITEMS TABLE ──
+function agingChip(due){
+  if(!due) return '<span class="aging-chip aging-na">—</span>';
+  var d = new Date(due+'T00:00:00');
+  var days = Math.floor((new Date() - d) / 86400000);
+  if(days < 0) return '<span class="aging-chip aging-cur">Current</span>';
+  if(days <= 30) return '<span class="aging-chip aging-30">1–30d</span>';
+  if(days <= 60) return '<span class="aging-chip aging-60">31–60d</span>';
+  return '<span class="aging-chip aging-90">61+d</span>';
+}
+
+function renderFbl5n(tbodyId, filterAcct, filterCust){
+  var tbody = document.getElementById(tbodyId);
+  if(!tbody) return;
+  var invs = INV.filter(function(v){
+    if(filterAcct && v.a !== filterAcct) return false;
+    if(filterCust && (v.c||'').toLowerCase() !== filterCust.toLowerCase()) return false;
+    return true;
+  });
+  if(!invs.length){
+    tbody.innerHTML = '<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = invs.map(function(v, i){
+    var matched = RES.find(function(r){ return r.i === v.i; });
+    var applied = matched ? matched.pd : 0;
+    var balance = v.amt - applied;
+    var conf = 0;
+    var ENG_ROW = ENG_ROWS.find(function(r){ return r.inv.i === v.i; });
+    if(ENG_ROW) conf = ENG_ROW.conf;
+    else if(ENG_PAY) conf = engGetConfidence(v, ENG_PAY);
+    var status = v.s || 'Open';
+    var statusBadge = v.s === 'Exact' || v.s === 'Applied' ? '<span class="badge badge-g">'+status+'</span>' :
+                      v.s === 'Short pay' ? '<span class="badge badge-am">'+status+'</span>' :
+                      v.s === 'Overpay' ? '<span class="badge badge-r">'+status+'</span>' :
+                      '<span style="color:var(--t3);font-size:12px">Open</span>';
+    var confDisp = conf > 0 ? '<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>' : '—';
+    return '<tr class="'+(ENG_ROW && ENG_ROW.selected ? 'selected-inv' : '')+'" onclick="fbl5nRowClick('+i+',''+v.i+'')" style="cursor:pointer">' +
+      '<td style="width:32px;padding:4px 6px"><input type="checkbox" '+(ENG_ROW && ENG_ROW.selected?'checked':'')+' onchange="fbl5nCheckRow(''+v.i+'',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>' +
+      '<td class="td-mono" style="font-size:11.5px">'+v.a+'</td>' +
+      '<td style="font-weight:600">'+v.c+'</td>' +
+      '<td class="td-mono" style="color:var(--pd)">'+v.i+'</td>' +
+      '<td class="td-mono">'+fmtDate(v.dt2)+'</td>' +
+      '<td class="td-mono" style="color:'+(new Date(v.due+'T00:00:00') < new Date() ? 'var(--r-t)' : '')+'">'+fmtDate(v.due)+'</td>' +
+      '<td>'+agingChip(v.due)+'</td>' +
+      '<td class="td-mono" style="font-size:11.5px">'+( v.po||'—')+'</td>' +
+      '<td class="td-mono" style="font-size:11.5px">'+(v.so||'—')+'</td>' +
+      '<td class="td-mono" style="font-size:11.5px">'+(v.d||'—')+'</td>' +
+      '<td class="td-num">$'+$f(v.amt)+'</td>' +
+      '<td class="td-num" style="color:'+(balance < v.amt * 0.5 ? 'var(--am-t)' : '')+'">$'+$f(Math.max(0,balance))+'</td>' +
+      '<td class="td-num" style="color:var(--g-t)">'+(applied > 0 ? '$'+$f(applied) : '—')+'</td>' +
+      '<td>'+statusBadge+'</td>' +
+      '<td style="text-align:center">'+confDisp+'</td>' +
+      '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(''+v.i+'')">Apply</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function fbl5nRowClick(idx, invI){
+  // Select/deselect in ENG_ROWS
+  var row = ENG_ROWS.find(function(r){ return r.inv.i === invI; });
+  if(row) { engToggleRow(ENG_ROWS.indexOf(row), !row.selected); refreshFbl5n(); }
+}
+
+function fbl5nCheckRow(invI, checked){
+  var row = ENG_ROWS.find(function(r){ return r.inv.i === invI; });
+  if(row) { engToggleRow(ENG_ROWS.indexOf(row), checked); refreshFbl5n(); }
+}
+
+function fbl5nApplyRow(invI){
+  var row = ENG_ROWS.find(function(r){ return r.inv.i === invI; });
+  if(row && !row.selected){ fbl5nCheckRow(invI, true); }
+  else if(!ENG_PAY){ toast('Select a payment first from the queue above','warn'); }
+}
+
+function refreshFbl5n(){
+  var acct = (document.getElementById('ca-acct-dropdown')||{}).value || '';
+  var cust = ENG_PAY ? ENG_PAY.c : '';
+  renderFbl5n('ca-open-items-body', acct, cust);
+}
+
+function sortFbl5n(ci){
+  sortTbl('ca-open-items-tbl', ci);
+}
+
+function sortFbl5nExc(ci){
+  sortTbl('exc-open-items-tbl', ci);
+}
+
+// ── ACCOUNT DROPDOWN CHANGES ──
+function caAcctDropdownChange(acct){
+  var labelEl = document.getElementById('ca-bottom-cust-label');
+  if(labelEl){
+    if(acct){
+      var custName = INV.filter(function(v){ return v.a === acct; }).map(function(v){ return v.c; })[0] || '';
+      labelEl.textContent = acct + (custName ? ' — '+custName : '');
+    } else {
+      labelEl.textContent = '— all accounts';
+    }
+  }
+  renderFbl5n('ca-open-items-body', acct, '');
+}
+
+function excAcctDropdownChange(acct){
+  renderFbl5n('exc-open-items-body', acct, '');
+}
+
+// ── INVOICE FILTERING ──
+function filterInvAll(q){
+  var acctFilter = (document.getElementById('inv-af')||{}).value || '';
+  var statusFilter = (document.getElementById('inv-status-filter')||{}).value || '';
+  var typeFilter = (document.getElementById('inv-type-filter')||{}).value || '';
+  var tbody = document.getElementById('inv-tb');
+  if(!tbody) return;
+  var rows = tbody.querySelectorAll('tr');
+  var ql = q ? q.toLowerCase() : '';
+  var visible = 0;
+  rows.forEach(function(tr){
+    var cells = tr.querySelectorAll('td');
+    if(!cells.length){ tr.style.display=''; return; }
+    var text = tr.innerText.toLowerCase();
+    var matchQ = !ql || text.includes(ql);
+    var acctCell = cells[1] ? cells[1].innerText.trim() : '';
+    var matchAcct = !acctFilter || acctCell === acctFilter;
+    var statCell = cells[10] ? cells[10].innerText.trim() : '';
+    var matchStatus = !statusFilter || (statusFilter === 'open' ? (!statCell || statCell === '—') : statCell.includes(statusFilter));
+    var typeCell = cells[6] ? cells[6].innerText.trim() : '';
+    var matchType = !typeFilter || typeCell.includes(typeFilter);
+    var show = matchQ && matchAcct && matchStatus && matchType;
+    tr.style.display = show ? '' : 'none';
+    if(show) visible++;
+  });
+  var ct = document.getElementById('inv-ct');
+  if(ct) ct.textContent = visible + ' of ' + INV.length + ' rows';
+}
+
+function clearInvFilters(){
+  ['inv-search','inv-status-filter','inv-type-filter'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
+  var af=document.getElementById('inv-af'); if(af)af.value='';
+  var tbody=document.getElementById('inv-tb');
+  if(tbody) tbody.querySelectorAll('tr').forEach(function(tr){tr.style.display='';});
+  var ct=document.getElementById('inv-ct'); if(ct && INV.length) ct.textContent=INV.length+' rows · click any cell to edit';
+}
+
+// ── REMITTANCE FILTERING ──
+function filterRemAll(q){
+  var methodFilter = (document.getElementById('rem-method-filter')||{}).value || '';
+  var ccyFilter = (document.getElementById('rem-ccy-filter')||{}).value || '';
+  var tbody = document.getElementById('rem-tb');
+  if(!tbody) return;
+  var rows = tbody.querySelectorAll('tr');
+  var ql = q ? q.toLowerCase() : '';
+  rows.forEach(function(tr){
+    var cells = tr.querySelectorAll('td');
+    if(!cells.length){ tr.style.display=''; return; }
+    var text = tr.innerText.toLowerCase();
+    var matchQ = !ql || text.includes(ql);
+    var methodCell = cells[7] ? cells[7].innerText.trim() : '';
+    var matchMethod = !methodFilter || methodCell.toLowerCase().includes(methodFilter.toLowerCase());
+    var ccyCell = cells[8] ? cells[8].innerText.trim() : '';
+    var matchCcy = !ccyFilter || ccyCell === ccyFilter;
+    tr.style.display = (matchQ && matchMethod && matchCcy) ? '' : 'none';
+  });
+}
+
+function clearRemFilters(){
+  ['rem-search','rem-method-filter','rem-ccy-filter'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
+  var tbody=document.getElementById('rem-tb');
+  if(tbody) tbody.querySelectorAll('tr').forEach(function(tr){tr.style.display='';});
+}
+
+// ── PATCH setCaTab to also populate open items ──
+var _origSetCaTab = setCaTab;
+function setCaTab(tab, btn){
+  _origSetCaTab(tab, btn);
+  if(tab === 'match'){
+    populateAllAcctDropdowns();
+    refreshFbl5n();
+  } else if(tab === 'exc'){
+    buildAcctDropdown('exc-acct-dropdown', true);
+    renderFbl5n('exc-open-items-body', '', '');
+  }
+}
+
+// ── Patch engLoadPayment to update bottom open items ──
+var _origEngLoadPaymentPhase5 = engLoadPayment;
+function engLoadPayment(idx){
+  _origEngLoadPaymentPhase5(idx);
+  setTimeout(function(){
+    // Select account in dropdown to match payment
+    if(ENG_PAY && ENG_PAY.a){
+      var sel = document.getElementById('ca-acct-dropdown');
+      if(sel) sel.value = ENG_PAY.a;
+      var lbl = document.getElementById('ca-bottom-cust-label');
+      if(lbl) lbl.textContent = ENG_PAY.a + (ENG_PAY.c ? ' — '+ENG_PAY.c : '');
+    }
+    refreshFbl5n();
+  }, 50);
+}
+
+// ── Patch rAll to repopulate dropdowns ──
+var _origRAllPhase5 = rAll;
+function rAll(){
+  _origRAllPhase5();
+  setTimeout(populateAllAcctDropdowns, 100);
+}
+
+// ── Patch launchApp to init role and rules ──
+var _origLaunchAppPhase5 = launchApp;
+function launchApp(user){
+  _origLaunchAppPhase5(user);
+  setTimeout(function(){
+    initRole();
+    renderMpRules();
+    renderSettingsPlans();
+    populateAllAcctDropdowns();
+    syncMpCheckboxes();
+  }, 150);
+}
+
+// ── DOMContentLoaded patches ──
+document.addEventListener('DOMContentLoaded', function(){
+  // Fix sidebar cfo and worklist onclick (these are set by DOMContentLoaded in phase3)
+  // Already handled. Just ensure role is applied on page load.
+  initRole();
+  renderMpRules();
+});
+
+// ── inv-po-filter and inv-so-filter (legacy compat) ──
+var legacyInvAf = document.getElementById('inv-af');
+if(legacyInvAf) legacyInvAf.addEventListener('change', function(){ filterInvAll(document.getElementById('inv-search').value||''); });
+
+// ── SETTINGS save with role ──
+var _origSaveSettings = saveSettings;
+function saveSettings(){
+  if(typeof _origSaveSettings === 'function') _origSaveSettings();
+  saveUserRole();
+  saveMpRules();
+  renderSettingsPlans();
+}
+
+// ── CFO savings headline fix (remove ROI language) ──
+function updateCfoSummaryClean(){
+  if(typeof updateCfoSummary === 'function') updateCfoSummary();
+  // Override ROI labels
+  var savingsHl = document.getElementById('cfo-savings-headline');
+  if(savingsHl && savingsHl.textContent.includes('labor cost')){
+    var ma = RES.filter(function(r){ return r.st==='Exact'||r.st==='Subset exact'; }).reduce(function(s,r){ return s+r.pd; },0);
+    savingsHl.textContent = '$'+$fk(ma)+' in cash matched this session';
+  }
+  // Focus metrics: remove ROI section if present
+  var roiSec = document.getElementById('cfo-roi-auto');
+  if(roiSec){
+    var roiCard = roiSec.closest('.card');
+    if(roiCard) roiCard.style.display = 'none';
+  }
+}
+
+// ── Patch sp() for CFO to use clean version ──
+var _origSpPhase5 = sp;
+function sp(id){
+  _origSpPhase5(id);
+  if(id === 'cfo'){
+    applyCfoAccess();
+    setTimeout(updateCfoSummaryClean, 50);
+  }
+  if(id === 'settings'){
+    setTimeout(function(){
+      initRole();
+      renderMpRules();
+      renderSettingsPlans();
+    }, 50);
+  }
+  if(id === 'cash-app'){
+    setTimeout(function(){
+      populateAllAcctDropdowns();
+      refreshFbl5n();
+    }, 100);
+  }
+}
+
 </script>
+</script>
+
+  <!-- Hidden match toggle inputs (used by runMatch engine, controlled by settings) -->
+  <input type="checkbox" id="s-inv" checked style="display:none">
+  <input type="checkbox" id="s-po" checked style="display:none">
+  <input type="checkbox" id="s-so" checked style="display:none">
+
+  <!-- Hidden allocation grid for internal state (display via FBL5N table) -->
+  <div style="display:none" aria-hidden="true">
+    <table><tbody id="eng-inv-body"></tbody></table>
+  </div>
+
+  <!-- Hidden compatibility elements for allocation engine -->
+  <div style="display:none" aria-hidden="true" id="eng-grid-wrap"></div>
 </body>
 </html>
