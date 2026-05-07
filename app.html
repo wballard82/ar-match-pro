@@ -1692,6 +1692,239 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 input:focus, select:focus, textarea:focus { outline: none; }
 
 
+
+/* ═══════════════════════════════════════════════════
+   DAILY WORKLIST + CFO SUMMARY — NEW COMPONENT STYLES
+   ═══════════════════════════════════════════════════ */
+
+/* Worklist item cards */
+.wl-section { margin-bottom: 28px; }
+.wl-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.wl-section-title {
+  font-size: 11px; font-weight: 800; color: var(--t3);
+  text-transform: uppercase; letter-spacing: .1em;
+  display: flex; align-items: center; gap: 8px;
+}
+.wl-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; border-radius: 11px;
+  font-size: 11px; font-weight: 800; padding: 0 6px;
+}
+.wl-count.urgent { background: var(--r); color: #fff; }
+.wl-count.warn   { background: var(--am); color: #fff; }
+.wl-count.info   { background: var(--p); color: #fff; }
+.wl-count.ok     { background: var(--g); color: #fff; }
+
+.wl-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; margin-bottom: 6px;
+  background: var(--surface); border: 1px solid var(--bdr);
+  border-radius: 12px; cursor: pointer;
+  transition: all .18s; position: relative; overflow: hidden;
+}
+.wl-item::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px; border-radius: 4px 0 0 4px;
+}
+.wl-item.urgent::before { background: var(--r); }
+.wl-item.warn::before   { background: var(--am); }
+.wl-item.info::before   { background: var(--p); }
+.wl-item.ok::before     { background: var(--g); }
+.wl-item:hover {
+  border-color: var(--bdr2);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(3px);
+}
+.wl-item-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.wl-item.urgent .wl-item-icon { background: var(--r-bg); }
+.wl-item.warn   .wl-item-icon { background: var(--am-bg); }
+.wl-item.info   .wl-item-icon { background: var(--pg); }
+.wl-item.ok     .wl-item-icon { background: var(--g-bg); }
+.wl-item-body { flex: 1; min-width: 0; }
+.wl-item-title { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 2px; }
+.wl-item-sub   { font-size: 12px; color: var(--t3); line-height: 1.4; }
+.wl-item-meta  { font-size: 12px; color: var(--t2); white-space: nowrap; }
+.wl-item-amount {
+  font-size: 17px; font-weight: 900; font-family: var(--mono);
+  color: var(--t1); white-space: nowrap;
+}
+.wl-item-cta {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px;
+  background: var(--surface2); border: 1.5px solid var(--bdr2);
+  font-size: 12px; font-weight: 700; color: var(--t2);
+  transition: all .15s; white-space: nowrap; flex-shrink: 0;
+}
+.wl-item:hover .wl-item-cta {
+  background: var(--p); border-color: var(--p); color: #fff;
+}
+.wl-empty-state {
+  padding: 32px 20px; text-align: center;
+  background: var(--surface); border: 1px solid var(--bdr);
+  border-radius: 12px;
+}
+.wl-empty-icon { font-size: 32px; margin-bottom: 8px; }
+.wl-empty-title { font-size: 14px; font-weight: 700; color: var(--t2); margin-bottom: 4px; }
+.wl-empty-sub { font-size: 12.5px; color: var(--t3); line-height: 1.5; }
+
+/* Worklist header bar */
+.wl-header-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 28px 14px;
+  border-bottom: 1px solid var(--bdr);
+  background: var(--surface); flex-shrink: 0;
+}
+.wl-greeting { font-size: 22px; font-weight: 800; color: var(--t1); letter-spacing: -.5px; }
+.wl-date { font-size: 13px; color: var(--t3); margin-top: 2px; font-weight: 500; }
+.wl-summary-pills {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.wl-summary-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all .15s; border: 1.5px solid;
+}
+.wl-summary-pill.urgent {
+  background: var(--r-bg); color: var(--r-t);
+  border-color: rgba(239,68,68,.25);
+}
+.wl-summary-pill.urgent:hover { background: var(--r); color: #fff; border-color: var(--r); }
+.wl-summary-pill.warn {
+  background: var(--am-bg); color: var(--am-t);
+  border-color: rgba(245,158,11,.25);
+}
+.wl-summary-pill.warn:hover { background: var(--am); color: #fff; border-color: var(--am); }
+.wl-summary-pill.good {
+  background: var(--g-bg); color: var(--g-t);
+  border-color: rgba(16,185,129,.25);
+}
+.wl-progress-ring { font-size: 28px; font-weight: 900; color: var(--g-t); font-family: var(--mono); }
+
+/* ── CFO Summary ── */
+.cfo-hero {
+  background: linear-gradient(135deg, #0A1628 0%, #0F1E3A 50%, #091525 100%);
+  border-radius: 16px; padding: 32px 36px; margin-bottom: 24px;
+  border: 1px solid rgba(59,130,246,.15); position: relative; overflow: hidden;
+}
+.cfo-hero::before {
+  content: ''; position: absolute;
+  width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(59,130,246,.08) 0%, transparent 70%);
+  right: -100px; top: -100px; pointer-events: none;
+}
+[data-theme="light"] .cfo-hero {
+  background: linear-gradient(135deg, #EEF4FF 0%, #E8F0FE 100%);
+  border-color: rgba(59,130,246,.2);
+}
+.cfo-hero-label {
+  font-size: 10.5px; font-weight: 800; color: var(--pd);
+  text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px;
+}
+.cfo-hero-headline {
+  font-size: 36px; font-weight: 900; color: #fff; letter-spacing: -1.2px;
+  line-height: 1.1; margin-bottom: 6px;
+  text-shadow: 0 2px 20px rgba(59,130,246,.3);
+}
+[data-theme="light"] .cfo-hero-headline { color: var(--t1); text-shadow: none; }
+.cfo-hero-sub { font-size: 14px; color: rgba(255,255,255,.55); font-weight: 500; }
+[data-theme="light"] .cfo-hero-sub { color: var(--t3); }
+.cfo-hero-metrics {
+  display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap;
+}
+.cfo-hero-metric { display: flex; flex-direction: column; gap: 3px; }
+.cfo-hero-metric-val {
+  font-size: 28px; font-weight: 900; font-family: var(--mono);
+  letter-spacing: -.5px; line-height: 1;
+  background: linear-gradient(135deg, #7DD3FC, #34D399);
+  -webkit-background-clip: text; color: transparent;
+}
+.cfo-hero-metric-lbl {
+  font-size: 11px; font-weight: 600; color: rgba(255,255,255,.4);
+  text-transform: uppercase; letter-spacing: .07em;
+}
+[data-theme="light"] .cfo-hero-metric-lbl { color: var(--t3); }
+
+.cfo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.cfo-metric-card {
+  background: var(--surface); border: 1px solid var(--bdr);
+  border-radius: 16px; padding: 22px; position: relative; overflow: hidden;
+  transition: all .2s; box-shadow: var(--shadow-xs);
+}
+.cfo-metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.cfo-metric-card-accent {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.cfo-metric-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 14px;
+}
+.cfo-metric-label { font-size: 11px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+.cfo-metric-value { font-size: 32px; font-weight: 900; font-family: var(--mono); letter-spacing: -.8px; color: var(--t1); line-height: 1; margin-bottom: 6px; }
+.cfo-metric-trend {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 600;
+}
+.cfo-metric-trend.up   { color: var(--g-t); }
+.cfo-metric-trend.down { color: var(--r-t); }
+.cfo-metric-sub { font-size: 12px; color: var(--t3); margin-top: 4px; }
+
+.cfo-bar-chart { margin-bottom: 24px; }
+.cfo-bar-chart-title { font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 16px; letter-spacing: -.3px; }
+.cfo-bar-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px;
+}
+.cfo-bar-label { font-size: 12.5px; color: var(--t2); font-weight: 600; width: 140px; flex-shrink: 0; }
+.cfo-bar-track {
+  flex: 1; height: 8px; background: var(--bdr); border-radius: 4px; overflow: hidden;
+}
+.cfo-bar-fill {
+  height: 100%; border-radius: 4px;
+  transition: width .8s cubic-bezier(.34,1.56,.64,1);
+}
+.cfo-bar-val { font-size: 12.5px; font-weight: 800; font-family: var(--mono); color: var(--t1); width: 60px; text-align: right; flex-shrink: 0; }
+
+.cfo-savings-callout {
+  background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(16,185,129,.04));
+  border: 1.5px solid rgba(16,185,129,.2); border-radius: 16px;
+  padding: 24px 28px; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 24px;
+}
+.cfo-savings-icon { font-size: 40px; flex-shrink: 0; }
+.cfo-savings-headline {
+  font-size: 20px; font-weight: 900; color: var(--g-t); font-family: var(--mono);
+  letter-spacing: -.4px; margin-bottom: 4px;
+}
+.cfo-savings-body { font-size: 13px; color: var(--t2); line-height: 1.6; }
+.cfo-savings-body strong { color: var(--t1); }
+
+.cfo-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.cfo-table-card { background: var(--surface); border: 1px solid var(--bdr); border-radius: 16px; overflow: hidden; }
+.cfo-table-header { padding: 16px 18px; border-bottom: 1px solid var(--bdr); background: var(--surface2); display: flex; align-items: center; justify-content: space-between; }
+.cfo-table-title { font-size: 13px; font-weight: 700; color: var(--t1); }
+.cfo-exc-row { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--bdr); font-size: 12.5px; }
+.cfo-exc-row:last-child { border-bottom: none; }
+
+.cfo-period-selector {
+  display: flex; gap: 0; background: var(--surface2);
+  border: 1px solid var(--bdr); border-radius: 9px; padding: 2px;
+}
+.cfo-period-btn {
+  padding: 6px 16px; border: none; background: none; color: var(--t2);
+  font-family: var(--font); font-size: 12px; font-weight: 600;
+  cursor: pointer; border-radius: 7px; transition: all .15s;
+}
+.cfo-period-btn.active { background: var(--surface); color: var(--t1); box-shadow: var(--shadow-xs); }
+
 </style>
 </head>
 <body>
@@ -2089,14 +2322,12 @@ input:focus, select:focus, textarea:focus { outline: none; }
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sb-group">
-        <div class="sb-group-label">Overview</div>
-        <div class="sb-item active" id="sbi-dashboard" onclick="sp('dashboard')">
-          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
-          Dashboard
+        <div class="sb-group-label">Workspace</div>
+        <div class="sb-item active" id="sbi-worklist" onclick="sp('worklist')">
+          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h12M2 8h9M2 12h7"/><circle cx="13" cy="12" r="2.5"/><path d="M12 11l1 1 1.5-1.5"/></svg>
+          Today's Work
+          <span class="sb-badge" id="sb-wl-ct" style="background:var(--p)">0</span>
         </div>
-      </div>
-      <div class="sb-group">
-        <div class="sb-group-label">Cash Application</div>
         <div class="sb-item" id="sbi-cash-app" onclick="sp('cash-app')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 8h14M8 1v14"/><circle cx="8" cy="8" r="7"/></svg>
           Cash Application
@@ -2119,7 +2350,11 @@ input:focus, select:focus, textarea:focus { outline: none; }
         </div>
       </div>
       <div class="sb-group">
-        <div class="sb-group-label">Export & Reports</div>
+        <div class="sb-group-label">Reports</div>
+        <div class="sb-item" id="sbi-cfo" onclick="sp('cfo')">
+          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12l3-4 3 2 3-5 3 3"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+          CFO Summary
+        </div>
         <div class="sb-item" id="sbi-posting" onclick="sp('posting')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
           Posting Export
@@ -2152,7 +2387,94 @@ input:focus, select:focus, textarea:focus { outline: none; }
     <div class="main">
 
       <!-- ════════════════ DASHBOARD ════════════════ -->
-      <div class="panel active" id="p-dashboard">
+      <!-- ════════════════ TODAY'S WORK (WORKLIST) ════════════════ -->
+      <div class="panel active" id="p-worklist">
+        <div class="wl-header-bar">
+          <div>
+            <div class="wl-greeting" id="wl-greeting">Good morning</div>
+            <div class="wl-date" id="wl-date">Loading…</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="wl-summary-pills" id="wl-summary-pills"></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" onclick="loadDemoData()">✨ Load sample data</button>
+              <button class="btn btn-p btn-sm" onclick="runMatch();sp('worklist')">⚡ Run matching</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body" style="max-width:860px;margin:0 auto;padding:28px 24px">
+
+          <!-- Urgent: needs action now -->
+          <div class="wl-section" id="wl-urgent-section">
+            <div class="wl-section-header">
+              <div class="wl-section-title">
+                🔴 Needs action
+                <span class="wl-count urgent" id="wl-urgent-ct">0</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')">View all exceptions →</button>
+            </div>
+            <div id="wl-urgent-list">
+              <div class="wl-empty-state">
+                <div class="wl-empty-icon">✅</div>
+                <div class="wl-empty-title">No urgent items</div>
+                <div class="wl-empty-sub">Run matching to detect exceptions and short pays.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- To allocate: payments waiting -->
+          <div class="wl-section" id="wl-allocate-section">
+            <div class="wl-section-header">
+              <div class="wl-section-title">
+                💳 Payments to allocate
+                <span class="wl-count info" id="wl-alloc-ct">0</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')">Open workspace →</button>
+            </div>
+            <div id="wl-alloc-list">
+              <div class="wl-empty-state">
+                <div class="wl-empty-icon">📂</div>
+                <div class="wl-empty-title">No payments waiting</div>
+                <div class="wl-empty-sub">Import remittance data to see payments that need allocation.</div>
+                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittance</button></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ready to export -->
+          <div class="wl-section" id="wl-export-section">
+            <div class="wl-section-header">
+              <div class="wl-section-title">
+                📤 Ready to export
+                <span class="wl-count ok" id="wl-export-ct">0</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="sp('posting')">Go to posting →</button>
+            </div>
+            <div id="wl-export-list">
+              <div class="wl-empty-state">
+                <div class="wl-empty-icon">📋</div>
+                <div class="wl-empty-title">Nothing ready to export yet</div>
+                <div class="wl-empty-sub">Approve allocations in the Cash Application workspace to generate posting data.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Matched today summary (done items) -->
+          <div class="wl-section" id="wl-done-section" style="display:none">
+            <div class="wl-section-header">
+              <div class="wl-section-title">
+                ✓ Matched today
+                <span class="wl-count ok" id="wl-done-ct">0</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="setCaTab('review',document.getElementById('ca-tab-review'));sp('cash-app')">View all →</button>
+            </div>
+            <div id="wl-done-list"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="panel" id="p-dashboard">
         <div class="panel-header">
           <div class="panel-header-row">
             <div>
@@ -2853,6 +3175,203 @@ input:focus, select:focus, textarea:focus { outline: none; }
       </div>
 
       <!-- ════════════════ REPORTS ════════════════ -->
+      <!-- ════════════════ CFO SUMMARY ════════════════ -->
+      <div class="panel" id="p-cfo">
+        <div class="panel-header">
+          <div class="panel-header-row">
+            <div>
+              <div class="panel-title">CFO Summary</div>
+              <div class="panel-sub">Executive overview · ROI analysis · Time saved · Match performance</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="cfo-period-selector">
+                <button class="cfo-period-btn active" onclick="setCfoPeriod('month',this)">This month</button>
+                <button class="cfo-period-btn" onclick="setCfoPeriod('quarter',this)">Quarter</button>
+                <button class="cfo-period-btn" onclick="setCfoPeriod('ytd',this)">YTD</button>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="exportPost()">↓ Export data</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+
+          <!-- Hero savings callout -->
+          <div class="cfo-hero">
+            <div class="cfo-hero-label">Return on Investment</div>
+            <div class="cfo-hero-headline" id="cfo-hours-saved">0 hours saved</div>
+            <div class="cfo-hero-sub" id="cfo-hero-sub">Based on current session match results vs. manual processing baseline</div>
+            <div class="cfo-hero-metrics">
+              <div class="cfo-hero-metric">
+                <div class="cfo-hero-metric-val" id="cfo-hero-matched">$0</div>
+                <div class="cfo-hero-metric-lbl">Cash applied</div>
+              </div>
+              <div class="cfo-hero-metric">
+                <div class="cfo-hero-metric-val" id="cfo-hero-rate">—</div>
+                <div class="cfo-hero-metric-lbl">Auto-match rate</div>
+              </div>
+              <div class="cfo-hero-metric">
+                <div class="cfo-hero-metric-val" id="cfo-hero-payments">0</div>
+                <div class="cfo-hero-metric-lbl">Payments processed</div>
+              </div>
+              <div class="cfo-hero-metric">
+                <div class="cfo-hero-metric-val" id="cfo-hero-invoices">0</div>
+                <div class="cfo-hero-metric-lbl">Invoices matched</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Savings callout -->
+          <div class="cfo-savings-callout" id="cfo-savings-callout">
+            <div class="cfo-savings-icon">💰</div>
+            <div>
+              <div class="cfo-savings-headline" id="cfo-savings-headline">$0 in labor cost saved</div>
+              <div class="cfo-savings-body" id="cfo-savings-body">
+                Import invoices and remittance, then run matching to calculate savings.
+              </div>
+            </div>
+          </div>
+
+          <!-- Key metrics grid -->
+          <div class="cfo-grid">
+            <div class="cfo-metric-card">
+              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--g),var(--cy))"></div>
+              <div class="cfo-metric-icon" style="background:var(--g-bg)">💚</div>
+              <div class="cfo-metric-label">Straight-Through Processing</div>
+              <div class="cfo-metric-value" id="cfo-stp">—</div>
+              <div class="cfo-metric-trend up" id="cfo-stp-trend">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2z"/></svg>
+                Auto-matched, no manual work
+              </div>
+              <div class="cfo-metric-sub">Target: 80%+</div>
+            </div>
+            <div class="cfo-metric-card">
+              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--am),var(--r))"></div>
+              <div class="cfo-metric-icon" style="background:var(--am-bg)">⚠️</div>
+              <div class="cfo-metric-label">Exception Rate</div>
+              <div class="cfo-metric-value" id="cfo-exc-rate">—</div>
+              <div class="cfo-metric-trend" id="cfo-exc-trend" style="color:var(--t3)">
+                Payments requiring manual review
+              </div>
+              <div class="cfo-metric-sub" id="cfo-exc-count">0 open exceptions</div>
+            </div>
+            <div class="cfo-metric-card">
+              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--p),var(--pu))"></div>
+              <div class="cfo-metric-icon" style="background:var(--pg)">⏱</div>
+              <div class="cfo-metric-label">Avg Time Per Payment</div>
+              <div class="cfo-metric-value" id="cfo-time-per">8 min</div>
+              <div class="cfo-metric-trend up">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2z"/></svg>
+                vs. 8 min manual baseline
+              </div>
+              <div class="cfo-metric-sub">AR Match Pro: &lt;30 sec auto</div>
+            </div>
+            <div class="cfo-metric-card">
+              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--r),#FF6B9D)"></div>
+              <div class="cfo-metric-icon" style="background:var(--r-bg)">💸</div>
+              <div class="cfo-metric-label">Short Pay Exposure</div>
+              <div class="cfo-metric-value" id="cfo-shortpay-amt">$0</div>
+              <div class="cfo-metric-trend down" id="cfo-shortpay-trend" style="color:var(--t3)">
+                Underpayments detected
+              </div>
+              <div class="cfo-metric-sub" id="cfo-shortpay-count">0 invoices affected</div>
+            </div>
+            <div class="cfo-metric-card">
+              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--cy),var(--p))"></div>
+              <div class="cfo-metric-icon" style="background:var(--cy-bg)">💰</div>
+              <div class="cfo-metric-label">Unapplied Cash</div>
+              <div class="cfo-metric-value" id="cfo-unapplied">$0</div>
+              <div class="cfo-metric-trend" style="color:var(--t3)">Cash received, not yet posted</div>
+              <div class="cfo-metric-sub">Aging risk if unresolved</div>
+            </div>
+            <div class="cfo-metric-card">
+              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--g),#059669)"></div>
+              <div class="cfo-metric-icon" style="background:var(--g-bg)">📊</div>
+              <div class="cfo-metric-label">Total Cash Processed</div>
+              <div class="cfo-metric-value" id="cfo-total">$0</div>
+              <div class="cfo-metric-trend up">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2z"/></svg>
+                <span id="cfo-total-sub">0 invoices · 0 payments</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cfo-two-col">
+            <!-- Match breakdown -->
+            <div class="cfo-table-card">
+              <div class="cfo-table-header">
+                <div class="cfo-table-title">Match Breakdown</div>
+                <span style="font-size:12px;color:var(--t3)" id="cfo-match-total-lbl"></span>
+              </div>
+              <div style="padding:18px" id="cfo-match-breakdown">
+                <div style="color:var(--t3);font-size:12.5px;text-align:center;padding:24px 0">Run matching to see breakdown</div>
+              </div>
+            </div>
+
+            <!-- Top exceptions by type -->
+            <div class="cfo-table-card">
+              <div class="cfo-table-header">
+                <div class="cfo-table-title">Exception Summary</div>
+                <button class="btn btn-ghost btn-xs" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')">Resolve →</button>
+              </div>
+              <div id="cfo-exc-summary">
+                <div class="cfo-exc-row" style="color:var(--t3);font-size:12.5px">No exceptions detected</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROI calculation breakdown -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header">
+              <div>
+                <div class="card-title">ROI Calculation — How We Measure Time Saved</div>
+                <div class="card-sub">Based on industry benchmark: 8 minutes per manual payment match</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="cfo-bar-chart">
+                <div class="cfo-bar-row">
+                  <div class="cfo-bar-label">Auto-matched</div>
+                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-auto" style="width:0%;background:linear-gradient(90deg,var(--g),var(--cy))"></div></div>
+                  <div class="cfo-bar-val" id="cfo-bar-auto-val">0</div>
+                </div>
+                <div class="cfo-bar-row">
+                  <div class="cfo-bar-label">Exceptions (manual)</div>
+                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-exc" style="width:0%;background:linear-gradient(90deg,var(--am),var(--r))"></div></div>
+                  <div class="cfo-bar-val" id="cfo-bar-exc-val">0</div>
+                </div>
+                <div class="cfo-bar-row">
+                  <div class="cfo-bar-label">Unapplied (pending)</div>
+                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-unapp" style="width:0%;background:linear-gradient(90deg,var(--cy),var(--p))"></div></div>
+                  <div class="cfo-bar-val" id="cfo-bar-unapp-val">0</div>
+                </div>
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--bdr);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Payments auto-matched</div>
+                  <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-auto">0</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Minutes saved each</div>
+                  <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--t1)">~8 min</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Total hours saved</div>
+                  <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-hours">0 hrs</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">At $65/hr labor cost</div>
+                  <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-dollars">$0</div>
+                </div>
+              </div>
+              <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6">
+                * 8 minutes is the industry average for manual invoice-to-payment matching including SAP lookup, remittance review, and posting. Labor cost assumes $65/hr fully-loaded AR specialist rate. Actual savings will vary.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <div class="panel" id="p-reporting">
         <div class="panel-header">
           <div class="panel-header-row">
@@ -5255,6 +5774,365 @@ try{
   var _STRIPE=Stripe('pk_live_51KRoPCK5o648Z7JzyGJcNQ7YFaLRCQgBysNIcRc7wiIwjKRHaB6ts4STYACp4ZxCDxnQzt501NsHhCbeEangyoyf00Y4b57dwP');
   var _STRIPE_PRICES={starter:'price_1TTbjvK5o648Z7JzPkL4QyOu',pro:'price_1TTbkdK5o648Z7JzuRmA4vVJ',team:'price_1TTblGK5o648Z7Jzg4vSZT01'};
 }catch(e){}
+
+
+// ═══════════════════════════════════════════════════════════
+// WORKLIST (TODAY'S WORK) ENGINE
+// ═══════════════════════════════════════════════════════════
+
+function buildWorklist(){
+  const now = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const userName = document.getElementById('tn-uname')?.textContent || '';
+
+  const greetEl = document.getElementById('wl-greeting');
+  if(greetEl) greetEl.textContent = userName ? greet + ', ' + userName : greet;
+  const dateEl = document.getElementById('wl-date');
+  if(dateEl) dateEl.textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ' · Here is what needs your attention today';
+
+  // ── Urgent: open exceptions needing resolution ──
+  const urgent = EXC.filter(e => !e.s || e.s === 'Open');
+  const shortPays = urgent.filter(e => e.type === 'Short pay');
+  const dups = urgent.filter(e => e.type === 'Duplicate');
+  const unmatched = urgent.filter(e => e.type === 'Unmatched');
+  const unapplied = urgent.filter(e => e.type === 'Unapplied payment');
+
+  const urgentList = document.getElementById('wl-urgent-list');
+  const urgentCt = document.getElementById('wl-urgent-ct');
+  if(urgentCt){ urgentCt.textContent = urgent.length; urgentCt.style.display = urgent.length ? 'inline-flex' : 'none'; }
+
+  if(urgent.length && urgentList){
+    const items = [];
+    if(shortPays.length) items.push({
+      cls:'warn', icon:'💸', label:'Short pays',
+      title: shortPays.length + ' short pay' + (shortPays.length>1?'s':'') + ' need resolution',
+      sub: 'Total exposure: $' + $f(shortPays.reduce((s,e)=>s+e.amt,0)) + ' · Contact customers or write off',
+      amt: '$' + $fk(shortPays.reduce((s,e)=>s+e.amt,0)),
+      action: 'Resolve', fn: "setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')"
+    });
+    if(dups.length) items.push({
+      cls:'urgent', icon:'⚠️', label:'Duplicates',
+      title: dups.length + ' possible duplicate payment' + (dups.length>1?'s':'') + ' detected',
+      sub: 'Same reference and amount — verify before posting to avoid double-credit',
+      amt: '$' + $fk(dups.reduce((s,e)=>s+e.amt,0)),
+      action: 'Review', fn: "setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')"
+    });
+    if(unmatched.length) items.push({
+      cls:'urgent', icon:'❓', label:'Unmatched',
+      title: unmatched.length + ' payment' + (unmatched.length>1?'s':'') + ' with no invoice match',
+      sub: 'No matching invoice, PO, or SO found — contact customer or post as unapplied',
+      amt: '$' + $fk(unmatched.reduce((s,e)=>s+e.amt,0)),
+      action: 'Review', fn: "setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')"
+    });
+    if(unapplied.length) items.push({
+      cls:'warn', icon:'💰', label:'Unapplied',
+      title: unapplied.length + ' unapplied payment' + (unapplied.length>1?'s':''),
+      sub: 'Cash received with no remittance reference — apply to oldest invoice or hold on account',
+      amt: '$' + $fk(unapplied.reduce((s,e)=>s+e.amt,0)),
+      action: 'Apply', fn: "setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')"
+    });
+    urgentList.innerHTML = items.map(item => `
+      <div class="wl-item ${item.cls}" onclick="${item.fn}">
+        <div class="wl-item-icon"><span>${item.icon}</span></div>
+        <div class="wl-item-body">
+          <div class="wl-item-title">${item.title}</div>
+          <div class="wl-item-sub">${item.sub}</div>
+        </div>
+        <div class="wl-item-amount">${item.amt}</div>
+        <div class="wl-item-cta">${item.action} <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6h8M6 3l3 3-3 3"/></svg></div>
+      </div>`).join('');
+  } else if(urgentList && EXC.length===0 && PAY.length>0){
+    urgentList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">No exceptions — clean run</div><div class="wl-empty-sub">All payments matched without issues.</div></div>`;
+  } else if(urgentList){
+    urgentList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">No urgent items</div><div class="wl-empty-sub">Import data and run matching to detect exceptions.</div></div>`;
+  }
+
+  // ── Payments to allocate ──
+  const unallocated = PAY.filter(p => {
+    const hasResult = RES.find(r => r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
+    const hasExc = EXC.find(e => e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
+    return !hasResult && !hasExc && !p.dp;
+  });
+  const dpays = PAY.filter(p => p.dp);
+  const allocList = document.getElementById('wl-alloc-list');
+  const allocCt = document.getElementById('wl-alloc-ct');
+  if(allocCt){ allocCt.textContent = unallocated.length + dpays.length; allocCt.style.display = (unallocated.length+dpays.length) ? 'inline-flex' : 'none'; }
+
+  if((unallocated.length || dpays.length) && allocList){
+    const items = [];
+    if(unallocated.length) {
+      // Group by customer
+      const byCust = {};
+      unallocated.forEach(p => { const k = p.c||p.a; if(!byCust[k]) byCust[k]={c:p.c,a:p.a,payments:[],total:0}; byCust[k].payments.push(p); byCust[k].total+=p.amt; });
+      Object.values(byCust).slice(0,5).forEach(cg => {
+        items.push({
+          cls:'info', icon:'💳',
+          title: cg.c || cg.a,
+          sub: cg.payments.length + ' payment' + (cg.payments.length>1?'s':'') + ' waiting · ' + (cg.payments[0].m||'ACH'),
+          amt: '$' + $fk(cg.total),
+          action: 'Allocate',
+          fn: `(function(){const p=PAY.findIndex(x=>x.a==='${(cg.a||'').replace(/'/g,"\'")}');setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app');setTimeout(()=>{if(p>=0){const sel=document.getElementById('eng-pay-sel');if(sel){sel.value=p;engLoadPayment(p);}}},200);})()`
+        });
+      });
+      if(Object.keys(byCust).length > 5) items.push({cls:'info',icon:'💳',title:(Object.keys(byCust).length-5)+' more customers with payments',sub:'Click to open the full allocation workspace',amt:'',action:'Open all',fn:"setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')"});
+    }
+    if(dpays.length) items.push({
+      cls:'warn', icon:'↓',
+      title: dpays.length + ' down payment' + (dpays.length>1?'s':'') + ' received',
+      sub: 'Down payments — apply to open invoices or hold on account',
+      amt: '$' + $fk(dpays.reduce((s,p)=>s+p.amt,0)),
+      action: 'Review', fn: "setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')"
+    });
+    allocList.innerHTML = items.map(item => `
+      <div class="wl-item ${item.cls}" onclick="${item.fn}">
+        <div class="wl-item-icon"><span>${item.icon}</span></div>
+        <div class="wl-item-body">
+          <div class="wl-item-title">${item.title}</div>
+          <div class="wl-item-sub">${item.sub}</div>
+        </div>
+        ${item.amt?`<div class="wl-item-amount">${item.amt}</div>`:''}
+        <div class="wl-item-cta">${item.action} <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6h8M6 3l3 3-3 3"/></svg></div>
+      </div>`).join('');
+  } else if(allocList && !PAY.length){
+    allocList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">📂</div><div class="wl-empty-title">No payments waiting</div><div class="wl-empty-sub">Import remittance data to see payments that need allocation.</div><div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittance</button></div></div>`;
+  } else if(allocList && PAY.length){
+    allocList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">🎉</div><div class="wl-empty-title">All payments allocated</div><div class="wl-empty-sub">Great work — no unallocated payments remaining.</div></div>`;
+  }
+
+  // ── Ready to export ──
+  const exportReady = RES.filter(r => (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc) && !r.exported);
+  const exportList = document.getElementById('wl-export-list');
+  const exportCt = document.getElementById('wl-export-ct');
+  if(exportCt){ exportCt.textContent = exportReady.length; exportCt.style.display = exportReady.length ? 'inline-flex' : 'none'; }
+
+  if(exportReady.length && exportList){
+    const totalAmt = exportReady.reduce((s,r)=>s+r.pd,0);
+    const byCust = {};
+    exportReady.forEach(r=>{ const k=r.c||r.a; if(!byCust[k]) byCust[k]={c:r.c,a:r.a,rows:[],total:0}; byCust[k].rows.push(r); byCust[k].total+=r.pd; });
+    const custSummary = Object.values(byCust).slice(0,3).map(cg=>cg.c||cg.a).join(', ');
+    exportList.innerHTML = `
+      <div class="wl-item ok" onclick="sp('posting')">
+        <div class="wl-item-icon"><span>📤</span></div>
+        <div class="wl-item-body">
+          <div class="wl-item-title">${exportReady.length} record${exportReady.length>1?'s':''} ready for SAP posting</div>
+          <div class="wl-item-sub">${custSummary}${Object.keys(byCust).length>3?' and '+(Object.keys(byCust).length-3)+' more':''} · Download SAP F-28 posting file</div>
+        </div>
+        <div class="wl-item-amount">$${$fk(totalAmt)}</div>
+        <div class="wl-item-cta">Export <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6h8M6 3l3 3-3 3"/></svg></div>
+      </div>`;
+  } else if(exportList){
+    exportList.innerHTML = `<div class="wl-empty-state"><div class="wl-empty-icon">📋</div><div class="wl-empty-title">Nothing ready to export</div><div class="wl-empty-sub">Approve allocations in the Cash Application workspace.</div></div>`;
+  }
+
+  // ── Matched today (done items) ──
+  const done = RES.filter(r => r.st==='Exact'||r.st==='Subset exact');
+  const doneSection = document.getElementById('wl-done-section');
+  const doneList = document.getElementById('wl-done-list');
+  const doneCt = document.getElementById('wl-done-ct');
+  if(doneCt) doneCt.textContent = done.length;
+  if(doneSection) doneSection.style.display = done.length ? 'block' : 'none';
+  if(done.length && doneList){
+    const byCust = {};
+    done.forEach(r=>{ const k=r.c||r.a; if(!byCust[k]) byCust[k]={c:r.c,a:r.a,rows:[],total:0}; byCust[k].rows.push(r); byCust[k].total+=r.pd; });
+    doneList.innerHTML = Object.values(byCust).slice(0,4).map(cg=>`
+      <div class="wl-item ok" onclick="setCaTab('review',document.getElementById('ca-tab-review'));sp('cash-app')">
+        <div class="wl-item-icon"><span>✅</span></div>
+        <div class="wl-item-body">
+          <div class="wl-item-title">${cg.c||cg.a}</div>
+          <div class="wl-item-sub">${cg.rows.length} invoice${cg.rows.length>1?'s':''} matched · auto-matched exactly</div>
+        </div>
+        <div class="wl-item-amount">$${$fk(cg.total)}</div>
+        <div class="wl-item-cta" style="background:var(--g-bg);border-color:rgba(16,185,129,.2);color:var(--g-t)">✓ Done</div>
+      </div>`).join('');
+  }
+
+  // ── Summary pills ──
+  const pillsEl = document.getElementById('wl-summary-pills');
+  if(pillsEl){
+    const pills = [];
+    if(urgent.length) pills.push(`<div class="wl-summary-pill urgent" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')">🔴 ${urgent.length} exception${urgent.length>1?'s':''}</div>`);
+    if(unallocated.length) pills.push(`<div class="wl-summary-pill warn" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')">💳 ${unallocated.length} to allocate</div>`);
+    if(exportReady.length) pills.push(`<div class="wl-summary-pill good" onclick="sp('posting')">📤 ${exportReady.length} ready to export</div>`);
+    if(done.length && !urgent.length && !unallocated.length) pills.push(`<div class="wl-summary-pill good">✅ ${done.length} matched today</div>`);
+    pillsEl.innerHTML = pills.join('');
+  }
+
+  // Update worklist badge in sidebar
+  const wlBadge = document.getElementById('sb-wl-ct');
+  const totalAction = urgent.length + unallocated.length + exportReady.length;
+  if(wlBadge){ wlBadge.textContent = totalAction; wlBadge.style.display = totalAction ? 'inline-flex' : 'none'; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CFO SUMMARY ENGINE
+// ═══════════════════════════════════════════════════════════
+
+let CFO_PERIOD = 'month';
+function setCfoPeriod(p, btn){
+  CFO_PERIOD = p;
+  document.querySelectorAll('.cfo-period-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  updateCfoSummary();
+}
+
+function updateCfoSummary(){
+  const setEl = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  const setW = (id, w) => { const el = document.getElementById(id); if(el) el.style.width = w; };
+
+  const tp = PAY.reduce((s,p)=>s+p.amt, 0);
+  const matched = RES.filter(r => r.st==='Exact'||r.st==='Subset exact');
+  const ma = matched.reduce((s,r)=>s+r.pd, 0);
+  const ua = EXC.reduce((s,e)=>s+e.amt, 0);
+  const spc = EXC.filter(e=>e.type==='Short pay');
+  const spAmt = spc.reduce((s,e)=>s+e.amt, 0);
+  const rt = tp > 0 ? (ma/tp*100) : 0;
+  const excRate = tp > 0 ? (EXC.filter(e=>!e.s||e.s==='Open').length / PAY.length * 100) : 0;
+  const autoCount = matched.length;
+
+  // Hours saved calc: 8 min per auto-matched payment
+  const minPerPayment = 8;
+  const hoursSaved = (autoCount * minPerPayment / 60);
+  const laborRate = 65; // $/hr
+  const dollarsSaved = hoursSaved * laborRate;
+
+  // Hero
+  if(hoursSaved > 0){
+    setEl('cfo-hours-saved', hoursSaved.toFixed(1) + ' hours saved this session');
+    setEl('cfo-hero-sub', autoCount + ' payments auto-matched × 8 min baseline = ' + (autoCount*8) + ' minutes of manual work eliminated');
+  } else {
+    setEl('cfo-hours-saved', 'No matches yet');
+    setEl('cfo-hero-sub', 'Import data and run matching to see your ROI');
+  }
+  setEl('cfo-hero-matched', $fk(ma));
+  setEl('cfo-hero-rate', tp>0 ? rt.toFixed(1)+'%' : '—');
+  setEl('cfo-hero-payments', PAY.length);
+  setEl('cfo-hero-invoices', matched.length);
+
+  // Savings callout
+  if(dollarsSaved > 0){
+    setEl('cfo-savings-headline', '$' + $f(dollarsSaved) + ' in labor cost saved');
+    document.getElementById('cfo-savings-body').innerHTML =
+      `<strong>${autoCount} payments</strong> auto-matched × <strong>8 min</strong> manual baseline × <strong>$65/hr</strong> labor = <strong>$${$f(dollarsSaved)}</strong> this session. ` +
+      `At this rate, AR Match Pro pays for itself in <strong>${dollarsSaved > 999 ? Math.ceil(999/dollarsSaved*30)+' days' : 'under a month'}</strong>.`;
+  } else {
+    setEl('cfo-savings-headline', '$0 saved — no data yet');
+    document.getElementById('cfo-savings-body').innerHTML = 'Import invoices and remittance, then run matching to calculate your ROI.';
+  }
+
+  // Metrics
+  setEl('cfo-stp', tp>0 ? rt.toFixed(1)+'%' : '—');
+  const stpTrend = document.getElementById('cfo-stp-trend');
+  if(stpTrend) stpTrend.style.color = rt >= 80 ? 'var(--g-t)' : rt >= 50 ? 'var(--am-t)' : 'var(--r-t)';
+  
+  setEl('cfo-exc-rate', PAY.length>0 ? (EXC.filter(e=>!e.s||e.s==='Open').length/PAY.length*100).toFixed(1)+'%' : '—');
+  setEl('cfo-exc-count', EXC.filter(e=>!e.s||e.s==='Open').length + ' open exceptions');
+  
+  setEl('cfo-shortpay-amt', '$'+$f(spAmt));
+  setEl('cfo-shortpay-count', spc.length + ' invoice' + (spc.length!==1?'s':'') + ' affected');
+  const spTrend = document.getElementById('cfo-shortpay-trend');
+  if(spTrend) spTrend.style.color = spc.length > 0 ? 'var(--r-t)' : 'var(--t3)';
+  
+  setEl('cfo-unapplied', '$'+$f(ua));
+  setEl('cfo-total', $fk(tp));
+  setEl('cfo-total-sub', INV.length+' invoices · '+PAY.length+' payments');
+
+  // ROI bars
+  const total = Math.max(autoCount + EXC.length + PAY.filter(p=>p.coa).length, 1);
+  setEl('cfo-roi-auto', autoCount);
+  setEl('cfo-roi-hours', hoursSaved.toFixed(1)+' hrs');
+  setEl('cfo-roi-dollars', '$'+$f(dollarsSaved));
+  setEl('cfo-bar-auto-val', autoCount);
+  setEl('cfo-bar-exc-val', EXC.length);
+  setEl('cfo-bar-unapp-val', PAY.filter(p=>p.coa).length);
+  setTimeout(()=>{
+    setW('cfo-bar-auto', (autoCount/total*100).toFixed(1)+'%');
+    setW('cfo-bar-exc', (EXC.length/total*100).toFixed(1)+'%');
+    setW('cfo-bar-unapp', (PAY.filter(p=>p.coa).length/total*100).toFixed(1)+'%');
+  }, 100);
+
+  // Match breakdown
+  const cn = {};
+  RES.forEach(r => { cn[r.st] = (cn[r.st]||0)+1; });
+  const tt = Object.values(cn).reduce((s,v)=>s+v,0)||1;
+  const co = {Exact:'#10B981','Subset exact':'#3B82F6','Short pay':'#F59E0B',Overpay:'#F97316','Amount match':'#8B5CF6'};
+  const mbEl = document.getElementById('cfo-match-breakdown');
+  const mlEl = document.getElementById('cfo-match-total-lbl');
+  if(mlEl) mlEl.textContent = RES.length + ' total records';
+  if(mbEl) mbEl.innerHTML = Object.entries(cn).length ? Object.entries(cn).map(([s,ct])=>`
+    <div class="cfo-bar-row">
+      <div class="cfo-bar-label">${s}</div>
+      <div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:${(ct/tt*100).toFixed(1)}%;background:${co[s]||'var(--p)'}"></div></div>
+      <div class="cfo-bar-val">${ct}</div>
+    </div>`).join('') : '<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
+
+  // Exception summary
+  const excByType = {};
+  EXC.forEach(e => { excByType[e.type] = (excByType[e.type]||{count:0,amt:0}); excByType[e.type].count++; excByType[e.type].amt+=e.amt; });
+  const excSumEl = document.getElementById('cfo-exc-summary');
+  const excIcon = {'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦'};
+  if(excSumEl) excSumEl.innerHTML = Object.entries(excByType).length ? Object.entries(excByType).map(([t,d])=>`
+    <div class="cfo-exc-row">
+      <span style="font-size:16px">${excIcon[t]||'⚠️'}</span>
+      <div style="flex:1"><div style="font-weight:700;color:var(--t1)">${t}</div><div style="font-size:11px;color:var(--t3)">${d.count} case${d.count>1?'s':''}</div></div>
+      <div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$${$fk(d.amt)}</div>
+    </div>`).join('') : '<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
+}
+
+// ── Hook into sp() to trigger worklist/cfo builds ──
+const _origSp = sp;
+function sp(id){
+  _origSp(id);
+  const pid = ({engine:'cash-app','cash-app':'cash-app',remittance:'remittance',inv:'invoices',rem:'remittance',posting:'posting',pricing:'settings',audit:'audit'})[id]||id;
+  if(pid==='worklist') buildWorklist();
+  if(pid==='cfo') updateCfoSummary();
+  // Update sidebar for new panels
+  ['worklist','cfo'].forEach(p => {
+    const sbi = document.getElementById('sbi-'+p);
+    if(sbi) sbi.classList.toggle('active', p===pid);
+  });
+}
+
+// ── Hook into updTop/updDash to refresh worklist ──
+const _origUpdTop2 = updTop;
+function updTop(){
+  _origUpdTop2();
+  // Refresh worklist badge
+  const urgent = EXC.filter(e=>!e.s||e.s==='Open');
+  const unallocated = PAY.filter(p => {
+    const hasResult = RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
+    const hasExc = EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
+    return !hasResult && !hasExc && !p.dp;
+  });
+  const exportReady = RES.filter(r=>(r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported);
+  const totalAction = urgent.length + unallocated.length + exportReady.length;
+  const wlBadge = document.getElementById('sb-wl-ct');
+  if(wlBadge){ wlBadge.textContent = totalAction; wlBadge.style.display = totalAction ? 'inline-flex' : 'none'; }
+  // If worklist is active, rebuild it
+  const wlPanel = document.getElementById('p-worklist');
+  if(wlPanel && wlPanel.classList.contains('active')) buildWorklist();
+  // If CFO is active, rebuild it
+  const cfoPanel = document.getElementById('p-cfo');
+  if(cfoPanel && cfoPanel.classList.contains('active')) updateCfoSummary();
+}
+
+// ── Override launchApp to land on worklist ──
+const _origLaunchApp2 = launchApp;
+function launchApp(user){
+  _origLaunchApp2(user);
+  // Override: navigate to worklist as default landing
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const wl = document.getElementById('p-worklist');
+  if(wl) wl.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  const sbiWl = document.getElementById('sbi-worklist');
+  if(sbiWl) sbiWl.classList.add('active');
+  buildWorklist();
+}
+
+
 </script>
 </body>
 </html>
