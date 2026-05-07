@@ -2076,7 +2076,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
         </div>
         <button class="btn-login" onclick="doLogin()">Sign in</button>
         <div class="lf-bottom" style="text-align:center;margin-top:14px">
-          No account? <a class="lf-link" onclick="loginShowPricing()" style="font-weight:700;color:var(--pd)">Sign up free →</a>
+          No account? <a class="lf-link" href="https://armatchpro.com/#pricing" target="_blank" style="font-weight:700;color:var(--pd)">Sign up →</a>
         </div>
         <div class="privacy-badge">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1L2 4v4c0 3.5 2.5 6 6 7 3.5-1 6-3.5 6-7V4L8 1z"/></svg>
@@ -2389,11 +2389,8 @@ input:focus, select:focus, textarea:focus { outline: none; }
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 8h14M8 1v14"/><circle cx="8" cy="8" r="7"/></svg>
           Cash Application
         </div>
-        <div class="sb-item" id="sbi-exceptions" onclick="sp('exceptions')">
-          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2L1 13h14L8 2z"/><path d="M8 6v4M8 11.5v.5"/></svg>
-          Exceptions
-          <span class="sb-badge" id="sb-exc-ct">0</span>
-        </div>
+        <!-- Exceptions removed from sidebar - accessible via Cash Application tab -->
+        <span id="sb-exc-ct" style="display:none">0</span>
       </div>
       <div class="sb-group">
         <div class="sb-group-label">Data</div>
@@ -3075,36 +3072,50 @@ input:focus, select:focus, textarea:focus { outline: none; }
           </div>
         </div>
         <div class="panel-body" style="padding:0">
-          <div class="filter-bar" style="padding:8px 20px;border-bottom:1px solid var(--bdr);margin:0;background:var(--surface2);flex-wrap:wrap;gap:6px">
-            <input class="inp" id="inv-search" placeholder="🔍 Search all columns…" oninput="filterInvAll(this.value)" style="width:200px;font-size:12.5px">
-            <select class="sel" id="inv-af" onchange="filterInvAll(document.getElementById('inv-search').value)" style="font-size:12.5px"><option value="">All accounts</option></select>
-            <select class="sel" id="inv-status-filter" onchange="filterInvAll(document.getElementById('inv-search').value)" style="font-size:12.5px">
-              <option value="">All statuses</option>
-              <option value="open">Open</option><option value="Exact">Matched</option>
-              <option value="Short pay">Short pay</option><option value="Overpay">Overpay</option>
-            </select>
-            <select class="sel" id="inv-type-filter" onchange="filterInvAll(document.getElementById('inv-search').value)" style="font-size:12.5px">
-              <option value="">All types</option>
-              <option>RV</option><option>DZ</option><option>Credit</option><option>Down Payment</option>
-            </select>
-            <button class="btn btn-ghost btn-sm" onclick="clearInvFilters()">Clear</button>
+          <div style="padding:6px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <input class="inp" id="inv-search" placeholder="🔍 Search all columns…" oninput="invColFilter()" style="width:220px;font-size:12.5px">
+            <button class="btn btn-ghost btn-sm" onclick="clearInvColFilters()">✕ Clear filters</button>
             <span style="font-size:12px;color:var(--t3);margin-left:auto" id="inv-ct">0 rows</span>
           </div>
           <div class="tbl-wrap" style="border:none;border-radius:0">
             <table class="tbl" id="inv-tbl">
               <thead>
                 <tr>
-                  <th onclick="sortTbl('inv-tbl',0)">Customer<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',1)">Account<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',2)">Invoice #<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',3)">PO #<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',4)">Sales Order<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',5)" style="text-align:right">Amount<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',6)">Type<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',7)">Invoice Date<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',8)">Due Date<span class="si2"></span></th>
-                  <th onclick="sortTbl('inv-tbl',9)">Document #<span class="si2"></span></th>
-                  <th>Status</th>
+                  <th onclick="invSortCol(0,this)">Customer<span class="si2"></span></th>
+                  <th onclick="invSortCol(1,this)">Account<span class="si2"></span></th>
+                  <th onclick="invSortCol(2,this)">Invoice #<span class="si2"></span></th>
+                  <th onclick="invSortCol(3,this)">PO #<span class="si2"></span></th>
+                  <th onclick="invSortCol(4,this)">Sales Order<span class="si2"></span></th>
+                  <th onclick="invSortCol(5,this)" style="text-align:right">Amount<span class="si2"></span></th>
+                  <th onclick="invSortCol(6,this)">Type<span class="si2"></span></th>
+                  <th onclick="invSortCol(7,this)">Invoice Date<span class="si2"></span></th>
+                  <th onclick="invSortCol(8,this)">Due Date<span class="si2"></span></th>
+                  <th onclick="invSortCol(9,this)">Document #<span class="si2"></span></th>
+                  <th onclick="invSortCol(10,this)">Status<span class="si2"></span></th>
+                </tr>
+                <tr class="col-filter-row" id="inv-filter-row">
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="0"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="1"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="2"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="3"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="4"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="5"></td>
+                  <td class="col-filter-row">
+                    <select class="col-filter-sel" oninput="invColFilter()" data-col="6">
+                      <option value="">All types</option>
+                      <option>RV</option><option>DZ</option><option>Credit</option><option>Down Payment</option>
+                    </select>
+                  </td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="From…" oninput="invColFilter()" data-col="7" type="text"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="8"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="9"></td>
+                  <td class="col-filter-row">
+                    <select class="col-filter-sel" oninput="invColFilter()" data-col="10">
+                      <option value="">All</option>
+                      <option value="open">Open</option><option value="Exact">Matched</option>
+                      <option value="Short pay">Short pay</option><option value="Overpay">Overpay</option>
+                    </select>
+                  </td>
                 </tr>
               </thead>
               <tbody id="inv-tb">
@@ -3388,57 +3399,11 @@ input:focus, select:focus, textarea:focus { outline: none; }
           </div>
 
           <!-- ROI calculation breakdown -->
-          <div class="card" style="margin-bottom:20px">
-            <div class="card-header">
-              <div>
-                <div class="card-title">ROI Calculation — How We Measure Time Saved</div>
-                <div class="card-sub">Based on industry benchmark: 8 minutes per manual payment match</div>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="cfo-bar-chart">
-                <div class="cfo-bar-row">
-                  <div class="cfo-bar-label">Auto-matched</div>
-                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-auto" style="width:0%;background:linear-gradient(90deg,var(--g),var(--cy))"></div></div>
-                  <div class="cfo-bar-val" id="cfo-bar-auto-val">0</div>
-                </div>
-                <div class="cfo-bar-row">
-                  <div class="cfo-bar-label">Exceptions (manual)</div>
-                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-exc" style="width:0%;background:linear-gradient(90deg,var(--am),var(--r))"></div></div>
-                  <div class="cfo-bar-val" id="cfo-bar-exc-val">0</div>
-                </div>
-                <div class="cfo-bar-row">
-                  <div class="cfo-bar-label">Unapplied (pending)</div>
-                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-unapp" style="width:0%;background:linear-gradient(90deg,var(--cy),var(--p))"></div></div>
-                  <div class="cfo-bar-val" id="cfo-bar-unapp-val">0</div>
-                </div>
-              </div>
-              <div style="background:var(--surface2);border:1px solid var(--bdr);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
-                <div>
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Payments auto-matched</div>
-                  <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-auto">0</div>
-                </div>
-                <div>
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Minutes saved each</div>
-                  <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--t1)">~8 min</div>
-                </div>
-                <div>
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Total hours saved</div>
-                  <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-hours">0 hrs</div>
-                </div>
-                <div>
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">At $65/hr labor cost</div>
-                  <div style="font-size:20px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-dollars">$0</div>
-                </div>
-              </div>
-              <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6">
-                * 8 minutes is the industry average for manual invoice-to-payment matching including SAP lookup, remittance review, and posting. Labor cost assumes $65/hr fully-loaded AR specialist rate. Actual savings will vary.
-              </div>
-            </div>
-          </div>
+          
 
         </div>
-      </div>
+      </div><!-- cfo-content-wrap -->
+      </div><!-- panel-body+panel -->
 
       <div class="panel" id="p-reporting">
         <div class="panel-header">
@@ -3526,6 +3491,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
             </div>
           </div>
         </div>
+      </div><!-- p-reporting -->
 
       <!-- ════════════════ AUDIT TRAIL ════════════════ -->
       <div class="panel" id="p-audit">
@@ -3898,7 +3864,7 @@ function renderWsExcPremium(){
   }
   const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
   const typeSev={'Short pay':'med','Unapplied payment':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
-  const POST_D=['Apply to invoice','Post as Unapplied Payment','Write off','Bank fee','Wire transfer'];
+  const POST_D=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
@@ -3920,7 +3886,7 @@ function renderWsExcPremium(){
            <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
           :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExcPremium,700)">
             <option value="">— Resolve —</option>
-            <option>Apply to invoice</option><option>Post as Unapplied Payment</option>
+            <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
             <option>Write off</option><option>Bank fee</option>
             <option>Wire transfer</option><option>Chase customer</option><option>Duplicate — reject</option>
           </select>
@@ -3951,7 +3917,7 @@ function renderWsReview(){
     const isExported=r.fromAlloc||r.fromExc;
     const ws=wsBadge[r.st]||'Review';
     const wsClass=r.st==='Exact'||r.st==='Resolved'||r.st==='Subset exact'?'ws-badge-ready':r.st==='Short pay'||r.st==='Overpay'?'ws-badge-review':'ws-badge-pending';
-    return`<div class="review-item" onclick="openCustomerDrawerForCustomer('${(r.c||'').replace(/'/g,"\'")}',' ${r.a||''}')">
+    return`<div class="review-item" onclick="reviewItemInlineToggle(event,this)">
       <div style="width:4px;height:100%;min-height:40px;border-radius:2px;background:${stColor[r.st]||'var(--p)'};flex-shrink:0;align-self:stretch;margin:-14px 0;border-radius:0"></div>
       <div style="flex:1;min-width:0;margin-left:4px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
@@ -4590,7 +4556,7 @@ function rExc(){
         <select class="ed" style="font-size:11.5px;width:120px" data-idx="${idx}" onchange="resolveException(parseInt(this.dataset.idx),this.value)">
           <option value="">— Select —</option>
           <option ${ex.dec==='Apply to invoice'?'selected':''}>Apply to invoice</option>
-          <option ${ex.dec==='Post as Unapplied Payment'?'selected':''}>Post as Unapplied Payment</option>
+          <option ${ex.dec==='Post as Unapplied Cash'?'selected':''}>Post as Unapplied Cash</option>
           <option ${ex.dec==='Write off'?'selected':''}>Write off</option>
           <option ${ex.dec==='Bank fee'?'selected':''}>Bank fee</option>
           <option ${ex.dec==='Wire transfer'?'selected':''}>Wire transfer</option>
@@ -4610,8 +4576,8 @@ function rPost(){
   const tb=document.getElementById('post-tb');if(!tb)return;
   if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations.</div></div></td></tr>';return;}
   const d=new Date().toISOString().split('T')[0];const dDisp=fmtDate(d);
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Payment':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
-  const excBadge={'Apply to invoice':'badge-g','Post as Unapplied Payment':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
+  const excBadge={'Apply to invoice':'badge-g','Post as Unapplied Cash':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
   tb.innerHTML=ap.map(r=>{
     const isExc=!!r.fromExc;
     const inv=INV.find(v=>v.i===r.i)||{};
@@ -4724,7 +4690,7 @@ function exportPost(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Payment':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
   const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Short Pay','Approved'];
   const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(!r.fromExc&&r.vr<-.01)?Math.abs(r.vr).toFixed(2):'0.00','Yes'];});
   csvDL([PH,...rows],'posting_'+d+'.csv');
@@ -4737,7 +4703,7 @@ function selFmt(el){document.querySelectorAll('.fmt-pill').forEach(p=>p.classLis
 // ══════════════════════════════════════════════════════════
 // EXCEPTION RESOLUTION ENGINE
 // ══════════════════════════════════════════════════════════
-const POST_DECISIONS=['Apply to invoice','Post as Unapplied Payment','Write off','Bank fee','Wire transfer'];
+const POST_DECISIONS=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
 const HOLD_DECISIONS=['Chase customer'];
 const DROP_DECISIONS=['Duplicate — reject'];
 let EXC_VIEW='open';
@@ -4777,10 +4743,11 @@ function resolveException(idx,dec){
       </div>`);
     return;
   }
-  if(dec==='Post as Unapplied Payment'){
-    const accts=[...new Set([...INV.map(v=>v.a),...PAY.map(p=>p.a)].filter(Boolean))];
-    const opts=accts.map(a=>`<option value="${a}">${a}</option>`).join('');
-    showModal('Post as Unapplied Payment',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select account to post unapplied cash:</div>
+  if(dec==='Post as Unapplied Cash'){
+    const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
+    const accts=Object.keys(acctMap).sort();
+    const opts=accts.map(a=>`<option value="${a}">${a}${acctMap[a]?' — '+acctMap[a]:''}</option>`).join('');
+    showModal('Post as Unapplied Cash',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select account to post unapplied cash:</div>
       ${opts?`<select id="exc-acct-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:8px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
         <option value="">— Select account —</option>${opts}</select><div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:8px">— or enter manually —</div>`:''}
       <input type="text" id="exc-acct-manual" placeholder="Account # (manual)" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:14px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
@@ -4810,8 +4777,8 @@ function confirmExcAcct(idx){
   const acctRef=(manual&&manual.value.trim())||(sel&&sel.value)||'';
   if(!acctRef){toast('Please select or enter an account number','warn');return;}
   const ex=EXC[idx];if(!ex)return;
-  ex.dec='Post as Unapplied Payment';ex.appliedToAcct=acctRef;
-  closeModal();finalizeExcResolution(idx,'Post as Unapplied Payment');
+  ex.dec='Post as Unapplied Cash';ex.appliedToAcct=acctRef;
+  closeModal();finalizeExcResolution(idx,'Post as Unapplied Cash');
 }
 
 function finalizeExcResolution(idx,dec){
@@ -4838,7 +4805,7 @@ function finalizeExcResolution(idx,dec){
       const acctRef=ex.appliedToAcct||ex.a||'—';
       RES.push({a:acctRef,c:ex.c,i:invRef,d:ex.id,id:ex.id,oa:ex.amt,pd:ex.amt,vr:0,st:'Resolved',m:dec,n:ex.notes||'',fromExc:true,excDec:dec});
       saveToStorage();rAll();updDash();updTop();
-      const msgs={'Apply to invoice':'Applied to '+invRef,'Post as Unapplied Payment':'Posted to account '+acctRef,'Write off':'Written off','Bank fee':'Bank fee recorded','Wire transfer':'Wire transfer recorded'};
+      const msgs={'Apply to invoice':'Applied to '+invRef,'Post as Unapplied Cash':'Posted to account '+acctRef,'Write off':'Written off','Bank fee':'Bank fee recorded','Wire transfer':'Wire transfer recorded'};
       addAudit('Exception resolved: '+dec,ex.id);
       toast('✓ '+(msgs[dec]||'Resolved — added to posting export'));
     },550);
@@ -5306,7 +5273,7 @@ function renderWsExc(){
     list.innerHTML=isResolved?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div>':'<div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect issues.</div></div>';
     return;
   }
-  const POST_D=['Apply to invoice','Post as Unapplied Payment','Write off','Bank fee','Wire transfer'];
+  const POST_D=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
@@ -5326,7 +5293,7 @@ function renderWsExc(){
         :`<input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
          <select class="ed" style="font-size:11.5px;width:120px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExc,600)">
            <option value="">— Resolve —</option>
-           <option>Apply to invoice</option><option>Post as Unapplied Payment</option>
+           <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
            <option>Write off</option><option>Bank fee</option>
            <option>Wire transfer</option><option>Chase customer</option><option>Duplicate — reject</option>
          </select>`}
@@ -5563,7 +5530,7 @@ async function runMatch(){
   for(let pi=0;pi<PAY.length;pi++){
     const p=PAY[pi];upd(20+Math.round(pi/PAY.length*65),RES.length,EXC.length);
     if(pi%2===0)await new Promise(r=>setTimeout(r,60));
-    if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Post as Unapplied Payment or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
+    if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Post as Unapplied Cash or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
     if(!p.a||p.a==='40999999'){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c,amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account or reference found — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
     const ni=norm(p.i),np=norm(p.po),ns=norm(p.so);
     const useInv=document.getElementById('s-inv')?.checked!==false;
@@ -6536,5 +6503,183 @@ document.addEventListener('DOMContentLoaded',function(){
 
   <!-- Hidden compatibility elements for allocation engine -->
   <div style="display:none" aria-hidden="true" id="eng-grid-wrap"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// PATCH: Excel-style invoice column filters + review inline detail
+// ═══════════════════════════════════════════════════
+
+// ── Invoice Excel-style column filter ──
+var _invSortState = {col:-1, asc:true};
+
+function invSortCol(ci, th){
+  // Toggle sort direction
+  if(_invSortState.col === ci){ _invSortState.asc = !_invSortState.asc; }
+  else { _invSortState.col = ci; _invSortState.asc = true; }
+  // Update header indicators
+  document.querySelectorAll('#inv-tbl thead tr:first-child th').forEach(function(h,i){
+    h.classList.remove('asc','desc');
+    if(i===ci) h.classList.add(_invSortState.asc ? 'asc' : 'desc');
+  });
+  sortTbl('inv-tbl', ci);
+  invColFilter(); // reapply column filters after sort
+}
+
+function invColFilter(){
+  var tbody = document.getElementById('inv-tb');
+  if(!tbody) return;
+  var globalQ = (document.getElementById('inv-search')||{}).value || '';
+  var filters = [];
+  document.querySelectorAll('#inv-filter-row [data-col]').forEach(function(el){
+    var col = parseInt(el.getAttribute('data-col'));
+    var val = (el.value||'').toLowerCase().trim();
+    if(val) filters.push({col:col, val:val});
+  });
+  var rows = tbody.querySelectorAll('tr');
+  var visible = 0;
+  rows.forEach(function(tr){
+    var cells = tr.querySelectorAll('td');
+    if(!cells.length){ tr.style.display=''; return; }
+    var rowText = tr.innerText.toLowerCase();
+    var showGlobal = !globalQ || rowText.includes(globalQ.toLowerCase());
+    var showCols = filters.every(function(f){
+      var cell = cells[f.col];
+      if(!cell) return true;
+      return cell.innerText.toLowerCase().includes(f.val);
+    });
+    var show = showGlobal && showCols;
+    tr.style.display = show ? '' : 'none';
+    if(show) visible++;
+  });
+  var ct = document.getElementById('inv-ct');
+  if(ct) ct.textContent = (filters.length||globalQ ? visible+' of '+INV.length : INV.length) + ' rows';
+}
+
+function clearInvColFilters(){
+  var inp = document.getElementById('inv-search');
+  if(inp) inp.value = '';
+  document.querySelectorAll('#inv-filter-row [data-col]').forEach(function(el){ el.value=''; });
+  document.querySelectorAll('#inv-tb tr').forEach(function(tr){ tr.style.display=''; });
+  var ct = document.getElementById('inv-ct');
+  if(ct && INV.length) ct.textContent = INV.length + ' rows · click any cell to edit';
+}
+
+// Keep old clearInvFilters as alias
+function clearInvFilters(){ clearInvColFilters(); }
+
+// ── Review tab: inline detail expand/collapse (no drawer) ──
+var _reviewOpenIdx = -1;
+
+function reviewItemInlineToggle(evt, rowEl){
+  if(evt) evt.stopPropagation();
+  // Find index of this item
+  var allItems = document.querySelectorAll('#review-list .review-item');
+  var idx = -1;
+  allItems.forEach(function(el,i){ if(el===rowEl) idx=i; });
+  
+  // Remove any existing detail panel
+  var existing = document.getElementById('review-inline-detail');
+  if(existing){ existing.remove(); }
+  
+  if(_reviewOpenIdx === idx){
+    // Toggle off
+    _reviewOpenIdx = -1;
+    rowEl.classList.remove('review-item-expanded');
+    return;
+  }
+  _reviewOpenIdx = idx;
+  allItems.forEach(function(el){ el.classList.remove('review-item-expanded'); });
+  rowEl.classList.add('review-item-expanded');
+  
+  // Get the result data
+  var ap = RES.filter(function(r){
+    return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||
+           r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay';
+  });
+  var r = ap[idx];
+  if(!r) return;
+  
+  // Find matching invoices and payments
+  var inv = INV.find(function(v){ return v.i===r.i; }) || {};
+  var pay = PAY.find(function(p){ return p.po===r.po||p.i===r.i||(p.a===r.a&&Math.abs(p.amt-r.pd)<1); }) || {};
+  
+  var confColor = r.st==='Exact'?'var(--g-t)':r.st==='Subset exact'?'var(--pd)':r.st==='Short pay'?'var(--am-t)':'var(--t3)';
+  var conf = r.st==='Exact'?'100%':r.st==='Subset exact'?'98%':r.st==='Amount match'?'72%':r.st==='Short pay'?'61%':'—';
+  
+  var detail = document.createElement('div');
+  detail.id = 'review-inline-detail';
+  detail.style.cssText = 'margin:0 14px 8px;padding:16px 18px;background:var(--surface2);border:1px solid var(--bdr2);border-radius:12px;border-top:none;border-top-left-radius:0;border-top-right-radius:0;animation:tabFadeIn .18s ease';
+  detail.innerHTML = 
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">'+
+      '<div><div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Customer</div>'+
+          '<div style="font-size:13px;font-weight:700;color:var(--t1)">'+(r.c||'—')+'</div></div>'+
+      '<div><div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Account</div>'+
+          '<div style="font-size:13px;font-family:var(--mono)">'+(r.a||'—')+'</div></div>'+
+      '<div><div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Invoice #</div>'+
+          '<div style="font-size:13px;font-family:var(--mono);color:var(--pd)">'+(r.i||'—')+'</div></div>'+
+      '<div><div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">PO #</div>'+
+          '<div style="font-size:13px;font-family:var(--mono)">'+(r.po||inv.po||'—')+'</div></div>'+
+      '<div><div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Invoice Amount</div>'+
+          '<div style="font-size:14px;font-weight:800;font-family:var(--mono)">$'+(typeof $f==='function'?$f(r.oa||0):'0.00')+'</div></div>'+
+      '<div><div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Amount Applied</div>'+
+          '<div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">$'+(typeof $f==='function'?$f(r.pd||0):'0.00')+'</div></div>'+
+      '<div><div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Variance</div>'+
+          '<div style="font-size:14px;font-weight:800;font-family:var(--mono);color:'+(r.vr&&Math.abs(r.vr)>0.01?'var(--am-t)':'var(--g-t)')+'">'+(r.vr&&Math.abs(r.vr)>0.01?'$'+(typeof $f==='function'?$f(Math.abs(r.vr)):'0.00'):'$0.00')+'</div></div>'+
+      '<div><div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Confidence</div>'+
+          '<div style="font-size:14px;font-weight:800;color:'+confColor+'">'+conf+'</div></div>'+
+    '</div>'+
+    '<div style="display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid var(--bdr)">'+
+      '<span style="font-size:11.5px;color:var(--t3)">Match method: <strong style="color:var(--t2)">'+(r.m||'—')+'</strong></span>'+
+      (pay.payDate?'<span style="font-size:11.5px;color:var(--t3);margin-left:8px">Payment date: <strong style="color:var(--t2)">'+fmtDate(pay.payDate)+'</strong></span>':'') +
+      '<div style="margin-left:auto;display:flex;gap:6px">'+
+        '<button class="btn btn-outline btn-xs" onclick="reviewItemInlineToggle(event,document.querySelector('.review-item-expanded'))">Collapse ↑</button>'+
+        (r.fromAlloc||r.fromExc?'<span class="badge badge-exported">Exported</span>':'<button class="btn btn-outline btn-xs" onclick="reopenResultItem('+idx+');document.getElementById('review-inline-detail').remove()">↩ Reopen</button>')+
+      '</div>'+
+    '</div>';
+  
+  rowEl.parentNode.insertBefore(detail, rowEl.nextSibling);
+}
+
+// CSS for expanded state
+(function(){
+  var s = document.createElement('style');
+  s.textContent = '.review-item-expanded{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;border-bottom-color:var(--p)!important;background:linear-gradient(135deg,rgba(59,130,246,.07),rgba(59,130,246,.04))!important;}';
+  document.head.appendChild(s);
+})();
+
+// ── Ensure INV data auto-populates Account Open Items tab ──
+// Override setCaTab so that switching to 'acct' renders with current INV data
+var _patchSetCaTabForAcct = setCaTab;
+function setCaTab(tab, btn){
+  _patchSetCaTabForAcct(tab, btn);
+  if(tab==='acct'){
+    // Refresh customer list with current INV
+    if(typeof renderAcctCustomers === 'function') renderAcctCustomers();
+  }
+}
+
+// ── Patch rInv to also refresh Account Open Items if it's active ──
+var _patchRInv = rInv;
+function rInv(){
+  _patchRInv();
+  var acctTab = document.getElementById('ws-acct');
+  if(acctTab && acctTab.classList.contains('active')){
+    if(typeof renderAcctCustomers === 'function') renderAcctCustomers();
+  }
+  // Also populate FBL5N bottom table if Cash App match tab is active
+  if(typeof refreshFbl5n === 'function') refreshFbl5n();
+  // Reapply column filters after re-render
+  invColFilter();
+}
+
+// ── Override loadDemoData/loadSampleInv to trigger invColFilter after render ──
+var _patchLoadSampleInvForFilter = loadSampleInv;
+function loadSampleInv(){
+  _patchLoadSampleInvForFilter();
+  setTimeout(invColFilter, 100);
+}
+
+</script>
+
 </body>
 </html>
