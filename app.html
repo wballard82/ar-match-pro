@@ -2067,7 +2067,10 @@ input:focus, select:focus, textarea:focus { outline: none; }
         </div>
         <div class="lf-field">
           <label class="lf-label" for="li-pass">Password</label>
-          <input class="lf-input" type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+          <div style="position:relative">
+            <input class="lf-input" type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:44px;width:100%">
+            <button type="button" onclick="var p=document.getElementById('li-pass');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'👁':'🙈';" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--t3);padding:0;line-height:1" title="Show/hide password">👁</button>
+          </div>
         </div>
         <input type="hidden" id="li-license" value="">
         <div class="lf-row">
@@ -4401,9 +4404,11 @@ function setUserDisplay(user){
 }
 
 function launchApp(user){
-  document.getElementById('login-screen').style.display='none';
+  var ls=document.getElementById('login-screen');
+  if(ls){ls.style.display='none';ls.style.visibility='hidden';ls.style.pointerEvents='none';}
   const appEl=document.getElementById('app');
-  appEl.style.display='flex';appEl.classList.add('visible');
+  if(appEl){appEl.style.display='flex';appEl.style.visibility='visible';appEl.classList.add('visible');}
+  document.body.style.overflow='hidden';
   IS_MASTER=!!(user.isMaster);
   setUserDisplay(user);
   setPlan(user.plan||'demo');
@@ -6576,8 +6581,17 @@ function sp(id){
 
 function launchApp(user){
   if(launchApp._running){console.error('launchApp re-entry blocked');return;}
+  // Immediately hide login screen and show app BEFORE any processing
+  var _ls=document.getElementById('login-screen');
+  var _app=document.getElementById('app');
+  if(_ls){_ls.style.display='none';}
+  if(_app){_app.style.display='flex';_app.classList.add('visible');}
   launchApp._running=true;
-  try{ _origLaunchApp(user); }finally{ launchApp._running=false; }
+  try{ _origLaunchApp(user); }catch(_e){
+    // Non-fatal: app is already showing, just log the error
+    console.warn('launchApp setup error (non-fatal):', _e.message);
+    if(typeof toast==='function') toast('Login warning: '+_e.message.slice(0,60),'warn');
+  }finally{ launchApp._running=false; }
   // Call buildWorklist immediately so date/greeting show correctly
   setTimeout(function(){
     buildWorklist();
