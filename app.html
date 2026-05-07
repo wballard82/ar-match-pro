@@ -1984,6 +1984,19 @@ input:focus, select:focus, textarea:focus { outline: none; }
 .resize-handle { height:6px; background:transparent; cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
 .resize-handle::after { content:''; width:40px; height:2px; border-radius:1px; background:var(--bdr2); }
 .resize-handle:hover::after { background:var(--p); }
+
+/* ── Login/App state management ── */
+body.app-active #login-screen {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+body.app-active #app {
+  display: flex !important;
+  pointer-events: auto !important;
+}
 </style>
 </head>
 <body>
@@ -4379,6 +4392,7 @@ function demoLogin(){
 
 function doLogout(){
   localStorage.removeItem('armp_session');
+  document.body.classList.remove('app-active');
   var app=document.getElementById('app');
   if(app){ app.classList.remove('visible'); app.style.display='none'; app.style.pointerEvents=''; app.style.visibility=''; app.style.opacity=''; }
   var ls=document.getElementById('login-screen');
@@ -6581,6 +6595,8 @@ function sp(id){
 }
 
 function cleanupLoginAndOverlays(){
+  // Add body class for CSS-level login screen suppression
+  document.body.classList.add('app-active');
   // Hide login screen completely so it cannot block any clicks
   var ls=document.getElementById('login-screen');
   if(ls){
