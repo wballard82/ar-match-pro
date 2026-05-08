@@ -3587,8 +3587,15 @@ body.app-active #app {
             <button class="btn btn-outline btn-sm" onclick="sp('settings')" style="margin-top:16px">Go to Settings →</button>
           </div>
           <div id="cfo-content-wrap">
-          
 
+          <!-- Data scope / ledger info bar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:11.5px;color:var(--t3);line-height:1.5" id="cfo-data-scope">📅 Showing current session — data accumulates automatically as you export batches</div>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              <button class="btn btn-ghost btn-xs" onclick="ledgerExportCSV()" title="Download full ledger as CSV">⬇ Export history</button>
+              <button class="btn btn-ghost btn-xs" onclick="ledgerClear()" style="color:var(--r-t)" title="Clear all session history">✕ Clear history</button>
+            </div>
+          </div>
           <!-- Hero savings callout -->
           <div class="cfo-hero">
             <div class="cfo-hero-label">Cash Application Performance</div>
@@ -5397,6 +5404,7 @@ function exportPost(){
   const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Short Pay','Approved'];
   const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(!r.fromExc&&r.vr<-.01)?Math.abs(r.vr).toFixed(2):'0.00','Yes'];});
   csvDL([PH,...rows],'posting_'+d+'.csv');
+  ledgerWriteSnapshot('Posting Export');
   addAudit('Posting export downloaded',ap.length+' rows');
   toast('Posting file exported · '+ap.length+' rows');
 }
@@ -5878,6 +5886,7 @@ function engExport(){
     r.inv.s='Applied';
   });
   saveToStorage();ENG_STATE='exported';ENG_LOCKED=true;
+  ledgerWriteSnapshot('Allocation');
   engUpdateWS('exported');
   document.getElementById('eng-locked-badge').style.display='flex';
   document.getElementById('eng-export-btn').style.display='none';
@@ -6403,6 +6412,7 @@ async function runMatch(){
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
   overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
   addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions',{before:'Loaded',after:'Matched'});
+  ledgerWriteSnapshot('Match Run');
   toast(`✓ Matching done · ${RES.length} results · ${EXC.length} exceptions`);
 }
 
@@ -7355,58 +7365,88 @@ function updateCfoSummary(){
   var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   var setW=function(id,w){var el=document.getElementById(id);if(el)el.style.width=w;};
 
-  // ── Configurable ROI inputs ──
-  var laborRate=parseFloat((document.getElementById('s-labor-rate')||{}).value)||65;
-  var minPerPay=parseFloat((document.getElementById('s-min-per-pay')||{}).value)||8;
+  // ── Configurable ROI inputs (live read + localStorage fallback) ──
+  var laborRate=parseFloat((document.getElementById('s-labor-rate')||{}).value||localStorage.getItem('armp_labor_rate')||'65');
+  var minPerPay=parseFloat((document.getElementById('s-min-per-pay')||{}).value||localStorage.getItem('armp_min_per_pay')||'8');
 
-  // Period multiplier: month=1x, quarter=3x, ytd=12x (annualized estimation)
-  var periodMult = CFO_PERIOD==='quarter'?3:CFO_PERIOD==='ytd'?12:1;
   var periodLabel = CFO_PERIOD==='quarter'?'This quarter':CFO_PERIOD==='ytd'?'Year to date':'This month';
-  var tp=PAY.reduce(function(s,p){return s+p.amt;},0)*periodMult;
-  var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
-  var ma=matched.reduce(function(s,r){return s+r.pd;},0)*periodMult;
+
+  // ── Current session totals (always use live data for exceptions/unapplied) ──
+  var sessionMatched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
+  var sessionMatchedAmt=sessionMatched.reduce(function(s,r){return s+r.pd;},0);
+  var sessionPayAmt=PAY.reduce(function(s,p){return s+p.amt;},0);
   var ua=EXC.reduce(function(s,e){return s+e.amt;},0);
   var spc=EXC.filter(function(e){return e.type==='Short pay';});
   var spAmt=spc.reduce(function(s,e){return s+e.amt;},0);
-  var rt=tp>0?(ma/tp*100):0;
-  var autoCount=matched.length*periodMult;
+
+  // ── Period data: aggregate from ledger; supplement with current session ──
+  var periodEntries=ledgerForPeriod(CFO_PERIOD);
+  var hasPeriodData=periodEntries.length>0;
+  var agg=hasPeriodData?ledgerAggregate(periodEntries):{
+    paymentsProcessed:PAY.length,
+    paymentsMatched:sessionMatched.length,
+    cashMatched:sessionMatchedAmt,
+    exceptionsOpen:EXC.length,
+    hoursSaved:sessionMatched.length*(minPerPay/60),
+    laborSaved:sessionMatched.length*(minPerPay/60)*laborRate,
+    sessions:0
+  };
+
+  // Always include current session in period if it has data (additive if already ledgered)
+  // We use Math.max for processed/matched to avoid double-counting when ledger already has today
+  var tp=Math.max(agg.cashMatched, sessionMatchedAmt);
+  var totalPayAmt=Math.max(agg.cashMatched, sessionPayAmt);
+  var autoCount=Math.max(agg.paymentsMatched, sessionMatched.length);
   var hoursSaved=autoCount*(minPerPay/60);
   var dollarsSaved=hoursSaved*laborRate;
+  var rt=totalPayAmt>0?(tp/totalPayAmt*100):0;
 
-  // ── Update ROI footnote text dynamically ──
+  // ── Data scope note ──
+  var dr=ledgerDateRange(periodEntries);
+  var scopeEl=document.getElementById('cfo-data-scope');
+  if(scopeEl){
+    if(hasPeriodData){
+      var sessionWord=agg.sessions===1?'1 session':agg.sessions+' sessions';
+      scopeEl.textContent='📅 '+periodLabel+' · '+sessionWord+' recorded · '+dr.first+' – '+dr.last+' · Stored locally in browser';
+    } else {
+      scopeEl.textContent='📅 Showing current session only — data accumulates automatically as you export batches';
+    }
+  }
+
+  // ── Update ROI footnote dynamically ──
   var footnoteEl=document.getElementById('cfo-roi-footnote');
-  if(footnoteEl) footnoteEl.textContent='* '+minPerPay+' minutes is the configured manual baseline per payment. Labor cost assumes $'+laborRate+'/hr fully-loaded AR rate. ROI multiple = labor cost saved ÷ Pro plan cost ($999/mo). Actual results will vary.';
+  if(footnoteEl) footnoteEl.textContent='* '+minPerPay+' min manual baseline · $'+laborRate+'/hr fully-loaded AR rate · ROI multiple = labor saved ÷ Pro plan ($999/mo). Change rates in Settings. Data stored locally — no ERP connection.';
   var cardSubRate=document.getElementById('cfo-roi-rate-sub');
   if(cardSubRate) cardSubRate.textContent='at $'+laborRate+'/hr loaded rate';
   var cardSubMin=document.getElementById('cfo-roi-min-sub');
   if(cardSubMin) cardSubMin.textContent='at '+minPerPay+' min per payment';
 
-  // Hero
+  // ── Hero ──
   if(autoCount>0){
-    setEl('cfo-hours-saved','$'+$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
-    setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received ('+periodLabel+')');
+    setEl('cfo-hours-saved','$'+$fk(tp)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
+    setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash applied ('+periodLabel+')');
   } else {
-    setEl('cfo-hours-saved','No matches yet');
-    setEl('cfo-hero-sub','Import data and run matching to see performance');
+    setEl('cfo-hours-saved','No matches yet — '+periodLabel);
+    setEl('cfo-hero-sub','Export a batch to begin building your '+CFO_PERIOD+' history');
   }
   setEl('cfo-hero-matched','$'+$fk(tp));
   setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'—');
-  setEl('cfo-hero-payments',PAY.length);
-  setEl('cfo-hero-invoices',matched.length);
+  setEl('cfo-hero-payments',Math.max(agg.paymentsProcessed,PAY.length));
+  setEl('cfo-hero-invoices',autoCount);
 
-  // Savings callout
+  // ── Savings callout ──
   if(tp>0){
-    setEl('cfo-savings-headline','$'+$fk(ma)+' in cash matched of $'+$fk(tp)+' received');
+    setEl('cfo-savings-headline','$'+$fk(tp)+' in cash matched · '+periodLabel);
     var bodyEl=document.getElementById('cfo-savings-body');
-    if(bodyEl) bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched · <strong>'+(tp>0?((ma/tp)*100).toFixed(1)+'%':'—')+'</strong> straight-through rate · <strong>$'+$fk(ua)+'</strong> unapplied';
+    if(bodyEl) bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched · <strong>'+rt.toFixed(1)+'%</strong> straight-through rate · <strong>$'+$fk(ua)+'</strong> unapplied this session';
   } else {
-    setEl('cfo-savings-headline','Import data to see cash flow summary');
+    setEl('cfo-savings-headline',hasPeriodData?'No matches yet — '+periodLabel:'Import data to see cash flow summary');
     var be2=document.getElementById('cfo-savings-body');
-    if(be2) be2.textContent='Load sample data or import invoices and remittance to begin.';
+    if(be2) be2.textContent=hasPeriodData?'Export batches to accumulate '+periodLabel+' history.':'Load sample data or import invoices and remittance to begin.';
   }
 
-  // Metric cards
-  setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
+  // ── Metric cards ──
+  setEl('cfo-stp',totalPayAmt>0?rt.toFixed(1)+'%':'—');
   var stpEl=document.getElementById('cfo-stp-trend'); if(stpEl) stpEl.style.color=rt>=80?'var(--g-t)':rt>=50?'var(--am-t)':'var(--r-t)';
   var openExcCt=EXC.filter(function(e){return !e.s||e.s==='Open';}).length;
   setEl('cfo-exc-rate',PAY.length>0?(openExcCt/PAY.length*100).toFixed(1)+'%':'—');
@@ -7416,26 +7456,27 @@ function updateCfoSummary(){
   var spTrend=document.getElementById('cfo-shortpay-trend'); if(spTrend) spTrend.style.color=spc.length>0?'var(--r-t)':'var(--t3)';
   setEl('cfo-unapplied','$'+$f(ua));
   setEl('cfo-total','$'+$fk(tp));
-  setEl('cfo-total-sub',INV.length+' invoices · '+PAY.length+' payments');
+  setEl('cfo-total-sub',INV.length+' invoices · '+PAY.length+' payments this session');
 
-  // ROI cards
+  // ── ROI cards ──
   setEl('cfo-roi-auto',autoCount);
   setEl('cfo-roi-hours',hoursSaved.toFixed(1)+' hrs');
   setEl('cfo-roi-dollars','$'+$f(dollarsSaved));
   var roiMultiple = dollarsSaved > 0 ? (dollarsSaved/999).toFixed(1)+'x' : '—';
   setEl('cfo-roi-multiple', roiMultiple);
 
-  // Top exception cause KPI
+  // ── Top exception cause ──
   var excByType={};
   EXC.forEach(function(e){excByType[e.type]=(excByType[e.type]||0)+1;});
   var topExcEntry=Object.entries(excByType).sort(function(a,b){return b[1]-a[1];})[0];
   setEl('cfo-top-exc-type', topExcEntry?topExcEntry[0]:'—');
   setEl('cfo-top-exc-ct', topExcEntry?topExcEntry[1]+' case'+(topExcEntry[1]>1?'s':''):'No exceptions');
 
-  // Manual review avoided = payments processed minus exceptions
+  // ── Manual review avoided ──
   var manualAvoided=Math.max(0,autoCount-EXC.length);
   setEl('cfo-manual-avoided', manualAvoided);
 
+  // ── Bar chart ──
   setEl('cfo-bar-auto-val',autoCount);
   setEl('cfo-bar-exc-val',EXC.length);
   setEl('cfo-bar-unapp-val',PAY.filter(function(p){return p.coa;}).length);
@@ -7446,15 +7487,15 @@ function updateCfoSummary(){
     setW('cfo-bar-unapp',(PAY.filter(function(p){return p.coa;}).length/total*100).toFixed(1)+'%');
   },100);
 
-  // Match breakdown
+  // ── Match breakdown ──
   var cn={};RES.forEach(function(r){cn[r.st]=(cn[r.st]||0)+1;});
   var tt=Object.values(cn).reduce(function(s,v){return s+v;},0)||1;
   var co={Exact:'#10B981','Subset exact':'#3B82F6','Short pay':'#F59E0B',Overpay:'#F97316','Amount match':'#8B5CF6'};
   var mbEl=document.getElementById('cfo-match-breakdown');
-  var mlEl=document.getElementById('cfo-match-total-lbl'); if(mlEl) mlEl.textContent=RES.length+' total records';
+  var mlEl=document.getElementById('cfo-match-total-lbl'); if(mlEl) mlEl.textContent=RES.length+' total records this session';
   if(mbEl) mbEl.innerHTML=Object.entries(cn).length?Object.entries(cn).map(function(e){ return '<div class="cfo-bar-row"><div class="cfo-bar-label">'+e[0]+'</div><div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:'+(e[1]/tt*100).toFixed(1)+'%;background:'+(co[e[0]]||'var(--p)')+'"></div></div><div class="cfo-bar-val">'+e[1]+'</div></div>'; }).join(''):'<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
 
-  // Exception summary
+  // ── Exception summary ──
   var excByTypeAmt={};EXC.forEach(function(e){excByTypeAmt[e.type]=excByTypeAmt[e.type]||{count:0,amt:0};excByTypeAmt[e.type].count++;excByTypeAmt[e.type].amt+=e.amt;});
   var excIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦'};
   var excSumEl=document.getElementById('cfo-exc-summary');
@@ -7462,6 +7503,145 @@ function updateCfoSummary(){
 }
 
 function updateCfoSummaryClean(){ updateCfoSummary(); }
+
+// ══════════════════════════════════════════════════════════
+// SESSION LEDGER
+// Stores aggregated totals per batch — no raw invoice data,
+// no PII, no ERP connection needed.
+// Powers real month/quarter/YTD CFO rollups across sessions.
+// Persists in localStorage key: armp_session_ledger
+// ══════════════════════════════════════════════════════════
+
+var LEDGER_KEY='armp_session_ledger';
+
+function ledgerGet(){
+  try{ return JSON.parse(localStorage.getItem(LEDGER_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+
+function ledgerSave(entries){
+  try{ localStorage.setItem(LEDGER_KEY,JSON.stringify(entries)); }
+  catch(e){}
+}
+
+// Write one snapshot entry. Called on engExport and exportPost.
+function ledgerWriteSnapshot(label){
+  var laborRate=parseFloat(localStorage.getItem('armp_labor_rate')||'65');
+  var minPerPay=parseFloat(localStorage.getItem('armp_min_per_pay')||'8');
+  var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc||r.fromExc;});
+  var cashMatched=matched.reduce(function(s,r){return s+r.pd;},0);
+  var paymentsCount=PAY.length;
+  var exceptionsCount=EXC.length;
+  var autoCount=matched.length;
+  var hoursSaved=autoCount*(minPerPay/60);
+  var laborSaved=hoursSaved*laborRate;
+  var matchRate=paymentsCount>0?(autoCount/paymentsCount*100):0;
+
+  if(cashMatched===0&&autoCount===0) return; // nothing meaningful to record
+
+  var entry={
+    id:'snap_'+Date.now(),
+    date:new Date().toISOString().slice(0,10),      // YYYY-MM-DD, date only
+    ts:new Date().toISOString(),
+    label:label||'Batch',
+    paymentsProcessed:paymentsCount,
+    paymentsMatched:autoCount,
+    cashMatched:parseFloat(cashMatched.toFixed(2)),
+    exceptionsOpen:exceptionsCount,
+    matchRate:parseFloat(matchRate.toFixed(2)),
+    hoursSaved:parseFloat(hoursSaved.toFixed(2)),
+    laborSaved:parseFloat(laborSaved.toFixed(2)),
+    laborRate:laborRate,
+    minPerPay:minPerPay
+  };
+
+  var entries=ledgerGet();
+  // Deduplicate: if a snapshot with same date already exists, update it instead of appending
+  var todayIdx=entries.findIndex(function(e){ return e.date===entry.date&&e.label===entry.label; });
+  if(todayIdx>-1){
+    // Accumulate on top of today's existing entry
+    var ex=entries[todayIdx];
+    ex.paymentsProcessed=Math.max(ex.paymentsProcessed,entry.paymentsProcessed);
+    ex.paymentsMatched=Math.max(ex.paymentsMatched,entry.paymentsMatched);
+    ex.cashMatched=Math.max(ex.cashMatched,entry.cashMatched);
+    ex.exceptionsOpen=entry.exceptionsOpen;
+    ex.matchRate=entry.matchRate;
+    ex.hoursSaved=Math.max(ex.hoursSaved,entry.hoursSaved);
+    ex.laborSaved=Math.max(ex.laborSaved,entry.laborSaved);
+    ex.ts=entry.ts;
+    entries[todayIdx]=ex;
+  } else {
+    entries.unshift(entry);
+  }
+  // Cap at 3 years of daily entries (1095)
+  if(entries.length>1095) entries.length=1095;
+  ledgerSave(entries);
+}
+
+// Aggregate ledger entries for a date range.
+function ledgerAggregate(entries){
+  return entries.reduce(function(acc,e){
+    acc.paymentsProcessed+=(e.paymentsProcessed||0);
+    acc.paymentsMatched+=(e.paymentsMatched||0);
+    acc.cashMatched+=(e.cashMatched||0);
+    acc.exceptionsOpen+=(e.exceptionsOpen||0);
+    acc.hoursSaved+=(e.hoursSaved||0);
+    acc.laborSaved+=(e.laborSaved||0);
+    acc.sessions++;
+    return acc;
+  },{paymentsProcessed:0,paymentsMatched:0,cashMatched:0,exceptionsOpen:0,hoursSaved:0,laborSaved:0,sessions:0});
+}
+
+// Filter ledger to a named period.
+function ledgerForPeriod(period){
+  var all=ledgerGet();
+  if(!all.length) return [];
+  var now=new Date();
+  var y=now.getFullYear();
+  var m=now.getMonth(); // 0-indexed
+  var q=Math.floor(m/3); // 0-indexed quarter
+  return all.filter(function(e){
+    var d=new Date(e.date+'T00:00:00');
+    if(period==='month')  return d.getFullYear()===y&&d.getMonth()===m;
+    if(period==='quarter'){
+      var eq=Math.floor(d.getMonth()/3);
+      return d.getFullYear()===y&&eq===q;
+    }
+    if(period==='ytd') return d.getFullYear()===y;
+    return true; // 'all'
+  });
+}
+
+// Returns {firstDate, lastDate} strings for a set of entries
+function ledgerDateRange(entries){
+  if(!entries.length) return {first:'—',last:'—'};
+  var dates=entries.map(function(e){return e.date;}).sort();
+  function fmt(s){
+    var d=new Date(s+'T00:00:00');
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
+  return {first:fmt(dates[0]),last:fmt(dates[dates.length-1])};
+}
+
+function ledgerClear(){
+  if(!confirm('Clear all session history? This cannot be undone.')) return;
+  localStorage.removeItem(LEDGER_KEY);
+  updateCfoSummary();
+  toast('Session history cleared');
+  addAudit('CFO ledger cleared','All historical snapshots removed');
+}
+
+function ledgerExportCSV(){
+  var entries=ledgerGet();
+  if(!entries.length){toast('No ledger data to export','warn');return;}
+  var header=['Date','Label','Payments Processed','Payments Matched','Cash Matched ($)','Match Rate (%)','Exceptions Open','Hours Saved','Labor Saved ($)'];
+  var rows=entries.map(function(e){
+    return[e.date,e.label||'Batch',e.paymentsProcessed,e.paymentsMatched,e.cashMatched.toFixed(2),e.matchRate.toFixed(1),e.exceptionsOpen,e.hoursSaved.toFixed(2),e.laborSaved.toFixed(2)];
+  });
+  csvDL([header].concat(rows),'armp_cfo_ledger_'+new Date().toISOString().slice(0,10)+'.csv');
+  toast('CFO ledger exported · '+entries.length+' sessions');
+  addAudit('CFO ledger exported',entries.length+' sessions');
+}
 function refreshWlBadge(){
   // Update worklist badge count only - buildWorklist is called by updTop when panel is active
   var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
@@ -7584,6 +7764,13 @@ saveSettings = function(){
     var users=getUsers();
     if(users[CURRENT_USER]){users[CURRENT_USER].name=full;var u=users;localStorage.setItem('armp_users',JSON.stringify(u));}
   }
+  // Persist labor rate and minutes-per-payment so they survive page reload
+  var lr=(document.getElementById('s-labor-rate')||{}).value;
+  var mp=(document.getElementById('s-min-per-pay')||{}).value;
+  if(lr) localStorage.setItem('armp_labor_rate',lr);
+  if(mp) localStorage.setItem('armp_min_per_pay',mp);
+  // Refresh CFO Summary immediately so ROI numbers update without navigating away
+  setTimeout(function(){ if(typeof updateCfoSummary==='function') updateCfoSummary(); },50);
   toast('Settings saved');
 };
 
@@ -7607,7 +7794,17 @@ sp = function(id){
     return;
   }
   _origSp(id);
-  if(id==='settings'){ initRole(); renderMpRules(); renderSettingsPlans(); setTimeout(function(){ renderMpRules(); if(IS_MASTER) renderDemoLeads(); },100); }
+  if(id==='settings'){
+    initRole(); renderMpRules(); renderSettingsPlans();
+    // Restore persisted ROI settings
+    var savedLr=localStorage.getItem('armp_labor_rate');
+    var savedMp=localStorage.getItem('armp_min_per_pay');
+    var lrEl=document.getElementById('s-labor-rate');
+    var mpEl=document.getElementById('s-min-per-pay');
+    if(savedLr&&lrEl) lrEl.value=savedLr;
+    if(savedMp&&mpEl) mpEl.value=savedMp;
+    setTimeout(function(){ renderMpRules(); if(IS_MASTER) renderDemoLeads(); },100);
+  }
   if(id==='cash-app') setTimeout(function(){ populateAllAcctDropdowns(); refreshFbl5n(); },100);
   if(id==='reporting') setTimeout(updReporting,50);
 };
