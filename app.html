@@ -1596,6 +1596,73 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
   font-size: 18px; font-weight: 900; font-family: var(--mono);
 }
 
+/* ── Exception ownership row ── */
+.exc-ownership {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:8px 0 4px; border-top:1px solid var(--bdr);
+  margin-top:8px;
+}
+.exc-owner-label {
+  font-size:9.5px; font-weight:700; color:var(--t3);
+  text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;
+}
+.exc-owner-sel {
+  font-size:11.5px; padding:3px 8px; border:1px solid var(--bdr);
+  border-radius:6px; background:var(--surface3); color:var(--t1);
+  font-family:var(--font); outline:none; cursor:pointer;
+}
+.exc-owner-sel:focus { border-color:var(--p); }
+.exc-priority-badge {
+  font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px;
+}
+.exc-priority-high { background:rgba(239,68,68,.12); color:var(--r-t); }
+.exc-priority-med  { background:rgba(245,158,11,.12); color:var(--am-t); }
+.exc-priority-low  { background:rgba(14,165,233,.12); color:var(--cy-t); }
+.exc-status-sel {
+  font-size:11px; padding:3px 8px; border:1px solid var(--bdr);
+  border-radius:6px; background:var(--surface3); color:var(--t1);
+  font-family:var(--font); outline:none; cursor:pointer;
+}
+.exc-due-inp {
+  font-size:11px; padding:3px 7px; border:1px solid var(--bdr);
+  border-radius:6px; background:var(--surface3); color:var(--t1);
+  font-family:var(--font); outline:none; width:120px;
+}
+.exc-notes-inp {
+  font-size:11.5px; padding:4px 9px; border:1px solid var(--bdr);
+  border-radius:6px; background:var(--surface3); color:var(--t1);
+  font-family:var(--font); outline:none; flex:1; min-width:100px;
+}
+.exc-notes-inp:focus,.exc-owner-sel:focus,.exc-status-sel:focus,.exc-due-inp:focus {
+  border-color:var(--p);
+}
+
+/* ── Drawer snapshot additions ── */
+.drawer-snap-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;
+}
+.drawer-snap-item {
+  padding:10px 12px; background:var(--surface2);
+  border:1px solid var(--bdr); border-radius:9px;
+}
+.drawer-snap-label {
+  font-size:9.5px; font-weight:700; color:var(--t3);
+  text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;
+}
+.drawer-snap-val {
+  font-size:15px; font-weight:900; font-family:var(--mono);
+  color:var(--t1); letter-spacing:-.3px; line-height:1;
+}
+.drawer-snap-val.good { color:var(--g-t); }
+.drawer-snap-val.warn { color:var(--am-t); }
+.drawer-snap-val.bad  { color:var(--r-t); }
+.drawer-po-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.drawer-po-tag {
+  font-size:10px; font-family:var(--mono); font-weight:600;
+  padding:2px 7px; border-radius:4px;
+  background:rgba(59,130,246,.1); color:var(--pd); border:1px solid rgba(59,130,246,.15);
+}
+
 /* ── Review items — richer ── */
 .review-item {
   border-bottom: none;
@@ -3998,6 +4065,14 @@ body.app-active #app {
       </div>
     </div>
 
+    <!-- Account Snapshot (oldest age, last payment, common POs) -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Account Snapshot</div>
+      <div id="drawer-snapshot">
+        <div style="color:var(--t3);font-size:12px">Select a customer to view snapshot</div>
+      </div>
+    </div>
+
     <!-- Aging buckets -->
     <div class="drawer-section">
       <div class="drawer-section-title">Aging Analysis</div>
@@ -4194,7 +4269,8 @@ function renderWsExcPremium(){
   const list=document.getElementById('ws-exc-list');const ct=document.getElementById('ws-exc-ct');if(!list)return;
   const tf=document.getElementById('ws-exc-type-filter');const tval=tf?tf.value:'';
   const isResolved=typeof WS_EXC_VIEW!=='undefined'&&WS_EXC_VIEW==='resolved';
-  let items=EXC.filter(ex=>isResolved?(ex.s==='Resolved'||ex.s==='Resolved — rejected'):(ex.s!=='Resolved'&&ex.s!=='Resolved — rejected'));
+  const RESOLVED_STATES=['Resolved','Resolved — rejected','Written Off','Posted as Unapplied'];
+  let items=EXC.filter(ex=>isResolved?RESOLVED_STATES.includes(ex.s):!RESOLVED_STATES.includes(ex.s));
   if(tval)items=items.filter(ex=>ex.type===tval);
   if(ct)ct.textContent=items.length+(isResolved?' resolved':' exception'+(items.length!==1?'s':''));
   if(!items.length){
@@ -4209,35 +4285,74 @@ function renderWsExcPremium(){
   }
   const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
   const typeSev={'Short pay':'med','Unapplied payment':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
-  const POST_D=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
+
+  // Role options HTML
+  const roleOpts=EXC_TEAM_ROLES.map(r=>`<option value="${r}">${r}</option>`).join('');
+  // Status options HTML (excluding resolved variants handled by resolve dropdown)
+  const statusOpts=EXC_STATUSES.map(s=>`<option value="${s}">${s}</option>`).join('');
+
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
     const sev=typeSev[ex.type]||'med';
     const icon=typeIcon[ex.type]||'⚠️';
-    return`<div class="exc-card sev-${sev}">
+    const pri=ex.priority||'Medium';
+    const priClass=pri==='High'?'exc-priority-high':pri==='Low'?'exc-priority-low':'exc-priority-med';
+    // Status display in meta
+    const statusDisplay=isResV
+      ?`<span style="color:var(--g-t)">${ex.dec||'Resolved'}</span>`
+      :ex.s==='In Review'?`<span style="color:var(--pd)">In Review</span>`
+      :ex.s==='Waiting on Customer'?`<span style="color:var(--am-t)">Waiting on Customer</span>`
+      :`<span style="color:var(--r-t)">${ex.s||'Open'}</span>`;
+    return`<div class="exc-card sev-${sev}" id="exc-card-${realIdx}">
       <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">$${$f(ex.amt)}</div>
       <div class="exc-card-header">
         <span class="exc-card-type-icon">${icon}</span>
-        <div style="flex:1;min-width:0;padding-right:80px">
+        <div style="flex:1;min-width:0;padding-right:90px">
           <div class="exc-card-title">${ex.type||'Exception'} — ${ex.c||'Unknown payer'}</div>
-          <div class="exc-card-meta">Account: ${ex.a||'—'} · Ref: ${ex.ref||'—'} · ${ex.s==='Open'?'<span style="color:var(--r-t)">Unresolved</span>':'<span style="color:var(--g-t)">'+ex.s+'</span>'}</div>
+          <div class="exc-card-meta">Acct: ${ex.a||'—'} · Ref: <span style="font-family:var(--mono)">${ex.ref||'—'}</span> · ${statusDisplay}</div>
         </div>
       </div>
       <div class="exc-card-body">${ex.detail||'No detail available'}</div>
+
+      <!-- ── RESOLVE ACTIONS ── -->
       <div class="exc-card-actions">
-        ${isResV?
-          `<span class="badge badge-g">${ex.dec||'Resolved'}</span>
-           <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
+        ${isResV
+          ?`<span class="badge badge-g" style="font-size:11px">${ex.dec||'Resolved'}</span>
+            <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
           :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="(function(s){var di=parseInt(s.dataset.idx),dv=s.value;if(!dv)return;s.value='';resolveException(di,dv);if(dv!=='Apply to invoice'&&dv!=='Post as Unapplied Cash'){setTimeout(renderWsExcPremium,800);}})(this)">
             <option value="">— Resolve —</option>
             <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
             <option>Write off</option><option>Bank fee</option>
             <option>Wire transfer</option><option>Chase customer</option><option>Duplicate — reject</option>
           </select>
-          <input type="text" class="inp" style="flex:1;font-size:11.5px;padding:5px 10px;min-width:80px;max-width:140px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Add note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
-          <span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Open</span>`
+          <span class="ws-badge ws-badge-pending" style="font-size:10.5px"><span class="ws-dot"></span>${ex.s||'Open'}</span>`
         }
+      </div>
+
+      <!-- ── OWNERSHIP ROW ── -->
+      <div class="exc-ownership">
+        <span class="exc-owner-label">Assigned</span>
+        <select class="exc-owner-sel" onchange="excSetField(${realIdx},'assignedTo',this.value)">
+          ${EXC_TEAM_ROLES.map(r=>`<option value="${r}"${(ex.assignedTo||'—')===r?' selected':''}>${r}</option>`).join('')}
+        </select>
+        <span class="exc-owner-label" style="margin-left:4px">Priority</span>
+        <select class="exc-owner-sel" onchange="excSetField(${realIdx},'priority',this.value)">
+          ${EXC_PRIORITY_OPTS.map(p=>`<option value="${p}"${(ex.priority||'Medium')===p?' selected':''}>${p}</option>`).join('')}
+        </select>
+        <span class="exc-priority-badge ${priClass}">${pri}</span>
+        <span class="exc-owner-label" style="margin-left:4px">Due</span>
+        <input type="date" class="exc-due-inp" value="${ex.dueDate||''}" onchange="excSetField(${realIdx},'dueDate',this.value)" title="Resolution due date">
+        ${!isResV?`<select class="exc-status-sel" onchange="excSetStatus(${realIdx},this.value)">
+          ${EXC_STATUSES.map(s=>`<option value="${s}"${(ex.s||'Open')===s?' selected':''}>${s}</option>`).join('')}
+        </select>`:''}
+      </div>
+
+      <!-- ── RESOLUTION NOTES ── -->
+      <div style="margin-top:6px">
+        <input type="text" class="exc-notes-inp" value="${(ex.resolutionNotes||ex.notes||'').replace(/"/g,'&quot;')}"
+          placeholder="Resolution notes…"
+          oninput="excSetField(${realIdx},'resolutionNotes',this.value);excSetField(${realIdx},'notes',this.value)">
       </div>
     </div>`;
   }).join('');
@@ -5200,6 +5315,11 @@ function selFmt(el){document.querySelectorAll('.fmt-pill').forEach(p=>p.classLis
 const POST_DECISIONS=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
 const HOLD_DECISIONS=['Chase customer'];
 const DROP_DECISIONS=['Duplicate — reject'];
+
+// ── Exception ownership constants ──
+const EXC_TEAM_ROLES=['—','AR Analyst','AR Manager','Controller','CFO','Collections','AP Liaison','External Auditor'];
+const EXC_STATUSES=['Open','In Review','Waiting on Customer','Resolved','Written Off','Posted as Unapplied'];
+const EXC_PRIORITY_OPTS=['High','Medium','Low'];
 let EXC_VIEW='open';
 
 function setExcView(v){
@@ -5219,6 +5339,56 @@ function revertException(idx){
   saveToStorage();rAll();updDash();updTop();
   setExcView('open');
   toast('↩ Reverted — exception reopened');
+}
+
+// ── Exception field setters (ownership, priority, status, notes) ──
+function excSetField(idx,field,val){
+  if(!EXC[idx]) return;
+  EXC[idx][field]=val;
+  // Re-render the priority badge immediately without full re-render
+  if(field==='priority'){
+    const card=document.getElementById('exc-card-'+idx);
+    if(card){
+      const badge=card.querySelector('.exc-priority-badge');
+      if(badge){
+        badge.textContent=val;
+        badge.className='exc-priority-badge '+(val==='High'?'exc-priority-high':val==='Low'?'exc-priority-low':'exc-priority-med');
+      }
+    }
+  }
+  saveToStorage();
+}
+
+function excSetStatus(idx,status){
+  if(!EXC[idx]) return;
+  EXC[idx].s=status;
+  saveToStorage();
+  // Only do a full re-render for terminal statuses; otherwise update badge inline
+  if(status==='Resolved'||status==='Resolved — rejected'||status==='Written Off'){
+    setTimeout(renderWsExcPremium,300);
+  } else {
+    // Update the ws-badge inline
+    const card=document.getElementById('exc-card-'+idx);
+    if(card){
+      const wsBadge=card.querySelector('.ws-badge.ws-badge-pending');
+      if(wsBadge) wsBadge.innerHTML='<span class="ws-dot"></span>'+status;
+    }
+    // Update the meta status display inline
+    const card2=document.getElementById('exc-card-'+idx);
+    if(card2){
+      const meta=card2.querySelector('.exc-card-meta');
+      if(meta){
+        const statusColor=status==='In Review'?'var(--pd)':status==='Waiting on Customer'?'var(--am-t)':'var(--r-t)';
+        // Rebuild meta with updated status — find last · and replace the status portion
+        const parts=meta.innerHTML.split('·');
+        if(parts.length>=3){
+          parts[parts.length-1]=' <span style="color:'+statusColor+'">'+status+'</span>';
+          meta.innerHTML=parts.join('·');
+        }
+      }
+    }
+  }
+  updTop();
 }
 
 function resolveException(idx,dec){
@@ -5978,28 +6148,33 @@ function openCustomerDrawer(){openCustomerDrawerForCustomer(ACCT_SELECTED_CUSTOM
 function openCustomerDrawerForCustomer(custName,acctId){
   DRAWER_CUSTOMER=custName;
   const drawer=document.getElementById('customer-drawer');if(!drawer)return;
-  // Populate
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+
   setEl('drawer-cust-name',custName||'Customer Account');
   setEl('drawer-cust-id','Account: '+(acctId||'—'));
-  // AR data
+
+  // Data slices
   const custInvs=INV.filter(v=>(v.c||'').toLowerCase()===(custName||'').toLowerCase()||v.a===acctId);
   const custPays=PAY.filter(p=>(p.c||'').toLowerCase()===(custName||'').toLowerCase()||p.a===acctId);
   const custExc=EXC.filter(e=>(e.c||'').toLowerCase()===(custName||'').toLowerCase()||e.a===acctId);
-  const totalBal=custInvs.reduce((s,v)=>s+(v.s==='Exact'||v.s==='Applied'?0:v.amt),0);
-  const unapplied=custPays.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(r.a===p.a&&Math.abs(r.pd-p.amt)<1))).reduce((s,p)=>s+p.amt,0);
   const openInvs=custInvs.filter(v=>!v.s||v.s==='Open'||v.s==='');
   const shortPays=custExc.filter(e=>e.type==='Short pay');
+
+  // Core KPIs
+  const totalBal=custInvs.reduce((s,v)=>s+(v.s==='Exact'||v.s==='Applied'?0:v.amt),0);
+  const unapplied=custPays.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(r.a===p.a&&Math.abs(r.pd-p.amt)<1))).reduce((s,p)=>s+p.amt,0);
   setEl('drawer-ar-balance','$'+$f(totalBal));
   setEl('drawer-unapplied','$'+$f(unapplied));
   setEl('drawer-open-inv',openInvs.length);
   setEl('drawer-shortpay',shortPays.length);
+
   // Aging
   const now=new Date();
-  let ageCur=0,age30=0,age60=0,age90=0;
+  let ageCur=0,age30=0,age60=0,age90=0,oldestDays=0;
   openInvs.forEach(v=>{
-    const due=v.due?new Date(v.due):new Date();
-    const days=Math.floor((now-due)/(1000*60*60*24));
+    const due=v.due?new Date(v.due+'T00:00:00'):now;
+    const days=Math.floor((now-due)/86400000);
+    if(days>oldestDays)oldestDays=days;
     const bal=Math.max(0,v.amt);
     if(days<=0)ageCur+=bal;
     else if(days<=30)age30+=bal;
@@ -6010,17 +6185,69 @@ function openCustomerDrawerForCustomer(custName,acctId){
   const ag30El=document.getElementById('aging-30');if(ag30El)ag30El.textContent='$'+$fk(age30);
   const ag60El=document.getElementById('aging-60');if(ag60El)ag60El.textContent='$'+$fk(age60);
   const ag90El=document.getElementById('aging-90');if(ag90El)ag90El.textContent='$'+$fk(age90);
-  // Activity
+
+  // ── Snapshot section (new) ──
+  const snapEl=document.getElementById('drawer-snapshot');
+  if(snapEl){
+    // Oldest invoice age
+    const oldestClass=oldestDays>90?'bad':oldestDays>30?'warn':'good';
+    const oldestLabel=oldestDays>0?oldestDays+'d overdue':'Current';
+    // Last payment
+    const sortedPays=[...custPays].sort((a,b)=>(b.payDate||'').localeCompare(a.payDate||''));
+    const lastPay=sortedPays[0];
+    const lastPayLabel=lastPay?fmtDate(lastPay.payDate)+' · $'+$f(lastPay.amt):'No payments';
+    // Credit hold removed — app reads from aging detail report, not ERP directly
+    const creditHold=false; // unused, kept for compat
+    // Common POs and SOs
+    const pos=[...new Set(custInvs.map(v=>v.po).filter(Boolean))].slice(0,4);
+    const sos=[...new Set(custInvs.map(v=>v.so).filter(Boolean))].slice(0,3);
+    const poTags=pos.map(p=>`<span class="drawer-po-tag">${p}</span>`).join('');
+    const soTags=sos.map(s=>`<span class="drawer-po-tag" style="background:rgba(139,92,246,.1);color:var(--pu-t);border-color:rgba(139,92,246,.15)">${s}</span>`).join('');
+
+    snapEl.innerHTML=`
+      <div class="drawer-snap-grid">
+        <div class="drawer-snap-item">
+          <div class="drawer-snap-label">Oldest Invoice</div>
+          <div class="drawer-snap-val ${oldestClass}">${oldestLabel}</div>
+        </div>
+        <div class="drawer-snap-item">
+          <div class="drawer-snap-label">Last Payment</div>
+          <div class="drawer-snap-val" style="font-size:11px;letter-spacing:0;line-height:1.4">${lastPayLabel}</div>
+        </div>
+        <div class="drawer-snap-item" style="grid-column:span 2">
+          <div class="drawer-snap-label">Open Exceptions</div>
+          <div class="drawer-snap-val ${custExc.length>0?'bad':'good'}">${custExc.length} open</div>
+        </div>
+      </div>
+      ${pos.length||sos.length?`
+      <div style="margin-top:4px">
+        <div class="drawer-snap-label" style="margin-bottom:5px">Common PO / SO References</div>
+        <div class="drawer-po-tags">${poTags}${soTags}${(!pos.length&&!sos.length)?'<span style="font-size:11px;color:var(--t3)">None found</span>':''}</div>
+      </div>`:''}`;
+  }
+
+  // Recent activity
   const actEl=document.getElementById('drawer-activity');
   if(actEl){
-    const acts=[...custPays.slice(-5).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">${p.m||'Payment'} — ${p.payDate?fmtDate(p.payDate):'—'}</span><span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">+$${$f(p.amt)}</span></div>`),...custInvs.slice(-3).reverse().map(v=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">Invoice ${v.i||'—'} issued</span><span style="font-family:var(--mono);font-weight:700;color:var(--am-t)">$${$f(v.amt)}</span></div>`)];
+    const acts=[
+      ...custPays.slice(-5).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">${p.m||'Payment'} — ${p.payDate?fmtDate(p.payDate):'—'}</span><span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">+$${$f(p.amt)}</span></div>`),
+      ...custInvs.slice(-3).reverse().map(v=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">Invoice ${v.i||'—'} issued</span><span style="font-family:var(--mono);font-weight:700;color:var(--am-t)">$${$f(v.amt)}</span></div>`)
+    ];
     actEl.innerHTML=acts.length?acts.join(''):'<div style="color:var(--t3);font-size:12px">No recent activity</div>';
   }
+
   // Exceptions
   const excEl=document.getElementById('drawer-exceptions');
   if(excEl){
-    excEl.innerHTML=custExc.length?custExc.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)"><span class="badge badge-am" style="font-size:10px">${e.type}</span><span style="font-size:12px;color:var(--t2)">${e.detail||e.ref||'—'}</span></div>`).join(''):'<div style="color:var(--t3);font-size:12px">No exceptions</div>';
+    excEl.innerHTML=custExc.length
+      ?custExc.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)">
+          <span class="badge badge-am" style="font-size:10px">${e.type}</span>
+          <span style="font-size:12px;color:var(--t2);flex:1">${e.detail||e.ref||'—'}</span>
+          ${e.assignedTo&&e.assignedTo!=='—'?`<span style="font-size:10px;color:var(--t3)">${e.assignedTo}</span>`:''}
+        </div>`).join('')
+      :'<div style="color:var(--t3);font-size:12px">No exceptions</div>';
   }
+
   drawer.classList.add('open');
 }
 function closeCustomerDrawer(){
