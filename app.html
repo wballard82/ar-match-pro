@@ -588,6 +588,17 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 .conf-high{color:var(--g-t);font-weight:700;font-size:12px;}
 .conf-med{color:var(--am-t);font-weight:700;font-size:12px;}
 .conf-low{color:var(--r-t);font-weight:700;font-size:12px;}
+/* Confidence reason chips */
+.conf-reasons{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+.conf-chip{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:600;padding:1px 6px;border-radius:4px;white-space:nowrap;}
+.conf-chip-inv{background:rgba(16,185,129,.12);color:#34D399;}
+.conf-chip-po{background:rgba(59,130,246,.12);color:#7DD3FC;}
+.conf-chip-so{background:rgba(139,92,246,.12);color:#C4B5FD;}
+.conf-chip-amt{background:rgba(16,185,129,.1);color:#6EE7B7;}
+.conf-chip-sp{background:rgba(245,158,11,.12);color:#FCD34D;}
+.conf-chip-dup{background:rgba(239,68,68,.12);color:#FCA5A5;}
+.conf-chip-acct{background:rgba(14,165,233,.12);color:#7DD3FC;}
+.conf-chip-multi{background:rgba(139,92,246,.12);color:#A78BFA;}
 
 /* ── Inputs ── */
 .inp {
@@ -1069,6 +1080,62 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
   background:var(--surface2); outline:none; transition:border-color .18s;
 }
 .ca-filter-sel:focus { border-color:var(--p); }
+
+/* ── Workflow Pipeline Status Bar ── */
+.ca-workflow-bar {
+  display:flex; align-items:stretch; gap:0;
+  background:var(--surface2); border-bottom:1px solid var(--bdr);
+  flex-shrink:0; overflow-x:auto; padding:0;
+}
+.ca-wf-stage {
+  flex:1; min-width:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:8px 10px; position:relative; cursor:default;
+  transition:background .15s;
+  border-right:1px solid var(--bdr);
+}
+.ca-wf-stage:last-child { border-right:none; }
+.ca-wf-stage::after {
+  content:''; position:absolute; right:-7px; top:50%;
+  transform:translateY(-50%);
+  width:0; height:0;
+  border-top:7px solid transparent;
+  border-bottom:7px solid transparent;
+  border-left:7px solid var(--bdr);
+  z-index:2; pointer-events:none;
+}
+.ca-wf-stage:last-child::after { display:none; }
+.ca-wf-stage.wf-done { background:rgba(16,185,129,.05); }
+.ca-wf-stage.wf-active { background:rgba(59,130,246,.06); }
+.ca-wf-stage.wf-pending { opacity:.55; }
+.ca-wf-label {
+  font-size:9.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.07em; color:var(--t3); margin-bottom:3px; white-space:nowrap;
+}
+.ca-wf-stage.wf-done .ca-wf-label { color:var(--g-t); }
+.ca-wf-stage.wf-active .ca-wf-label { color:var(--pd); }
+.ca-wf-count {
+  font-size:15px; font-weight:900; font-family:var(--mono);
+  color:var(--t2); letter-spacing:-.5px; line-height:1;
+}
+.ca-wf-stage.wf-done .ca-wf-count { color:var(--g-t); }
+.ca-wf-stage.wf-active .ca-wf-count { color:var(--t1); }
+.ca-wf-amt {
+  font-size:10px; color:var(--t3); font-family:var(--mono);
+  margin-top:2px; white-space:nowrap;
+}
+.ca-wf-stage.wf-done .ca-wf-amt { color:var(--g); }
+.ca-wf-pct {
+  position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:var(--bdr);
+}
+.ca-wf-pct-fill {
+  height:100%; border-radius:0;
+  background:var(--g); transition:width .6s ease;
+}
+.ca-wf-stage.wf-active .ca-wf-pct-fill { background:var(--p); }
+.ca-wf-stage.wf-pending .ca-wf-pct-fill { background:var(--t4); }
+@media(max-width:900px){.ca-wf-amt{display:none;}.ca-wf-stage{padding:6px 6px;}}
 
 /* Filter bar */
 .filter-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 0; margin-bottom:12px; }
@@ -1953,6 +2020,12 @@ input:focus, select:focus, textarea:focus { outline: none; }
 .fbl5n-tbl tbody tr:hover { background:rgba(59,130,246,.04); }
 .fbl5n-tbl tbody tr.selected-inv { background:rgba(16,185,129,.14) !important; box-shadow:inset 3px 0 0 var(--g); }
 .fbl5n-tbl .td-num { text-align:right; font-family:var(--mono); font-weight:600; }
+.fbl5n-tbl .td-mono { font-family:var(--mono); font-size:11.5px; color:var(--t2); }
+.fbl5n-tbl .td-amt { text-align:right; font-family:var(--mono); font-weight:700; }
+.fbl5n-tbl .td-amt.pos { color:var(--g-t); }
+.fbl5n-tbl .td-amt.neg { color:var(--r-t); }
+.fbl5n-tbl thead th.asc::after { content:' ↑'; font-size:9px; opacity:.7; }
+.fbl5n-tbl thead th.desc::after { content:' ↓'; font-size:9px; opacity:.7; }
 .aging-chip { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10.5px; font-weight:700; }
 .aging-cur { background:var(--g-bg); color:var(--g-t); }
 .aging-30  { background:var(--am-bg); color:var(--am-t); }
@@ -2781,6 +2854,46 @@ body.app-active #app {
           <button class="ca-tab" id="ca-tab-exc" onclick="setCaTab('exc',this)">Exceptions</button>
           <button class="ca-tab" id="ca-tab-acct" onclick="setCaTab('acct',this)">Account Transaction</button>
           <button class="ca-tab" id="ca-tab-recon" onclick="setCaTab('recon',this)">Reconcile</button>
+        </div>
+
+        <!-- ── WORKFLOW PIPELINE STATUS BAR ── -->
+        <div class="ca-workflow-bar" id="ca-workflow-bar">
+          <div class="ca-wf-stage wf-pending" id="wf-imported">
+            <div class="ca-wf-label">📥 Imported</div>
+            <div class="ca-wf-count" id="wf-imported-count">0</div>
+            <div class="ca-wf-amt" id="wf-imported-amt">—</div>
+            <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-imported-fill" style="width:0%"></div></div>
+          </div>
+          <div class="ca-wf-stage wf-pending" id="wf-matched">
+            <div class="ca-wf-label">⚡ Matched</div>
+            <div class="ca-wf-count" id="wf-matched-count">0</div>
+            <div class="ca-wf-amt" id="wf-matched-amt">—</div>
+            <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-matched-fill" style="width:0%"></div></div>
+          </div>
+          <div class="ca-wf-stage wf-pending" id="wf-reviewed">
+            <div class="ca-wf-label">👁 Reviewed</div>
+            <div class="ca-wf-count" id="wf-reviewed-count">0</div>
+            <div class="ca-wf-amt" id="wf-reviewed-amt">—</div>
+            <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-reviewed-fill" style="width:0%"></div></div>
+          </div>
+          <div class="ca-wf-stage wf-pending" id="wf-approved">
+            <div class="ca-wf-label">✓ Approved</div>
+            <div class="ca-wf-count" id="wf-approved-count">0</div>
+            <div class="ca-wf-amt" id="wf-approved-amt">—</div>
+            <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-approved-fill" style="width:0%"></div></div>
+          </div>
+          <div class="ca-wf-stage wf-pending" id="wf-exported">
+            <div class="ca-wf-label">↓ Exported</div>
+            <div class="ca-wf-count" id="wf-exported-count">0</div>
+            <div class="ca-wf-amt" id="wf-exported-amt">—</div>
+            <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-exported-fill" style="width:0%"></div></div>
+          </div>
+          <div class="ca-wf-stage wf-pending" id="wf-exceptions">
+            <div class="ca-wf-label">⚠ Exceptions</div>
+            <div class="ca-wf-count" id="wf-exceptions-count">0</div>
+            <div class="ca-wf-amt" id="wf-exceptions-amt">—</div>
+            <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-exceptions-fill" style="width:0%"></div></div>
+          </div>
         </div>
 
         <!-- ── TAB: TO BE MATCHED (horizontal split) ── -->
@@ -4481,6 +4594,84 @@ function updDash(){
       ${ua_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">💙</span>Unapplied cash: <strong>$${$f(ua_tot)}</strong> pending decision</div>`:''}
       ${top?`<div class="ai-suggestion"><span class="ai-suggestion-icon">🔴</span>Top exception: <strong>${top[0]}</strong> — ${top[1]} case${top[1]!==1?'s':''}</div>`:''}
     </div>`;
+  updWorkflowBar();
+}
+
+// ── Workflow Pipeline Bar ──
+function updWorkflowBar(){
+  var s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  var sf=function(id,w){var el=document.getElementById(id);if(el)el.style.width=Math.min(100,Math.round(w))+'%';};
+  var sc=function(stageId,cls){var el=document.getElementById(stageId);if(el){el.classList.remove('wf-done','wf-active','wf-pending');el.classList.add(cls);}};
+  var totalPay=PAY.length;
+  // Imported
+  var importedCount=INV.length+PAY.length;
+  var importedAmt=INV.reduce(function(a,v){return a+Math.abs(v.amt);},0)+PAY.reduce(function(a,p){return a+p.amt;},0);
+  s('wf-imported-count',importedCount);
+  s('wf-imported-amt',importedCount?'$'+$fk(importedAmt):'—');
+  sf('wf-imported-fill',importedCount?100:0);
+  sc('wf-imported',importedCount?'wf-done':'wf-pending');
+  // Matched
+  var matchedCount=RES.length;
+  var matchedAmt=RES.reduce(function(a,r){return a+r.pd;},0);
+  s('wf-matched-count',matchedCount);
+  s('wf-matched-amt',matchedCount?'$'+$fk(matchedAmt):'—');
+  sf('wf-matched-fill',totalPay?matchedCount/totalPay*100:0);
+  sc('wf-matched',matchedCount>0?'wf-done':importedCount?'wf-active':'wf-pending');
+  // Reviewed (exact/subset/amount-match)
+  var reviewedRows=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.st==='Amount match';});
+  var reviewedAmt=reviewedRows.reduce(function(a,r){return a+r.pd;},0);
+  s('wf-reviewed-count',reviewedRows.length);
+  s('wf-reviewed-amt',reviewedRows.length?'$'+$fk(reviewedAmt):'—');
+  sf('wf-reviewed-fill',matchedCount?reviewedRows.length/matchedCount*100:0);
+  sc('wf-reviewed',reviewedRows.length>0?(reviewedRows.length===matchedCount&&matchedCount>0?'wf-done':'wf-active'):'wf-pending');
+  // Approved (fromAlloc)
+  var approvedRows=RES.filter(function(r){return r.fromAlloc||r.approved;});
+  var approvedAmt=approvedRows.reduce(function(a,r){return a+r.pd;},0);
+  s('wf-approved-count',approvedRows.length);
+  s('wf-approved-amt',approvedRows.length?'$'+$fk(approvedAmt):'—');
+  sf('wf-approved-fill',reviewedRows.length?approvedRows.length/reviewedRows.length*100:0);
+  sc('wf-approved',approvedRows.length>0?'wf-done':reviewedRows.length?'wf-active':'wf-pending');
+  // Exported
+  var exportedRows=RES.filter(function(r){return r.exported||r.fromAlloc;});
+  var exportedAmt=exportedRows.reduce(function(a,r){return a+r.pd;},0);
+  s('wf-exported-count',exportedRows.length);
+  s('wf-exported-amt',exportedRows.length?'$'+$fk(exportedAmt):'—');
+  sf('wf-exported-fill',approvedRows.length?exportedRows.length/Math.max(approvedRows.length,1)*100:0);
+  sc('wf-exported',exportedRows.length>0?'wf-done':approvedRows.length?'wf-active':'wf-pending');
+  // Exceptions
+  var openExc=EXC.filter(function(e){return !e.s||e.s==='Open'||e.s==='Pending follow-up';});
+  var excAmt=openExc.reduce(function(a,e){return a+e.amt;},0);
+  s('wf-exceptions-count',openExc.length);
+  s('wf-exceptions-amt',openExc.length?'$'+$fk(excAmt):'—');
+  sf('wf-exceptions-fill',totalPay&&openExc.length?openExc.length/totalPay*100:0);
+  var excStage=document.getElementById('wf-exceptions');
+  if(excStage){
+    excStage.classList.remove('wf-done','wf-active','wf-pending');
+    excStage.classList.add(openExc.length>0?'wf-active':'wf-done');
+    var excFill=excStage.querySelector('.ca-wf-pct-fill');
+    if(excFill)excFill.style.background=openExc.length>0?'var(--am)':'var(--g)';
+    var excLabel=excStage.querySelector('.ca-wf-label');
+    if(excLabel)excLabel.style.color=openExc.length>0?'var(--am-t)':'var(--g-t)';
+  }
+}
+
+// ── Confidence Reason Chips ──
+function confReasons(inv,pay){
+  var r=[];
+  if(!pay) return r;
+  if(inv.i&&pay.i&&(pay.i.includes(inv.i)||inv.i.includes(pay.i))) r.push({label:'Invoice match',cls:'conf-chip-inv'});
+  if(inv.po&&pay.po&&norm(inv.po)===norm(pay.po)) r.push({label:'PO match',cls:'conf-chip-po'});
+  if(inv.so&&pay.so&&norm(inv.so)===norm(pay.so)) r.push({label:'SO match',cls:'conf-chip-so'});
+  if(Math.abs(inv.amt-pay.amt)<0.01) r.push({label:'Exact amount',cls:'conf-chip-amt'});
+  else if(Math.abs(inv.amt-pay.amt)<inv.amt*0.05) r.push({label:'Amount close',cls:'conf-chip-amt'});
+  if(Math.abs(inv.amt-pay.amt)>0.01&&Math.abs(inv.amt-pay.amt)<inv.amt*0.2) r.push({label:'Short pay',cls:'conf-chip-sp'});
+  if(inv.a&&pay.a&&inv.a===pay.a&&r.length===0) r.push({label:'Account match',cls:'conf-chip-acct'});
+  return r;
+}
+function confReasonChipsHtml(inv,pay){
+  var r=confReasons(inv,pay);
+  if(!r.length) return '';
+  return '<div class="conf-reasons">'+r.map(function(rc){return '<span class="conf-chip '+rc.cls+'">'+rc.label+'</span>';}).join('')+'</div>';
 }
 
 // ── Reporting ──
@@ -5309,7 +5500,10 @@ function engRenderRows(){
           :r.alreadyPaid?'<span class="badge badge-gray" style="font-size:10px">Paid</span>'
           :'<span style="font-size:11px;color:var(--t3)">Open</span>'}
       </td>
-      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:center"><span class="${confClass}">${r.conf}%</span></td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:center">
+        <span class="${confClass}">${r.conf}%</span>
+        ${ENG_PAY?confReasonChipsHtml(inv,ENG_PAY):''}
+      </td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr)">${excBadge}</td>
     </tr>`;
   }).join('');
@@ -6531,7 +6725,7 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
             v.s==='Short pay'?'<span class="badge badge-am">'+status+'</span>':
             v.s==='Overpay'?'<span class="badge badge-r">'+status+'</span>':
             '<span style="color:var(--t3);font-size:12px">Open</span>';
-    var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>':'—';
+    var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>'+(ENG_PAY?confReasonChipsHtml(v,ENG_PAY):''):'—';
     var sel=ENG_ROW&&ENG_ROW.selected;
     return '<tr class="'+(sel?'selected-inv':'')+'" onclick="fbl5nRowClick(\''+v.i+'\')" style="cursor:pointer">'+
       '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+v.i+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
@@ -6957,6 +7151,8 @@ rAll = function(){
   var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
   var tot=urgent.length+unalloc.length+xr.length;
   var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display='none';} // badge permanently hidden
+  // Refresh workflow bar
+  setTimeout(updWorkflowBar,50);
 };
 
 loadDemoData = function(){
