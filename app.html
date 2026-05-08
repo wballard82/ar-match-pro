@@ -8,7 +8,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AR Match Pro v1778185567</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════
    AR MATCH PRO v5.2 — ENTERPRISE FINTECH POLISH
@@ -58,8 +59,8 @@
   /* ── Layout ── */
   --sidebar-w: 224px;
   --topnav-h:  56px;
-  --font: 'DM Sans', system-ui, sans-serif;
-  --mono: 'DM Mono', 'JetBrains Mono', monospace;
+  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
 
   /* ── Radii ── */
   --r4: 4px; --r6: 6px; --r8: 8px; --r10: 10px;
@@ -79,32 +80,41 @@
 }
 
 [data-theme="light"] {
-  --bg:        #EEF2F7;
+  --bg:        #F2F4F7;
   --surface:   #FFFFFF;
-  --surface2:  #F7FAFC;
-  --surface3:  #F0F4F8;
-  --surface4:  #E8EEF5;
-  --bdr:       rgba(0,0,0,.06);
-  --bdr2:      rgba(0,0,0,.1);
-  --bdr3:      rgba(0,0,0,.16);
-  --t1: #0A1628;
-  --t2: #3D5A7A;
-  --t3: #7A95B0;
-  --t4: #B0C4D8;
+  --surface2:  #F8FAFB;
+  --surface3:  #EFF2F5;
+  --surface4:  #E5E9EF;
+  --bdr:       rgba(0,0,0,.08);
+  --bdr2:      rgba(0,0,0,.13);
+  --bdr3:      rgba(0,0,0,.2);
+  /* Pure black text hierarchy for maximum contrast */
+  --t1: #000000;
+  --t2: #1A1A2E;
+  --t3: #4A5568;
+  --t4: #A0AEC0;
   --g-glow: rgba(16,185,129,.15);
-  --glass:  rgba(0,0,0,.015);
-  --glass2: rgba(0,0,0,.03);
-  --glass3: rgba(0,0,0,.06);
-  --shadow-xs: 0 1px 2px rgba(0,0,0,.06);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
-  --shadow-md: 0 4px 20px rgba(0,0,0,.1);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,.12);
+  --glass:  rgba(0,0,0,.02);
+  --glass2: rgba(0,0,0,.04);
+  --glass3: rgba(0,0,0,.07);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.07);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.09);
+  --shadow-md: 0 4px 20px rgba(0,0,0,.11);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.13);
   --p-glow: 0 0 20px rgba(59,130,246,.15);
 }
 
 /* ── Reset ── */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
-html,body { height:100%; font-family:var(--font); background:var(--bg); color:var(--t1); font-size:13px; line-height:1.5; -webkit-font-smoothing:antialiased; overflow:hidden; }
+html,body { height:100%; font-family:var(--font); background:var(--bg); color:var(--t1); font-size:13px; line-height:1.5; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; overflow:hidden; }
+
+/* ── Mono: disable slashed zero, enable tabular numerals ── */
+.td-mono, .td-amt, .td-key, [class*="mono"], code,
+[style*="font-family:var(--mono)"], [style*="font-family: var(--mono)"] {
+  font-feature-settings: "zero" 0, "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
 
 /* ── Scrollbars ── */
 * { scrollbar-width: thin; scrollbar-color: var(--bdr3) transparent; }
@@ -1743,6 +1753,14 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
   transition: background .1s;
 }
 .tbl tbody tr:hover { background: rgba(59,130,246,.04); }
+.tbl tbody tr.selected-row {
+  background: rgba(59,130,246,.18) !important;
+  box-shadow: inset 3px 0 0 var(--p);
+}
+.tbl tbody tr.selected-row td { color: var(--t1) !important; }
+/* Posting table checkbox column */
+.tbl tbody tr.post-ready td:last-child { color: var(--g-t); font-weight: 700; }
+.tbl tbody tr.post-notready td:last-child { color: var(--r-t); }
 .tbl thead th {
   background: var(--surface2);
   font-size: 9.5px;
@@ -1995,7 +2013,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
 /* ── CFO Summary ── */
 .cfo-hero {
   background: linear-gradient(135deg, #0A1628 0%, #0F1E3A 50%, #091525 100%);
-  border-radius: 16px; padding: 32px 36px; margin-bottom: 24px;
+  border-radius: 14px; padding: 18px 24px; margin-bottom: 14px;
   border: 1px solid rgba(59,130,246,.15); position: relative; overflow: hidden;
 }
 .cfo-hero::before {
@@ -2009,19 +2027,19 @@ input:focus, select:focus, textarea:focus { outline: none; }
   border-color: rgba(59,130,246,.2);
 }
 .cfo-hero-label {
-  font-size: 10.5px; font-weight: 800; color: var(--pd);
-  text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px;
+  font-size: 10px; font-weight: 800; color: var(--pd);
+  text-transform: uppercase; letter-spacing: .12em; margin-bottom: 4px;
 }
 .cfo-hero-headline {
-  font-size: 36px; font-weight: 900; color: #fff; letter-spacing: -1.2px;
-  line-height: 1.1; margin-bottom: 6px;
+  font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -.6px;
+  line-height: 1.1; margin-bottom: 3px;
   text-shadow: 0 2px 20px rgba(59,130,246,.3);
 }
 [data-theme="light"] .cfo-hero-headline { color: var(--t1); text-shadow: none; }
-.cfo-hero-sub { font-size: 14px; color: rgba(255,255,255,.55); font-weight: 500; }
+.cfo-hero-sub { font-size: 12.5px; color: rgba(255,255,255,.55); font-weight: 500; }
 [data-theme="light"] .cfo-hero-sub { color: var(--t3); }
 .cfo-hero-metrics {
-  display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap;
+  display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap;
 }
 .cfo-hero-metric { display: flex; flex-direction: column; gap: 3px; }
 .cfo-hero-metric-val {
@@ -2036,10 +2054,10 @@ input:focus, select:focus, textarea:focus { outline: none; }
 }
 [data-theme="light"] .cfo-hero-metric-lbl { color: var(--t3); }
 
-.cfo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.cfo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
 .cfo-metric-card {
   background: var(--surface); border: 1px solid var(--bdr);
-  border-radius: 16px; padding: 22px; position: relative; overflow: hidden;
+  border-radius: 12px; padding: 14px 16px; position: relative; overflow: hidden;
   transition: all .2s; box-shadow: var(--shadow-xs);
 }
 .cfo-metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
@@ -2047,25 +2065,25 @@ input:focus, select:focus, textarea:focus { outline: none; }
   position: absolute; top: 0; left: 0; right: 0; height: 3px;
 }
 .cfo-metric-icon {
-  width: 44px; height: 44px; border-radius: 12px;
+  width: 32px; height: 32px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px; margin-bottom: 14px;
+  font-size: 16px; margin-bottom: 8px;
 }
-.cfo-metric-label { font-size: 11px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
-.cfo-metric-value { font-size: 32px; font-weight: 900; font-family: var(--mono); letter-spacing: -.8px; color: var(--t1); line-height: 1; margin-bottom: 6px; }
+.cfo-metric-label { font-size: 10px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+.cfo-metric-value { font-size: 22px; font-weight: 900; font-family: var(--mono); letter-spacing: -.5px; color: var(--t1); line-height: 1; margin-bottom: 4px; }
 .cfo-metric-trend {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600;
 }
 .cfo-metric-trend.up   { color: var(--g-t); }
 .cfo-metric-trend.down { color: var(--r-t); }
-.cfo-metric-sub { font-size: 12px; color: var(--t3); margin-top: 4px; }
+.cfo-metric-sub { font-size: 11px; color: var(--t3); margin-top: 3px; }
 
-.cfo-bar-chart { margin-bottom: 24px; }
-.cfo-bar-chart-title { font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 16px; letter-spacing: -.3px; }
+.cfo-bar-chart { margin-bottom: 14px; }
+.cfo-bar-chart-title { font-size: 13px; font-weight: 800; color: var(--t1); margin-bottom: 10px; letter-spacing: -.3px; }
 .cfo-bar-row {
-  display: flex; align-items: center; gap: 12px;
-  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px;
 }
 .cfo-bar-label { font-size: 12.5px; color: var(--t2); font-weight: 600; width: 140px; flex-shrink: 0; }
 .cfo-bar-track {
@@ -2079,23 +2097,23 @@ input:focus, select:focus, textarea:focus { outline: none; }
 
 .cfo-savings-callout {
   background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(16,185,129,.04));
-  border: 1.5px solid rgba(16,185,129,.2); border-radius: 16px;
-  padding: 24px 28px; margin-bottom: 24px;
-  display: flex; align-items: center; gap: 24px;
+  border: 1.5px solid rgba(16,185,129,.2); border-radius: 12px;
+  padding: 14px 18px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 16px;
 }
-.cfo-savings-icon { font-size: 40px; flex-shrink: 0; }
+.cfo-savings-icon { font-size: 28px; flex-shrink: 0; }
 .cfo-savings-headline {
-  font-size: 20px; font-weight: 900; color: var(--g-t); font-family: var(--mono);
-  letter-spacing: -.4px; margin-bottom: 4px;
+  font-size: 16px; font-weight: 900; color: var(--g-t); font-family: var(--mono);
+  letter-spacing: -.3px; margin-bottom: 2px;
 }
-.cfo-savings-body { font-size: 13px; color: var(--t2); line-height: 1.6; }
+.cfo-savings-body { font-size: 12px; color: var(--t2); line-height: 1.5; }
 .cfo-savings-body strong { color: var(--t1); }
 
-.cfo-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-.cfo-table-card { background: var(--surface); border: 1px solid var(--bdr); border-radius: 16px; overflow: hidden; }
-.cfo-table-header { padding: 16px 18px; border-bottom: 1px solid var(--bdr); background: var(--surface2); display: flex; align-items: center; justify-content: space-between; }
-.cfo-table-title { font-size: 13px; font-weight: 700; color: var(--t1); }
-.cfo-exc-row { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--bdr); font-size: 12.5px; }
+.cfo-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.cfo-table-card { background: var(--surface); border: 1px solid var(--bdr); border-radius: 12px; overflow: hidden; }
+.cfo-table-header { padding: 10px 14px; border-bottom: 1px solid var(--bdr); background: var(--surface2); display: flex; align-items: center; justify-content: space-between; }
+.cfo-table-title { font-size: 12px; font-weight: 700; color: var(--t1); }
+.cfo-exc-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--bdr); font-size: 12px; }
 .cfo-exc-row:last-child { border-bottom: none; }
 
 .cfo-period-selector {
@@ -2572,6 +2590,9 @@ body.app-active #app {
         <div class="notif-dot" id="notif-dot"></div>
       </button>
       <button class="tn-icon-btn" id="dm-btn" onclick="toggleDark()" title="Toggle theme">🌙</button>
+      <button class="tn-icon-btn" onclick="resetSession()" title="Clear all data — start fresh session" style="color:var(--r-t)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8a6 6 0 1 1 1.5 4"/><path d="M2 4v4h4"/></svg>
+      </button>
       <div class="tn-divider"></div>
       <div class="tn-user" onclick="sp('settings')">
         <div class="tn-avatar" id="tn-avatar">AR</div>
@@ -3821,57 +3842,53 @@ body.app-active #app {
             </div>
           </div>
 
-          <!-- ROI calculation breakdown -->
-          <div class="card" style="margin-bottom:20px">
-            <div class="card-header">
-              <div>
-                <div class="card-title">Return on Investment — Labor Cost &amp; Hours Saved</div>
-                <div class="card-sub" id="cfo-roi-card-sub">Based on 8 min/payment manual baseline · $65/hr fully-loaded AR rate</div>
+          <!-- ROI calculation breakdown — compact inline -->
+          <div style="background:var(--surface);border:1px solid var(--bdr);border-radius:12px;margin-bottom:12px;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bdr);background:var(--surface2)">
+              <div style="font-size:12px;font-weight:700;color:var(--t1)">ROI — Labor Cost &amp; Hours Saved</div>
+              <div style="font-size:11px;color:var(--t3)" id="cfo-roi-card-sub">Based on 8 min/payment · $65/hr AR rate</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0">
+              <div style="padding:14px 16px;border-right:1px solid var(--bdr)">
+                <div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Auto-Matched</div>
+                <div style="font-size:24px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-auto">0</div>
+                <div style="font-size:10.5px;color:var(--t3);margin-top:2px">vs. manual</div>
+              </div>
+              <div style="padding:14px 16px;border-right:1px solid var(--bdr)">
+                <div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Hours Saved</div>
+                <div style="font-size:24px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-hours">0 hrs</div>
+                <div style="font-size:10.5px;color:var(--t3);margin-top:2px" id="cfo-roi-min-sub">at 8 min/payment</div>
+              </div>
+              <div style="padding:14px 16px;border-right:1px solid var(--bdr)">
+                <div style="font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Labor Saved</div>
+                <div style="font-size:24px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-dollars">$0</div>
+                <div style="font-size:10.5px;color:var(--t3);margin-top:2px" id="cfo-roi-rate-sub">at $65/hr</div>
+              </div>
+              <div style="padding:14px 16px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.04))">
+                <div style="font-size:9.5px;font-weight:700;color:var(--pd);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">ROI Multiple</div>
+                <div style="font-size:24px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-multiple">—</div>
+                <div style="font-size:10.5px;color:var(--t3);margin-top:2px">vs. manual baseline</div>
               </div>
             </div>
-            <div class="card-body">
-              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
-                <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Payments Auto-Matched</div>
-                  <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-auto">0</div>
-                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">vs. manual matching</div>
-                </div>
-                <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Hours Saved</div>
-                  <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-hours">0 hrs</div>
-                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px" id="cfo-roi-min-sub">at 8 min per payment</div>
-                </div>
-                <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
-                  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Labor Cost Saved</div>
-                  <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-dollars">$0</div>
-                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px" id="cfo-roi-rate-sub">at $65/hr loaded rate</div>
-                </div>
-                <div style="padding:16px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.2);border-radius:12px">
-                  <div style="font-size:10px;font-weight:700;color:var(--pd);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI Multiple</div>
-                  <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-multiple">—</div>
-                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">labor savings / subscription</div>
-                </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid var(--bdr)">
+              <div style="padding:10px 16px;border-right:1px solid var(--bdr);display:flex;align-items:center;gap:8px">
+                <div style="font-size:11px;color:var(--t2);width:100px;flex-shrink:0">Auto-matched</div>
+                <div style="flex:1;height:4px;background:var(--bdr);border-radius:2px;overflow:hidden"><div class="cfo-bar-fill" id="cfo-bar-auto" style="width:0%;background:linear-gradient(90deg,var(--g),var(--cy));height:100%"></div></div>
+                <div style="font-size:11px;font-weight:700;font-family:var(--mono);color:var(--t1);width:20px;text-align:right" id="cfo-bar-auto-val">0</div>
               </div>
-              <div class="cfo-bar-chart">
-                <div class="cfo-bar-row">
-                  <div class="cfo-bar-label">Auto-matched</div>
-                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-auto" style="width:0%;background:linear-gradient(90deg,var(--g),var(--cy))"></div></div>
-                  <div class="cfo-bar-val" id="cfo-bar-auto-val">0</div>
-                </div>
-                <div class="cfo-bar-row">
-                  <div class="cfo-bar-label">Exceptions (manual)</div>
-                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-exc" style="width:0%;background:linear-gradient(90deg,var(--am),var(--r))"></div></div>
-                  <div class="cfo-bar-val" id="cfo-bar-exc-val">0</div>
-                </div>
-                <div class="cfo-bar-row">
-                  <div class="cfo-bar-label">Unapplied (pending)</div>
-                  <div class="cfo-bar-track"><div class="cfo-bar-fill" id="cfo-bar-unapp" style="width:0%;background:linear-gradient(90deg,var(--cy),var(--p))"></div></div>
-                  <div class="cfo-bar-val" id="cfo-bar-unapp-val">0</div>
-                </div>
+              <div style="padding:10px 16px;border-right:1px solid var(--bdr);display:flex;align-items:center;gap:8px">
+                <div style="font-size:11px;color:var(--t2);width:100px;flex-shrink:0">Exceptions</div>
+                <div style="flex:1;height:4px;background:var(--bdr);border-radius:2px;overflow:hidden"><div class="cfo-bar-fill" id="cfo-bar-exc" style="width:0%;background:linear-gradient(90deg,var(--am),var(--r));height:100%"></div></div>
+                <div style="font-size:11px;font-weight:700;font-family:var(--mono);color:var(--t1);width:20px;text-align:right" id="cfo-bar-exc-val">0</div>
               </div>
-              <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6" id="cfo-roi-footnote">
-                * 8 minutes is the industry average for manual invoice-to-payment matching. Labor cost assumes $65/hr fully-loaded AR specialist rate. ROI multiple = labor cost saved ÷ Pro plan cost ($999/mo). Actual results will vary. <a href="javascript:void(0)" onclick="sp('settings')" style="color:var(--pd);text-decoration:none">Adjust in Settings →</a>
+              <div style="padding:10px 16px;display:flex;align-items:center;gap:8px">
+                <div style="font-size:11px;color:var(--t2);width:100px;flex-shrink:0">Unapplied</div>
+                <div style="flex:1;height:4px;background:var(--bdr);border-radius:2px;overflow:hidden"><div class="cfo-bar-fill" id="cfo-bar-unapp" style="width:0%;background:linear-gradient(90deg,var(--cy),var(--p));height:100%"></div></div>
+                <div style="font-size:11px;font-weight:700;font-family:var(--mono);color:var(--t1);width:20px;text-align:right" id="cfo-bar-unapp-val">0</div>
               </div>
+            </div>
+            <div style="padding:8px 16px;font-size:11px;color:var(--t3);border-top:1px solid var(--bdr)" id="cfo-roi-footnote">
+              * 8 min manual baseline. Adjust labor rate and time in Settings. <a href="javascript:void(0)" onclick="sp('settings')" style="color:var(--pd);text-decoration:none">Settings →</a>
             </div>
           </div>
 
@@ -5151,6 +5168,7 @@ function doLogout(){
   if(ls){ ls.style.display=''; ls.style.visibility=''; ls.style.pointerEvents=''; ls.style.zIndex=''; ls.style.opacity=''; }
   INV=[];PAY=[];RES=[];EXC=[];
   IS_DEMO=true;IS_TRIAL=false;CURRENT_USER='';IS_MASTER=false;
+  localStorage.removeItem('armp_trial_exports');
   // Reset demo UI
   var badge=document.getElementById('demo-top-badge');if(badge)badge.style.display='none';
   var dp=document.getElementById('demo-prompt-overlay');if(dp)dp.classList.remove('open');
@@ -5243,11 +5261,26 @@ function clearInvData(){if(!confirm('Clear all invoice data?'))return;INV=[];sav
 function clearPayData(){if(!confirm('Clear all remittance data?'))return;PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittance data');toast('Remittance data cleared');}
 function clearMatchData(){if(!confirm('Clear all match results?'))return;RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');}
 function clearAllData(){if(!confirm('Clear all data?'))return;INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');}
+
+function resetSession(){
+  if(!confirm('Clear all invoice, payment, and match data for a fresh session?\n\nThis does not affect your account, settings, or CFO history.')) return;
+  INV=[];PAY=[];RES=[];EXC=[];
+  rAll();updDash();updTop();
+  setStatus('ready');
+  // Clear data keys but preserve settings, session, ledger, trial access
+  ['inv','pay','res','exc'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}});
+  // Reset trial export counter for the session
+  localStorage.removeItem('armp_trial_exports');
+  addAudit('Session reset','All invoice/payment/match data cleared',{after:'Fresh session'});
+  toast('Session cleared — ready for new data');
+  // Navigate to worklist
+  setTimeout(function(){sp('cash-app');},300);
+}
 function saveSettings(){
   // Persist matching tolerance
   var tol=parseFloat(document.getElementById('s-tol')?.value||'1');
   try{localStorage.setItem('armp_tol',String(tol));}catch(e){}
-  toast('Settings saved');
+  // Toast is handled by the saveSettings override — do not add one here
 }
 function filterDash(t){if(t==='exceptions')sp('exceptions');else sp('cash-app');}
 function filterByStatus(s){sp('exceptions');}
@@ -5449,7 +5482,7 @@ function rPost(){
     const inv=INV.find(v=>v.i===r.i)||{};
     const typeLbl=typeMap[r.m]||'Invoice';
     const badgeCls=isExc?(excBadge[r.excDec||r.m]||'badge-gray'):'badge-g';
-    return`<tr style="${isExc?'background:rgba(14,165,233,.03)':''}">
+    return`<tr onclick="this.classList.toggle('selected-row')" style="${isExc?'background:rgba(14,165,233,.03);':''}cursor:pointer">
       <td class="td-mono">${r.a||'—'}</td>
       <td>${r.c||'—'}</td>
       <td class="td-mono">${dDisp}</td>
