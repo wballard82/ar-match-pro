@@ -3549,6 +3549,7 @@ body.app-active #app {
                   <th onclick="sortTbl('post-tbl',8)" style="text-align:right">Post Amount<span class="si2"></span></th>
                   <th onclick="sortTbl('post-tbl',9)" style="text-align:right">Short Pay<span class="si2"></span></th>
                   <th onclick="sortTbl('post-tbl',10)">Approved<span class="si2"></span></th>
+                  <th onclick="sortTbl('post-tbl',11)">Readiness<span class="si2"></span></th>
                 </tr>
               </thead>
               <tbody id="post-tb">
@@ -3686,6 +3687,23 @@ body.app-active #app {
                 <span id="cfo-total-sub">0 invoices · 0 payments</span>
               </div>
             </div>
+            <div class="cfo-metric-card">
+              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--pu),var(--p))"></div>
+              <div class="cfo-metric-icon" style="background:var(--pu-bg)">🛡</div>
+              <div class="cfo-metric-label">Manual Review Avoided</div>
+              <div class="cfo-metric-value" id="cfo-manual-avoided">0</div>
+              <div class="cfo-metric-trend up" style="color:var(--pu-t)">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2z"/></svg>
+                Payments handled automatically
+              </div>
+            </div>
+            <div class="cfo-metric-card">
+              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--am),#D97706)"></div>
+              <div class="cfo-metric-icon" style="background:var(--am-bg)">🔴</div>
+              <div class="cfo-metric-label">Top Exception Cause</div>
+              <div class="cfo-metric-value" id="cfo-top-exc-type" style="font-size:18px;letter-spacing:-.2px">—</div>
+              <div class="cfo-metric-sub" id="cfo-top-exc-ct">No exceptions</div>
+            </div>
           </div>
 
           <div class="cfo-two-col">
@@ -3717,7 +3735,7 @@ body.app-active #app {
             <div class="card-header">
               <div>
                 <div class="card-title">Return on Investment — Labor Cost &amp; Hours Saved</div>
-                <div class="card-sub">Based on 8 min/payment manual baseline · $65/hr fully-loaded AR rate</div>
+                <div class="card-sub" id="cfo-roi-card-sub">Based on 8 min/payment manual baseline · $65/hr fully-loaded AR rate</div>
               </div>
             </div>
             <div class="card-body">
@@ -3730,12 +3748,12 @@ body.app-active #app {
                 <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
                   <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Hours Saved</div>
                   <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--pd)" id="cfo-roi-hours">0 hrs</div>
-                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">at 8 min per payment</div>
+                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px" id="cfo-roi-min-sub">at 8 min per payment</div>
                 </div>
                 <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
                   <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Labor Cost Saved</div>
                   <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-dollars">$0</div>
-                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">at $65/hr loaded rate</div>
+                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px" id="cfo-roi-rate-sub">at $65/hr loaded rate</div>
                 </div>
                 <div style="padding:16px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.2);border-radius:12px">
                   <div style="font-size:10px;font-weight:700;color:var(--pd);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI Multiple</div>
@@ -3760,8 +3778,8 @@ body.app-active #app {
                   <div class="cfo-bar-val" id="cfo-bar-unapp-val">0</div>
                 </div>
               </div>
-              <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6">
-                * 8 minutes is the industry average for manual invoice-to-payment matching. Labor cost assumes $65/hr fully-loaded AR specialist rate. ROI multiple = labor cost saved ÷ Pro plan cost ($999/mo). Actual results will vary.
+              <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6" id="cfo-roi-footnote">
+                * 8 minutes is the industry average for manual invoice-to-payment matching. Labor cost assumes $65/hr fully-loaded AR specialist rate. ROI multiple = labor cost saved ÷ Pro plan cost ($999/mo). Actual results will vary. <a href="javascript:void(0)" onclick="sp('settings')" style="color:var(--pd);text-decoration:none">Adjust in Settings →</a>
               </div>
             </div>
           </div>
@@ -3878,6 +3896,7 @@ body.app-active #app {
                   <th onclick="sortTbl('audit-tb',1)">User<span class="si2"></span></th>
                   <th onclick="sortTbl('audit-tb',2)">Action<span class="si2"></span></th>
                   <th onclick="sortTbl('audit-tb',3)">Reference<span class="si2"></span></th>
+                  <th onclick="sortTbl('audit-tb',4)">Status Change<span class="si2"></span></th>
                 </tr>
               </thead>
               <tbody id="audit-tbl-body">
@@ -3945,6 +3964,32 @@ body.app-active #app {
             <div class="settings-row">
               <div><div class="settings-label">Amount tolerance ($)</div><div class="settings-desc">Max variance to still consider an exact match</div></div>
               <input class="inp" type="number" id="s-tol" value="1" min="0" max="100" step="0.5" style="width:80px;font-size:12.5px;text-align:right">
+            </div>
+          </div>
+
+          <!-- ROI & Labor Rate -->
+          <div class="settings-section">
+            <div class="settings-section-title">📊 ROI &amp; Labor Cost</div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Fully-loaded AR labor rate ($/hr)</div>
+                <div class="settings-desc">Used to calculate labor cost saved in CFO Summary. Include salary, benefits, and overhead.</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:13px;color:var(--t2);font-weight:700">$</span>
+                <input class="inp" type="number" id="s-labor-rate" value="65" min="10" max="500" step="5" style="width:80px;font-size:12.5px;text-align:right">
+                <span style="font-size:12px;color:var(--t3)">/hr</span>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Manual processing time (min/payment)</div>
+                <div class="settings-desc">Baseline minutes per payment without AR Match Pro. Industry average is 8 min.</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input class="inp" type="number" id="s-min-per-pay" value="8" min="1" max="120" step="1" style="width:80px;font-size:12.5px;text-align:right">
+                <span style="font-size:12px;color:var(--t3)">min</span>
+              </div>
             </div>
           </div>
 
@@ -4838,16 +4883,49 @@ function exportReporting(){toast('PDF export requires backend. Export data via P
 
 // ── Audit trail ──
 const GLOBAL_AUDIT=[];
-function addAudit(action,ref){
-  GLOBAL_AUDIT.unshift({ts:new Date().toLocaleTimeString(),user:CURRENT_USER||'user',action,ref:ref||''});
+function addAudit(action, ref, opts){
+  // opts: { before, after, inv, pay, amount }
+  var o=opts||{};
+  GLOBAL_AUDIT.unshift({
+    ts: new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),
+    iso: new Date().toISOString(),
+    user: CURRENT_USER||'user',
+    action: action||'',
+    ref: ref||'',
+    before: o.before||'',
+    after: o.after||'',
+    inv: o.inv||'',
+    pay: o.pay||'',
+    amount: o.amount!=null?o.amount:''
+  });
+  if(GLOBAL_AUDIT.length>500) GLOBAL_AUDIT.length=500;
   initAuditTbl();
 }
+
 function initAuditTbl(){
   const tbody=document.getElementById('audit-tbl-body');if(!tbody)return;
-  if(!GLOBAL_AUDIT.length){tbody.innerHTML='<tr><td colspan="4"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No audit records</div></div></td></tr>';return;}
-  tbody.innerHTML=GLOBAL_AUDIT.slice(0,100).map(a=>
-    `<tr><td class="td-mono">${a.ts}</td><td style="color:var(--p);font-weight:700">${a.user}</td><td style="color:var(--t2)">${a.action}</td><td class="td-mono" style="color:var(--t3)">${a.ref}</td></tr>`
-  ).join('');
+  if(!GLOBAL_AUDIT.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No audit records</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=GLOBAL_AUDIT.slice(0,200).map(a=>{
+    var refCell=a.ref||'';
+    if(a.inv) refCell+=(refCell?' · ':'')+('<span style="font-family:var(--mono);color:var(--pd)">'+a.inv+'</span>');
+    if(a.pay) refCell+=(refCell?' · ':'')+('<span style="font-family:var(--mono);color:var(--cy-t)">'+a.pay+'</span>');
+    if(a.amount!=='') refCell+=(refCell?' · ':'')+('<span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">$'+$f(Number(a.amount))+'</span>');
+    var statusCell='';
+    if(a.before||a.after){
+      statusCell='<span style="color:var(--t3)">'+escHtml(a.before)+'</span>';
+      if(a.after) statusCell+=' → <span style="color:var(--g-t)">'+escHtml(a.after)+'</span>';
+    }
+    return`<tr>
+      <td class="td-mono" style="white-space:nowrap;font-size:11px">${a.ts}</td>
+      <td style="color:var(--pd);font-weight:700;font-size:11.5px;white-space:nowrap">${escHtml(a.user)}</td>
+      <td style="color:var(--t1);font-weight:500">${escHtml(a.action)}</td>
+      <td style="font-size:11.5px">${refCell}</td>
+      <td style="font-size:11px;white-space:nowrap">${statusCell}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ── Login ──
@@ -4950,7 +5028,7 @@ function launchApp(user){
   if(!IS_DEMO){INV=[];PAY=[];RES=[];EXC=[];loadFromStorage();}
   rAll();updDash();updTop();initAuditTbl();
   if(IS_DEMO)toast((IS_TRIAL?'🚀 7-Day Free Trial active — load sample data to explore':'Demo mode — click "Load sample data" to get started.'));
-  addAudit('Login','User: '+(user.name||CURRENT_USER));
+  addAudit('Login','User: '+(user.name||CURRENT_USER),{after:'Authenticated'});
 
   setTimeout(navToWorklist, 0);
 }
@@ -5183,10 +5261,25 @@ function rPost(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   const ct=document.getElementById('post-ct');if(ct)ct.textContent=ap.length+' rows';
   const tb=document.getElementById('post-tb');if(!tb)return;
-  if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations.</div></div></td></tr>';return;}
+  if(!ap.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations.</div></div></td></tr>';return;}
   const d=new Date().toISOString().split('T')[0];const dDisp=fmtDate(d);
   const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
   const excBadge={'Apply to invoice':'badge-g','Post as Unapplied Cash':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
+
+  // ── Readiness check helper ──
+  function getReadiness(r,inv){
+    var missing=[];
+    if(!r.i&&!r.fromExc) missing.push('Invoice #');
+    if(!r.a)             missing.push('Account');
+    if(!r.pd||r.pd===0)  missing.push('Amount');
+    if(!r.d&&!r.id)      missing.push('Document #');
+    // Payment date — use today as fallback, always present
+    if(missing.length===0){
+      return '<span style="font-size:10.5px;font-weight:700;color:var(--g-t)">✓ Ready</span>';
+    }
+    return '<span style="font-size:10.5px;font-weight:700;color:var(--r-t)" title="Missing: '+missing.join(', ')+'">✗ Not Ready</span><div style="font-size:9.5px;color:var(--t3);margin-top:2px">'+missing.join(', ')+'</div>';
+  }
+
   tb.innerHTML=ap.map(r=>{
     const isExc=!!r.fromExc;
     const inv=INV.find(v=>v.i===r.i)||{};
@@ -5204,6 +5297,7 @@ function rPost(){
       <td class="td-amt pos">$${$f(r.pd)}</td>
       <td class="td-amt ${r.vr<-.01?'neg':''}">${(!isExc&&r.vr<-.01)?'$'+$f(Math.abs(r.vr)):'—'}</td>
       <td><span class="badge badge-g">Approved</span></td>
+      <td style="white-space:nowrap">${getReadiness(r,inv)}</td>
     </tr>`;
   }).join('');
 }
@@ -5474,7 +5568,7 @@ function finalizeExcResolution(idx,dec){
       RES.push({a:acctRef,c:ex.c,i:invRef,d:ex.id,id:ex.id,oa:ex.amt,pd:ex.amt,vr:0,st:'Resolved',m:dec,n:ex.notes||'',fromExc:true,excDec:dec});
       saveToStorage();rAll();updDash();updTop();
       const msgs={'Apply to invoice':'Applied to '+invRef,'Post as Unapplied Cash':'Posted to account '+acctRef,'Write off':'Written off','Bank fee':'Bank fee recorded','Wire transfer':'Wire transfer recorded'};
-      addAudit('Exception resolved: '+dec,ex.id);
+      addAudit('Exception resolved: '+dec,ex.id,{before:'Open',after:dec,amount:ex.amt});
       toast('✓ '+(msgs[dec]||'Resolved — added to posting export'));
     },550);
   }
@@ -5767,7 +5861,7 @@ function engApprove(){
   document.getElementById('eng-export-btn').style.display='inline-flex';
   const totalApplied=sel.reduce((s,r)=>s+r.applyAmt,0);
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
-  addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
+  addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices',{before:'Suggested',after:'Approved',amount:totalApplied});
   toast('Allocation approved — click Export & lock to post');
 }
 
@@ -5789,7 +5883,7 @@ function engExport(){
   document.getElementById('eng-export-btn').style.display='none';
   document.getElementById('eng-approve-btn').style.display='none';
   engAudit('Exported to posting — locked');
-  addAudit('Exported & locked','$'+$f(sel.reduce((s,r)=>s+r.applyAmt,0)));
+  addAudit('Exported & locked','$'+$f(sel.reduce((s,r)=>s+r.applyAmt,0)),{before:'Approved',after:'Exported'});
   rAll();updDash();updTop();
   toast('✓ Exported to posting — allocation locked');
 }
@@ -6308,7 +6402,7 @@ async function runMatch(){
   }
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
   overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
-  addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions');
+  addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions',{before:'Loaded',after:'Matched'});
   toast(`✓ Matching done · ${RES.length} results · ${EXC.length} exceptions`);
 }
 
@@ -7260,6 +7354,11 @@ function setCfoPeriod(p,btn){
 function updateCfoSummary(){
   var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   var setW=function(id,w){var el=document.getElementById(id);if(el)el.style.width=w;};
+
+  // ── Configurable ROI inputs ──
+  var laborRate=parseFloat((document.getElementById('s-labor-rate')||{}).value)||65;
+  var minPerPay=parseFloat((document.getElementById('s-min-per-pay')||{}).value)||8;
+
   // Period multiplier: month=1x, quarter=3x, ytd=12x (annualized estimation)
   var periodMult = CFO_PERIOD==='quarter'?3:CFO_PERIOD==='ytd'?12:1;
   var periodLabel = CFO_PERIOD==='quarter'?'This quarter':CFO_PERIOD==='ytd'?'Year to date':'This month';
@@ -7271,10 +7370,18 @@ function updateCfoSummary(){
   var spAmt=spc.reduce(function(s,e){return s+e.amt;},0);
   var rt=tp>0?(ma/tp*100):0;
   var autoCount=matched.length*periodMult;
-  var hoursSaved=autoCount*8/60;
-  var dollarsSaved=hoursSaved*65;
+  var hoursSaved=autoCount*(minPerPay/60);
+  var dollarsSaved=hoursSaved*laborRate;
 
-  // Hero: Cash Application Performance
+  // ── Update ROI footnote text dynamically ──
+  var footnoteEl=document.getElementById('cfo-roi-footnote');
+  if(footnoteEl) footnoteEl.textContent='* '+minPerPay+' minutes is the configured manual baseline per payment. Labor cost assumes $'+laborRate+'/hr fully-loaded AR rate. ROI multiple = labor cost saved ÷ Pro plan cost ($999/mo). Actual results will vary.';
+  var cardSubRate=document.getElementById('cfo-roi-rate-sub');
+  if(cardSubRate) cardSubRate.textContent='at $'+laborRate+'/hr loaded rate';
+  var cardSubMin=document.getElementById('cfo-roi-min-sub');
+  if(cardSubMin) cardSubMin.textContent='at '+minPerPay+' min per payment';
+
+  // Hero
   if(autoCount>0){
     setEl('cfo-hours-saved','$'+$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
     setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received ('+periodLabel+')');
@@ -7282,12 +7389,12 @@ function updateCfoSummary(){
     setEl('cfo-hours-saved','No matches yet');
     setEl('cfo-hero-sub','Import data and run matching to see performance');
   }
-  setEl('cfo-hero-matched','$'+$fk(tp));       // Cash Received
+  setEl('cfo-hero-matched','$'+$fk(tp));
   setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'—');
   setEl('cfo-hero-payments',PAY.length);
   setEl('cfo-hero-invoices',matched.length);
 
-  // Savings callout: Cash Received vs Cash Matched
+  // Savings callout
   if(tp>0){
     setEl('cfo-savings-headline','$'+$fk(ma)+' in cash matched of $'+$fk(tp)+' received');
     var bodyEl=document.getElementById('cfo-savings-body');
@@ -7298,6 +7405,7 @@ function updateCfoSummary(){
     if(be2) be2.textContent='Load sample data or import invoices and remittance to begin.';
   }
 
+  // Metric cards
   setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
   var stpEl=document.getElementById('cfo-stp-trend'); if(stpEl) stpEl.style.color=rt>=80?'var(--g-t)':rt>=50?'var(--am-t)':'var(--r-t)';
   var openExcCt=EXC.filter(function(e){return !e.s||e.s==='Open';}).length;
@@ -7309,12 +7417,25 @@ function updateCfoSummary(){
   setEl('cfo-unapplied','$'+$f(ua));
   setEl('cfo-total','$'+$fk(tp));
   setEl('cfo-total-sub',INV.length+' invoices · '+PAY.length+' payments');
+
+  // ROI cards
   setEl('cfo-roi-auto',autoCount);
   setEl('cfo-roi-hours',hoursSaved.toFixed(1)+' hrs');
   setEl('cfo-roi-dollars','$'+$f(dollarsSaved));
-  // ROI multiple = labor savings / Pro plan cost ($999/mo)
   var roiMultiple = dollarsSaved > 0 ? (dollarsSaved/999).toFixed(1)+'x' : '—';
   setEl('cfo-roi-multiple', roiMultiple);
+
+  // Top exception cause KPI
+  var excByType={};
+  EXC.forEach(function(e){excByType[e.type]=(excByType[e.type]||0)+1;});
+  var topExcEntry=Object.entries(excByType).sort(function(a,b){return b[1]-a[1];})[0];
+  setEl('cfo-top-exc-type', topExcEntry?topExcEntry[0]:'—');
+  setEl('cfo-top-exc-ct', topExcEntry?topExcEntry[1]+' case'+(topExcEntry[1]>1?'s':''):'No exceptions');
+
+  // Manual review avoided = payments processed minus exceptions
+  var manualAvoided=Math.max(0,autoCount-EXC.length);
+  setEl('cfo-manual-avoided', manualAvoided);
+
   setEl('cfo-bar-auto-val',autoCount);
   setEl('cfo-bar-exc-val',EXC.length);
   setEl('cfo-bar-unapp-val',PAY.filter(function(p){return p.coa;}).length);
@@ -7324,6 +7445,7 @@ function updateCfoSummary(){
     setW('cfo-bar-exc',(EXC.length/total*100).toFixed(1)+'%');
     setW('cfo-bar-unapp',(PAY.filter(function(p){return p.coa;}).length/total*100).toFixed(1)+'%');
   },100);
+
   // Match breakdown
   var cn={};RES.forEach(function(r){cn[r.st]=(cn[r.st]||0)+1;});
   var tt=Object.values(cn).reduce(function(s,v){return s+v;},0)||1;
@@ -7331,11 +7453,12 @@ function updateCfoSummary(){
   var mbEl=document.getElementById('cfo-match-breakdown');
   var mlEl=document.getElementById('cfo-match-total-lbl'); if(mlEl) mlEl.textContent=RES.length+' total records';
   if(mbEl) mbEl.innerHTML=Object.entries(cn).length?Object.entries(cn).map(function(e){ return '<div class="cfo-bar-row"><div class="cfo-bar-label">'+e[0]+'</div><div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:'+(e[1]/tt*100).toFixed(1)+'%;background:'+(co[e[0]]||'var(--p)')+'"></div></div><div class="cfo-bar-val">'+e[1]+'</div></div>'; }).join(''):'<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
+
   // Exception summary
-  var excByType={};EXC.forEach(function(e){excByType[e.type]=excByType[e.type]||{count:0,amt:0};excByType[e.type].count++;excByType[e.type].amt+=e.amt;});
+  var excByTypeAmt={};EXC.forEach(function(e){excByTypeAmt[e.type]=excByTypeAmt[e.type]||{count:0,amt:0};excByTypeAmt[e.type].count++;excByTypeAmt[e.type].amt+=e.amt;});
   var excIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦'};
   var excSumEl=document.getElementById('cfo-exc-summary');
-  if(excSumEl) excSumEl.innerHTML=Object.entries(excByType).length?Object.entries(excByType).map(function(e){ return '<div class="cfo-exc-row"><span style="font-size:16px">'+(excIcon[e[0]]||'⚠️')+'</span><div style="flex:1"><div style="font-weight:700;color:var(--t1)">'+e[0]+'</div><div style="font-size:11px;color:var(--t3)">'+e[1].count+' case'+(e[1].count>1?'s':'')+'</div></div><div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$'+$fk(e[1].amt)+'</div></div>'; }).join(''):'<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
+  if(excSumEl) excSumEl.innerHTML=Object.entries(excByTypeAmt).length?Object.entries(excByTypeAmt).map(function(e){ return '<div class="cfo-exc-row"><span style="font-size:16px">'+(excIcon[e[0]]||'⚠️')+'</span><div style="flex:1"><div style="font-weight:700;color:var(--t1)">'+e[0]+'</div><div style="font-size:11px;color:var(--t3)">'+e[1].count+' case'+(e[1].count>1?'s':'')+'</div></div><div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$'+$fk(e[1].amt)+'</div></div>'; }).join(''):'<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
 }
 
 function updateCfoSummaryClean(){ updateCfoSummary(); }
