@@ -1951,7 +1951,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
 .fbl5n-tbl thead th:hover { color:var(--t1); }
 .fbl5n-tbl tbody td { padding:7px 10px; border-bottom:1px solid var(--bdr); vertical-align:middle; white-space:nowrap; }
 .fbl5n-tbl tbody tr:hover { background:rgba(59,130,246,.04); }
-.fbl5n-tbl tbody tr.selected-inv { background:rgba(16,185,129,.07) !important; }
+.fbl5n-tbl tbody tr.selected-inv { background:rgba(16,185,129,.14) !important; box-shadow:inset 3px 0 0 var(--g); }
 .fbl5n-tbl .td-num { text-align:right; font-family:var(--mono); font-weight:600; }
 .aging-chip { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10.5px; font-weight:700; }
 .aging-cur { background:var(--g-bg); color:var(--g-t); }
@@ -2854,6 +2854,9 @@ body.app-active #app {
                     </div>
                   </div>
 
+                  <!-- Remittance detail strip — shown immediately on payment selection -->
+                  <div id="eng-remittance-detail" style="display:none;flex-direction:column"></div>
+
                   <div class="eng-warn dup" id="eng-dup-warn">⚠️ <span id="eng-dup-msg">Duplicate payment detected</span></div>
                   <div class="eng-warn sp" id="eng-short-pay-warn">⚠️ Short pay detected</div>
                   <div class="ai-bar" id="eng-ai-bar" style="margin:8px 12px 0"><div class="ai-bar-header">🤖 AI Suggestions</div><div id="eng-ai-list"></div></div>
@@ -2927,18 +2930,27 @@ body.app-active #app {
                   <span style="font-weight:500;color:var(--t3);text-transform:none;letter-spacing:0;font-size:11px" id="ca-bottom-cust-label">— select account or payment</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account</span>
-                  <select id="ca-acct-dropdown" class="ca-acct-sel" onchange="caAcctDropdownChange(this.value)">
+                  <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account #</span>
+                  <!-- Manual account number entry (primary) -->
+                  <div style="position:relative">
+                    <input type="text" id="ca-acct-manual-input" placeholder="Type account number…"
+                      style="padding:5px 10px;border:1px solid var(--bdr2);border-radius:6px;font-size:12px;font-family:var(--mono);background:var(--surface2);color:var(--t1);outline:none;width:200px"
+                      oninput="caAcctManualInput(this.value)"
+                      onkeydown="if(event.key==='Enter')caAcctDropdownChange(this.value.trim())">
+                    <div id="ca-acct-manual-suggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:30;display:none;max-height:200px;overflow-y:auto;min-width:240px"></div>
+                  </div>
+                  <!-- Hidden dropdown kept for backward compat with existing JS -->
+                  <select id="ca-acct-dropdown" class="ca-acct-sel" onchange="caAcctDropdownChange(this.value)" style="display:none">
                     <option value="">All accounts</option>
                   </select>
-                  <button class="btn btn-ghost btn-xs" onclick="caAcctDropdownChange(document.getElementById('ca-acct-dropdown').value)">↻ Refresh</button>
+                  <button class="btn btn-ghost btn-xs" onclick="caAcctDropdownChange(document.getElementById('ca-acct-manual-input').value.trim())">↻ Refresh</button>
                 </div>
               </div>
               <div class="ca-bottom-tbl-wrap">
                 <table class="fbl5n-tbl" id="ca-open-items-tbl">
                   <thead>
                     <tr>
-                      <th style="width:32px"></th>
+                      <th style="width:32px"><input type="checkbox" id="fbl5n-select-all" title="Select / deselect all" style="width:14px;height:14px;cursor:pointer;accent-color:var(--p)" onchange="fbl5nSelectAll(this.checked)"></th>
                       <th onclick="sortFbl5n(0)">Account<span class="si2"></span></th>
                       <th onclick="sortFbl5n(1)">Customer<span class="si2"></span></th>
                       <th onclick="sortFbl5n(2)">Invoice #<span class="si2"></span></th>
@@ -2967,8 +2979,26 @@ body.app-active #app {
 
         <!-- ── TAB: REVIEW ── -->
         <div class="ws-tab-view" id="ws-review">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
-            <div style="font-size:12px;color:var(--t3)" id="review-ct">0 matched records</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font-size:12px;color:var(--t3)" id="review-ct">0 matched records</span>
+              <input type="text" placeholder="Search…" id="review-search" oninput="reviewFilter()" style="padding:4px 9px;border:1px solid var(--bdr2);border-radius:6px;font-size:12px;background:var(--surface3);color:var(--t1);outline:none;width:140px">
+              <select id="review-status-filter" onchange="reviewFilter()" style="padding:4px 8px;border:1px solid var(--bdr2);border-radius:6px;font-size:12px;background:var(--surface3);color:var(--t1);outline:none">
+                <option value="">All statuses</option>
+                <option>Exact</option><option>Subset exact</option><option>Amount match</option>
+                <option>Short pay</option><option>Overpay</option><option>Resolved</option>
+              </select>
+              <select id="review-sort-sel" onchange="reviewSort()" style="padding:4px 8px;border:1px solid var(--bdr2);border-radius:6px;font-size:12px;background:var(--surface3);color:var(--t1);outline:none">
+                <option value="">Sort: Default</option>
+                <option value="cust-asc">Customer A→Z</option>
+                <option value="cust-desc">Customer Z→A</option>
+                <option value="amt-desc">Amount: High→Low</option>
+                <option value="amt-asc">Amount: Low→High</option>
+                <option value="date-desc">Date: Newest</option>
+                <option value="date-asc">Date: Oldest</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" onclick="clearMatchData()">Clear results</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting file</button>
@@ -3766,10 +3796,11 @@ body.app-active #app {
             <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
               <div>
                 <div class="settings-section-title" style="margin-bottom:4px;border:none;padding:0">🧑‍💼 Demo Leads</div>
-                <div style="font-size:12px;color:var(--t3);line-height:1.55">Leads from the Free Demo signup form · Stored in <code style="font-size:10.5px;background:var(--surface3);padding:1px 5px;border-radius:4px">armp_demo_leads</code><br>
-                <span style="color:var(--t4);font-size:11px">⚠ MVP: leads only show on the same browser where signup occurred. Netlify Forms backup is separate.</span></div>
+                <div style="font-size:12px;color:var(--t3);line-height:1.55">Leads from the Free Demo signup form · Local: <code style="font-size:10.5px;background:var(--surface3);padding:1px 5px;border-radius:4px">armp_demo_leads</code> · Use <strong style="color:var(--pd)">Sync Netlify Leads</strong> to pull verified submissions from all devices.<br>
+                <span style="color:var(--t4);font-size:11px">Requires <code style="font-size:10px;background:var(--surface3);padding:1px 4px;border-radius:3px">NETLIFY_API_TOKEN</code> + <code style="font-size:10px;background:var(--surface3);padding:1px 4px;border-radius:3px">NETLIFY_DEMO_FORM_ID</code> set in Netlify environment variables.</span></div>
               </div>
               <div style="display:flex;gap:8px;flex-shrink:0">
+                <button class="btn btn-outline btn-xs" id="netlify-sync-btn" onclick="syncNetlifyLeads()" title="Pull verified submissions from Netlify Forms">⬆ Sync Netlify Leads</button>
                 <button class="btn btn-outline btn-xs" onclick="renderDemoLeads()" title="Refresh leads from localStorage">↻ Refresh</button>
                 <button class="btn btn-outline btn-xs" onclick="exportDemoLeadsCSV()" title="Download leads as CSV">⬇ Export CSV</button>
               </div>
@@ -4072,7 +4103,7 @@ function renderWsExcPremium(){
         ${isResV?
           `<span class="badge badge-g">${ex.dec||'Resolved'}</span>
            <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
-          :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExcPremium,700)">
+          :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="(function(s){var di=parseInt(s.dataset.idx),dv=s.value;if(!dv)return;s.value='';resolveException(di,dv);if(dv!=='Apply to invoice'&&dv!=='Post as Unapplied Cash'){setTimeout(renderWsExcPremium,800);}})(this)">
             <option value="">— Resolve —</option>
             <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
             <option>Write off</option><option>Bank fee</option>
@@ -4089,47 +4120,99 @@ function renderWsExcPremium(){
 // renderWsExc delegates to renderWsExcPremium (defined above)
 
 // ── Premium review items ──
+let _reviewData=[];
 function renderWsReview(){
   const list=document.getElementById('review-list');const ct=document.getElementById('review-ct');if(!list)return;
-  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
-  if(ct)ct.textContent=ap.length+' matched record'+(ap.length!==1?'s':'');
-  if(!ap.length){
+  _reviewData=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
+  if(ct)ct.textContent=_reviewData.length+' matched record'+(_reviewData.length!==1?'s':'');
+  if(!_reviewData.length){
     list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Run matching or approve allocations from the To Be Matched tab to populate the review queue.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">← Back to matching</button></div></div>`;
     return;
   }
+  _renderReviewItems(_reviewData);
+}
+
+function _renderReviewItems(items){
+  const list=document.getElementById('review-list');if(!list)return;
   const stColor={Exact:'var(--g)','Subset exact':'var(--p)','Short pay':'var(--am)',Overpay:'var(--am)',Resolved:'var(--g)','Amount match':'var(--pu)',Partial:'var(--am)'};
   const stBadge={Exact:'badge-g','Subset exact':'badge-p','Short pay':'badge-am',Overpay:'badge-am',Resolved:'badge-g','Amount match':'badge-pu',Partial:'badge-am'};
   const wsBadge={Exact:'Ready for Export','Subset exact':'Ready for Export',Resolved:'Awaiting Export','Amount match':'Review Recommended','Short pay':'Requires Review',Overpay:'Requires Review'};
-  list.innerHTML=ap.map((r,i)=>{
+  list.innerHTML=items.map((r,i)=>{
     const conf=r.st==='Exact'?'100%':r.st==='Subset exact'?'98%':r.st==='Amount match'?'72%':r.st==='Short pay'?'61%':'—';
     const isExported=r.fromAlloc||r.fromExc;
     const ws=wsBadge[r.st]||'Review';
     const wsClass=r.st==='Exact'||r.st==='Resolved'||r.st==='Subset exact'?'ws-badge-ready':r.st==='Short pay'||r.st==='Overpay'?'ws-badge-review':'ws-badge-pending';
-    return`<div class="review-item" onclick="reviewItemInlineToggle(event,this)">
-      <div style="width:4px;height:100%;min-height:40px;border-radius:2px;background:${stColor[r.st]||'var(--p)'};flex-shrink:0;align-self:stretch;margin:-14px 0;border-radius:0"></div>
-      <div style="flex:1;min-width:0;margin-left:4px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+    // Find source payment for bank/ref/date details
+    const srcPay=PAY.find(p=>(p.a===r.a||p.c===r.c)&&(Math.abs(p.amt-r.pd)<0.01||p.i===r.i||p.po===r.po));
+    const bankLabel=srcPay&&srcPay.bank===`JPM-1234567890`?'JP Morgan — 1234567890':srcPay&&srcPay.bank===`BOA-9876543210`?'Bank of America — 9876543210':(srcPay&&srcPay.bank||'');
+    const txRef=srcPay?srcPay.txId||'—':'—';
+    const payDate=srcPay&&srcPay.payDate?fmtDate(srcPay.payDate):'—';
+    const method=srcPay?srcPay.m||srcPay.txType||'—':'—';
+    const remRef=srcPay?srcPay.i||srcPay.po||'—':'—';
+    const realIdx=RES.indexOf(r);
+    return`<div class="review-item" onclick="reviewItemInlineToggle(event,this)" data-customer="${(r.c||'').toLowerCase()}" data-status="${r.st||''}" data-amt="${r.pd||0}" data-date="${srcPay&&srcPay.payDate||''}">
+      <div style="width:4px;min-height:40px;border-radius:0;background:${stColor[r.st]||'var(--p)'};flex-shrink:0;align-self:stretch;margin:-14px 0"></div>
+      <div style="flex:1;min-width:0;margin-left:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
           <div style="font-size:13.5px;font-weight:800;color:var(--t1)">${r.c||'—'}</div>
           <span class="badge ${stBadge[r.st]||'badge-gray'}">${r.st}</span>
           <span class="ws-badge ${wsClass}" style="font-size:10.5px;padding:2px 8px"><span class="ws-dot"></span>${ws}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:14px;font-size:12px;color:var(--t2)">
-          <span>Acct: <strong style="color:var(--t1)">${r.a||'—'}</strong></span>
+        <div style="display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--t2);flex-wrap:wrap">
+          <span>Acct: <strong style="color:var(--t1);font-family:var(--mono)">${r.a||'—'}</strong></span>
           <span>Inv: <strong style="color:var(--pd);font-family:var(--mono)">${r.i||'—'}</strong></span>
-          ${r.po?`<span>PO: ${r.po}</span>`:''}
+          ${r.po?`<span>PO: <span style="font-family:var(--mono)">${r.po}</span></span>`:''}
+          <span>TX Ref: <span style="font-family:var(--mono);color:var(--t1)">${txRef}</span></span>
+          <span>Date: ${payDate}</span>
+          <span>Method: <strong style="color:var(--t1)">${method}</strong></span>
+          ${bankLabel?`<span style="color:var(--cy-t)">🏦 ${bankLabel}</span>`:''}
           ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: $${$f(Math.abs(r.vr))}</span>`:''}
+          ${remRef&&remRef!=='—'&&remRef!==r.i?`<span>Rem Ref: <span style="font-family:var(--mono)">${remRef}</span></span>`:''}
         </div>
       </div>
-      <div style="text-align:right;flex-shrink:0">
+      <div style="text-align:right;flex-shrink:0;padding-left:12px">
         <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">$${$f(r.pd)}</div>
         <div style="font-size:11px;color:var(--t3)">of $${$f(r.oa)}</div>
         <div style="font-size:11.5px;font-weight:700;color:${conf==='100%'?'var(--g-t)':'var(--am-t)'}">Conf: ${conf}</div>
       </div>
       <div style="flex-shrink:0;margin-left:12px" onclick="event.stopPropagation()">
-        ${isExported?`<span class="badge badge-exported" style="font-size:10px">Exported</span>`:`<button class="btn btn-outline btn-xs" onclick="reopenResultItem(${i})">↩ Reopen</button>`}
+        ${isExported?`<span class="badge badge-exported" style="font-size:10px">Exported</span>`:`<button class="btn btn-outline btn-xs" onclick="reopenResultItem(${realIdx})">↩ Reopen</button>`}
       </div>
     </div>`;
   }).join('');
+}
+
+function reviewFilter(){
+  const q=(document.getElementById('review-search')||{}).value||'';
+  const sf=(document.getElementById('review-status-filter')||{}).value||'';
+  const ql=q.toLowerCase();
+  let items=_reviewData;
+  if(ql)items=items.filter(r=>(r.c||'').toLowerCase().includes(ql)||(r.a||'').toLowerCase().includes(ql)||(r.i||'').toLowerCase().includes(ql)||(r.po||'').toLowerCase().includes(ql)||(r.st||'').toLowerCase().includes(ql));
+  if(sf)items=items.filter(r=>r.st===sf);
+  _renderReviewItems(items);
+}
+
+function reviewSort(){
+  const sv=(document.getElementById('review-sort-sel')||{}).value||'';
+  let items=[..._reviewData];
+  if(sv==='cust-asc')items.sort((a,b)=>(a.c||'').localeCompare(b.c||''));
+  else if(sv==='cust-desc')items.sort((a,b)=>(b.c||'').localeCompare(a.c||''));
+  else if(sv==='amt-desc')items.sort((a,b)=>b.pd-a.pd);
+  else if(sv==='amt-asc')items.sort((a,b)=>a.pd-b.pd);
+  else if(sv==='date-desc'){
+    items.sort((a,b)=>{
+      const pa=PAY.find(p=>p.a===a.a&&Math.abs(p.amt-a.pd)<0.01);
+      const pb=PAY.find(p=>p.a===b.a&&Math.abs(p.amt-b.pd)<0.01);
+      return ((pb&&pb.payDate)||'').localeCompare((pa&&pa.payDate)||'');
+    });
+  }else if(sv==='date-asc'){
+    items.sort((a,b)=>{
+      const pa=PAY.find(p=>p.a===a.a&&Math.abs(p.amt-a.pd)<0.01);
+      const pb=PAY.find(p=>p.a===b.a&&Math.abs(p.amt-b.pd)<0.01);
+      return ((pa&&pa.payDate)||'').localeCompare((pb&&pb.payDate)||'');
+    });
+  }else if(sv==='status')items.sort((a,b)=>(a.st||'').localeCompare(b.st||''));
+  _renderReviewItems(items);
 }
 
 // ── Premium reconcile ──
@@ -4265,7 +4348,7 @@ function checkFeature(f){
 // ── Helpers ──
 function norm(s){return String(s||'').toUpperCase().replace(/[-\s\.]/g,'')}
 function $f(n){return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
-function $fk(n){const a=Math.abs(n);if(a>=1000000)return(n<0?'-':'')+'$'+(a/1000000).toFixed(1)+'M';if(a>=1000)return(n<0?'-':'')+'$'+(a/1000).toFixed(0)+'K';return(n<0?'-':'')+'$'+$f(a)}
+function $fk(n){const a=Math.abs(n);if(a>=1000000)return(n<0?'-':'')+(a/1000000).toFixed(1)+'M';if(a>=1000)return(n<0?'-':'')+(a/1000).toFixed(0)+'K';return(n<0?'-':'')+$f(a)}
 function fmtDate(s){if(!s)return'—';const d=new Date(s+'T00:00:00');if(isNaN(d))return s;return(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getDate().toString().padStart(2,'0')+'/'+d.getFullYear()}
 function isoDate(s){if(!s)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const d=new Date(s);if(isNaN(d))return'';return d.toISOString().split('T')[0]}
 function badge(s){const m={Exact:'badge badge-g','Subset exact':'badge badge-p','Short pay':'badge badge-am',Overpay:'badge badge-am','Unapplied payment':'badge badge-cy',Unmatched:'badge badge-r','Amount match':'badge badge-pu','Down payment':'badge badge-cy'};return`<span class="${m[s]||'badge badge-gray'}">${s||'—'}</span>`}
@@ -4322,9 +4405,9 @@ function updTop(){
   const ma=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact').reduce((s,r)=>s+r.pd,0);
   const ua=EXC.reduce((s,e)=>s+e.amt,0);
   const spc=EXC.filter(e=>e.type==='Short pay').length;
-  setEl('kpi-matched',tp>0?$fk(ma):'$0');
+  setEl('kpi-matched',tp>0?'$'+$fk(ma):'$0');
   setEl('kpi-rate',tp>0?(ma/tp*100).toFixed(1)+'%':'—');
-  setEl('kpi-unapplied',$fk(ua));
+  setEl('kpi-unapplied','$'+$fk(ua));
   setEl('kpi-exc',EXC.filter(e=>!e.s||e.s==='Open').length);
   setEl('kpi-shortpay',spc);
   const excCt=EXC.filter(e=>!e.s||e.s==='Open').length;
@@ -4345,17 +4428,17 @@ function updDash(){
   const ua=EXC.reduce((s,e)=>s+e.amt,0);
   const rt=tp>0?ma/tp*100:0;
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setEl('dk-matched',$fk(ma));
+  setEl('dk-matched','$'+$fk(ma));
   setEl('dk-matched-s',matched.length+' transactions cleared');
   const pctEl=document.getElementById('dk-matched-pct');if(pctEl)pctEl.textContent=rt.toFixed(1)+'%';
   const mbEl=document.getElementById('dk-matched-bar');if(mbEl)mbEl.style.width=(tp>0?ma/tp*100:0).toFixed(1)+'%';
-  setEl('dk-unapplied',$fk(ua));
+  setEl('dk-unapplied','$'+$fk(ua));
   setEl('dk-exc-s',EXC.length+' exceptions');
   const ecEl=document.getElementById('dk-exc-ct');if(ecEl){ecEl.textContent=EXC.length;ecEl.style.display=EXC.length?'flex':'none';}
   const ubEl=document.getElementById('dk-unapplied-bar');if(ubEl)ubEl.style.width=(tp>0?ua/tp*100:0).toFixed(1)+'%';
   setEl('dk-rate',rt.toFixed(1)+'%');
   const rbEl=document.getElementById('dk-rate-bar');if(rbEl)rbEl.style.width=rt.toFixed(1)+'%';
-  setEl('dk-total',$fk(tp));
+  setEl('dk-total','$'+$fk(tp));
   setEl('dk-total-s',INV.length+' invoices · '+PAY.length+' payments');
   const cn={};
   RES.forEach(r=>{cn[r.st]=(cn[r.st]||0)+1;});
@@ -4393,11 +4476,11 @@ function updReporting(){
   const ua=EXC.reduce((s,e)=>s+e.amt,0);
   const rt=tp>0?ma/tp*100:0;
   const spc=EXC.filter(e=>e.type==='Short pay');
-  setEl('rpt-matched',$fk(ma));setEl('rpt-matched-s',matched.length+' transactions');
+  setEl('rpt-matched','$'+$fk(ma));setEl('rpt-matched-s',matched.length+' transactions');
   const rb=document.getElementById('rpt-matched-bar');if(rb)rb.style.width=rt.toFixed(1)+'%';
   setEl('rpt-rate',rt.toFixed(1)+'%');setEl('rpt-rate-s','STP rate');
   const rr=document.getElementById('rpt-rate-bar');if(rr)rr.style.width=rt.toFixed(1)+'%';
-  setEl('rpt-unapplied',$fk(ua));setEl('rpt-unapplied-s','Pending decision');
+  setEl('rpt-unapplied','$'+$fk(ua));setEl('rpt-unapplied-s','Pending decision');
   const ub=document.getElementById('rpt-unapplied-bar');if(ub)ub.style.width=(tp>0?ua/tp*100:0).toFixed(1)+'%';
   setEl('rpt-shortpay',spc.length);setEl('rpt-shortpay-s','$'+$f(spc.reduce((s,e)=>s+e.amt,0))+' total');
   setEl('rpt-exc',EXC.length);
@@ -5041,11 +5124,14 @@ const EXC_CODES={
 function engRefreshSel(){
   const sel=document.getElementById('eng-pay-sel');if(!sel)return;
   const prev=ENG_PAY_IDX;
+  const bankFilter=(document.getElementById('ca-bank-sel')||{}).value||'';
   sel.innerHTML='<option value="">— Select a payment to allocate —</option>'+
     PAY.map((p,i)=>{
+      if(bankFilter&&(p.bank||'')!==bankFilter) return '';
       const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
       const status=matched?'✓ ':p.dp?'↓ ':'';
-      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · $${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}`;
+      const bankTag=p.bank?` [${p.bank==='JPM-1234567890'?'JPM':'BOA'}]`:'';
+      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · $${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}${bankTag}`;
       return`<option value="${i}" ${i===prev?'selected':''}>${label}</option>`;
     }).join('');
   const empty=document.getElementById('eng-empty');
@@ -5059,10 +5145,26 @@ function engLoadPayment(idx){
   ENG_PAY={...p,_idx:idx};ENG_PAY_IDX=idx;
   ENG_LOCKED=false;ENG_STATE='suggested';ENG_AUDIT=[];ENG_ROWS=[];
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  set('eng-h-cust',p.c||'—');set('eng-h-ref',p.i||p.po||p.txId||'—');
+  set('eng-h-cust',p.c||'—');set('eng-h-ref',p.txId||p.i||p.po||'—');
   set('eng-h-date',p.payDate?fmtDate(p.payDate):'—');set('eng-h-amt','$'+$f(p.amt));
   set('eng-h-applied','$0.00');set('eng-h-rem','$'+$f(p.amt));
   set('eng-h-method',p.m||p.txType||'—');set('eng-h-ccy',p.ccy||'USD');
+  // Show bank account in header
+  const bankLabel=p.bank===`JPM-1234567890`?'JP Morgan — 1234567890':p.bank===`BOA-9876543210`?'Bank of America — 9876543210':(p.bank||'—');
+  const remDetailEl=document.getElementById('eng-remittance-detail');
+  if(remDetailEl){
+    remDetailEl.style.display='flex';
+    remDetailEl.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:10px 24px;padding:7px 12px;background:var(--surface2);border-bottom:1px solid var(--bdr);font-size:12px">
+      <span><span style="color:var(--t3);margin-right:4px">Bank</span><strong style="color:var(--t1)">${bankLabel}</strong></span>
+      <span><span style="color:var(--t3);margin-right:4px">TX Ref</span><span style="font-family:var(--mono);color:var(--pd)">${p.txId||'—'}</span></span>
+      <span><span style="color:var(--t3);margin-right:4px">Method</span><strong style="color:var(--t1)">${p.m||p.txType||'—'}</strong></span>
+      <span><span style="color:var(--t3);margin-right:4px">Date</span>${p.payDate?fmtDate(p.payDate):'—'}</span>
+      <span><span style="color:var(--t3);margin-right:4px">Amount</span><strong style="color:var(--g-t);font-family:var(--mono)">$${$f(p.amt)}</strong></span>
+      ${p.po?`<span><span style="color:var(--t3);margin-right:4px">PO Ref</span><span style="font-family:var(--mono)">${p.po}</span></span>`:''}
+      ${p.i?`<span><span style="color:var(--t3);margin-right:4px">Invoice Ref</span><span style="font-family:var(--mono)">${p.i}</span></span>`:''}
+      ${p.n?`<span style="color:var(--am-t)">📝 ${p.n}</span>`:''}
+    </div>`;
+  }
   const remEl=document.getElementById('eng-h-rem');if(remEl)remEl.style.color='var(--pd)';
   ['eng-full-badge','eng-locked-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['eng-grid-wrap','eng-audit-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});const ph=document.getElementById('eng-header');if(ph)ph.style.display='flex';
@@ -5166,7 +5268,7 @@ function engRenderRows(){
     const balance=inv.amt-(r.alreadyPaid?inv.amt:0);
     const confClass=r.conf>=80?'conf-high':r.conf>=50?'conf-med':'conf-low';
     const excBadge=r.excCode?`<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:${EXC_CODES[r.excCode]?.color||'#94A3B8'}22;color:${EXC_CODES[r.excCode]?.color||'#94A3B8'}">${EXC_CODES[r.excCode]?.label||r.excCode}</span>`:'';
-    const rowBg=r.selected?'rgba(16,185,129,.06)':r.alreadyPaid?'rgba(148,163,184,.06)':'';
+    const rowBg=r.selected?'rgba(16,185,129,.14)':r.alreadyPaid?'rgba(148,163,184,.06)':'';
     return`<tr style="background:${rowBg};opacity:${r.alreadyPaid?.65:1};transition:background .2s" id="eng-row-${i}">
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr)">
         ${disabled?`<span style="font-size:11px;color:#94A3B8">${r.alreadyPaid?'✗':'🔒'}</span>`:`<input type="checkbox" ${r.selected?'checked':''} onchange="engToggleRow(${i},this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--p)">`}
@@ -5346,6 +5448,7 @@ function engAudit(action){
 
 function engResetUI(){
   ENG_PAY=null;ENG_PAY_IDX=-1;ENG_ROWS=[];ENG_LOCKED=false;
+  const remDetailEl=document.getElementById('eng-remittance-detail');if(remDetailEl){remDetailEl.style.display='none';remDetailEl.innerHTML='';}
   ['eng-header','eng-grid-wrap','eng-audit-wrap','eng-ai-bar','eng-dup-warn','eng-short-pay-warn','alloc-fully'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const emp=document.getElementById('eng-empty');if(emp)emp.style.display='flex';
   const totalsBar=document.getElementById('alloc-totals');if(totalsBar)totalsBar.style.display='none';
@@ -5714,8 +5817,16 @@ function closeCustomerDrawer(){
 // ── Cash App top filters ──
 function caFilterUpdate(){
   // NOTE: ca-bank-sel is a BANK account selector (JP Morgan, BofA) — never overwrite it
-  // Only refresh the payment queue when filters change
+  // Refresh payment queue filtered by selected bank
   if(typeof engRefreshSel==='function')engRefreshSel();
+  if(typeof renderPayQueue==='function')renderPayQueue();
+}
+
+// Returns true if payment p matches current bank filter
+function _payMatchesBankFilter(p){
+  var bankSel=(document.getElementById('ca-bank-sel')||{}).value||'';
+  if(!bankSel) return true;
+  return (p.bank||'')=== bankSel;
 }
 </script>
 <script>
@@ -5779,45 +5890,57 @@ function findSub(g,t,tol){const n=Math.min(g.length,16),gr=g.slice(0,n);function
 // ══════════════════════════════════════════════════════════
 function loadSampleInv(){
   INV=[
-    {c:'Acme Industrial',a:'40025016',i:'5104243542',po:'4220080799',so:'2103495110',amt:995,dt:'RV',dt2:'2024-05-15',due:'2024-06-14',d:'1000226191',s:''},
-    {c:'Nexus Semiconductor',a:'40084094',i:'5103599037',po:'4400667625',so:'2102858567',amt:1948.5,dt:'RV',dt2:'2023-01-20',due:'2023-02-19',d:'1000079150',s:''},
-    {c:'MedCore Solutions',a:'40016800',i:'5104007742',po:'4400688100',so:'2103470662',amt:12160,dt:'RV',dt2:'2024-03-10',due:'2024-04-09',d:'1000592557',s:''},
-    {c:'MedCore Solutions',a:'40016800',i:'5104387980',po:'5500000093',so:'2103891957',amt:7500,dt:'RV',dt2:'2024-08-05',due:'2024-09-04',d:'1000363570',s:''},
-    {c:'MedCore Solutions',a:'40016800',i:'5104865901',po:'4517920656',so:'2103672036',amt:3600,dt:'RV',dt2:'2025-09-15',due:'2025-10-15',d:'1000357207',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104854812',po:'4520591829',so:'2104211797',amt:23375,dt:'RV',dt2:'2025-09-04',due:'2025-11-03',d:'1000347699',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104872034',po:'4519244548',so:'2103953152',amt:1175,dt:'RV',dt2:'2025-09-18',due:'2025-11-17',d:'1000366374',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104868961',po:'4520051766',so:'2104105623',amt:1295,dt:'RV',dt2:'2025-09-16',due:'2025-11-15',d:'1000359467',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104866947',po:'4520652895',so:'2104224749',amt:26125,dt:'RV',dt2:'2025-09-15',due:'2025-11-14',d:'1000357669',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104868964',po:'4520652895',so:'2104224749',amt:7095,dt:'RV',dt2:'2025-09-16',due:'2025-11-15',d:'1000359470',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104860600',po:'4520763488',so:'2104247709',amt:33495,dt:'RV',dt2:'2025-09-11',due:'2025-11-10',d:'1000352074',s:''},
-    {c:'Orion Logistics',a:'40031200',i:'5104920100',po:'4521100001',so:'2104300001',amt:8750,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410001',s:''},
-    {c:'Orion Logistics',a:'40031200',i:'5104920101',po:'4521100001',so:'2104300002',amt:4250,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410002',s:''},
-    {c:'Vertex Energy',a:'40045600',i:'5104931500',po:'4521200001',so:'2104400001',amt:15000,dt:'RV',dt2:'2025-10-05',due:'2025-11-04',d:'1000420001',s:''},
-    {c:'MedCore Solutions',a:'40016800',i:'5104099001',po:'4400688100',so:'2103470662',amt:-1200,dt:'RV',dt2:'2024-03-20',due:'2024-04-19',d:'1000592558',s:''},
+    // ── JP Morgan 1234567890 ──
+    {c:'Acme Industrial',a:'40025016',i:'5104243542',po:'4220080799',so:'2103495110',amt:995,dt:'RV',dt2:'2024-05-15',due:'2024-06-14',d:'1000226191',bank:'JPM-1234567890',s:''},
+    {c:'Nexus Semiconductor',a:'40084094',i:'5103599037',po:'4400667625',so:'2102858567',amt:1948.5,dt:'RV',dt2:'2023-01-20',due:'2023-02-19',d:'1000079150',bank:'JPM-1234567890',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104854812',po:'4520591829',so:'2104211797',amt:23375,dt:'RV',dt2:'2025-09-04',due:'2025-11-03',d:'1000347699',bank:'JPM-1234567890',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104872034',po:'4519244548',so:'2103953152',amt:1175,dt:'RV',dt2:'2025-09-18',due:'2025-11-17',d:'1000366374',bank:'JPM-1234567890',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104868961',po:'4520051766',so:'2104105623',amt:1295,dt:'RV',dt2:'2025-09-16',due:'2025-11-15',d:'1000359467',bank:'JPM-1234567890',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104866947',po:'4520652895',so:'2104224749',amt:26125,dt:'RV',dt2:'2025-09-15',due:'2025-11-14',d:'1000357669',bank:'JPM-1234567890',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104868964',po:'4520652895',so:'2104224749',amt:7095,dt:'RV',dt2:'2025-09-16',due:'2025-11-15',d:'1000359470',bank:'JPM-1234567890',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104860600',po:'4520763488',so:'2104247709',amt:33495,dt:'RV',dt2:'2025-09-11',due:'2025-11-10',d:'1000352074',bank:'JPM-1234567890',s:''},
+    {c:'Orion Logistics',a:'40031200',i:'5104920100',po:'4521100001',so:'2104300001',amt:8750,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410001',bank:'JPM-1234567890',s:''},
+    {c:'Orion Logistics',a:'40031200',i:'5104920101',po:'4521100001',so:'2104300002',amt:4250,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410002',bank:'JPM-1234567890',s:''},
+    // ── Bank of America 9876543210 ──
+    {c:'MedCore Solutions',a:'40016800',i:'5104007742',po:'4400688100',so:'2103470662',amt:12160,dt:'RV',dt2:'2024-03-10',due:'2024-04-09',d:'1000592557',bank:'BOA-9876543210',s:''},
+    {c:'MedCore Solutions',a:'40016800',i:'5104387980',po:'5500000093',so:'2103891957',amt:7500,dt:'RV',dt2:'2024-08-05',due:'2024-09-04',d:'1000363570',bank:'BOA-9876543210',s:''},
+    {c:'MedCore Solutions',a:'40016800',i:'5104865901',po:'4517920656',so:'2103672036',amt:3600,dt:'RV',dt2:'2025-09-15',due:'2025-10-15',d:'1000357207',bank:'BOA-9876543210',s:''},
+    {c:'MedCore Solutions',a:'40016800',i:'5104099001',po:'4400688100',so:'2103470662',amt:-1200,dt:'CM',dt2:'2024-03-20',due:'2024-04-19',d:'1000592558',bank:'BOA-9876543210',s:''},
+    {c:'Vertex Energy',a:'40045600',i:'5104931500',po:'4521200001',so:'2104400001',amt:15000,dt:'RV',dt2:'2025-10-05',due:'2025-11-04',d:'1000420001',bank:'BOA-9876543210',s:''},
+    {c:'Pinnacle Systems',a:'40058700',i:'5105001001',po:'4522100001',so:'2104500001',amt:28500,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500001',bank:'BOA-9876543210',s:''},
+    {c:'Pinnacle Systems',a:'40058700',i:'5105001002',po:'4522100001',so:'2104500002',amt:11200,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500002',bank:'BOA-9876543210',s:''},
+    {c:'Summit Biotech',a:'40067300',i:'5105012001',po:'4522200001',so:'2104600001',amt:44000,dt:'RV',dt2:'2025-11-10',due:'2025-12-10',d:'1000510001',bank:'BOA-9876543210',s:''},
   ];
   rInv();updTop();setStatus('loaded');saveToStorage();
-  addAudit('Sample invoices loaded','15 rows');
-  toast('15 invoices loaded (incl. 1 credit memo)');
+  addAudit('Sample invoices loaded','18 rows (JPM + BOA)');
+  toast('18 invoices loaded across JP Morgan & Bank of America');
 }
 
 function loadSampleRem(){
   PAY=[
-    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110001',payDate:'2026-05-01',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110002',payDate:'2026-05-01',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40016800',c:'MedCore Solutions',amt:7500,po:'',i:'5104387980',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884421',payDate:'2026-05-01',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40016800',c:'MedCore Solutions',amt:3600,po:'4517920656',i:'5104865901',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110003',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:1175,po:'4519244548',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110004',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:1295,po:'4520051766',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110005',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:33200,po:'4520652895',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884422',payDate:'2026-05-03',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:33495,po:'',i:'5104860600',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110006',payDate:'2026-05-03',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40016800',c:'MedCore Solutions',amt:1595,po:'4520683115',i:'',so:'',m:'Check',txType:'Check',txId:'5043',payDate:'2026-05-04',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40031200',c:'Orion Logistics',amt:13000,po:'4521100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884423',payDate:'2026-05-04',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40045600',c:'Vertex Energy',amt:15000,po:'',i:'5104931500',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110007',payDate:'2026-05-05',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40999999',c:'Unknown Payer',amt:2500,po:'',i:'',so:'',m:'Check',txType:'Check',txId:'1188',payDate:'2026-05-05',ccy:'USD',n:'',coa:false,dp:false},
+    // ── JP Morgan 1234567890 ──
+    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'JPM-ACH-20260501-001',payDate:'2026-05-01',ccy:'USD',n:'Down payment — PO 4520591829',bank:'JPM-1234567890',coa:false,dp:true},
+    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'JPM-ACH-20260501-002',payDate:'2026-05-01',ccy:'USD',n:'Down payment — PO 4520591829',bank:'JPM-1234567890',coa:false,dp:true},
+    {a:'40017108',c:'Delta Aerospace',amt:1175,po:'4519244548',i:'',so:'',m:'ACH',txType:'ACH',txId:'JPM-ACH-20260502-004',payDate:'2026-05-02',ccy:'USD',n:'',bank:'JPM-1234567890',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:1295,po:'4520051766',i:'',so:'',m:'ACH',txType:'ACH',txId:'JPM-ACH-20260502-005',payDate:'2026-05-02',ccy:'USD',n:'',bank:'JPM-1234567890',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:33200,po:'4520652895',i:'',so:'',m:'Wire',txType:'Wire',txId:'JPM-FED-20260503-88421',payDate:'2026-05-03',ccy:'USD',n:'Short pay — PO 4520652895 group $33,220 expected',bank:'JPM-1234567890',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:33495,po:'',i:'5104860600',so:'',m:'ACH',txType:'ACH',txId:'JPM-ACH-20260503-006',payDate:'2026-05-03',ccy:'USD',n:'',bank:'JPM-1234567890',coa:false,dp:false},
+    {a:'40031200',c:'Orion Logistics',amt:13000,po:'4521100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'JPM-FED-20260504-88422',payDate:'2026-05-04',ccy:'USD',n:'Short pay — PO group $13,000 vs invoiced $13,000',bank:'JPM-1234567890',coa:false,dp:false},
+    {a:'40025016',c:'Acme Industrial',amt:995,po:'',i:'5104243542',so:'',m:'Check',txType:'Check',txId:'JPM-CHK-2891',payDate:'2026-05-05',ccy:'USD',n:'',bank:'JPM-1234567890',coa:false,dp:false},
+    {a:'40084094',c:'Nexus Semiconductor',amt:1948.5,po:'4400667625',i:'',so:'',m:'ACH',txType:'ACH',txId:'JPM-ACH-20260505-007',payDate:'2026-05-05',ccy:'USD',n:'',bank:'JPM-1234567890',coa:false,dp:false},
+    {a:'40999999',c:'Unknown Payer',amt:2500,po:'',i:'',so:'',m:'Check',txType:'Check',txId:'JPM-CHK-1188',payDate:'2026-05-05',ccy:'USD',n:'No remittance — unknown payer',bank:'JPM-1234567890',coa:false,dp:false},
+    // ── Bank of America 9876543210 ──
+    {a:'40016800',c:'MedCore Solutions',amt:7500,po:'',i:'5104387980',so:'',m:'Wire',txType:'Wire',txId:'BOA-FED-20260501-884421',payDate:'2026-05-01',ccy:'USD',n:'',bank:'BOA-9876543210',coa:false,dp:false},
+    {a:'40016800',c:'MedCore Solutions',amt:3600,po:'4517920656',i:'5104865901',so:'',m:'ACH',txType:'ACH',txId:'BOA-ACH-20260502-20110',payDate:'2026-05-02',ccy:'USD',n:'',bank:'BOA-9876543210',coa:false,dp:false},
+    {a:'40016800',c:'MedCore Solutions',amt:1595,po:'4520683115',i:'',so:'',m:'Check',txType:'Check',txId:'BOA-CHK-5043',payDate:'2026-05-04',ccy:'USD',n:'Down payment — no matching invoice',bank:'BOA-9876543210',coa:false,dp:true},
+    {a:'40045600',c:'Vertex Energy',amt:15000,po:'',i:'5104931500',so:'',m:'ACH',txType:'ACH',txId:'BOA-ACH-20260505-20111',payDate:'2026-05-05',ccy:'USD',n:'',bank:'BOA-9876543210',coa:false,dp:false},
+    {a:'40058700',c:'Pinnacle Systems',amt:39700,po:'4522100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'BOA-FED-20260506-884430',payDate:'2026-05-06',ccy:'USD',n:'PO group — covers invoices 5105001001 + 5105001002',bank:'BOA-9876543210',coa:false,dp:false},
+    {a:'40067300',c:'Summit Biotech',amt:42000,po:'4522200001',i:'',so:'',m:'Wire',txType:'Wire',txId:'BOA-FED-20260507-884431',payDate:'2026-05-07',ccy:'USD',n:'Short pay — $44,000 invoiced, $42,000 received',bank:'BOA-9876543210',coa:false,dp:false},
+    {a:'40016800',c:'MedCore Solutions',amt:11800,po:'4400688100',i:'',so:'',m:'ACH',txType:'ACH',txId:'BOA-ACH-20260508-20112',payDate:'2026-05-08',ccy:'USD',n:'Short pay — invoice 5104007742 $12,160 partial receipt',bank:'BOA-9876543210',coa:false,dp:false},
   ];
   rRem();updTop();setStatus('loaded');saveToStorage();
-  addAudit('Sample remittance loaded','12 rows');
-  toast('12 remittance lines loaded');
+  addAudit('Sample remittance loaded','17 rows (JPM + BOA)');
+  toast('17 remittance lines loaded across JP Morgan & Bank of America');
 }
 
 function loadDemoData(){loadSampleInv();loadSampleRem();}
@@ -6301,6 +6424,11 @@ function populateAllAcctDropdowns(){
   // ca-bank-sel is STATIC (JP Morgan, BofA) — never rebuild it from customer data
   buildAcctDropdown('ca-acct-dropdown',true);
   buildAcctDropdown('exc-acct-dropdown',true);
+  // Update manual input placeholder with available count
+  var accts={};INV.forEach(function(v){if(v.a&&v.c)accts[v.a]=v.c;});PAY.forEach(function(p){if(p.a&&p.c&&!accts[p.a])accts[p.a]=p.c;});
+  var ct=Object.keys(accts).length;
+  var manInp=document.getElementById('ca-acct-manual-input');
+  if(manInp&&ct>0) manInp.placeholder='Type account # ('+ct+' available)…';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -6310,10 +6438,11 @@ function agingChip(due){
   if(!due) return '<span class="aging-chip aging-na">—</span>';
   var d=new Date(due+'T00:00:00');
   var days=Math.floor((new Date()-d)/86400000);
-  if(days<0) return '<span class="aging-chip aging-cur">Current</span>';
-  if(days<=30) return '<span class="aging-chip aging-30">1–30d</span>';
-  if(days<=60) return '<span class="aging-chip aging-60">31–60d</span>';
-  return '<span class="aging-chip aging-90">61+d</span>';
+  if(days<0) return '<span class="aging-chip aging-cur">Current ('+Math.abs(days)+'d)</span>';
+  if(days===0) return '<span class="aging-chip aging-cur">Due today</span>';
+  if(days<=30) return '<span class="aging-chip aging-30">'+days+'d overdue</span>';
+  if(days<=60) return '<span class="aging-chip aging-60">'+days+'d overdue</span>';
+  return '<span class="aging-chip aging-90">'+days+'d overdue</span>';
 }
 
 function renderFbl5n(tbodyId, filterAcct, filterCust){
@@ -6376,6 +6505,12 @@ function fbl5nApplyRow(invI){
   if(row&&!row.selected){ fbl5nCheckRow(invI,true); }
   else if(!ENG_PAY){ toast('Select a payment first from the queue above','warn'); }
 }
+function fbl5nSelectAll(checked){
+  if(!ENG_PAY){toast('Select a payment first','warn');var cb=document.getElementById('fbl5n-select-all');if(cb)cb.checked=false;return;}
+  if(checked){engMarkAll();}else{engClearAll();}
+  var cb=document.getElementById('fbl5n-select-all');if(cb)cb.checked=checked;
+  refreshFbl5n();
+}
 function refreshFbl5n(){
   var acct=(document.getElementById('ca-acct-dropdown')||{}).value||'';
   var cust=ENG_PAY?ENG_PAY.c:'';
@@ -6384,7 +6519,24 @@ function refreshFbl5n(){
 function sortFbl5n(ci){ sortTbl('ca-open-items-tbl',ci); }
 function sortFbl5nExc(ci){ sortTbl('exc-open-items-tbl',ci); }
 
+function caAcctManualInput(val){
+  var sugEl=document.getElementById('ca-acct-manual-suggestions');if(!sugEl)return;
+  var q=val.trim().toLowerCase();
+  if(!q){sugEl.style.display='none';return;}
+  var accts={};INV.forEach(function(v){if(v.a&&v.c)accts[v.a]=v.c;});PAY.forEach(function(p){if(p.a&&p.c&&!accts[p.a])accts[p.a]=p.c;});
+  var matches=Object.keys(accts).filter(function(a){return a.toLowerCase().includes(q)||(accts[a]||'').toLowerCase().includes(q);}).slice(0,8);
+  if(!matches.length){sugEl.style.display='none';return;}
+  sugEl.innerHTML=matches.map(function(a){return'<div style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center" onmousedown="event.preventDefault();document.getElementById(\'ca-acct-manual-input\').value=\''+a+'\';document.getElementById(\'ca-acct-manual-suggestions\').style.display=\'none\';caAcctDropdownChange(\''+a+'\')"><span style=\'font-family:var(--mono);color:var(--pd)\'>'+a+'</span><span style=\'color:var(--t2);font-size:11px\'>'+accts[a]+'</span></div>';}).join('');
+  sugEl.style.display='block';
+}
+
 function caAcctDropdownChange(acct){
+  // Close suggestions
+  var sugEl=document.getElementById('ca-acct-manual-suggestions');if(sugEl)sugEl.style.display='none';
+  // Sync hidden dropdown for backward compat
+  var sel=document.getElementById('ca-acct-dropdown');if(sel)sel.value=acct||'';
+  // Sync manual input
+  var inp=document.getElementById('ca-acct-manual-input');if(inp&&acct!==undefined)inp.value=acct;
   var labelEl=document.getElementById('ca-bottom-cust-label');
   if(labelEl){
     if(acct){
@@ -6642,7 +6794,7 @@ function updateCfoSummary(){
     setEl('cfo-hours-saved','No matches yet');
     setEl('cfo-hero-sub','Import data and run matching to see performance');
   }
-  setEl('cfo-hero-matched',$fk(tp));       // Cash Received
+  setEl('cfo-hero-matched','$'+$fk(tp));       // Cash Received
   setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'—');
   setEl('cfo-hero-payments',PAY.length);
   setEl('cfo-hero-invoices',matched.length);
@@ -6667,7 +6819,7 @@ function updateCfoSummary(){
   setEl('cfo-shortpay-count',spc.length+' invoice'+(spc.length!==1?'s':'')+' affected');
   var spTrend=document.getElementById('cfo-shortpay-trend'); if(spTrend) spTrend.style.color=spc.length>0?'var(--r-t)':'var(--t3)';
   setEl('cfo-unapplied','$'+$f(ua));
-  setEl('cfo-total',$fk(tp));
+  setEl('cfo-total','$'+$fk(tp));
   setEl('cfo-total-sub',INV.length+' invoices · '+PAY.length+' payments');
   setEl('cfo-roi-auto',autoCount);
   setEl('cfo-roi-hours',hoursSaved.toFixed(1)+' hrs');
@@ -6722,6 +6874,9 @@ engLoadPayment = function(idx){
     if(ENG_PAY&&ENG_PAY.a){
       var sel=document.getElementById('ca-acct-dropdown');
       if(sel) sel.value=ENG_PAY.a;
+      // Sync manual input
+      var manInp=document.getElementById('ca-acct-manual-input');
+      if(manInp) manInp.value=ENG_PAY.a;
       var lbl=document.getElementById('ca-bottom-cust-label');
       if(lbl){ var accts={}; INV.forEach(function(v){if(v.a&&v.c)accts[v.a]=v.c;}); lbl.textContent=ENG_PAY.a+(accts[ENG_PAY.a]?' — '+accts[ENG_PAY.a]:''); }
     }
@@ -6907,9 +7062,77 @@ document.addEventListener('DOMContentLoaded',function(){
   renderMpRules();
 });
 
-// ══════════════════════════════════════════════════════════
-// DEMO LEADS ADMIN
-// ══════════════════════════════════════════════════════════
+// ── Sync leads from Netlify Forms via Netlify Function ──
+// The function at /.netlify/functions/get-demo-leads fetches verified
+// Netlify Forms submissions server-side (API token never hits the browser).
+// Results are merged into armp_demo_leads, deduped by email.
+function syncNetlifyLeads(){
+  if(!IS_MASTER) return;
+
+  var btn = document.getElementById('netlify-sync-btn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Syncing…'; }
+
+  fetch('/.netlify/functions/get-demo-leads', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(function(res){
+    if(!res.ok){
+      return res.json().then(function(body){
+        throw new Error(body.error || 'HTTP ' + res.status);
+      }).catch(function(){
+        throw new Error('HTTP ' + res.status);
+      });
+    }
+    return res.json();
+  })
+  .then(function(netlifyLeads){
+    if(!Array.isArray(netlifyLeads)){
+      throw new Error('Unexpected response format from function');
+    }
+
+    // Merge into localStorage — deduplicate by email (case-insensitive)
+    var existing = getDemoLeads();
+    var emailMap = {};
+    existing.forEach(function(l, i){ if(l.email) emailMap[l.email.toLowerCase()] = i; });
+
+    var added = 0;
+    var updated = 0;
+    netlifyLeads.forEach(function(nl){
+      if(!nl.email) return;
+      var key = nl.email.toLowerCase();
+      if(emailMap.hasOwnProperty(key)){
+        // Update source tag so admin knows this was confirmed via Netlify
+        var idx = emailMap[key];
+        if(existing[idx].source && existing[idx].source.indexOf('Netlify') === -1){
+          existing[idx].source = (existing[idx].source || 'Free Demo') + ' · Netlify ✓';
+          existing[idx].netlifyVerified = true;
+          updated++;
+        }
+      } else {
+        // New lead from Netlify — add to front
+        nl.netlifyVerified = true;
+        existing.unshift(nl);
+        emailMap[key] = 0; // prevent double-insert from same Netlify batch
+        added++;
+      }
+    });
+
+    saveDemoLeads(existing);
+    renderDemoLeads();
+
+    var msg = '✓ Netlify sync complete — ' + added + ' new, ' + updated + ' verified';
+    toast(msg, '');
+  })
+  .catch(function(err){
+    console.warn('Netlify leads sync failed:', err.message || err);
+    toast('Could not sync Netlify leads. Showing local leads.', '');
+    renderDemoLeads(); // still show local data
+  })
+  .finally(function(){
+    if(btn){ btn.disabled = false; btn.textContent = '⬆ Sync Netlify Leads'; }
+  });
+}
 
 function getDemoLeads(){
   try{ return JSON.parse(localStorage.getItem('armp_demo_leads')||'[]'); }catch(e){ return []; }
