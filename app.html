@@ -118,12 +118,10 @@
 html,body { height:100%; font-family:var(--font); background:var(--bg); color:var(--t1); font-size:13px; line-height:1.5; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; overflow:hidden; }
 
 /* ── Mono font: clean open zeros everywhere — no dots, no slashes ── */
-* { font-variant-numeric: tabular-nums; }
-[class*="mono"], .td-mono, .td-amt, .td-key, .td-num,
-[style*="font-family:var(--mono)"], [style*="JetBrains"], [style*="Roboto Mono"],
-code, pre, .kpi-card-val, .recon-kpi-val, .cfo-metric-value,
-.drawer-snap-val, .pq-item-amt, .pq-item-ref {
-  font-family: var(--mono) !important;
+.td-mono, .td-amt, .td-key, .td-num, .pq-item-amt, .pq-item-ref,
+.kpi-card-val, .recon-kpi-val, .cfo-metric-value, .drawer-snap-val,
+code, pre {
+  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "zero" 0, "tnum" 1;
   -webkit-font-feature-settings: "zero" 0, "tnum" 1;
