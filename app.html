@@ -3763,19 +3763,21 @@ body.app-active #app {
 
           <!-- ══ DEMO LEADS ADMIN (master/admin only) ══ -->
           <div id="demo-leads-section" style="display:none;margin-top:24px;padding-top:20px;border-top:2px solid var(--bdr)">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
               <div>
-                <div class="settings-section-title" style="margin-bottom:2px;border:none;padding:0">🧑‍💼 Demo Leads</div>
-                <div style="font-size:12px;color:var(--t3)">All free demo signups — from localStorage armp_demo_leads</div>
+                <div class="settings-section-title" style="margin-bottom:4px;border:none;padding:0">🧑‍💼 Demo Leads</div>
+                <div style="font-size:12px;color:var(--t3);line-height:1.55">Leads from the Free Demo signup form · Stored in <code style="font-size:10.5px;background:var(--surface3);padding:1px 5px;border-radius:4px">armp_demo_leads</code><br>
+                <span style="color:var(--t4);font-size:11px">⚠ MVP: leads only show on the same browser where signup occurred. Netlify Forms backup is separate.</span></div>
               </div>
-              <div style="display:flex;gap:8px">
-                <button class="btn btn-outline btn-xs" onclick="renderDemoLeads()">↻ Refresh</button>
-                <button class="btn btn-outline btn-xs" onclick="exportDemoLeadsCSV()">⬇ Export CSV</button>
+              <div style="display:flex;gap:8px;flex-shrink:0">
+                <button class="btn btn-outline btn-xs" onclick="renderDemoLeads()" title="Refresh leads from localStorage">↻ Refresh</button>
+                <button class="btn btn-outline btn-xs" onclick="exportDemoLeadsCSV()" title="Download leads as CSV">⬇ Export CSV</button>
               </div>
             </div>
-            <div id="demo-leads-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"></div>
+            <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Actions: <span style="color:var(--t2)">📞 = Mark Contacted &nbsp;✓ = Mark Converted &nbsp;⏰ = Mark Expired &nbsp;✕ = Delete</span></div>
+            <div id="demo-leads-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
             <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--bdr)">
-              <table id="demo-leads-tbl" style="width:100%;border-collapse:collapse;font-size:12px;min-width:900px">
+              <table id="demo-leads-tbl" style="width:100%;border-collapse:collapse;font-size:12px;min-width:1020px">
                 <thead>
                   <tr style="background:var(--surface2)">
                     <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Signup Date</th>
@@ -3784,16 +3786,17 @@ body.app-active #app {
                     <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Company</th>
                     <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Job Title</th>
                     <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Phone</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">ERP</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Volume</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Status</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Expires</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Days Left</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">ERP System</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Invoice Volume</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Demo Status</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Demo Expiration</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Days Remaining</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Source</th>
                     <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="demo-leads-tbody">
-                  <tr><td colspan="12" style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No demo leads yet.</td></tr>
+                  <tr><td colspan="13" style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No demo leads yet. Leads appear here after users complete the free demo signup on the landing page (same browser).</td></tr>
                 </tbody>
               </table>
             </div>
@@ -6925,58 +6928,83 @@ function renderDemoLeads(){
   var statsEl = document.getElementById('demo-leads-stats');
   if(!tbody) return;
 
-  // Stats
   var now = new Date();
-  var active = leads.filter(function(l){ return l.demoStatus==='Demo Active' && new Date(l.demoExpiration)>now; }).length;
+
+  // Auto-expire leads past their expiration date in storage
+  var changed = false;
+  leads.forEach(function(l){
+    if(l.demoStatus==='Demo Active' && l.demoExpiration && new Date(l.demoExpiration) < now){
+      l.demoStatus = 'Expired';
+      changed = true;
+    }
+  });
+  if(changed) saveDemoLeads(leads);
+
+  // Stats row
+  var total = leads.length;
+  var active = leads.filter(function(l){ return l.demoStatus==='Demo Active'; }).length;
   var contacted = leads.filter(function(l){ return l.demoStatus==='Contacted'; }).length;
   var converted = leads.filter(function(l){ return l.demoStatus==='Converted'; }).length;
-  var expired = leads.filter(function(l){ return l.demoStatus==='Expired' || (l.demoStatus==='Demo Active'&&new Date(l.demoExpiration)<=now); }).length;
+  var expired = leads.filter(function(l){ return l.demoStatus==='Expired'; }).length;
+
   if(statsEl){
     statsEl.innerHTML = [
-      {label:'Total Leads',val:leads.length,color:'var(--pd)'},
+      {label:'Total',val:total,color:'var(--pd)'},
       {label:'Active',val:active,color:'var(--g-t)'},
       {label:'Contacted',val:contacted,color:'var(--am-t)'},
-      {label:'Converted',val:converted,color:'var(--g-t)'}
+      {label:'Converted',val:converted,color:'var(--cy-t)'},
+      {label:'Expired',val:expired,color:'var(--r-t)'}
     ].map(function(s){
       return '<div style="background:var(--surface2);border:1px solid var(--bdr);border-radius:10px;padding:12px;text-align:center">'+
         '<div style="font-size:22px;font-weight:900;font-family:var(--mono);color:'+s.color+'">'+s.val+'</div>'+
         '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-top:3px">'+s.label+'</div>'+
       '</div>';
     }).join('');
+    // Fix stats grid to 5 columns
+    statsEl.style.gridTemplateColumns='repeat(5,1fr)';
   }
 
   if(!leads.length){
-    tbody.innerHTML='<tr><td colspan="12" style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No demo leads yet. Leads appear after users complete the free demo form on the landing page.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="13" style="padding:32px;text-align:center;color:var(--t3);font-size:13px;line-height:1.7">'+
+      '<div style="font-size:28px;margin-bottom:10px">📭</div>'+
+      '<div style="font-weight:600;color:var(--t2);margin-bottom:6px">No demo leads yet</div>'+
+      '<div>Leads appear here after users submit the Free Demo form on the landing page.<br>'+
+      '<span style="color:var(--t4);font-size:11px">Note: leads are stored in this browser. They appear when signup and admin login happen on the same device.</span></div>'+
+    '</td></tr>';
     return;
   }
 
+  // 13 columns: Signup Date | Full Name | Work Email | Company | Job Title | Phone | ERP System | Invoice Volume | Demo Status | Demo Expiration | Days Remaining | Source | Actions
   tbody.innerHTML = leads.map(function(lead, idx){
     var expDate = lead.demoExpiration ? new Date(lead.demoExpiration) : null;
     var isExpired = expDate && expDate < now;
-    var daysLeft = expDate ? Math.max(0,Math.ceil((expDate-now)/(1000*60*60*24))) : '—';
+    var daysLeft = expDate ? Math.max(0, Math.ceil((expDate - now)/(1000*60*60*24))) : '—';
     var status = lead.demoStatus || 'Demo Active';
-    if(isExpired && status==='Demo Active') status='Expired';
-    var statusColor = status==='Demo Active'?'var(--g-t)':status==='Contacted'?'var(--am-t)':status==='Converted'?'var(--pd)':'var(--r-t)';
+    var statusColor = status==='Demo Active'?'var(--g-t)':status==='Contacted'?'var(--am-t)':status==='Converted'?'var(--cy-t)':'var(--r-t)';
     var signupDate = lead.signupDate ? new Date(lead.signupDate).toLocaleDateString() : '—';
     var expDateStr = expDate ? expDate.toLocaleDateString() : '—';
-    return '<tr style="border-bottom:1px solid var(--bdr)">'+
-      '<td style="padding:9px 12px;color:var(--t2);white-space:nowrap">'+signupDate+'</td>'+
-      '<td style="padding:9px 12px;font-weight:600;color:var(--t1)">'+escHtml(lead.fullName||'—')+'</td>'+
-      '<td style="padding:9px 12px;color:var(--pd)"><a href="mailto:'+escHtml(lead.email||'')+'" style="color:var(--pd);text-decoration:none">'+escHtml(lead.email||'—')+'</a></td>'+
+    var daysDisplay = typeof daysLeft==='number' ? String(daysLeft) : daysLeft;
+    var daysColor = isExpired ? 'var(--r-t)' : daysLeft<=2 ? 'var(--am-t)' : 'var(--g-t)';
+    var rowBg = idx%2===0 ? '' : 'background:var(--glass);';
+    return '<tr style="border-bottom:1px solid var(--bdr);'+rowBg+'">'+
+      '<td style="padding:9px 12px;color:var(--t2);white-space:nowrap;font-size:11.5px">'+escHtml(signupDate)+'</td>'+
+      '<td style="padding:9px 12px;font-weight:600;color:var(--t1);white-space:nowrap">'+escHtml(lead.fullName||'—')+'</td>'+
+      '<td style="padding:9px 12px;white-space:nowrap"><a href="mailto:'+escHtml(lead.email||'')+'" style="color:var(--pd);text-decoration:none;font-size:11.5px">'+escHtml(lead.email||'—')+'</a></td>'+
       '<td style="padding:9px 12px;color:var(--t1)">'+escHtml(lead.company||'—')+'</td>'+
-      '<td style="padding:9px 12px;color:var(--t2)">'+escHtml(lead.jobTitle||'—')+'</td>'+
-      '<td style="padding:9px 12px;color:var(--t2)">'+escHtml(lead.phone||'—')+'</td>'+
-      '<td style="padding:9px 12px;color:var(--t2)">'+escHtml(lead.erp||'—')+'</td>'+
-      '<td style="padding:9px 12px;color:var(--t2)">'+escHtml(lead.invoiceVolume||'—')+'</td>'+
-      '<td style="padding:9px 12px"><span style="font-size:11px;font-weight:700;color:'+statusColor+'">'+status+'</span></td>'+
-      '<td style="padding:9px 12px;color:var(--t2);white-space:nowrap">'+expDateStr+'</td>'+
-      '<td style="padding:9px 12px;font-family:var(--mono);color:'+(isExpired?'var(--r-t)':'var(--g-t)')+'">'+daysLeft+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t2);font-size:11.5px">'+escHtml(lead.jobTitle||'—')+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t2);font-size:11.5px;white-space:nowrap">'+escHtml(lead.phone||'—')+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t2);font-size:11.5px">'+escHtml(lead.erp||'—')+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t2);font-size:11.5px">'+escHtml(lead.invoiceVolume||'—')+'</td>'+
+      '<td style="padding:9px 12px;white-space:nowrap"><span style="font-size:11px;font-weight:700;color:'+statusColor+'">'+escHtml(status)+'</span></td>'+
+      '<td style="padding:9px 12px;color:var(--t2);white-space:nowrap;font-size:11.5px">'+escHtml(expDateStr)+'</td>'+
+      '<td style="padding:9px 12px;font-family:var(--mono);font-weight:700;font-size:12px;color:'+daysColor+'">'+escHtml(daysDisplay)+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t3);font-size:11px">'+escHtml(lead.source||'Free Demo')+'</td>'+
       '<td style="padding:9px 12px;white-space:nowrap">'+
-        '<div style="display:flex;gap:5px;flex-wrap:wrap">'+
-          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 8px" onclick="updateDemoLeadStatus('+idx+',' + "'Contacted'" + ')">Contacted</button>'+
-          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 8px;color:var(--g-t)" onclick="updateDemoLeadStatus('+idx+',' + "'Converted'" + ')">Converted</button>'+
-          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 8px;color:var(--r-t)" onclick="updateDemoLeadStatus('+idx+',' + "'Expired'" + ')">Expired</button>'+
-          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 8px;color:var(--r-t)" onclick="deleteDemoLead('+idx+')">✕</button>'+
+        '<div style="display:flex;gap:4px;flex-wrap:nowrap">'+
+          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 7px;white-space:nowrap" onclick="updateDemoLeadStatus('+idx+',' + "'Contacted'" + ')">📞</button>'+
+          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 7px;color:var(--cy-t);white-space:nowrap" onclick="updateDemoLeadStatus('+idx+',' + "'Converted'" + ')">✓</button>'+
+          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 7px;color:var(--am-t);white-space:nowrap" onclick="updateDemoLeadStatus('+idx+',' + "'Expired'" + ')">⏰</button>'+
+          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 7px;color:var(--r-t);white-space:nowrap" onclick="deleteDemoLead('+idx+')">✕</button>'+
         '</div>'+
       '</td>'+
     '</tr>';
@@ -6984,36 +7012,56 @@ function renderDemoLeads(){
 }
 
 function escHtml(str){
-  if(!str) return '';
+  if(str===null||str===undefined) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function updateDemoLeadStatus(idx, status){
   var leads = getDemoLeads();
-  if(leads[idx]){ leads[idx].demoStatus = status; saveDemoLeads(leads); renderDemoLeads(); toast('Lead updated: '+status,''); }
+  if(!leads[idx]) return;
+  leads[idx].demoStatus = status;
+  leads[idx].lastUpdated = new Date().toISOString();
+  saveDemoLeads(leads);
+  renderDemoLeads();
+  var labels = {Contacted:'📞 Marked Contacted', Converted:'✓ Marked Converted', Expired:'⏰ Marked Expired'};
+  toast(labels[status]||'Lead updated','');
 }
 
 function deleteDemoLead(idx){
   var leads = getDemoLeads();
-  leads.splice(idx,1);
+  if(!leads[idx]) return;
+  var name = leads[idx].fullName || leads[idx].email || 'lead';
+  leads.splice(idx, 1);
   saveDemoLeads(leads);
   renderDemoLeads();
-  toast('Lead deleted','');
+  toast('Deleted: '+name,'');
 }
 
 function exportDemoLeadsCSV(){
   var leads = getDemoLeads();
   if(!leads.length){ toast('No leads to export',''); return; }
   var cols = ['signupDate','fullName','email','company','jobTitle','phone','erp','invoiceVolume','demoStatus','demoExpiration','source'];
-  var header = ['Signup Date','Full Name','Email','Company','Job Title','Phone','ERP','Invoice Volume','Status','Demo Expiration','Source'];
+  var header = ['Signup Date','Full Name','Work Email','Company','Job Title','Phone','ERP System','Invoice Volume','Demo Status','Demo Expiration','Source'];
   var rows = [header.join(',')].concat(leads.map(function(l){
-    return cols.map(function(c){ return '"'+(l[c]||'').replace(/"/g,'""')+'"'; }).join(',');
+    return cols.map(function(c){
+      var val = (l[c]||'');
+      // Format ISO dates to readable
+      if((c==='signupDate'||c==='demoExpiration')&&val){
+        try{ val = new Date(val).toLocaleDateString(); }catch(e){}
+      }
+      return '"'+String(val).replace(/"/g,'""')+'"';
+    }).join(',');
   }));
+  var blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n'));
+  a.href = url;
   a.download = 'armp_demo_leads_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);
   a.click();
-  toast('Demo leads exported','');
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Exported '+leads.length+' lead'+(leads.length===1?'':'s'),'');
 }
 
 </script>
