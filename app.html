@@ -348,6 +348,25 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
   border-radius:50%; background:var(--r); border:1.5px solid var(--surface);
   display:none; animation:pulseDot 2s ease-in-out infinite;
 }
+/* Unresolved exception card pulse — subtle left border throb */
+.exc-card.sev-high { animation:excHighPulse 3s ease-in-out infinite; }
+@keyframes excHighPulse {
+  0%,100%{ box-shadow:none; }
+  50%{ box-shadow:-2px 0 0 var(--r), 0 0 12px rgba(239,68,68,.08); }
+}
+/* Amber pulse for unreconciled dot */
+.exc-pulse-dot { animation:excAmberPulse 2.4s ease-in-out infinite; }
+@keyframes excAmberPulse {
+  0%,100%{ box-shadow:0 0 0 0 rgba(245,158,11,.5); }
+  50%{ box-shadow:0 0 0 5px rgba(245,158,11,0); }
+}
+/* KPI count-up: number changes slide up */
+@keyframes kpiSlideUp {
+  from{ opacity:0; transform:translateY(6px) scale(.96); }
+  to{ opacity:1; transform:none; }
+}
+.kpi-updated { animation:kpiSlideUp .3s cubic-bezier(.34,1.56,.64,1) both; }
+}
 @keyframes pulseDot {0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4);}50%{box-shadow:0 0 0 4px rgba(239,68,68,.0);}}
 
 .tn-divider { width:1px; height:22px; background:var(--bdr); margin:0 6px; }
@@ -1732,8 +1751,40 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 /* ── Alloc grid rows ── */
 .alloc-tbl tbody tr:hover { background: rgba(59,130,246,.04); }
 
-/* ── Reconcile items ── */
-.recon-item {
+/* ── Reconcile KPI cells ── */
+.recon-kpi-cell {
+  padding:16px 20px; display:flex; flex-direction:column;
+  justify-content:center; background:var(--surface2);
+}
+.recon-kpi-label {
+  font-size:9.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.07em; color:var(--t3); margin-bottom:6px;
+}
+.recon-kpi-val {
+  font-size:24px; font-weight:900; font-family:var(--mono);
+  color:var(--t1); letter-spacing:-1px; line-height:1;
+  margin-bottom:4px; transition:all .4s cubic-bezier(.34,1.56,.64,1);
+}
+.recon-kpi-val.recon-kpi-good { color:var(--g-t); }
+.recon-kpi-val.recon-kpi-warn { color:var(--am-t); }
+.recon-kpi-val.recon-kpi-bad  { color:var(--r-t); }
+.recon-kpi-sub {
+  font-size:11px; color:var(--t3); line-height:1.4;
+}
+.recon-kpi-bar-wrap {
+  height:4px; background:var(--bdr); border-radius:2px;
+  overflow:hidden; margin-top:6px;
+}
+.recon-kpi-bar {
+  height:100%; width:0%; border-radius:2px;
+  background:linear-gradient(90deg,var(--p),var(--g));
+  transition:width .7s cubic-bezier(.4,0,.2,1);
+}
+@media(max-width:900px){
+  #recon-kpi-row{grid-template-columns:1fr 1fr!important;}
+  .recon-kpi-cell:nth-child(n+3){border-top:1px solid var(--bdr);}
+  .recon-kpi-cell:nth-child(odd){border-left:none!important;}
+}
   margin: 5px 16px;
   padding: 14px 16px;
   border-radius: 12px;
@@ -3304,13 +3355,46 @@ body.app-active #app {
 
         <!-- ── TAB: RECONCILE ── -->
         <div class="ws-tab-view" id="ws-recon">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
-            <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
+          <!-- Recon header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-size:12px;color:var(--t3)" id="recon-summary">Reconcile payments vs open invoices</span>
+              <span id="recon-status-badge" style="display:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px"></span>
+            </div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" onclick="runMatch()">⚡ Auto-match</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
           </div>
+          <!-- KPI cards -->
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-bottom:1px solid var(--bdr);flex-shrink:0" id="recon-kpi-row">
+            <div class="recon-kpi-cell" id="rkpi-received">
+              <div class="recon-kpi-label">Total Received</div>
+              <div class="recon-kpi-val" id="rkpi-received-val">$0</div>
+              <div class="recon-kpi-sub" id="rkpi-received-sub">0 payments</div>
+            </div>
+            <div class="recon-kpi-cell" id="rkpi-reconciled" style="border-left:1px solid var(--bdr)">
+              <div class="recon-kpi-label">Reconciled</div>
+              <div class="recon-kpi-val recon-kpi-good" id="rkpi-reconciled-val">$0</div>
+              <div class="recon-kpi-sub" id="rkpi-reconciled-sub">0 matched</div>
+            </div>
+            <div class="recon-kpi-cell" id="rkpi-unreconciled" style="border-left:1px solid var(--bdr)">
+              <div class="recon-kpi-label">Unreconciled</div>
+              <div class="recon-kpi-val recon-kpi-warn" id="rkpi-unreconciled-val">$0</div>
+              <div class="recon-kpi-sub" id="rkpi-unreconciled-sub">0 pending</div>
+            </div>
+            <div class="recon-kpi-cell" id="rkpi-pct" style="border-left:1px solid var(--bdr)">
+              <div class="recon-kpi-label">Reconciliation %</div>
+              <div class="recon-kpi-val" id="rkpi-pct-val">—</div>
+              <div class="recon-kpi-sub recon-kpi-bar-wrap"><div class="recon-kpi-bar" id="rkpi-bar"></div></div>
+            </div>
+            <div class="recon-kpi-cell" id="rkpi-variance" style="border-left:1px solid var(--bdr)">
+              <div class="recon-kpi-label">Remaining Variance</div>
+              <div class="recon-kpi-val recon-kpi-bad" id="rkpi-variance-val">$0</div>
+              <div class="recon-kpi-sub" id="rkpi-variance-sub">exceptions + unmatched</div>
+            </div>
+          </div>
+          <!-- Detail list -->
           <div style="flex:1;overflow-y:auto;padding:12px 16px"><div id="recon-list"><div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No reconciliation data</div><div class="empty-s">Import data and run matching to reconcile.</div></div></div></div>
         </div>
 
@@ -4510,45 +4594,113 @@ function reviewSort(){
 
 // ── Premium reconcile ──
 function renderWsRecon(){
-  const list=document.getElementById('recon-list');const summary=document.getElementById('recon-summary');if(!list)return;
-  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
-  const unmatched=PAY.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
-  const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
-  const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
-  const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
-  if(summary)summary.innerHTML=`<strong style="color:var(--t1)">$${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">$${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
+  // ── Recon KPI cells ──
+  var setR=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  var list=document.getElementById('recon-list');
+  var summary=document.getElementById('recon-summary');
+  if(!list)return;
+  var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc;});
+  var unmatched=PAY.filter(function(p){return !RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});});
+  var totalPay=PAY.reduce(function(s,p){return s+p.amt;},0);
+  var totalMatched=matched.reduce(function(s,r){return s+r.pd;},0);
+  var totalUnmatched=unmatched.reduce(function(s,p){return s+p.amt;},0);
+  var excAmt=EXC.filter(function(e){return !e.s||e.s==='Open';}).reduce(function(s,e){return s+e.amt;},0);
+  var variance=totalUnmatched+excAmt;
+  var reconPct=totalPay>0?((totalMatched/totalPay)*100):0;
+
+  // Status
+  var statusLabel=reconPct>=99?'Balanced':reconPct>=80?'On Track':reconPct>=50?'Variance':'Needs Review';
+  var statusColor=reconPct>=99?'var(--g-t)':reconPct>=80?'var(--p)':reconPct>=50?'var(--am-t)':'var(--r-t)';
+  var statusBg=reconPct>=99?'rgba(16,185,129,.12)':reconPct>=80?'rgba(59,130,246,.1)':reconPct>=50?'rgba(245,158,11,.12)':'rgba(239,68,68,.12)';
+  var badge=document.getElementById('recon-status-badge');
+  if(badge){
+    badge.style.display='inline-block';
+    badge.textContent=(reconPct>=99?'✓ ':reconPct>=80?'↑ ':reconPct>=50?'⚠ ':'✗ ')+statusLabel;
+    badge.style.color=statusColor;
+    badge.style.background=statusBg;
+    badge.style.border='1px solid '+statusColor.replace('var(','').replace(')','');
+  }
+
+  // KPI cells
+  setR('rkpi-received-val','$'+$fk(totalPay));
+  setR('rkpi-received-sub',PAY.length+' payment'+(PAY.length!==1?'s':''));
+  setR('rkpi-reconciled-val','$'+$fk(totalMatched));
+  setR('rkpi-reconciled-sub',matched.length+' matched');
+  setR('rkpi-unreconciled-val','$'+$fk(totalUnmatched));
+  setR('rkpi-unreconciled-sub',unmatched.length+' pending');
+  setR('rkpi-pct-val',totalPay>0?reconPct.toFixed(1)+'%':'—');
+  var pctEl=document.getElementById('rkpi-pct-val');
+  if(pctEl) pctEl.style.color=reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)';
+  setTimeout(function(){var b=document.getElementById('rkpi-bar');if(b)b.style.width=Math.min(100,reconPct).toFixed(1)+'%';},80);
+  setR('rkpi-variance-val','$'+$fk(variance));
+  setR('rkpi-variance-sub',(EXC.filter(function(e){return !e.s||e.s==='Open';}).length)+' exceptions + '+unmatched.length+' unmatched');
+  var varEl=document.getElementById('rkpi-variance-val');
+  if(varEl) varEl.style.color=variance===0?'var(--g-t)':variance<totalPay*0.1?'var(--am-t)':'var(--r-t)';
+
+  if(summary) summary.textContent='$'+$fk(totalMatched)+' reconciled of $'+$fk(totalPay)+' received · '+reconPct.toFixed(1)+'%';
   if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance and run matching to reconcile.</div></div>';return;}
-  const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
-  list.innerHTML=rows.map(item=>{
-    if(item.type==='matched'){const r=item.r;return`<div class="recon-item">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--g);flex-shrink:0;box-shadow:0 0 8px rgba(16,185,129,.4)"></div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--t1)">${r.c||'—'}</div>
-        <div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">${r.i||'—'} · ${r.po?'PO '+r.po:''}</div>
-      </div>
-      <div style="font-size:15px;font-weight:900;font-family:var(--mono);color:var(--g-t)">+$${$f(r.pd)}</div>
-      <span class="ws-badge ws-badge-ready" style="font-size:10.5px"><span class="ws-dot"></span>Reconciled</span>
-    </div>`;} 
-    else{const p=item.p;return`<div class="recon-item" style="border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.03)">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--am);flex-shrink:0;animation:pulseDot 2s ease-in-out infinite"></div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--t1)">${p.c||p.a||'Unknown'}</div>
-        <div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">${p.txId||p.po||'—'} · ${p.payDate?fmtDate(p.payDate):'—'}</div>
-      </div>
-      <div style="font-size:15px;font-weight:900;font-family:var(--mono);color:var(--am-t)">$${$f(p.amt)}</div>
-      <span class="ws-badge ws-badge-pending" style="font-size:10.5px"><span class="ws-dot"></span>Unreconciled</span>
-      <button class="btn btn-outline btn-xs" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">Apply</button>
-    </div>`;}
+
+  var rows=[...matched.map(function(r){return{type:'matched',r};}), ...unmatched.map(function(p){return{type:'unmatched',p};})];
+  list.innerHTML=rows.map(function(item){
+    if(item.type==='matched'){
+      var r=item.r;
+      return`<div class="recon-item">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--g);flex-shrink:0;box-shadow:0 0 8px rgba(16,185,129,.4)"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">${r.c||'—'}</div>
+          <div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">${r.i||'—'}${r.po?' · PO '+r.po:''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:900;font-family:var(--mono);color:var(--g-t)">+$${$f(r.pd)}</div>
+          <div style="font-size:10.5px;color:var(--t3)">${r.st}</div>
+        </div>
+        <span class="ws-badge ws-badge-ready" style="font-size:10.5px"><span class="ws-dot"></span>Reconciled</span>
+      </div>`;
+    } else {
+      var p=item.p;
+      return`<div class="recon-item" style="border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.03)">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--am);flex-shrink:0" class="exc-pulse-dot"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">${p.c||p.a||'Unknown'}</div>
+          <div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">${p.txId||p.po||'—'}${p.payDate?' · '+fmtDate(p.payDate):''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:900;font-family:var(--mono);color:var(--am-t)">$${$f(p.amt)}</div>
+          <div style="font-size:10.5px;color:var(--t3)">${p.m||'—'}</div>
+        </div>
+        <span class="ws-badge ws-badge-pending" style="font-size:10.5px"><span class="ws-dot"></span>Unreconciled</span>
+        <button class="btn btn-outline btn-xs" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')">Apply →</button>
+      </div>`;
+    }
   }).join('');
 }
 
-// ── Animate KPI updates ──
+// ── KPI animations ──
 function animateKpiVal(id,newVal){
-  const el=document.getElementById(id);if(!el)return;
-  el.style.transition='all .3s cubic-bezier(.34,1.56,.64,1)';
-  el.style.transform='scale(1.05)';
+  var el=document.getElementById(id);if(!el)return;
+  el.classList.remove('kpi-updated');
+  // Force reflow so animation restarts
+  void el.offsetWidth;
   el.textContent=newVal;
-  setTimeout(()=>{el.style.transform='';},300);
+  el.classList.add('kpi-updated');
+  setTimeout(function(){el.classList.remove('kpi-updated');},400);
+}
+
+// Numeric count-up animation — used for integer KPI values
+function kpiCountUp(id,targetNum,prefix,suffix,duration){
+  var el=document.getElementById(id);if(!el)return;
+  prefix=prefix||'';suffix=suffix||'';duration=duration||600;
+  var start=0;var startTime=null;
+  function step(ts){
+    if(!startTime)startTime=ts;
+    var progress=Math.min((ts-startTime)/duration,1);
+    var ease=1-Math.pow(1-progress,3); // ease-out cubic
+    var current=Math.round(start+(targetNum-start)*ease);
+    el.textContent=prefix+current.toLocaleString()+suffix;
+    if(progress<1) requestAnimationFrame(step);
+    else el.textContent=prefix+targetNum.toLocaleString()+suffix;
+  }
+  requestAnimationFrame(step);
 }
 
 // engLoadPayment already patched in HTML to show payment-flow
@@ -4723,17 +4875,17 @@ function updDash(){
   const ua=EXC.reduce((s,e)=>s+e.amt,0);
   const rt=tp>0?ma/tp*100:0;
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setEl('dk-matched','$'+$fk(ma));
+  animateKpiVal('dk-matched','$'+$fk(ma));
   setEl('dk-matched-s',matched.length+' transactions cleared');
   const pctEl=document.getElementById('dk-matched-pct');if(pctEl)pctEl.textContent=rt.toFixed(1)+'%';
   const mbEl=document.getElementById('dk-matched-bar');if(mbEl)mbEl.style.width=(tp>0?ma/tp*100:0).toFixed(1)+'%';
-  setEl('dk-unapplied','$'+$fk(ua));
+  animateKpiVal('dk-unapplied','$'+$fk(ua));
   setEl('dk-exc-s',EXC.length+' exceptions');
   const ecEl=document.getElementById('dk-exc-ct');if(ecEl){ecEl.textContent=EXC.length;ecEl.style.display=EXC.length?'flex':'none';}
   const ubEl=document.getElementById('dk-unapplied-bar');if(ubEl)ubEl.style.width=(tp>0?ua/tp*100:0).toFixed(1)+'%';
-  setEl('dk-rate',rt.toFixed(1)+'%');
+  animateKpiVal('dk-rate',rt.toFixed(1)+'%');
   const rbEl=document.getElementById('dk-rate-bar');if(rbEl)rbEl.style.width=rt.toFixed(1)+'%';
-  setEl('dk-total','$'+$fk(tp));
+  animateKpiVal('dk-total','$'+$fk(tp));
   setEl('dk-total-s',INV.length+' invoices · '+PAY.length+' payments');
   const cn={};
   RES.forEach(r=>{cn[r.st]=(cn[r.st]||0)+1;});
@@ -5091,7 +5243,12 @@ function clearInvData(){if(!confirm('Clear all invoice data?'))return;INV=[];sav
 function clearPayData(){if(!confirm('Clear all remittance data?'))return;PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittance data');toast('Remittance data cleared');}
 function clearMatchData(){if(!confirm('Clear all match results?'))return;RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');}
 function clearAllData(){if(!confirm('Clear all data?'))return;INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');}
-function saveSettings(){toast('Settings saved');}
+function saveSettings(){
+  // Persist matching tolerance
+  var tol=parseFloat(document.getElementById('s-tol')?.value||'1');
+  try{localStorage.setItem('armp_tol',String(tol));}catch(e){}
+  toast('Settings saved');
+}
 function filterDash(t){if(t==='exceptions')sp('exceptions');else sp('cash-app');}
 function filterByStatus(s){sp('exceptions');}
 function showRegister(){showLfView('register');}
@@ -5396,7 +5553,12 @@ function fc(id,ci,v){document.querySelectorAll('#'+id+' tr').forEach(tr=>{const 
 function csvDL(rows,fn){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=fn;a.click();}
 function exportExc(){if(!EXC.length){toast('No exceptions','warn');return;}csvDL([EH,...EXC.map(e=>[e.id,e.a,e.c,e.amt,e.ref,e.type,e.detail,e.action,e.dec,e.s])],'exceptions_'+new Date().toISOString().split('T')[0]+'.csv');toast('Exceptions exported');}
 function exportPost(){
-  if(IS_DEMO){showUpgrade('Posting Export','Available on Starter, Pro, and Team plans.');return;}
+  if(IS_DEMO&&!IS_TRIAL){showUpgrade('Posting Export','Available on Starter, Pro, and Team plans.');return;}
+  if(IS_TRIAL){
+    var trialExports=parseInt(localStorage.getItem('armp_trial_exports')||'0');
+    if(trialExports>=3){showTrialPrompt();toast('Trial export limit reached (3 exports). Upgrade for unlimited.','warn');return;}
+    localStorage.setItem('armp_trial_exports',String(trialExports+1));
+  }
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
@@ -5874,7 +6036,13 @@ function engApprove(){
 }
 
 function engExport(){
-  if(IS_DEMO){showUpgrade('Posting Export','Available on Starter, Pro, and Team plans.');return;}
+  if(IS_DEMO&&!IS_TRIAL){showUpgrade('Posting Export','Available on Starter, Pro, and Team plans.');return;}
+  if(IS_TRIAL){
+    var trialExports=parseInt(localStorage.getItem('armp_trial_exports')||'0');
+    if(trialExports>=3){showTrialPrompt();toast('Trial export limit reached (3 exports). Upgrade for unlimited.','warn');return;}
+    localStorage.setItem('armp_trial_exports',String(trialExports+1));
+    toast('Trial export '+(trialExports+1)+' of 3 used');
+  }
   const sel=ENG_ROWS.filter(r=>r.selected);
   if(!sel.length){toast('Nothing selected to export','warn');return;}
   sel.forEach(r=>{
@@ -6386,7 +6554,7 @@ async function runMatch(){
   await new Promise(r=>setTimeout(r,200));upd(15,0,0);
   await new Promise(r=>setTimeout(r,200));
   RES=[];EXC=[];INV.forEach(v=>v.s='');
-  const tol=parseFloat(document.getElementById('s-tol')?.value)||1;let ec=1;
+  const tol=parseFloat(document.getElementById('s-tol')?.value||localStorage.getItem('armp_tol')||'1');let ec=1;
   for(let pi=0;pi<PAY.length;pi++){
     const p=PAY[pi];upd(20+Math.round(pi/PAY.length*65),RES.length,EXC.length);
     if(pi%2===0)await new Promise(r=>setTimeout(r,60));
@@ -6412,7 +6580,7 @@ async function runMatch(){
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
   overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
   addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions',{before:'Loaded',after:'Matched'});
-  ledgerWriteSnapshot('Match Run');
+  if(RES.length>0) ledgerWriteSnapshot('Match Run');
   toast(`✓ Matching done · ${RES.length} results · ${EXC.length} exceptions`);
 }
 
@@ -7799,10 +7967,13 @@ sp = function(id){
     // Restore persisted ROI settings
     var savedLr=localStorage.getItem('armp_labor_rate');
     var savedMp=localStorage.getItem('armp_min_per_pay');
+    var savedTol=localStorage.getItem('armp_tol');
     var lrEl=document.getElementById('s-labor-rate');
     var mpEl=document.getElementById('s-min-per-pay');
+    var tolEl=document.getElementById('s-tol');
     if(savedLr&&lrEl) lrEl.value=savedLr;
     if(savedMp&&mpEl) mpEl.value=savedMp;
+    if(savedTol&&tolEl) tolEl.value=savedTol;
     setTimeout(function(){ renderMpRules(); if(IS_MASTER) renderDemoLeads(); },100);
   }
   if(id==='cash-app') setTimeout(function(){ populateAllAcctDropdowns(); refreshFbl5n(); },100);
