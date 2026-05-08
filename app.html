@@ -27,13 +27,14 @@
 
   /* ── Typography ── */
   --t1: #F0F6FF;
-  --t2: #A8C0D8;
-  --t3: #6B87A0;
-  --t4: #3A5068;
+  --t2: #C4D6E8;
+  --t3: #8AAABF;
+  --t4: #506880;
+  /* ── Brand (brighter blue for dark bg readability) ── */
+  --pd:  #93C5FD;  /* blue-300 — crisp on dark bg */
 
   /* ── Brand ── */
   --p:   #3B82F6;
-  --pd:  #60A5FA;
   --ps:  #1D4ED8;
   --pg:  rgba(59,130,246,.1);
   --p-glow: 0 0 20px rgba(59,130,246,.25);
@@ -90,16 +91,16 @@
   --bdr3:      rgba(0,0,0,.2);
   /* Pure black text hierarchy */
   --t1: #000000;
-  --t2: #1A1A2E;
-  --t3: #4A5568;
-  --t4: #A0AEC0;
-  /* WCAG AA semantic text — dark versions for light backgrounds */
-  --g-t:   #065F46;   /* dark green  — 7.5:1 on white */
-  --r-t:   #991B1B;   /* dark red    — 7:1 on white   */
-  --am-t:  #92400E;   /* dark amber  — 7:1 on white   */
-  --pu-t:  #5B21B6;   /* dark purple — 7:1 on white   */
-  --cy-t:  #0C4A6E;   /* dark cyan   — 8:1 on white   */
-  --pd:    #1E40AF;   /* dark blue   — 8:1 on white   */
+  --t2: #111827;
+  --t3: #374151;
+  --t4: #6B7280;
+  /* WCAG AA semantic text — purpose-built for light backgrounds */
+  --g-t:   #065F46;   /* dark green  7.5:1 */
+  --r-t:   #991B1B;   /* dark red    7.0:1 */
+  --am-t:  #B45309;   /* dark orange 5.5:1 — warm, not brown */
+  --pu-t:  #5B21B6;   /* dark purple 7.0:1 */
+  --cy-t:  #0C4A6E;   /* dark cyan   8.0:1 */
+  --pd:    #1E40AF;   /* dark blue   8.0:1 */
   --p:     #1D4ED8;
   --p-glow: 0 0 20px rgba(59,130,246,.15);
   --g-glow: rgba(16,185,129,.15);
@@ -116,7 +117,17 @@
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 html,body { height:100%; font-family:var(--font); background:var(--bg); color:var(--t1); font-size:13px; line-height:1.5; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; overflow:hidden; }
 
-/* ── Enterprise emoji rendering fix ──
+/* ── Mono font: clean open zeros everywhere — no dots, no slashes ── */
+* { font-variant-numeric: tabular-nums; }
+[class*="mono"], .td-mono, .td-amt, .td-key, .td-num,
+[style*="font-family:var(--mono)"], [style*="JetBrains"], [style*="Roboto Mono"],
+code, pre, .kpi-card-val, .recon-kpi-val, .cfo-metric-value,
+.drawer-snap-val, .pq-item-amt, .pq-item-ref {
+  font-family: var(--mono) !important;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" 0, "tnum" 1;
+  -webkit-font-feature-settings: "zero" 0, "tnum" 1;
+}
    Forces emoji in UI elements to render via system emoji font
    (Apple Color Emoji on Mac, Segoe UI Emoji on Windows)
    so they look crisp and consistent, not the browser default. */
@@ -452,7 +463,7 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
 .kpi-card-val.amber { color:var(--am-t); }
 .kpi-card-val.blue { color:var(--pd); }
 .kpi-card-sub {
-  font-size:9.5px; font-weight:600; color:var(--t3); white-space:nowrap;
+  font-size:10px; font-weight:600; color:var(--t2); white-space:nowrap;
   display:flex; align-items:center; gap:3px;
 }
 .kpi-trend-up { color:var(--g-t); font-size:9px; }
@@ -2610,7 +2621,10 @@ body.app-active #app {
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 1a5 5 0 015 5v3l1 2H2l1-2V6a5 5 0 015-5z"/><path d="M6.5 13.5a1.5 1.5 0 003 0"/></svg>
         <div class="notif-dot" id="notif-dot"></div>
       </button>
-      <button class="tn-icon-btn" id="dm-btn" onclick="toggleDark()" title="Toggle theme">🌙</button>
+      <button class="tn-icon-btn" id="dm-btn" onclick="toggleDark()" title="Toggle light/dark theme">
+        <svg id="dm-icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>
+        <svg id="dm-icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
       <button class="tn-icon-btn" onclick="resetSession()" title="Clear all data — start fresh session" style="color:var(--r-t)">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8a6 6 0 1 1 1.5 4"/><path d="M2 4v4h4"/></svg>
       </button>
@@ -2627,7 +2641,7 @@ body.app-active #app {
 
   <!-- KPI STRIP — Executive-level metrics -->
   <div class="kpi-strip">
-    <div class="kpi-card kpi-green" onclick="sp('reporting')" style="cursor:pointer;min-width:150px">
+    <div class="kpi-card kpi-green" onclick="setCaTab('recon',document.getElementById('ca-tab-recon'));sp('cash-app')" style="cursor:pointer;min-width:150px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--g-t)"></div>
         Cash Matched
@@ -2664,7 +2678,7 @@ body.app-active #app {
         <div class="kpi-spark-bar" style="height:95%"></div>
       </div>
     </div>
-    <div class="kpi-card kpi-amber" onclick="sp('cash-app')" style="cursor:pointer;min-width:140px">
+    <div class="kpi-card kpi-amber" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app')" style="cursor:pointer;min-width:140px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--am-t)"></div>
         Unapplied Cash
@@ -2680,7 +2694,7 @@ body.app-active #app {
       <div class="kpi-card-val red" id="kpi-exc">0</div>
       <div class="kpi-card-sub" id="kpi-exc-sub">Require action</div>
     </div>
-    <div class="kpi-card kpi-amber" style="min-width:120px">
+    <div class="kpi-card kpi-amber" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(function(){var f=document.getElementById('ws-exc-type-filter');if(f){f.value='Short pay';renderWsExcPremium();}},400)" style="cursor:pointer;min-width:120px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--am-t)"></div>
         Short Pays
@@ -2688,15 +2702,12 @@ body.app-active #app {
       <div class="kpi-card-val amber" id="kpi-shortpay">0</div>
       <div class="kpi-card-sub">Underpayments</div>
     </div>
-    <div class="kpi-card" style="min-width:100px">
-      <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:var(--t3)"></div>
-        Invoices
+    <div class="kpi-card" onclick="sp('invoices')" style="cursor:pointer;min-width:100px">
       </div>
       <div class="kpi-card-val" id="kpi-inv-ct">0</div>
       <div class="kpi-card-sub">In system</div>
     </div>
-    <div class="kpi-card" style="min-width:100px">
+    <div class="kpi-card" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')" style="cursor:pointer;min-width:100px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--t3)"></div>
         Payments
@@ -3511,7 +3522,7 @@ body.app-active #app {
         </div>
         <div class="panel-body" style="padding:0">
           <div style="padding:6px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);display:flex;align-items:center;gap:8px;flex-shrink:0">
-            <input class="inp" id="inv-search" placeholder="🔍 Search all columns…" oninput="invColFilter()" style="width:220px;font-size:12.5px">
+            <input class="inp" id="inv-search" placeholder="Search: customer, invoice #, PO #, SO #, amount, date…" oninput="invColFilter()" style="width:280px;font-size:12px">
             <button class="btn btn-ghost btn-sm" onclick="clearInvColFilters()">✕ Clear filters</button>
             <span style="font-size:12px;color:var(--t3);margin-left:auto" id="inv-ct">0 rows</span>
           </div>
@@ -4461,15 +4472,12 @@ function renderWsExcPremium(){
         }
       </div>
 
-      <!-- ── OWNERSHIP ROW — Status + Notes only ── -->
-      <div class="exc-ownership" style="gap:10px">
-        ${!isResV?`<select class="exc-status-sel" onchange="excSetStatus(${realIdx},this.value)" title="Update status">
-          ${EXC_STATUSES.map(s=>`<option value="${s}"${(ex.s||'Open')===s?' selected':''}>${s}</option>`).join('')}
-        </select>`:''}
+      <!-- ── RESOLUTION NOTES ── -->
+      ${!isResV?`<div style="margin-top:6px">
         <input type="text" class="exc-notes-inp" value="${(ex.resolutionNotes||ex.notes||'').replace(/"/g,'&quot;')}"
           placeholder="Resolution notes…"
           oninput="excSetField(${realIdx},'resolutionNotes',this.value);excSetField(${realIdx},'notes',this.value)">
-      </div>
+      </div>`:''}
     </div>`;
   }).join('');
 }
@@ -4819,7 +4827,9 @@ function toggleDark(){
   const html=document.documentElement;
   const dark=html.dataset.theme==='dark';
   html.dataset.theme=dark?'light':'dark';
-  const btn=document.getElementById('dm-btn');if(btn)btn.textContent=dark?'🌙':'☀️';
+  const moon=document.getElementById('dm-icon-moon');const sun=document.getElementById('dm-icon-sun');
+  if(moon)moon.style.display=dark?'block':'none';
+  if(sun)sun.style.display=dark?'none':'block';
   const sdm=document.getElementById('s-dm');if(sdm)sdm.checked=!dark;
 }
 
@@ -5153,7 +5163,7 @@ function setUserDisplay(user){
   if(pi) pi.value=user.name||'';
   const planBadge=document.getElementById('tn-plan');if(planBadge)planBadge.textContent=PLANS[user.plan||'demo']?.name||'Demo';
   const ppb=document.getElementById('profile-plan-badge');
-  if(ppb)ppb.innerHTML=`<span class="badge ${user.plan==='pro'?'badge-p':user.plan==='team'?'badge-pu':user.plan==='starter'?'badge-g':'badge-am'}" style="font-size:11px">${PLANS[user.plan||'demo']?.name||'Demo'} plan</span>`;
+  if(ppb)ppb.innerHTML=''; // plan name shown in Current Plan row only, not in email section
 }
 
 function launchApp(user){
@@ -5685,14 +5695,12 @@ function resolveException(idx,dec){
   }
 
   if(dec==='Post as Unapplied Cash'){
-    // Show inline account selector — filter open items when account entered
-    const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
-    const accts=Object.keys(acctMap).sort();
-    const opts=accts.map(a=>`<option value="${a}">${a}${acctMap[a]?' — '+acctMap[a]:''}</option>`).join('');
+    // Modal with account selector — can choose ANY account, not just the listed one
     showModal('Post as Unapplied Cash',`
-      <div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Enter or select account number:</div>
+      <div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px">Select destination account</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:12px">This payment may belong to a different account than listed. Type any account # or customer name.</div>
       <div style="position:relative;margin-bottom:14px">
-        <input type="text" id="exc-acct-manual" placeholder="Type account # or customer name…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr2);border-radius:7px;font-size:13px;font-family:var(--mono);background:var(--surface2);color:var(--t1);outline:none" oninput="excAcctManualSearch(this.value)" autocomplete="off">
+        <input type="text" id="exc-acct-manual" placeholder="Type account # or customer name…" value="${ex.a||''}" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr2);border-radius:7px;font-size:13px;font-family:var(--mono);background:var(--surface2);color:var(--t1);outline:none" oninput="excAcctManualSearch(this.value)" autocomplete="off">
         <div id="exc-acct-preview" style="font-size:11.5px;color:var(--g-t);margin-top:4px;padding-left:2px;min-height:18px"></div>
         <div id="exc-acct-suggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:20;display:none;max-height:180px;overflow-y:auto"></div>
       </div>
@@ -5700,6 +5708,8 @@ function resolveException(idx,dec){
         <button class="btn btn-p btn-sm" onclick="confirmExcAcct(${idx})">Post as Unapplied</button>
         <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
       </div>`);
+    // Pre-populate suggestions for the listed account
+    setTimeout(function(){ excAcctManualSearch(ex.a||''); }, 100);
     return;
   }
 
@@ -6608,6 +6618,21 @@ async function runMatch(){
   }
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
   overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
+  // Immediately refresh exceptions and review tabs
+  if(typeof renderWsExcPremium==='function') renderWsExcPremium();
+  if(typeof renderWsReview==='function') renderWsReview();
+  // Auto-navigate to correct tab
+  var cashAppPanel=document.getElementById('p-cash-app');
+  var isCashAppActive=cashAppPanel&&cashAppPanel.classList.contains('active');
+  if(isCashAppActive){
+    if(RES.length>0){
+      var reviewBtn=document.getElementById('ca-tab-review');
+      if(reviewBtn) setCaTab('review',reviewBtn);
+    } else if(EXC.length>0){
+      var excBtn=document.getElementById('ca-tab-exc');
+      if(excBtn) setCaTab('exc',excBtn);
+    }
+  }
   addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions',{before:'Loaded',after:'Matched'});
   if(RES.length>0) ledgerWriteSnapshot('Match Run');
   toast(`✓ Matching done · ${RES.length} results · ${EXC.length} exceptions`);
@@ -7174,15 +7199,20 @@ function syncMpCheckboxes(){
 // SETTINGS PLANS
 // ═══════════════════════════════════════════════════════════
 function renderSettingsPlans(){
-  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP + NetSuite','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'};
-  var el=document.getElementById('settings-plan-features'); if(el) el.textContent=pf[USER_PLAN]||'';
   var lvl=PLANS[USER_PLAN]?PLANS[USER_PLAN].level:0;
+  var planName=PLANS[USER_PLAN]?.name||'Trial';
+  var badgeCls=USER_PLAN==='pro'?'badge-p':USER_PLAN==='team'?'badge-pu':USER_PLAN==='starter'?'badge-g':'badge-am';
+  // Update Current Plan row badge to match email section style
+  var spn=document.getElementById('settings-plan-name');
+  if(spn) spn.innerHTML='<span class="badge '+badgeCls+'" style="font-size:12px;padding:4px 12px">'+planName+'</span>';
+  // Update plan description
+  var el=document.getElementById('settings-plan-features'); if(el) el.textContent='';
   var ub=document.getElementById('settings-upgrade-btn'); if(ub) ub.style.display=lvl>=3?'none':'';
-  var db=document.getElementById('settings-downgrade-btn'); if(db) db.style.display=lvl>0?'':'none';
+  var db=document.getElementById('settings-downgrade-btn'); if(db){db.style.display=lvl>0?'':'none'; db.textContent='Change';}
 }
 
 function showDowngradeModal(){
-  showModal('Downgrade Plan','<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:16px">This is a simulated demo — no actual billing change occurs.<br><br>In production, downgrading would take effect at end of billing period.</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-p btn-sm" onclick="closeModal();toast(\'Downgrade simulated — no billing changed\')">Confirm (demo)</button></div>');
+  showModal('Change Plan','<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:16px">To change your plan, visit the pricing page or contact support.<br><br><a href="mailto:info@armatchpro.com" style="color:var(--pd)">info@armatchpro.com</a></div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button><button class="btn btn-p btn-sm" onclick="window.open(\'https://armatchpro.com/#pricing\',\'_blank\');closeModal()">View Plans</button></div>');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -7235,6 +7265,23 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
   if(!invs.length){
     tbody.innerHTML='<tr><td colspan="13"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
     return;
+  }
+  // Sort: if a payment is selected, matching invoices bubble to top
+  if(ENG_PAY){
+    invs=invs.slice().sort(function(a,b){
+      function score(v){
+        var s=0;
+        if(ENG_PAY.i&&v.i&&norm(v.i)===norm(ENG_PAY.i)) s+=100;
+        if(ENG_PAY.po&&v.po&&norm(v.po)===norm(ENG_PAY.po)) s+=80;
+        if(ENG_PAY.so&&v.so&&norm(v.so)===norm(ENG_PAY.so)) s+=60;
+        if(Math.abs(v.amt-ENG_PAY.amt)<1) s+=40;
+        // Selected rows always first
+        var row=ENG_ROWS.find(function(r){return r.inv.i===v.i;});
+        if(row&&row.selected) s+=200;
+        return s;
+      }
+      return score(b)-score(a);
+    });
   }
   tbody.innerHTML=invs.map(function(v,i){
     var matched=RES.find(function(r){ return r.i===v.i; });
@@ -8016,7 +8063,11 @@ loadSampleRem = function(){
 
 runMatch = function(){
   var result = _origRunMatch.apply(this, arguments);
-  setTimeout(function(){ buildWorklist(); refreshFbl5n(); updReporting(); },600);
+  setTimeout(function(){
+    buildWorklist(); refreshFbl5n(); updReporting();
+    // Always refresh exceptions panel so it shows immediately
+    if(typeof renderWsExcPremium==='function') renderWsExcPremium();
+  },700);
   return result;
 };
 
