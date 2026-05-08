@@ -9,7 +9,7 @@
 <title>AR Match Pro v1778185567</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════
    AR MATCH PRO v5.2 — ENTERPRISE FINTECH POLISH
@@ -27,9 +27,9 @@
 
   /* ── Typography ── */
   --t1: #F0F6FF;
-  --t2: #8BA3C7;
-  --t3: #4D6480;
-  --t4: #2E3F56;
+  --t2: #A8C0D8;
+  --t3: #6B87A0;
+  --t4: #3A5068;
 
   /* ── Brand ── */
   --p:   #3B82F6;
@@ -60,7 +60,7 @@
   --sidebar-w: 224px;
   --topnav-h:  56px;
   --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --mono: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  --mono: 'Roboto Mono', 'Menlo', 'Consolas', monospace;
 
   /* ── Radii ── */
   --r4: 4px; --r6: 6px; --r8: 8px; --r10: 10px;
@@ -88,11 +88,20 @@
   --bdr:       rgba(0,0,0,.08);
   --bdr2:      rgba(0,0,0,.13);
   --bdr3:      rgba(0,0,0,.2);
-  /* Pure black text hierarchy for maximum contrast */
+  /* Pure black text hierarchy */
   --t1: #000000;
   --t2: #1A1A2E;
   --t3: #4A5568;
   --t4: #A0AEC0;
+  /* WCAG AA semantic text — dark versions for light backgrounds */
+  --g-t:   #065F46;   /* dark green  — 7.5:1 on white */
+  --r-t:   #991B1B;   /* dark red    — 7:1 on white   */
+  --am-t:  #92400E;   /* dark amber  — 7:1 on white   */
+  --pu-t:  #5B21B6;   /* dark purple — 7:1 on white   */
+  --cy-t:  #0C4A6E;   /* dark cyan   — 8:1 on white   */
+  --pd:    #1E40AF;   /* dark blue   — 8:1 on white   */
+  --p:     #1D4ED8;
+  --p-glow: 0 0 20px rgba(59,130,246,.15);
   --g-glow: rgba(16,185,129,.15);
   --glass:  rgba(0,0,0,.02);
   --glass2: rgba(0,0,0,.04);
@@ -101,14 +110,26 @@
   --shadow-sm: 0 2px 8px rgba(0,0,0,.09);
   --shadow-md: 0 4px 20px rgba(0,0,0,.11);
   --shadow-lg: 0 12px 40px rgba(0,0,0,.13);
-  --p-glow: 0 0 20px rgba(59,130,246,.15);
 }
 
 /* ── Reset ── */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 html,body { height:100%; font-family:var(--font); background:var(--bg); color:var(--t1); font-size:13px; line-height:1.5; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; overflow:hidden; }
 
-/* ── Mono: disable slashed zero, enable tabular numerals ── */
+/* ── Enterprise emoji rendering fix ──
+   Forces emoji in UI elements to render via system emoji font
+   (Apple Color Emoji on Mac, Segoe UI Emoji on Windows)
+   so they look crisp and consistent, not the browser default. */
+.empty-icon,
+.empty-icon * {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+}
+.cfo-metric-icon {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+/* Workflow bar icons already SVG — no override needed */
 .td-mono, .td-amt, .td-key, [class*="mono"], code,
 [style*="font-family:var(--mono)"], [style*="font-family: var(--mono)"] {
   font-feature-settings: "zero" 0, "tnum" 1;
@@ -2462,7 +2483,7 @@ body.app-active #app {
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('team')">Select Team</button>
         </div>
       </div>
-      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--t3)">🔒 Local-first · no data uploaded &nbsp;·&nbsp; <a href="https://calendly.com/armatchpro" target="_blank" style="color:var(--pd)">Book a demo</a></div>
+      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--t3)">🔒 Local-first · no data uploaded</div>
     </div>
   </div>
 </div>
@@ -2575,7 +2596,7 @@ body.app-active #app {
 
     <div class="tn-search">
       <span class="tn-search-icon">🔍</span>
-      <input type="text" placeholder="Search invoices, payments, customers…" onkeydown="if(event.key==='Enter')globalSearch(this.value)" id="global-search">
+      <input type="text" placeholder="Search invoices, PO#, customers, payments…" onkeydown="if(event.key==='Enter')globalSearch(this.value)" id="global-search">
     </div>
 
     <div class="tn-actions">
@@ -2997,25 +3018,25 @@ body.app-active #app {
         <!-- ── WORKFLOW PIPELINE STATUS BAR ── -->
         <div class="ca-workflow-bar" id="ca-workflow-bar">
           <div class="ca-wf-stage wf-pending" id="wf-imported">
-            <div class="ca-wf-label">📥 Imported</div>
+            <div class="ca-wf-label"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px"><path d="M8 2v8M4 7l4 4 4-4"/><rect x="2" y="12" width="12" height="2" rx="1"/></svg>Imported</div>
             <div class="ca-wf-count" id="wf-imported-count">0</div>
             <div class="ca-wf-amt" id="wf-imported-amt">—</div>
             <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-imported-fill" style="width:0%"></div></div>
           </div>
           <div class="ca-wf-stage wf-pending" id="wf-matched">
-            <div class="ca-wf-label">⚡ Matched</div>
+            <div class="ca-wf-label"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px"><polygon points="4,2 14,8 4,14"/></svg>Matched</div>
             <div class="ca-wf-count" id="wf-matched-count">0</div>
             <div class="ca-wf-amt" id="wf-matched-amt">—</div>
             <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-matched-fill" style="width:0%"></div></div>
           </div>
           <div class="ca-wf-stage wf-pending" id="wf-reviewed">
-            <div class="ca-wf-label">👁 Reviewed</div>
+            <div class="ca-wf-label"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg>Reviewed</div>
             <div class="ca-wf-count" id="wf-reviewed-count">0</div>
             <div class="ca-wf-amt" id="wf-reviewed-amt">—</div>
             <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-reviewed-fill" style="width:0%"></div></div>
           </div>
           <div class="ca-wf-stage wf-pending" id="wf-approved">
-            <div class="ca-wf-label">✓ Approved</div>
+            <div class="ca-wf-label"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:3px;vertical-align:-1px"><path d="M2 8l4 4 8-8"/></svg>Approved</div>
             <div class="ca-wf-count" id="wf-approved-count">0</div>
             <div class="ca-wf-amt" id="wf-approved-amt">—</div>
             <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-approved-fill" style="width:0%"></div></div>
@@ -3027,7 +3048,7 @@ body.app-active #app {
             <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-exported-fill" style="width:0%"></div></div>
           </div>
           <div class="ca-wf-stage wf-pending" id="wf-exceptions">
-            <div class="ca-wf-label">⚠ Exceptions</div>
+            <div class="ca-wf-label"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px;vertical-align:-1px"><path d="M8 1l7 13H1z"/><path d="M8 6v4M8 11v1"/></svg>Exceptions</div>
             <div class="ca-wf-count" id="wf-exceptions-count">0</div>
             <div class="ca-wf-amt" id="wf-exceptions-amt">—</div>
             <div class="ca-wf-pct"><div class="ca-wf-pct-fill" id="wf-exceptions-fill" style="width:0%"></div></div>
@@ -3142,7 +3163,7 @@ body.app-active #app {
                     </div>
                     <div class="pf-status-row">
                       <div class="pay-fully-badge" id="eng-full-badge">✓ Fully Allocated</div>
-                      <div class="pay-locked-badge" id="eng-locked-badge">🔒 Locked · Exported</div>
+                      <div class="pay-locked-badge" id="eng-locked-badge"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:-1px"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>Locked · Exported</div>
                     </div>
                   </div>
 
@@ -3175,11 +3196,11 @@ body.app-active #app {
                       <div class="ca-right-section-body" id="ca-ai-right"><div style="font-size:12px;color:var(--t3);line-height:1.6">Select a payment for AI suggestions.</div></div>
                     </div>
                     <div class="ca-right-section">
-                      <div class="ca-right-section-hdr"><div class="ca-right-section-title">⚠️ Exceptions</div></div>
+                      <div class="ca-right-section-hdr"><div class="ca-right-section-title"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:-1px"><path d="M8 1l7 13H1z"/><path d="M8 6v4M8 11v1"/></svg>Exceptions</div></div>
                       <div class="ca-right-section-body" id="ca-exc-right"><div style="font-size:12px;color:var(--t3)">No exceptions for current payment.</div></div>
                     </div>
                     <div class="ca-right-section" style="flex:1;overflow:hidden">
-                      <div class="ca-right-section-hdr"><div class="ca-right-section-title">📋 Audit Trail</div></div>
+                      <div class="ca-right-section-hdr"><div class="ca-right-section-title"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:-1px"><path d="M2 4h12M2 8h9M2 12h7"/></svg>Audit Trail</div></div>
                       <div class="ca-right-section-body" id="eng-audit-right" style="max-height:200px;overflow-y:auto"><div style="font-size:12px;color:var(--t3)">Actions appear here.</div></div>
                     </div>
                   </div>
@@ -3230,11 +3251,10 @@ body.app-active #app {
                       <th onclick="sortFbl5n(11)" style="text-align:right">Applied<span class="si2"></span></th>
                       <th onclick="sortFbl5n(12)">Status<span class="si2"></span></th>
                       <th style="text-align:center">Conf%</th>
-                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody id="ca-open-items-body">
-                    <tr><td colspan="16"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
+                    <tr><td colspan="13"><div class="empty" style="padding:20px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.4"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3358,7 +3378,7 @@ body.app-active #app {
                       <tr>
                         <th>Invoice #</th><th>Inv Date</th><th>Due Date</th><th>PO #</th><th>Sales Order</th>
                         <th style="text-align:right">Amount</th><th style="text-align:right">Balance</th>
-                        <th>Aging</th><th>Status</th><th>Action</th>
+                        <th>Aging</th><th>Status</th>
                       </tr>
                     </thead>
                     <tbody id="acct-inv-body"><tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">No invoices</div></div></td></tr></tbody>
@@ -3459,7 +3479,6 @@ body.app-active #app {
                   <th onclick="sortTbl('exc-tbl',5)">Type<span class="si2"></span></th>
                   <th>Detail</th>
                   <th>Notes</th>
-                  <th>Action</th>
                   <th id="exc-action-th">Status</th>
                   <th></th>
                 </tr>
@@ -3598,7 +3617,6 @@ body.app-active #app {
                   <th>Notes</th>
                   <th>Status</th>
                   <th>Allocation</th>
-                  <th style="width:60px">Actions</th>
                 </tr>
               </thead>
               <tbody id="rem-tb">
@@ -3752,7 +3770,7 @@ body.app-active #app {
             </div>
             <div class="cfo-metric-card">
               <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--am),var(--r))"></div>
-              <div class="cfo-metric-icon" style="background:var(--am-bg)">⚠️</div>
+              <div class="cfo-metric-icon" style="background:var(--am-bg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
               <div class="cfo-metric-label">Exception Rate</div>
               <div class="cfo-metric-value" id="cfo-exc-rate">—</div>
               <div class="cfo-metric-trend" id="cfo-exc-trend" style="color:var(--t3)">
@@ -3762,7 +3780,7 @@ body.app-active #app {
             </div>
             <div class="cfo-metric-card">
               <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--p),var(--pu))"></div>
-              <div class="cfo-metric-icon" style="background:var(--pg)">⏱</div>
+              <div class="cfo-metric-icon" style="background:var(--pg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
               <div class="cfo-metric-label">Avg Time Per Payment</div>
               <div class="cfo-metric-value" id="cfo-time-per">8 min</div>
               <div class="cfo-metric-trend up">
@@ -3801,7 +3819,7 @@ body.app-active #app {
             </div>
             <div class="cfo-metric-card">
               <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--pu),var(--p))"></div>
-              <div class="cfo-metric-icon" style="background:var(--pu-bg)">🛡</div>
+              <div class="cfo-metric-icon" style="background:var(--pu-bg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
               <div class="cfo-metric-label">Manual Review Avoided</div>
               <div class="cfo-metric-value" id="cfo-manual-avoided">0</div>
               <div class="cfo-metric-trend up" style="color:var(--pu-t)">
@@ -4041,17 +4059,8 @@ body.app-active #app {
               <span id="profile-plan-badge"></span>
             </div>
             <div class="settings-row">
-              <div><div class="settings-label">Role</div><div class="settings-desc">Controls access to CFO Summary and admin features</div></div>
-              <select class="sel" id="s-role" onchange="saveUserRole()" style="font-size:12.5px;min-width:180px">
-                <option value="specialist">AR Specialist</option>
-                <option value="manager">AR Manager</option>
-                <option value="controller">Controller / CFO</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div class="settings-row">
               <div><div class="settings-label">Current Plan</div></div>
-              <span id="settings-plan-name" style="font-size:13px;font-weight:800;color:var(--pd)">Demo</span>
+              <span id="settings-plan-name" style="font-size:13px;font-weight:800;color:var(--pd)">Trial</span>
             </div>
           </div>
 
@@ -4075,9 +4084,20 @@ body.app-active #app {
             </div>
           </div>
 
+          <!-- Bank Accounts (paid plans) -->
+          <div class="settings-section" id="bank-acct-section">
+            <div class="settings-section-title">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-right:6px;vertical-align:-2px"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M1 7h14"/><path d="M4 11h2M10 11h2"/></svg>
+              Bank Accounts
+            </div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:12px">Add your company's bank accounts for payment matching. Account numbers are stored locally — no banking credentials are transmitted.</div>
+            <div id="bank-acct-list" style="margin-bottom:12px"></div>
+            <button class="btn btn-outline btn-sm" onclick="bankAcctAdd()">+ Add bank account</button>
+          </div>
+
           <!-- ROI & Labor Rate -->
           <div class="settings-section">
-            <div class="settings-section-title">📊 ROI &amp; Labor Cost</div>
+            <div class="settings-section-title"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-right:6px;vertical-align:-2px"><path d="M2 12l3-4 3 2 3-5 3 3"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>ROI &amp; Labor Cost</div>
             <div class="settings-row">
               <div>
                 <div class="settings-label">Fully-loaded AR labor rate ($/hr)</div>
@@ -4125,7 +4145,7 @@ body.app-active #app {
               </div>
             </div>
             <div style="font-size:12px;color:var(--t3);text-align:center">
-              Questions? <a href="mailto:info@armatchpro.com" style="color:var(--pd)">info@armatchpro.com</a> · <a href="https://calendly.com/armatchpro" target="_blank" style="color:var(--pd)">Book a demo</a>
+              Questions? <a href="mailto:info@armatchpro.com" style="color:var(--pd)">info@armatchpro.com</a>
             </div>
           </div>
 
@@ -4134,48 +4154,6 @@ body.app-active #app {
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline" onclick="doLogout()">Sign out</button>
               <button class="btn btn-p" onclick="saveSettings()">Save settings</button>
-            </div>
-          </div>
-
-          <!-- ══ DEMO LEADS ADMIN (master/admin only) ══ -->
-          <div id="demo-leads-section" style="display:none;margin-top:24px;padding-top:20px;border-top:2px solid var(--bdr)">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-              <div>
-                <div class="settings-section-title" style="margin-bottom:4px;border:none;padding:0">🧑‍💼 Demo Leads</div>
-                <div style="font-size:12px;color:var(--t3);line-height:1.55">Leads from the Free Demo signup form · Local: <code style="font-size:10.5px;background:var(--surface3);padding:1px 5px;border-radius:4px">armp_demo_leads</code> · Use <strong style="color:var(--pd)">Sync Netlify Leads</strong> to pull verified submissions from all devices.<br>
-                <span style="color:var(--t4);font-size:11px">Requires <code style="font-size:10px;background:var(--surface3);padding:1px 4px;border-radius:3px">NETLIFY_API_TOKEN</code> + <code style="font-size:10px;background:var(--surface3);padding:1px 4px;border-radius:3px">NETLIFY_DEMO_FORM_ID</code> set in Netlify environment variables.</span></div>
-              </div>
-              <div style="display:flex;gap:8px;flex-shrink:0">
-                <button class="btn btn-outline btn-xs" id="netlify-sync-btn" onclick="syncNetlifyLeads()" title="Pull verified submissions from Netlify Forms">⬆ Sync Netlify Leads</button>
-                <button class="btn btn-outline btn-xs" onclick="renderDemoLeads()" title="Refresh leads from localStorage">↻ Refresh</button>
-                <button class="btn btn-outline btn-xs" onclick="exportDemoLeadsCSV()" title="Download leads as CSV">⬇ Export CSV</button>
-              </div>
-            </div>
-            <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Actions: <span style="color:var(--t2)">📞 = Mark Contacted &nbsp;✓ = Mark Converted &nbsp;⏰ = Mark Expired &nbsp;✕ = Delete</span></div>
-            <div id="demo-leads-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
-            <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--bdr)">
-              <table id="demo-leads-tbl" style="width:100%;border-collapse:collapse;font-size:12px;min-width:1020px">
-                <thead>
-                  <tr style="background:var(--surface2)">
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Signup Date</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Full Name</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Work Email</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Company</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Job Title</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Phone</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">ERP System</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Invoice Volume</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Demo Status</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Demo Expiration</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Days Remaining</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Source</th>
-                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="demo-leads-tbody">
-                  <tr><td colspan="13" style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No demo leads yet. Leads appear here after users complete the free demo signup on the landing page (same browser).</td></tr>
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
@@ -4483,26 +4461,11 @@ function renderWsExcPremium(){
         }
       </div>
 
-      <!-- ── OWNERSHIP ROW ── -->
-      <div class="exc-ownership">
-        <span class="exc-owner-label">Assigned</span>
-        <select class="exc-owner-sel" onchange="excSetField(${realIdx},'assignedTo',this.value)">
-          ${EXC_TEAM_ROLES.map(r=>`<option value="${r}"${(ex.assignedTo||'—')===r?' selected':''}>${r}</option>`).join('')}
-        </select>
-        <span class="exc-owner-label" style="margin-left:4px">Priority</span>
-        <select class="exc-owner-sel" onchange="excSetField(${realIdx},'priority',this.value)">
-          ${EXC_PRIORITY_OPTS.map(p=>`<option value="${p}"${(ex.priority||'Medium')===p?' selected':''}>${p}</option>`).join('')}
-        </select>
-        <span class="exc-priority-badge ${priClass}">${pri}</span>
-        <span class="exc-owner-label" style="margin-left:4px">Due</span>
-        <input type="date" class="exc-due-inp" value="${ex.dueDate||''}" onchange="excSetField(${realIdx},'dueDate',this.value)" title="Resolution due date">
-        ${!isResV?`<select class="exc-status-sel" onchange="excSetStatus(${realIdx},this.value)">
+      <!-- ── OWNERSHIP ROW — Status + Notes only ── -->
+      <div class="exc-ownership" style="gap:10px">
+        ${!isResV?`<select class="exc-status-sel" onchange="excSetStatus(${realIdx},this.value)" title="Update status">
           ${EXC_STATUSES.map(s=>`<option value="${s}"${(ex.s||'Open')===s?' selected':''}>${s}</option>`).join('')}
         </select>`:''}
-      </div>
-
-      <!-- ── RESOLUTION NOTES ── -->
-      <div style="margin-top:6px">
         <input type="text" class="exc-notes-inp" value="${(ex.resolutionNotes||ex.notes||'').replace(/"/g,'&quot;')}"
           placeholder="Resolution notes…"
           oninput="excSetField(${realIdx},'resolutionNotes',this.value);excSetField(${realIdx},'notes',this.value)">
@@ -4755,7 +4718,7 @@ function _legacyClearAllExceptions(){
 // ── Data ──
 let INV=[],PAY=[],RES=[],EXC=[],IMP_TYPE='inv';
 const IH=['Customer','Account','Invoice #','PO #','Sales Order','Amount','Type','Invoice Date','Due Date','Document #','Status'];
-const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action','Decision','Status'];
+const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Notes','Decision','Status'];
 
 // ── Plans ──
 const PLANS={
@@ -5212,7 +5175,20 @@ function launchApp(user){
 
 function globalSearch(q){
   if(!q)return;
-  if(INV.length){sp('invoices');const el=document.getElementById('inv-search');if(el)el.value=q;searchTbl('inv-tb',q);}
+  var ql=q.trim().toLowerCase();
+  if(!ql)return;
+  // Search invoices by customer, invoice#, PO#, SO#, amount
+  var invHit=INV.find(function(v){return(v.c||'').toLowerCase().includes(ql)||(v.i||'').toLowerCase().includes(ql)||(v.po||'').toLowerCase().includes(ql)||(v.so||'').toLowerCase().includes(ql)||String(v.amt).includes(ql);});
+  if(invHit||INV.length){
+    sp('invoices');
+    var el=document.getElementById('inv-search');
+    if(el){el.value=q;invColFilter();}
+    return;
+  }
+  // Search payments by customer, txId, PO#
+  var payHit=PAY.find(function(p){return(p.c||'').toLowerCase().includes(ql)||(p.txId||'').toLowerCase().includes(ql)||(p.po||'').toLowerCase().includes(ql);});
+  if(payHit){sp('cash-app');return;}
+  toast('No results for "'+q.trim()+'"','');
 }
 
 // ── Modals ──
@@ -5364,7 +5340,7 @@ function rInv(){
 function rRem(){
   const tb=document.getElementById('rem-tb');if(!tb)return;
   const ct=document.getElementById('rem-ct');
-  if(!PAY.length){tb.innerHTML='<tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import bank file or paste CSV.</div></div></td></tr>';if(ct)ct.textContent='0 rows';renderPayQueue();return;}
+  if(!PAY.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.4"><rect x="1" y="6" width="22" height="15" rx="2"/><path d="M1 10h22"/><path d="M6 16h3M14 16h5"/></svg></div><div class="empty-t">No remittance data</div><div class="empty-s">Import bank file or paste CSV.</div></div></td></tr>';if(ct)ct.textContent='0 rows';renderPayQueue();return;}
   if(ct)ct.textContent=PAY.length+' rows · ACH · Wire · Check · Lockbox';
   tb.innerHTML=PAY.map((p,idx)=>{
     const {badge:statusBadge}=getRemStatus(p,idx);
@@ -5382,12 +5358,6 @@ function rRem(){
       <td style="font-size:11.5px;color:var(--t3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n||'—'}</td>
       <td>${statusBadge}</td>
       <td><button class="expand-btn" onclick="toggleRemAlloc(this,${idx})">Allocation</button></td>
-      <td>
-        <div style="display:flex;gap:4px">
-          <button class="btn btn-ghost btn-xs" onclick="addRemRowBefore(${idx})" title="Insert row before">+</button>
-          <button class="btn btn-ghost btn-xs" onclick="delRemRow(${idx})" title="Delete row" style="color:var(--r-t)">−</button>
-        </div>
-      </td>
     </tr>`;
   }).join('');
   caFilterUpdate();
@@ -5691,37 +5661,48 @@ function excSetStatus(idx,status){
 function resolveException(idx,dec){
   const ex=EXC[idx];if(!ex)return;
   if(!dec||dec==='— Select —')return;
+
   if(dec==='Apply to invoice'){
-    const openInvs=INV.filter(v=>!v.s||v.s==='Open'||v.s==='Partial');
-    const opts=openInvs.map(v=>`<option value="${v.i}">${v.i} — ${v.c} — $${$f(v.amt)}</option>`).join('');
-    showModal('Apply to Invoice',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select invoice to apply this payment to:</div>
-      ${opts?`<select id="exc-inv-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:8px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
-        <option value="">— Select from open invoices —</option>${opts}</select><div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:8px">— or enter manually —</div>`:''}
-      <input type="text" id="exc-inv-manual" placeholder="Invoice # (manual entry)" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:14px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-p btn-sm" onclick="confirmExcInv(${idx})">Apply to invoice</button>
-        <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
-      </div>`);
+    // Navigate to Cash Application → To Be Matched tab
+    // Then filter the Account Open Items to this customer
+    ex._pendingResolutionIdx=idx;
+    ex._pendingResolutionDec='Apply to invoice';
+    sp('cash-app');
+    setTimeout(function(){
+      setCaTab('match',document.getElementById('ca-tab-match'));
+      // Pre-filter account open items to this customer
+      if(ex.a){
+        var manInp=document.getElementById('ca-acct-manual-input');
+        if(manInp) manInp.value=ex.a;
+        caAcctDropdownChange(ex.a);
+      }
+      // Scroll bottom panel into view
+      var bottomHalf=document.querySelector('.ca-bottom-half');
+      if(bottomHalf) bottomHalf.scrollIntoView({behavior:'smooth',block:'nearest'});
+      toast('Select invoice(s) for this exception from the open items below, then approve','');
+    },300);
     return;
   }
+
   if(dec==='Post as Unapplied Cash'){
+    // Show inline account selector — filter open items when account entered
     const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
     const accts=Object.keys(acctMap).sort();
     const opts=accts.map(a=>`<option value="${a}">${a}${acctMap[a]?' — '+acctMap[a]:''}</option>`).join('');
-    showModal('Post as Unapplied Cash',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select account to post unapplied cash:</div>
-      ${opts?`<select id="exc-acct-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:8px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
-        <option value="">— Select account —</option>${opts}</select><div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:8px">— or enter manually —</div>`:''}
+    showModal('Post as Unapplied Cash',`
+      <div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Enter or select account number:</div>
       <div style="position:relative;margin-bottom:14px">
-        <input type="text" id="exc-acct-manual" placeholder="Account # or customer name…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none" oninput="excAcctManualSearch(this.value)">
+        <input type="text" id="exc-acct-manual" placeholder="Type account # or customer name…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr2);border-radius:7px;font-size:13px;font-family:var(--mono);background:var(--surface2);color:var(--t1);outline:none" oninput="excAcctManualSearch(this.value)" autocomplete="off">
         <div id="exc-acct-preview" style="font-size:11.5px;color:var(--g-t);margin-top:4px;padding-left:2px;min-height:18px"></div>
         <div id="exc-acct-suggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:20;display:none;max-height:180px;overflow-y:auto"></div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-p btn-sm" onclick="confirmExcAcct(${idx})">Post as unapplied</button>
+        <button class="btn btn-p btn-sm" onclick="confirmExcAcct(${idx})">Post as Unapplied</button>
         <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
       </div>`);
     return;
   }
+
   ex.dec=dec;
   finalizeExcResolution(idx,dec);
 }
@@ -5807,7 +5788,7 @@ function engRefreshSel(){
       const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
       const status=matched?'✓ ':p.dp?'↓ ':'';
       const bankTag=p.bank?` [${p.bank==='JPM-1234567890'?'JPM':'BOA'}]`:'';
-      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · $${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}${bankTag}`;
+      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · $${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}${p.dp?' · Down Payment':''}${bankTag}`;
       return`<option value="${i}" ${i===prev?'selected':''}>${label}</option>`;
     }).join('');
   const empty=document.getElementById('eng-empty');
@@ -6143,23 +6124,38 @@ function engResetUI(){
 
 // ── Payment Queue ──
 function renderPayQueue(){
-  const list=document.getElementById('pq-list');const ct=document.getElementById('pq-count');if(!list)return;
-  if(ct)ct.textContent='('+PAY.length+')';
-  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
-  list.innerHTML=PAY.map((p,i)=>{
-    const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
-    const exc=EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
-    const isActive=ENG_PAY_IDX===i;
-    const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':'var(--bdr3)';
-    const stateLabel=matched?'Matched':exc?'Exception':p.dp?'Down Pay':'Pending';
-    return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
-      <div class="pq-state-indicator" style="background:${stateColor}"></div>
-      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}</div><div class="pq-item-amt">$${$f(p.amt)}</div></div>
-      <div class="pq-item-bot">
-        <div class="pq-item-ref">${p.i||p.po||p.txId||'—'}</div>
-        <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
-      </div>
-    </div>`;
+  var list=document.getElementById('pq-list');var ct=document.getElementById('pq-count');if(!list)return;
+  var bankFilter=(document.getElementById('ca-bank-sel')||{}).value||'';
+  var filtered=bankFilter?PAY.filter(function(p){return(p.bank||'')===bankFilter;}):PAY;
+  if(ct)ct.textContent='('+filtered.length+(bankFilter&&filtered.length!==PAY.length?'/'+PAY.length:'')+')';
+  if(!filtered.length){
+    list.innerHTML='<div class="empty" style="padding:24px 12px">'+
+      '<div class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.4"><rect x="1" y="6" width="22" height="15" rx="2"/><path d="M1 10h22"/><path d="M6 16h3M14 16h5"/></svg></div>'+
+      '<div class="empty-t">'+(bankFilter?'No payments for this bank':'No payments')+'</div>'+
+      '<div class="empty-s">'+(bankFilter?'Select a different bank or import remittance.':'Import remittance data.')+'</div>'+
+      (bankFilter?'':'<div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div>')+
+    '</div>';
+    return;
+  }
+  list.innerHTML=filtered.map(function(p){
+    var i=PAY.indexOf(p);
+    var matched=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});
+    var exc=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});
+    var isActive=ENG_PAY_IDX===i;
+    var stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':'var(--bdr3)';
+    var stateLabel=matched?'Matched':exc?'Exception':p.dp?'Down Payment':'Pending';
+    var bankTag=p.bank==='JPM-1234567890'?'JPM':p.bank==='BOA-9876543210'?'BOA':'';
+    return'<div class="pq-item'+(isActive?' active':'')+'" onclick="engLoadPaymentFromQueue('+i+')">'+
+      '<div class="pq-state-indicator" style="background:'+stateColor+'"></div>'+
+      '<div class="pq-item-top">'+
+        '<div class="pq-item-cust">'+( p.c||p.a||'Unknown')+(bankTag?' <span style="font-size:9px;opacity:.5;font-weight:700">'+bankTag+'</span>':'')+'</div>'+
+        '<div class="pq-item-amt">$'+$f(p.amt)+'</div>'+
+      '</div>'+
+      '<div class="pq-item-bot">'+
+        '<div class="pq-item-ref">'+(p.i||p.po||p.txId||'—')+'</div>'+
+        '<span style="font-size:10px;padding:1px 6px;border-radius:6px;background:'+stateColor+'18;color:'+stateColor+';font-weight:700">'+stateLabel+'</span>'+
+      '</div>'+
+    '</div>';
   }).join('');
 }
 
@@ -7084,30 +7080,20 @@ function loginShowPricing(){
 var USER_ROLE = localStorage.getItem('armp_role') || 'specialist';
 var CFO_ROLES = ['manager','controller','admin','cfo','finance'];
 
-function saveUserRole(){
-  var sel = document.getElementById('s-role');
-  if(!sel) return;
-  USER_ROLE = sel.value;
-  localStorage.setItem('armp_role', USER_ROLE);
-  applyCfoAccess();
-  toast('Role updated: ' + sel.options[sel.selectedIndex].text);
-  addAudit('Role changed', USER_ROLE);
-}
-
 function applyCfoAccess(){
-  var canSeeCfo = IS_MASTER || CFO_ROLES.indexOf(USER_ROLE) >= 0;
-  var sbiCfo = document.getElementById('sbi-cfo');
-  if(sbiCfo) sbiCfo.style.display = canSeeCfo ? '' : 'none';
-  var gate = document.getElementById('cfo-role-gate');
-  var wrap = document.getElementById('cfo-content-wrap');
-  if(gate) gate.style.display = canSeeCfo ? 'none' : 'block';
-  if(wrap) wrap.style.display = canSeeCfo ? '' : 'none';
+  // CFO Summary visible to Pro, Team, admin/master — no role selector needed
+  var planLevel=(PLANS[USER_PLAN]||{}).level||0;
+  var canSeeCfo=IS_MASTER||(planLevel>=2); // pro=2, team=3
+  var sbiCfo=document.getElementById('sbi-cfo');
+  if(sbiCfo) sbiCfo.style.display='';  // always show in sidebar — gate is inside panel
+  var gate=document.getElementById('cfo-role-gate');
+  var wrap=document.getElementById('cfo-content-wrap');
+  if(gate) gate.style.display=canSeeCfo?'none':'block';
+  if(wrap) wrap.style.display=canSeeCfo?'':'none';
 }
 
 function initRole(){
-  var sel = document.getElementById('s-role');
-  if(sel) sel.value = IS_MASTER ? 'admin' : USER_ROLE;
-  applyCfoAccess();
+  applyCfoAccess(); // no role selector to init — just apply plan-based access
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -7231,11 +7217,12 @@ function agingChip(due){
   if(!due) return '<span class="aging-chip aging-na">—</span>';
   var d=new Date(due+'T00:00:00');
   var days=Math.floor((new Date()-d)/86400000);
-  if(days<0) return '<span class="aging-chip aging-cur">Current ('+Math.abs(days)+'d)</span>';
+  var dayWord=days===1?'day':'days';
+  if(days<0) return '<span class="aging-chip aging-cur">Current ('+Math.abs(days)+' '+dayWord+')</span>';
   if(days===0) return '<span class="aging-chip aging-cur">Due today</span>';
-  if(days<=30) return '<span class="aging-chip aging-30">'+days+'d overdue</span>';
-  if(days<=60) return '<span class="aging-chip aging-60">'+days+'d overdue</span>';
-  return '<span class="aging-chip aging-90">'+days+'d overdue</span>';
+  if(days<=30) return '<span class="aging-chip aging-30">'+days+' '+dayWord+' overdue</span>';
+  if(days<=60) return '<span class="aging-chip aging-60">'+days+' '+dayWord+' overdue</span>';
+  return '<span class="aging-chip aging-90">'+days+' '+dayWord+' overdue</span>';
 }
 
 function renderFbl5n(tbodyId, filterAcct, filterCust){
@@ -7246,7 +7233,7 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
     return true;
   });
   if(!invs.length){
-    tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="13"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
     return;
   }
   tbody.innerHTML=invs.map(function(v,i){
@@ -7278,7 +7265,6 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
       '<td class="td-num" style="color:var(--g-t)">'+(applied>0?'$'+$f(applied):'—')+'</td>'+
       '<td>'+sb+'</td>'+
       '<td style="text-align:center">'+cd+'</td>'+
-      '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(\''+v.i+'\')">Apply</button></td>'+
     '</tr>';
   }).join('');
 }
@@ -7706,7 +7692,124 @@ function updateCfoSummary(){
 function updateCfoSummaryClean(){ updateCfoSummary(); }
 
 // ══════════════════════════════════════════════════════════
-// SESSION LEDGER
+// BANK ACCOUNT MANAGEMENT (Settings)
+// Stores in localStorage key: armp_bank_accounts
+// No real credentials — name, masked account#, routing#, type only
+// ══════════════════════════════════════════════════════════
+var BANK_ACCT_KEY='armp_bank_accounts';
+
+function getBankAccounts(){
+  try{return JSON.parse(localStorage.getItem(BANK_ACCT_KEY)||'[]');}catch(e){return[];}
+}
+function saveBankAccounts(accts){
+  try{localStorage.setItem(BANK_ACCT_KEY,JSON.stringify(accts));}catch(e){}
+}
+
+function renderBankAcctList(){
+  var el=document.getElementById('bank-acct-list');if(!el)return;
+  var accts=getBankAccounts();
+  if(!accts.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:10px 0">No bank accounts added yet.</div>';
+    return;
+  }
+  el.innerHTML=accts.map(function(a,i){
+    var masked=a.acct?'••••'+a.acct.slice(-4):'—';
+    var routingMasked=a.routing?'••••'+a.routing.slice(-4):'—';
+    return'<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--bdr);border-radius:8px;margin-bottom:8px;flex-wrap:wrap">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:700;color:var(--t1);font-size:13px">'+escHtml(a.name)+'</div>'+
+        '<div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">Acct: '+masked+' &nbsp;·&nbsp; Routing: '+routingMasked+' &nbsp;·&nbsp; '+escHtml(a.type||'Checking')+'</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-shrink:0">'+
+        '<button class="btn btn-outline btn-xs" onclick="bankAcctEdit('+i+')">Edit</button>'+
+        '<button class="btn btn-outline btn-xs" style="color:var(--r-t)" onclick="bankAcctDelete('+i+')">Delete</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  // Sync to ca-bank-sel dropdown
+  var bankSel=document.getElementById('ca-bank-sel');
+  if(bankSel){
+    var existing=Array.from(bankSel.options).map(function(o){return o.value;});
+    accts.forEach(function(a){
+      var key=a.name+(a.acct?'-'+a.acct.slice(-4):'');
+      if(!existing.includes(key)){
+        var opt=document.createElement('option');
+        opt.value=key;opt.textContent=a.name+(a.acct?' (••••'+a.acct.slice(-4)+')':'');
+        bankSel.appendChild(opt);
+      }
+    });
+  }
+}
+
+function bankAcctAdd(){
+  showModal('Add Bank Account',
+    '<div style="display:flex;flex-direction:column;gap:12px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Bank Name *</div>'+
+    '<input id="ba-name" class="inp" placeholder="e.g. JP Morgan Chase" style="width:100%;font-size:13px"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Account Number *</div>'+
+    '<input id="ba-acct" class="inp" placeholder="Account number" type="password" style="width:100%;font-size:13px"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Routing Number</div>'+
+    '<input id="ba-routing" class="inp" placeholder="9-digit routing number" style="width:100%;font-size:13px" maxlength="9"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Account Type</div>'+
+    '<select id="ba-type" class="sel" style="width:100%;font-size:13px"><option>Checking</option><option>Savings</option><option>Money Market</option><option>Other</option></select></div>'+
+    '<div style="font-size:11px;color:var(--t3)">Account numbers are stored locally in this browser only. No data is transmitted externally.</div>'+
+    '<div style="display:flex;gap:8px">'+
+    '<button class="btn btn-p btn-sm" onclick="bankAcctSaveNew()">Save account</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+    '</div></div>'
+  );
+}
+
+function bankAcctSaveNew(){
+  var name=(document.getElementById('ba-name')||{}).value||'';
+  var acct=(document.getElementById('ba-acct')||{}).value||'';
+  var routing=(document.getElementById('ba-routing')||{}).value||'';
+  var type=(document.getElementById('ba-type')||{}).value||'Checking';
+  if(!name.trim()){toast('Bank name is required','warn');return;}
+  if(!acct.trim()){toast('Account number is required','warn');return;}
+  var accts=getBankAccounts();
+  accts.push({name:name.trim(),acct:acct.trim(),routing:routing.trim(),type:type,addedAt:new Date().toISOString()});
+  saveBankAccounts(accts);
+  closeModal();renderBankAcctList();
+  toast('Bank account added');
+  addAudit('Bank account added',name.trim());
+}
+
+function bankAcctEdit(idx){
+  var accts=getBankAccounts();var a=accts[idx];if(!a)return;
+  showModal('Edit Bank Account',
+    '<div style="display:flex;flex-direction:column;gap:12px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Bank Name</div>'+
+    '<input id="ba-name" class="inp" value="'+escHtml(a.name)+'" style="width:100%;font-size:13px"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Account Number</div>'+
+    '<input id="ba-acct" class="inp" value="'+escHtml(a.acct)+'" style="width:100%;font-size:13px"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Routing Number</div>'+
+    '<input id="ba-routing" class="inp" value="'+escHtml(a.routing||'')+'" style="width:100%;font-size:13px" maxlength="9"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Account Type</div>'+
+    '<select id="ba-type" class="sel" style="width:100%;font-size:13px"><option '+(a.type==='Checking'?'selected':'')+'>Checking</option><option '+(a.type==='Savings'?'selected':'')+'>Savings</option><option '+(a.type==='Money Market'?'selected':'')+'>Money Market</option><option '+(a.type==='Other'?'selected':'')+'>Other</option></select></div>'+
+    '<div style="display:flex;gap:8px">'+
+    '<button class="btn btn-p btn-sm" onclick="bankAcctUpdate('+idx+')">Save changes</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+    '</div></div>'
+  );
+}
+
+function bankAcctUpdate(idx){
+  var accts=getBankAccounts();if(!accts[idx])return;
+  accts[idx].name=(document.getElementById('ba-name')||{}).value||accts[idx].name;
+  accts[idx].acct=(document.getElementById('ba-acct')||{}).value||accts[idx].acct;
+  accts[idx].routing=(document.getElementById('ba-routing')||{}).value||accts[idx].routing;
+  accts[idx].type=(document.getElementById('ba-type')||{}).value||accts[idx].type;
+  saveBankAccounts(accts);closeModal();renderBankAcctList();
+  toast('Bank account updated');
+}
+
+function bankAcctDelete(idx){
+  var accts=getBankAccounts();
+  if(!confirm('Delete '+((accts[idx]||{}).name||'this account')+'?'))return;
+  accts.splice(idx,1);saveBankAccounts(accts);renderBankAcctList();
+  toast('Bank account deleted');
+}
 // Stores aggregated totals per batch — no raw invoice data,
 // no PII, no ERP connection needed.
 // Powers real month/quarter/YTD CFO rollups across sessions.
@@ -7953,12 +8056,18 @@ function syncProfileName(){
 }
 
 saveSettings = function(){
+  // Validate first + last name required
+  var fnEl=document.getElementById('profile-firstname-input');
+  var lnEl=document.getElementById('profile-lastname-input');
+  var fn=(fnEl||{}).value||'';var ln=(lnEl||{}).value||'';
+  if(!fn.trim()){toast('First name is required','warn');if(fnEl)fnEl.focus();return;}
+  if(!ln.trim()){toast('Last name is required','warn');if(lnEl)lnEl.focus();return;}
   // Sync first+last before saving
   syncProfileName();
   _origSaveSettings();
-  saveUserRole();
   saveMpRules();
   renderSettingsPlans();
+  applyCfoAccess(); // apply plan-based CFO access after save
   // Persist name to user storage
   var full=(document.getElementById('profile-name-input')||{}).value||'';
   if(CURRENT_USER&&full){
@@ -8007,7 +8116,24 @@ sp = function(id){
     if(savedLr&&lrEl) lrEl.value=savedLr;
     if(savedMp&&mpEl) mpEl.value=savedMp;
     if(savedTol&&tolEl) tolEl.value=savedTol;
-    setTimeout(function(){ renderMpRules(); if(IS_MASTER) renderDemoLeads(); },100);
+    // Auto-parse fullName into first/last if those fields are empty
+    var fnEl=document.getElementById('profile-firstname-input');
+    var lnEl=document.getElementById('profile-lastname-input');
+    if(fnEl&&lnEl&&!fnEl.value.trim()){
+      var users=getUsers();
+      var u=users[CURRENT_USER]||{};
+      var full=(u.name||'').trim();
+      if(full){
+        var parts=full.split(/\s+/);
+        fnEl.value=parts[0]||'';
+        lnEl.value=parts.slice(1).join(' ')||'';
+        syncProfileName();
+      }
+    }
+    // Mark first/last as required
+    if(fnEl) fnEl.setAttribute('required','');
+    if(lnEl) lnEl.setAttribute('required','');
+    setTimeout(function(){ renderMpRules(); renderBankAcctList(); },100);
   }
   if(id==='cash-app') setTimeout(function(){ populateAllAcctDropdowns(); refreshFbl5n(); },100);
   if(id==='reporting') setTimeout(updReporting,50);
@@ -8353,6 +8479,8 @@ function invColFilter(){
     var cells = tr.querySelectorAll('td');
     if(!cells.length){ tr.style.display=''; return; }
     var rowText = tr.innerText.toLowerCase();
+    // Also search PO# explicitly
+    var poCells=Array.from(cells).filter(function(c){ return c.innerText.toLowerCase().includes(globalQ.toLowerCase()); });
     var showGlobal = !globalQ || rowText.includes(globalQ.toLowerCase());
     var showCols = filters.every(function(f){
       var cell = cells[f.col];
@@ -8574,8 +8702,7 @@ function closeReviewInlineDetail(){
     <h3>Your 7-Day Free Trial is active.</h3>
     <p>Upgrade to unlock unlimited production imports, full posting exports, admin settings, and complete workflow access. Your team can be live in minutes — no ERP integration required.</p>
     <div class="demo-prompt-btns">
-      <button class="demo-prompt-btn-upgrade" onclick="window.open('https://armatchpro.com/#pricing','_blank')">🚀 Upgrade Now</button>
-      <button class="demo-prompt-btn-book" onclick="window.open('https://calendly.com/armatchpro','_blank')">📅 Book a Demo</button>
+      <button class="demo-prompt-btn-upgrade" onclick="window.open('https://armatchpro.com/#pricing','_blank')">Upgrade Now</button>
       <button class="demo-prompt-btn-continue" onclick="closeTrialPrompt()">Continue Trial</button>
     </div>
   </div>
@@ -8588,8 +8715,7 @@ function closeReviewInlineDetail(){
     <h2>Your 7-Day Free Trial has expired.</h2>
     <p>Your AR Match Pro trial has ended. Upgrade to a paid plan to continue matching invoices, running allocations, and exporting posting files.</p>
     <div class="demo-expired-btns">
-      <button class="demo-expired-btn-upgrade" onclick="window.location.href='https://armatchpro.com/#pricing'">🚀 Upgrade Now</button>
-      <button class="demo-expired-btn-book" onclick="window.open('https://calendly.com/armatchpro','_blank')">📅 Book a Demo</button>
+      <button class="demo-expired-btn-upgrade" onclick="window.location.href='https://armatchpro.com/#pricing'">Upgrade Now</button>
       <a class="demo-expired-btn-home" onclick="window.location.href='index.html'">← Return to Home</a>
     </div>
   </div>
