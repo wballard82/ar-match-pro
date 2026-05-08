@@ -1997,6 +1997,60 @@ body.app-active #app {
   display: flex !important;
   pointer-events: auto !important;
 }
+
+/* ── Demo Purchase Prompt ── */
+#demo-prompt-overlay {
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;
+  align-items:center;justify-content:center;backdrop-filter:blur(6px);
+}
+#demo-prompt-overlay.open{display:flex;}
+#demo-prompt-box {
+  background:linear-gradient(160deg,#0F1625,#141E30);
+  border:1px solid rgba(59,130,246,.25);border-radius:20px;
+  width:480px;max-width:95vw;padding:36px 32px;box-shadow:0 32px 80px rgba(0,0,0,.6);
+  animation:demoPromptIn .32s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes demoPromptIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:none}}
+#demo-prompt-box h3{font-size:20px;font-weight:800;color:#F0F6FF;margin:14px 0 10px;letter-spacing:-.3px;}
+#demo-prompt-box p{font-size:14px;color:#8BA3C7;line-height:1.65;margin-bottom:22px;}
+.demo-prompt-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);color:#60A5FA;font-size:12px;font-weight:700;padding:6px 13px;border-radius:999px;margin-bottom:4px;}
+.demo-prompt-days{font-size:13px;font-weight:700;color:#34D399;margin-bottom:18px;}
+.demo-prompt-btns{display:flex;gap:10px;flex-wrap:wrap;}
+.demo-prompt-btn-upgrade{flex:1;padding:13px 18px;background:linear-gradient(135deg,#3B82F6,#1D4ED8);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .18s;}
+.demo-prompt-btn-upgrade:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,130,246,.4);}
+.demo-prompt-btn-book{padding:13px 18px;background:transparent;color:#8BA3C7;border:1.5px solid rgba(255,255,255,.12);border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .18s;}
+.demo-prompt-btn-book:hover{border-color:rgba(255,255,255,.25);color:#F0F6FF;}
+.demo-prompt-btn-continue{padding:13px 18px;background:transparent;color:#4D6480;border:1.5px solid rgba(255,255,255,.07);border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .18s;}
+.demo-prompt-btn-continue:hover{color:#8BA3C7;border-color:rgba(255,255,255,.12);}
+
+/* ── Demo Expired Overlay ── */
+#demo-expired-overlay {
+  display:none;position:fixed;inset:0;background:#080D18;z-index:400;
+  align-items:center;justify-content:center;
+}
+#demo-expired-overlay.open{display:flex;}
+#demo-expired-box{
+  text-align:center;max-width:440px;padding:20px;
+}
+#demo-expired-box h2{font-size:28px;font-weight:900;color:#F0F6FF;margin:16px 0 10px;letter-spacing:-.5px;}
+#demo-expired-box p{font-size:15px;color:#8BA3C7;line-height:1.65;margin-bottom:28px;}
+.demo-expired-icon{font-size:52px;margin-bottom:8px;}
+.demo-expired-btns{display:flex;flex-direction:column;gap:10px;align-items:center;}
+.demo-expired-btn-upgrade{width:100%;max-width:260px;padding:14px;background:linear-gradient(135deg,#3B82F6,#1D4ED8);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.demo-expired-btn-book{width:100%;max-width:260px;padding:13px;background:transparent;color:#8BA3C7;border:1.5px solid rgba(255,255,255,.15);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);}
+.demo-expired-btn-home{font-size:13px;color:#4D6480;text-decoration:none;margin-top:6px;display:block;cursor:pointer;}
+.demo-expired-btn-home:hover{color:#8BA3C7;}
+
+/* ── Demo top badge ── */
+#demo-top-badge {
+  display:none;align-items:center;gap:8px;
+  background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);
+  color:#FCD34D;font-size:11.5px;font-weight:700;
+  padding:4px 12px;border-radius:999px;
+  cursor:pointer;flex-shrink:0;
+}
+#demo-top-badge:hover{background:rgba(245,158,11,.2);}
+
 </style>
 </head>
 <body>
@@ -2293,6 +2347,9 @@ body.app-active #app {
     </div>
 
     <div class="tn-actions">
+      <div id="demo-top-badge" onclick="showDemoPrompt()" title="Demo mode — click to upgrade">
+        ⚡ <span id="demo-days-label">Demo</span>
+      </div>
       <button class="tn-icon-btn" title="Import data" onclick="openImport('inv')">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 2v8M5 7l3 3 3-3"/></svg>
       </button>
@@ -4399,6 +4456,10 @@ function doLogout(){
   if(ls){ ls.style.display=''; ls.style.visibility=''; ls.style.pointerEvents=''; ls.style.zIndex=''; ls.style.opacity=''; }
   INV=[];PAY=[];RES=[];EXC=[];
   IS_DEMO=true;CURRENT_USER='';IS_MASTER=false;
+  // Reset demo UI
+  var badge=document.getElementById('demo-top-badge');if(badge)badge.style.display='none';
+  var dp=document.getElementById('demo-prompt-overlay');if(dp)dp.classList.remove('open');
+  var de=document.getElementById('demo-expired-overlay');if(de)de.classList.remove('open');
 }
 
 function setUserDisplay(user){
@@ -5854,27 +5915,131 @@ function initLogoCanvas(){
 }
 
 // ══════════════════════════════════════════════════════════
+// DEMO ACCESS MANAGEMENT
+// ══════════════════════════════════════════════════════════
+
+function getDemoAccess(){
+  try{
+    var raw=localStorage.getItem('armp_demo_access');
+    if(!raw)return null;
+    var d=JSON.parse(raw);
+    if(!d||!d.enabled)return null;
+    return d;
+  }catch(e){return null;}
+}
+
+function isDemoExpired(d){
+  if(!d||!d.expiresAt)return true;
+  return new Date(d.expiresAt)<new Date();
+}
+
+function demoDaysRemaining(d){
+  if(!d||!d.expiresAt)return 0;
+  var ms=new Date(d.expiresAt)-new Date();
+  return Math.max(0,Math.ceil(ms/(1000*60*60*24)));
+}
+
+function showDemoExpiredScreen(){
+  var ov=document.getElementById('demo-expired-overlay');
+  if(ov)ov.classList.add('open');
+}
+
+function showDemoPrompt(){
+  var ov=document.getElementById('demo-prompt-overlay');
+  if(ov)ov.classList.add('open');
+}
+
+function closeDemoPrompt(){
+  var ov=document.getElementById('demo-prompt-overlay');
+  if(ov)ov.classList.remove('open');
+}
+
+function initDemoBadge(daysLeft){
+  var badge=document.getElementById('demo-top-badge');
+  var label=document.getElementById('demo-days-label');
+  if(badge){badge.style.display='flex';}
+  if(label){label.textContent='Demo: '+daysLeft+' day'+(daysLeft===1?'':'s')+' left';}
+  var daysText=document.getElementById('demo-prompt-days-text');
+  if(daysText){daysText.textContent=daysLeft+' day'+(daysLeft===1?'':'s')+' remaining';}
+}
+
+function launchDemoFromAccess(demoData){
+  IS_DEMO=true;
+  CURRENT_USER=demoData.email||'demo@armatchpro.com';
+  var displayName=demoData.fullName||demoData.firstName||'Demo User';
+  launchApp({name:displayName,avatar:'',plan:'demo',isMaster:false});
+  var days=demoDaysRemaining(demoData);
+  initDemoBadge(days);
+  // Show purchase prompt after app loads
+  setTimeout(function(){
+    if(!IS_MASTER){showDemoPrompt();}
+  },1200);
+}
+
+function doLogoutDemoCleanup(){
+  // Also clear demo access on explicit logout
+  // (keep armp_demo_access for re-entry within 7 days)
+}
+
+// ══════════════════════════════════════════════════════════
 // SESSION RESTORE + INIT
 // ══════════════════════════════════════════════════════════
-window.addEventListener('load',()=>{
+window.addEventListener('load',function(){
   initLogoCanvas();
-  const params=new URLSearchParams(window.location.search);
-  if(params.get('demo')==='true'){demoLogin();return;}
-  const rem=localStorage.getItem('armp_remember_email');
-  const emailEl=document.getElementById('li-email');
-  if(rem&&emailEl){emailEl.value=rem;const rb=document.getElementById('li-remember');if(rb)rb.checked=true;}
-  if(params.get('checkout')==='success'){const plan=params.get('plan')||'pro';setTimeout(()=>toast('🎉 Payment successful! Sign in to activate your '+plan+' plan.'),500);}
-  const sess=localStorage.getItem('armp_session');
+  var params=new URLSearchParams(window.location.search);
+
+  // ── Demo mode via URL param ──
+  if(params.get('mode')==='demo'||params.get('demo')==='true'){
+    var demoData=getDemoAccess();
+    if(demoData){
+      if(isDemoExpired(demoData)){
+        showDemoExpiredScreen();
+        return;
+      }
+      launchDemoFromAccess(demoData);
+      return;
+    } else {
+      // No stored demo access — fall through to regular login
+      // (might happen if localStorage was cleared)
+      IS_DEMO=true;CURRENT_USER='demo@armatchpro.com';
+      launchApp({name:'Demo User',avatar:'',plan:'demo',isMaster:false});
+      setTimeout(showDemoPrompt,1200);
+      return;
+    }
+  }
+
+  // ── Remember email ──
+  var rem=localStorage.getItem('armp_remember_email');
+  var emailEl=document.getElementById('li-email');
+  if(rem&&emailEl){emailEl.value=rem;var rb=document.getElementById('li-remember');if(rb)rb.checked=true;}
+
+  // ── Checkout success ──
+  if(params.get('checkout')==='success'){
+    var plan=params.get('plan')||'pro';
+    setTimeout(function(){toast('🎉 Payment successful! Sign in to activate your '+plan+' plan.');},500);
+  }
+
+  // ── Existing session ──
+  var sess=localStorage.getItem('armp_session');
   if(sess){
     try{
       if(sess===MASTER_ADMIN_EMAIL){CURRENT_USER=sess;IS_DEMO=false;launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});return;}
-      const users=getUsers();
+      var users=getUsers();
       if(users[sess]){CURRENT_USER=sess;IS_DEMO=false;launchApp(users[sess]);}
       else localStorage.removeItem('armp_session');
     }catch(e){localStorage.removeItem('armp_session');}
   }
+
+  // ── Check for still-valid stored demo access on direct app.html load ──
+  // (user bookmarked app.html directly after demo signup)
+  var storedDemo=getDemoAccess();
+  if(storedDemo&&!isDemoExpired(storedDemo)&&!sess){
+    // Offer demo re-entry silently — show login but pre-check for returning demo users
+    // Demo users re-enter via app.html?mode=demo link; don't auto-bypass login here
+  }
+
   // Dark mode state
-  const sdm=document.getElementById('s-dm');if(sdm)sdm.checked=true;
+  var sdm=document.getElementById('s-dm');if(sdm)sdm.checked=true;
 });
 </script>
 <script src="https://js.stripe.com/v3/"></script>
@@ -6921,6 +7086,35 @@ function closeReviewInlineDetail(){
 }
 
 </script>
+
+<!-- ══ DEMO PURCHASE PROMPT ══ -->
+<div id="demo-prompt-overlay">
+  <div id="demo-prompt-box">
+    <div class="demo-prompt-badge">⚡ Free Demo Active</div>
+    <div class="demo-prompt-days" id="demo-prompt-days-text">7 days remaining</div>
+    <h3>Your AR Match Pro demo is active.</h3>
+    <p>Upgrade to unlock production imports, exports, admin settings, and full workflow access. Your team can be live in minutes — no ERP integration required.</p>
+    <div class="demo-prompt-btns">
+      <button class="demo-prompt-btn-upgrade" onclick="window.open('https://armatchpro.com/#pricing','_blank')">🚀 Upgrade Now</button>
+      <button class="demo-prompt-btn-book" onclick="window.open('https://calendly.com/armatchpro','_blank')">📅 Book a Demo</button>
+      <button class="demo-prompt-btn-continue" onclick="closeDemoPrompt()">Continue Demo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DEMO EXPIRED ══ -->
+<div id="demo-expired-overlay">
+  <div id="demo-expired-box">
+    <div class="demo-expired-icon">⏰</div>
+    <h2>Your demo has expired.</h2>
+    <p>Your 7-day AR Match Pro demo has ended. Upgrade to a paid plan to continue matching invoices, running allocations, and exporting posting files.</p>
+    <div class="demo-expired-btns">
+      <button class="demo-expired-btn-upgrade" onclick="window.location.href='https://armatchpro.com/#pricing'">🚀 Upgrade Now</button>
+      <button class="demo-expired-btn-book" onclick="window.open('https://calendly.com/armatchpro','_blank')">📅 Book a Demo</button>
+      <a class="demo-expired-btn-home" onclick="window.location.href='index.html'">← Return to Home</a>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

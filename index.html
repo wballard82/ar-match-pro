@@ -1108,64 +1108,66 @@ async function submitLead(){
   errEl.style.display='none';
 
   const btn=document.getElementById('lead-submit-btn');
-  btn.disabled=true;btn.textContent='Sending…';
+  btn.disabled=true;btn.textContent='Setting up your demo…';
 
-  // Save to localStorage as backup
-  const leads=JSON.parse(localStorage.getItem('armp_leads')||'[]');
-  const lead={name,email,company,title,phone,erp,volume,ts:new Date().toISOString(),source:'landing-page-demo'};
-  leads.push(lead);
-  localStorage.setItem('armp_leads',JSON.stringify(leads));
+  // Parse first name
+  const firstName=name.split(' ')[0]||name;
 
-  // Grant demo access — gates demo.html
-  localStorage.setItem('demoAccessGranted','true');
-  localStorage.setItem('armp_demo_access',JSON.stringify({
-    granted:true,
-    name:name,
-    email:email,
-    company:company,
-    ts:new Date().toISOString()
-  }));
-
-  // Send via Formspree
+  // Save lead to localStorage
   try{
-    await fetch('https://formspree.io/f/xqenaooy',{
+    const leads=JSON.parse(localStorage.getItem('armp_leads')||'[]');
+    leads.push({name,email,company,title,phone,erp,volume,ts:new Date().toISOString(),source:'landing-page-demo'});
+    localStorage.setItem('armp_leads',JSON.stringify(leads));
+  }catch(e){}
+
+  // Save full demo access
+  const now=new Date();
+  const expiresAt=new Date(now.getTime()+7*24*60*60*1000);
+  const demoAccess={
+    enabled:true,
+    email:email,
+    firstName:firstName,
+    fullName:name,
+    company:company,
+    jobTitle:title,
+    phone:phone,
+    erp:erp,
+    invoiceVolume:volume,
+    startedAt:now.toISOString(),
+    expiresAt:expiresAt.toISOString(),
+    plan:'demo'
+  };
+  try{
+    localStorage.setItem('armp_demo_access',JSON.stringify(demoAccess));
+    localStorage.setItem('demoAccessGranted','true');
+  }catch(e){}
+
+  // Fire-and-forget Formspree — NEVER block demo on failure
+  try{
+    fetch('https://formspree.io/f/xqenaooy',{
       method:'POST',
       headers:{'Content-Type':'application/json','Accept':'application/json'},
       body:JSON.stringify({
-        name, email, company, title, phone, erp, volume,
-        _subject:`New AR Match Pro demo request — ${company}`,
-        _replyto: email,
-        message:`
-Demo Request — AR Match Pro
-
-Name: ${name}
-Email: ${email}
-Company: ${company}
-Job Title: ${title}
-Phone: ${phone||'not provided'}
-ERP / Accounting System: ${erp}
-Monthly Invoice Volume: ${volume}
-Time: ${new Date().toLocaleString()}
-        `.trim()
+        name,email,company,title,phone,erp,volume,
+        _subject:'New AR Match Pro demo request — '+company,
+        _replyto:email,
+        message:'Demo Request\n\nName: '+name+'\nEmail: '+email+'\nCompany: '+company+'\nJob Title: '+title+'\nPhone: '+(phone||'not provided')+'\nERP: '+erp+'\nVolume: '+volume+'\nTime: '+new Date().toLocaleString()
       })
-    });
-  }catch(e){
-    // Formspree failed — data still saved in localStorage, admin panel will show it
-    console.warn('Formspree send failed, lead saved locally',e);
-  }
+    }).catch(function(e){console.log('Lead form note: backend unavailable, demo granted locally.',e);});
+  }catch(e){console.log('Lead form note: fetch failed.',e);}
 
   // Show success + countdown
   document.getElementById('lead-form-wrap').style.display='none';
   document.getElementById('lead-success').style.display='block';
-  document.getElementById('lead-success-name').textContent=name.split(' ')[0];
+  document.getElementById('lead-success-name').textContent=firstName;
   document.getElementById('lead-success-email').textContent=email;
 
-  // Animate progress bar then redirect
+  // Animate progress bar then redirect to app.html?mode=demo
   const bar=document.getElementById('lead-progress');
   let pct=0;
-  const interval=setInterval(()=>{
+  const interval=setInterval(function(){
     pct+=2;bar.style.width=pct+'%';
-    if(pct>=100){clearInterval(interval);window.location.href='demo.html?auto=true';}
+    if(pct>=100){clearInterval(interval);window.location.href='app.html?mode=demo';}
   },50);
 }
 
