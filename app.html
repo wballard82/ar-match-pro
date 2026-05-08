@@ -2051,6 +2051,16 @@ body.app-active #app {
 }
 #demo-top-badge:hover{background:rgba(245,158,11,.2);}
 
+/* ── App Mobile ── */
+@media(max-width:600px){
+  #demo-prompt-box{padding:24px 18px;width:95vw;}
+  .demo-prompt-btns{flex-direction:column;align-items:stretch;}
+  .demo-prompt-btn-upgrade,.demo-prompt-btn-book,.demo-prompt-btn-continue{text-align:center;width:100%;}
+  #demo-expired-box{padding:16px;}
+  #demo-expired-box h2{font-size:22px;}
+  .demo-leads-section table{font-size:11px;}
+}
+
 </style>
 </head>
 <body>
@@ -3748,6 +3758,44 @@ body.app-active #app {
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline" onclick="doLogout()">Sign out</button>
               <button class="btn btn-p" onclick="saveSettings()">Save settings</button>
+            </div>
+          </div>
+
+          <!-- ══ DEMO LEADS ADMIN (master/admin only) ══ -->
+          <div id="demo-leads-section" style="display:none;margin-top:24px;padding-top:20px;border-top:2px solid var(--bdr)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+              <div>
+                <div class="settings-section-title" style="margin-bottom:2px;border:none;padding:0">🧑‍💼 Demo Leads</div>
+                <div style="font-size:12px;color:var(--t3)">All free demo signups — from localStorage armp_demo_leads</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-outline btn-xs" onclick="renderDemoLeads()">↻ Refresh</button>
+                <button class="btn btn-outline btn-xs" onclick="exportDemoLeadsCSV()">⬇ Export CSV</button>
+              </div>
+            </div>
+            <div id="demo-leads-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"></div>
+            <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--bdr)">
+              <table id="demo-leads-tbl" style="width:100%;border-collapse:collapse;font-size:12px;min-width:900px">
+                <thead>
+                  <tr style="background:var(--surface2)">
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Signup Date</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Full Name</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Work Email</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Company</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Job Title</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Phone</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">ERP</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Volume</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Status</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Expires</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Days Left</th>
+                    <th style="padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--bdr)">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="demo-leads-tbody">
+                  <tr><td colspan="12" style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No demo leads yet.</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -6755,7 +6803,7 @@ sp = function(id){
     return;
   }
   _origSp(id);
-  if(id==='settings'){ initRole(); renderMpRules(); renderSettingsPlans(); setTimeout(function(){ renderMpRules(); },100); }
+  if(id==='settings'){ initRole(); renderMpRules(); renderSettingsPlans(); setTimeout(function(){ renderMpRules(); if(IS_MASTER) renderDemoLeads(); },100); }
   if(id==='cash-app') setTimeout(function(){ populateAllAcctDropdowns(); refreshFbl5n(); },100);
   if(id==='reporting') setTimeout(updReporting,50);
 };
@@ -6809,6 +6857,7 @@ launchApp = function(user){
     renderSettingsPlans();
     populateAllAcctDropdowns();
     syncMpCheckboxes();
+    if(IS_MASTER) setTimeout(renderDemoLeads, 300);
   },200);
 };
 
@@ -6821,6 +6870,118 @@ document.addEventListener('DOMContentLoaded',function(){
   initRole();
   renderMpRules();
 });
+
+// ══════════════════════════════════════════════════════════
+// DEMO LEADS ADMIN
+// ══════════════════════════════════════════════════════════
+
+function getDemoLeads(){
+  try{ return JSON.parse(localStorage.getItem('armp_demo_leads')||'[]'); }catch(e){ return []; }
+}
+function saveDemoLeads(leads){
+  try{ localStorage.setItem('armp_demo_leads',JSON.stringify(leads)); }catch(e){}
+}
+
+function renderDemoLeads(){
+  if(!IS_MASTER) return;
+  var section = document.getElementById('demo-leads-section');
+  if(section) section.style.display='block';
+
+  var leads = getDemoLeads();
+  var tbody = document.getElementById('demo-leads-tbody');
+  var statsEl = document.getElementById('demo-leads-stats');
+  if(!tbody) return;
+
+  // Stats
+  var now = new Date();
+  var active = leads.filter(function(l){ return l.demoStatus==='Demo Active' && new Date(l.demoExpiration)>now; }).length;
+  var contacted = leads.filter(function(l){ return l.demoStatus==='Contacted'; }).length;
+  var converted = leads.filter(function(l){ return l.demoStatus==='Converted'; }).length;
+  var expired = leads.filter(function(l){ return l.demoStatus==='Expired' || (l.demoStatus==='Demo Active'&&new Date(l.demoExpiration)<=now); }).length;
+  if(statsEl){
+    statsEl.innerHTML = [
+      {label:'Total Leads',val:leads.length,color:'var(--pd)'},
+      {label:'Active',val:active,color:'var(--g-t)'},
+      {label:'Contacted',val:contacted,color:'var(--am-t)'},
+      {label:'Converted',val:converted,color:'var(--g-t)'}
+    ].map(function(s){
+      return '<div style="background:var(--surface2);border:1px solid var(--bdr);border-radius:10px;padding:12px;text-align:center">'+
+        '<div style="font-size:22px;font-weight:900;font-family:var(--mono);color:'+s.color+'">'+s.val+'</div>'+
+        '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-top:3px">'+s.label+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  if(!leads.length){
+    tbody.innerHTML='<tr><td colspan="12" style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No demo leads yet. Leads appear after users complete the free demo form on the landing page.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = leads.map(function(lead, idx){
+    var expDate = lead.demoExpiration ? new Date(lead.demoExpiration) : null;
+    var isExpired = expDate && expDate < now;
+    var daysLeft = expDate ? Math.max(0,Math.ceil((expDate-now)/(1000*60*60*24))) : '—';
+    var status = lead.demoStatus || 'Demo Active';
+    if(isExpired && status==='Demo Active') status='Expired';
+    var statusColor = status==='Demo Active'?'var(--g-t)':status==='Contacted'?'var(--am-t)':status==='Converted'?'var(--pd)':'var(--r-t)';
+    var signupDate = lead.signupDate ? new Date(lead.signupDate).toLocaleDateString() : '—';
+    var expDateStr = expDate ? expDate.toLocaleDateString() : '—';
+    return '<tr style="border-bottom:1px solid var(--bdr)">'+
+      '<td style="padding:9px 12px;color:var(--t2);white-space:nowrap">'+signupDate+'</td>'+
+      '<td style="padding:9px 12px;font-weight:600;color:var(--t1)">'+escHtml(lead.fullName||'—')+'</td>'+
+      '<td style="padding:9px 12px;color:var(--pd)"><a href="mailto:'+escHtml(lead.email||'')+'" style="color:var(--pd);text-decoration:none">'+escHtml(lead.email||'—')+'</a></td>'+
+      '<td style="padding:9px 12px;color:var(--t1)">'+escHtml(lead.company||'—')+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t2)">'+escHtml(lead.jobTitle||'—')+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t2)">'+escHtml(lead.phone||'—')+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t2)">'+escHtml(lead.erp||'—')+'</td>'+
+      '<td style="padding:9px 12px;color:var(--t2)">'+escHtml(lead.invoiceVolume||'—')+'</td>'+
+      '<td style="padding:9px 12px"><span style="font-size:11px;font-weight:700;color:'+statusColor+'">'+status+'</span></td>'+
+      '<td style="padding:9px 12px;color:var(--t2);white-space:nowrap">'+expDateStr+'</td>'+
+      '<td style="padding:9px 12px;font-family:var(--mono);color:'+(isExpired?'var(--r-t)':'var(--g-t)')+'">'+daysLeft+'</td>'+
+      '<td style="padding:9px 12px;white-space:nowrap">'+
+        '<div style="display:flex;gap:5px;flex-wrap:wrap">'+
+          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 8px" onclick="updateDemoLeadStatus('+idx+',' + "'Contacted'" + ')">Contacted</button>'+
+          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 8px;color:var(--g-t)" onclick="updateDemoLeadStatus('+idx+',' + "'Converted'" + ')">Converted</button>'+
+          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 8px;color:var(--r-t)" onclick="updateDemoLeadStatus('+idx+',' + "'Expired'" + ')">Expired</button>'+
+          '<button class="btn btn-outline btn-xs" style="font-size:10px;padding:3px 8px;color:var(--r-t)" onclick="deleteDemoLead('+idx+')">✕</button>'+
+        '</div>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+}
+
+function escHtml(str){
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateDemoLeadStatus(idx, status){
+  var leads = getDemoLeads();
+  if(leads[idx]){ leads[idx].demoStatus = status; saveDemoLeads(leads); renderDemoLeads(); toast('Lead updated: '+status,''); }
+}
+
+function deleteDemoLead(idx){
+  var leads = getDemoLeads();
+  leads.splice(idx,1);
+  saveDemoLeads(leads);
+  renderDemoLeads();
+  toast('Lead deleted','');
+}
+
+function exportDemoLeadsCSV(){
+  var leads = getDemoLeads();
+  if(!leads.length){ toast('No leads to export',''); return; }
+  var cols = ['signupDate','fullName','email','company','jobTitle','phone','erp','invoiceVolume','demoStatus','demoExpiration','source'];
+  var header = ['Signup Date','Full Name','Email','Company','Job Title','Phone','ERP','Invoice Volume','Status','Demo Expiration','Source'];
+  var rows = [header.join(',')].concat(leads.map(function(l){
+    return cols.map(function(c){ return '"'+(l[c]||'').replace(/"/g,'""')+'"'; }).join(',');
+  }));
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n'));
+  a.download = 'armp_demo_leads_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('Demo leads exported','');
+}
 
 </script>
 

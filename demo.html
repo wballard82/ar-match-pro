@@ -17,8 +17,6 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
-
-/* ── GRID BACKGROUND ── */
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(14,165,233,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
 
 /* ── HEADER ── */
@@ -35,10 +33,17 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 /* ── HERO ── */
 .hero{padding:100px 24px 48px;text-align:center;position:relative;z-index:1}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--p);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);padding:5px 14px;border-radius:999px;margin-bottom:20px;letter-spacing:.04em;text-transform:uppercase}
-.hero h1{font-family:var(--font);font-size:clamp(32px,5vw,56px);font-weight:800;color:var(--t1);letter-spacing:-2px;line-height:1.05;margin-bottom:16px}
+.hero h1{font-family:var(--font);font-size:clamp(28px,5vw,52px);font-weight:800;color:var(--t1);letter-spacing:-2px;line-height:1.05;margin-bottom:14px}
 .hero h1 em{font-style:normal;background:linear-gradient(135deg,#7DD3FC,#34D399);-webkit-background-clip:text;color:transparent}
-.hero-sub{font-size:17px;color:var(--t2);max-width:540px;margin:0 auto 32px;line-height:1.65}
+.hero-sub{font-size:16px;color:var(--t2);max-width:540px;margin:0 auto 28px;line-height:1.65}
 .hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+/* Demo Welcome hero — shown after access */
+.demo-welcome-hero{padding:96px 24px 36px;text-align:center;position:relative;z-index:1}
+.demo-welcome-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:#34D399;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);padding:5px 14px;border-radius:999px;margin-bottom:18px;letter-spacing:.04em;text-transform:uppercase}
+.demo-welcome-hero h1{font-size:clamp(26px,4.5vw,46px);font-weight:800;color:var(--t1);letter-spacing:-1.5px;line-height:1.08;margin-bottom:12px}
+.demo-welcome-hero h1 em{font-style:normal;background:linear-gradient(135deg,#7DD3FC,#34D399);-webkit-background-clip:text;color:transparent}
+.demo-welcome-sub{font-size:15px;color:var(--t2);max-width:480px;margin:0 auto 28px;line-height:1.65}
+.demo-welcome-name{color:#34D399;font-weight:700}
 
 /* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .18s;font-family:var(--font);text-decoration:none;line-height:1;white-space:nowrap}
@@ -50,14 +55,26 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .btn-outline:hover{border-color:var(--p);color:var(--p)}
 .btn-ghost{background:rgba(255,255,255,.06);color:var(--t1);border:1px solid var(--line2)}
 .btn-ghost:hover{background:rgba(255,255,255,.1)}
-.btn-lg{padding:15px 28px;font-size:15px}
+.btn-lg{padding:15px 28px;font-size:15px;border-radius:12px}
 .btn-sm{padding:7px 14px;font-size:12.5px}
+/* Open Full App CTA */
+.open-app-btn{display:inline-flex;align-items:center;gap:9px;padding:18px 36px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:800;cursor:pointer;font-family:var(--font);box-shadow:0 12px 32px var(--glow-p),0 0 0 1px rgba(14,165,233,.18);transition:all .2s;text-decoration:none;letter-spacing:-.2px}
+.open-app-btn:hover{transform:translateY(-3px);box-shadow:0 20px 48px var(--glow-p)}
 
 /* ── DEMO CONTAINER ── */
 .demo-wrap{max-width:1060px;margin:0 auto;padding:0 16px 60px;position:relative;z-index:1}
 
+/* ── OPEN APP CARD ── */
+.open-app-card{background:linear-gradient(135deg,rgba(14,165,233,.1),rgba(16,185,129,.06));border:1px solid rgba(14,165,233,.2);border-radius:20px;padding:40px 32px;text-align:center;margin-bottom:24px}
+.open-app-card-icon{font-size:44px;margin-bottom:16px}
+.open-app-card h2{font-size:22px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.3px}
+.open-app-card p{font-size:14px;color:var(--t2);margin-bottom:24px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.6}
+.open-app-note{font-size:12px;color:var(--t3);margin-top:12px}
+.demo-meta-row{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.demo-meta-item{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t3)}
+
 /* ── STEP TRACKER ── */
-.steps{display:flex;align-items:center;gap:0;margin-bottom:32px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;padding:0}
+.steps{display:flex;align-items:center;gap:0;margin-bottom:24px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;padding:0}
 .step{flex:1;padding:14px 16px;display:flex;align-items:center;gap:10px;position:relative;transition:.3s;cursor:default}
 .step+.step::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:1px;height:60%;background:var(--line)}
 .step-num{width:26px;height:26px;border-radius:50%;border:2px solid var(--line2);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--t3);transition:.3s;flex-shrink:0;font-family:var(--mono)}
@@ -113,7 +130,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .prog-stat-val.g{color:var(--g)}.prog-stat-val.am{color:var(--am)}
 .prog-stat-lbl{font-size:11px;color:var(--t3);margin-top:4px}
 
-/* ── RESULTS (hidden until done) ── */
+/* ── RESULTS ── */
 #results-section{display:none}
 #results-section.show{display:block}
 
@@ -126,11 +143,9 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .kpi-card.g::before{background:linear-gradient(90deg,var(--g),var(--gd))}
 .kpi-card.p::before{background:linear-gradient(90deg,var(--p),var(--pd))}
 .kpi-card.am::before{background:var(--am)}
-.kpi-card.r::before{background:var(--r)}
-.kpi-card.pu::before{background:var(--pu)}
 .kpi-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
 .kpi-val{font-size:30px;font-weight:800;font-family:var(--mono);letter-spacing:-1.5px;line-height:1;margin-bottom:4px}
-.kpi-val.g{color:var(--g)}.kpi-val.p{color:var(--p)}.kpi-val.am{color:var(--am)}.kpi-val.r{color:var(--r)}.kpi-val.pu{color:var(--pu)}
+.kpi-val.g{color:var(--g)}.kpi-val.p{color:var(--p)}.kpi-val.am{color:var(--am)}
 .kpi-sub{font-size:11.5px;color:var(--t3)}
 
 /* ── BEFORE / AFTER ── */
@@ -139,7 +154,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .ba-col{padding:22px 24px}
 .ba-col.before{background:rgba(239,68,68,.06);border-right:1px solid var(--line)}
 .ba-col.after{background:rgba(16,185,129,.06)}
-.ba-title{font-family:var(--font);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.ba-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;display:flex;align-items:center;gap:7px}
 .ba-col.before .ba-title{color:var(--r)}
 .ba-col.after .ba-title{color:var(--g)}
 .ba-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:13px;color:var(--t2);line-height:1.5}
@@ -154,97 +169,123 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .insight-title{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:3px}
 .insight-desc{font-size:12px;color:var(--t3);line-height:1.5}
 
-/* ── WHY COLUMN ── */
+/* ── WHY TAG ── */
 .why-tip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--p);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);border-radius:6px;padding:2px 8px;cursor:default;white-space:nowrap}
 
 /* ── ROI BANNER ── */
 .roi-banner{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(14,165,233,.08));border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:18px;margin-bottom:16px;animation:fadeUp .6s ease both;animation-delay:.3s;flex-wrap:wrap}
 .roi-icon{font-size:32px;flex-shrink:0}
-.roi-txt h3{font-family:var(--font);font-size:17px;font-weight:800;color:var(--t1);margin-bottom:3px}
+.roi-txt h3{font-size:17px;font-weight:800;color:var(--t1);margin-bottom:3px}
 .roi-txt p{font-size:13px;color:var(--t2)}
 .roi-val{margin-left:auto;text-align:right;flex-shrink:0}
 .roi-num{font-family:var(--mono);font-size:28px;font-weight:800;color:var(--g);line-height:1}
 .roi-lbl{font-size:11px;color:var(--t3);margin-top:2px}
 
-/* ── FEATURE LOCK TEASER ── */
+/* ── FEATURE LOCK ── */
 .lock-teaser{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:10px;padding:13px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px;animation:fadeUp .6s ease both;animation-delay:.35s}
 .lock-teaser-txt{font-size:13px;color:var(--t1);flex:1}
 .lock-teaser-txt strong{color:#C4B5FD}
 
 /* ── CTA SECTION ── */
 .cta-section{text-align:center;padding:28px;background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:16px;animation:fadeUp .6s ease both;animation-delay:.4s}
-.cta-title{font-family:var(--font);font-size:22px;font-weight:800;color:var(--t1);margin-bottom:6px;letter-spacing:-.3px}
+.cta-title{font-size:22px;font-weight:800;color:var(--t1);margin-bottom:6px;letter-spacing:-.3px}
 .cta-sub{font-size:14px;color:var(--t2);margin-bottom:22px}
 .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
-/* ── UPLOAD SECTION ── */
-.upload-section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;text-align:center;animation:fadeUp .6s ease both;animation-delay:.5s}
-.upload-title{font-size:15px;font-weight:700;color:var(--t1);margin-bottom:6px}
-.upload-sub{font-size:13px;color:var(--t3);margin-bottom:16px;line-height:1.6}
+/* ── TRUST MSG ── */
 .trust-msg{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--t3);margin-top:12px}
-
-/* ── INITIAL STATE ── */
-.load-state{text-align:center;padding:40px 20px}
-.load-icon{font-size:48px;margin-bottom:16px;opacity:.5}
-.load-title{font-family:var(--font);font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px}
-.load-sub{font-size:13.5px;color:var(--t3);margin-bottom:24px}
 
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
-  .hero{padding:80px 16px 32px}
-  .hero h1{font-size:30px;letter-spacing:-1px}
-  .hero-sub{font-size:15px}
+  .hero{padding:76px 16px 28px}
+  .demo-welcome-hero{padding:76px 16px 24px}
+  .hero h1,.demo-welcome-hero h1{font-size:26px;letter-spacing:-.8px}
+  .hero-sub,.demo-welcome-sub{font-size:14px}
+  .hero-actions,.open-app-card .cta-btns{flex-direction:column;align-items:center}
+  .hero-actions .btn,.open-app-card .open-app-btn{width:100%;max-width:320px;justify-content:center}
   .demo-panel-body{padding:14px}
   .kpi-grid{grid-template-columns:1fr 1fr}
+  .open-app-card{padding:28px 20px}
+  .open-app-btn{width:100%;max-width:320px;justify-content:center;font-size:15px;padding:15px 20px}
+  .demo-meta-row{gap:12px}
+  .hdr-back span{display:none}
 }
 </style>
 </head>
 <body>
+
 <!-- ══ ACCESS GATE ══ -->
 <div id="access-gate" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#07111F,#0F172A);align-items:center;justify-content:center;padding:24px;font-family:'Inter',sans-serif">
-  <div style="background:#fff;border-radius:18px;padding:40px 36px;max-width:460px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.4)">
+  <div style="background:#0D1B2E;border:1px solid #1A2D42;border-radius:18px;padding:40px 36px;max-width:460px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.5)">
     <div style="font-size:48px;margin-bottom:18px">🔒</div>
-    <h2 style="font-size:22px;font-weight:800;color:#0F172A;margin-bottom:10px;letter-spacing:-.3px">Demo access required</h2>
-    <p style="font-size:14.5px;color:#64748B;line-height:1.65;margin-bottom:24px">
-      Please complete the short request form on the landing page first. We will email your demo confirmation and unlock access immediately after submission.
-    </p>
-    <a href="/index.html" style="display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 8px 22px rgba(14,165,233,.3)">← Back to landing page</a>
-    <div style="margin-top:18px;font-size:12.5px;color:#94A3B8">Your files are processed securely. No ERP connection required for MVP.</div>
+    <h2 style="font-size:22px;font-weight:800;color:#F1F5F9;margin-bottom:10px;letter-spacing:-.3px">Demo access required</h2>
+    <p style="font-size:14.5px;color:#94A3B8;line-height:1.65;margin-bottom:24px">Please complete the short request form on the landing page first. Access is granted immediately after submission.</p>
+    <a href="index.html" style="display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 8px 22px rgba(14,165,233,.3)">← Back to landing page</a>
+    <div style="margin-top:18px;font-size:12.5px;color:#475569">Your files are processed securely. No ERP connection required.</div>
+  </div>
+</div>
+
+<!-- ══ EXPIRED GATE ══ -->
+<div id="expired-gate" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#07111F,#0F172A);align-items:center;justify-content:center;padding:24px;font-family:'Inter',sans-serif">
+  <div style="background:#0D1B2E;border:1px solid #1A2D42;border-radius:18px;padding:40px 36px;max-width:460px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.5)">
+    <div style="font-size:48px;margin-bottom:18px">⏰</div>
+    <h2 style="font-size:22px;font-weight:800;color:#F1F5F9;margin-bottom:10px;letter-spacing:-.3px">Your demo has expired</h2>
+    <p style="font-size:14.5px;color:#94A3B8;line-height:1.65;margin-bottom:24px">Your 7-day AR Match Pro demo has ended. Upgrade to a paid plan to continue using the full app.</p>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <a href="index.html#pricing" style="width:100%;max-width:260px;display:block;padding:13px 20px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;text-align:center">🚀 Upgrade Now</a>
+      <a href="https://calendly.com/armatchpro" target="_blank" style="width:100%;max-width:260px;display:block;padding:12px 20px;background:transparent;color:#94A3B8;border:1.5px solid #1A2D42;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;text-align:center">📅 Book a Demo</a>
+      <a href="index.html" style="font-size:13px;color:#475569;text-decoration:none;margin-top:4px">← Return to Home</a>
+    </div>
   </div>
 </div>
 
 <script>
-// ══ DEMO ACCESS GUARD ══
-// Runs immediately on page load — before any demo content
+// ══ DEMO ACCESS GUARD — runs immediately ══
+var _demoAccessData = null;
+var _isDemoUser = false;
 (function(){
   try{
-    const access = JSON.parse(localStorage.getItem('armp_demo_access')||'null');
-    const isMaster = localStorage.getItem('armp_session') === 'admin@armatchpro.com';
-    const params = new URLSearchParams(window.location.search);
-    const fromLead = params.get('auto') === 'true'; // came from lead submit
-    if(!access || !access.granted){
-      if(!isMaster){
-        // Block demo
-        document.documentElement.style.overflow='hidden';
-        const gate = document.getElementById('access-gate');
-        if(gate){gate.style.display='flex';}
-        // Hide the rest of the page
-        document.addEventListener('DOMContentLoaded',function(){
-          document.querySelectorAll('body > *:not(#access-gate):not(script)').forEach(el=>{
-            el.style.display='none';
-          });
-          // Re-show the gate
-          if(gate){gate.style.display='flex';}
-        });
-        return;
-      }
+    var raw = localStorage.getItem('armp_demo_access');
+    var access = raw ? JSON.parse(raw) : null;
+    var isMaster = localStorage.getItem('armp_session') === 'admin@armatchpro.com';
+    var params = new URLSearchParams(window.location.search);
+    var isMode = params.get('mode') === 'demo' || params.get('auto') === 'true';
+
+    if(isMaster){
+      _isDemoUser = false;
+      return; // admin always allowed
     }
+
+    if(!access || (!access.enabled && !access.granted)){
+      // No access at all
+      document.documentElement.style.overflow = 'hidden';
+      document.addEventListener('DOMContentLoaded', function(){
+        document.getElementById('access-gate').style.display = 'flex';
+        document.querySelectorAll('body > *:not(#access-gate):not(#expired-gate):not(script)').forEach(function(el){el.style.display='none';});
+        document.getElementById('access-gate').style.display = 'flex';
+      });
+      return;
+    }
+
+    // Check expiry
+    if(access.expiresAt && new Date(access.expiresAt) < new Date()){
+      document.documentElement.style.overflow = 'hidden';
+      document.addEventListener('DOMContentLoaded', function(){
+        document.getElementById('expired-gate').style.display = 'flex';
+        document.querySelectorAll('body > *:not(#access-gate):not(#expired-gate):not(script)').forEach(function(el){el.style.display='none';});
+        document.getElementById('expired-gate').style.display = 'flex';
+      });
+      return;
+    }
+
+    _demoAccessData = access;
+    _isDemoUser = true;
+
   }catch(e){
-    console.warn('Access guard error:',e);
+    console.warn('Access guard error:', e);
   }
 })();
 </script>
-
 
 <!-- HEADER -->
 <div class="hdr">
@@ -254,13 +295,20 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   </a>
   <span class="hdr-badge">Live Demo</span>
   <div class="hdr-right">
-    <a class="hdr-back" href="index.html">← Back to site</a>
+    <a class="hdr-back" href="index.html"><span>←</span> Back to site</a>
   </div>
 </div>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-eyebrow">⚡ Interactive Demo — No Login Required</div>
+<!-- DEMO WELCOME HERO (shown for signed-up users) -->
+<div class="demo-welcome-hero" id="welcome-hero" style="display:none">
+  <div class="demo-welcome-eyebrow">✓ Demo Access Active</div>
+  <h1>Welcome to AR Match Pro,<br><em id="welcome-name">Demo User</em></h1>
+  <div class="demo-welcome-sub" id="welcome-sub">Your 7-day free demo is active. Open the full app to start matching invoices with sample data — no ERP integration required.</div>
+</div>
+
+<!-- PUBLIC HERO (shown when no access yet) -->
+<div class="hero" id="public-hero" style="display:none">
+  <div class="hero-eyebrow">⚡ Interactive Demo</div>
   <h1>See how AR Match Pro<br><em>eliminates manual matching</em></h1>
   <div class="hero-sub">Watch one payment automatically allocate across multiple invoices — in under 60 seconds.</div>
   <div class="hero-actions">
@@ -270,13 +318,31 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 </div>
 
 <!-- DEMO WRAP -->
-<div class="demo-wrap">
+<div class="demo-wrap" id="demo-wrap">
 
-  <!-- STEP TRACKER -->
+  <!-- OPEN FULL APP CARD (shown for signed-up demo users) -->
+  <div class="open-app-card" id="open-app-card" style="display:none">
+    <div class="open-app-card-icon">🚀</div>
+    <h2>Open the Full App</h2>
+    <p>Your demo is active and ready. Open AR Match Pro to load sample data, run matching, view results, and explore the CFO dashboard — all in demo mode.</p>
+    <div class="cta-btns" style="justify-content:center">
+      <a class="open-app-btn" href="app.html?mode=demo">
+        Open Full App →
+      </a>
+    </div>
+    <div class="open-app-note">Sample data loads automatically in demo mode</div>
+    <div class="demo-meta-row" id="demo-meta-row">
+      <div class="demo-meta-item">📅 <span id="meta-company">—</span></div>
+      <div class="demo-meta-item">⏰ <span id="meta-days">7 days remaining</span></div>
+      <div class="demo-meta-item">✓ Demo Active</div>
+    </div>
+  </div>
+
+  <!-- STEP TRACKER (always present for demo flow) -->
   <div class="steps" id="steps">
     <div class="step active" id="step-1">
       <div class="step-num"><span>1</span></div>
-      <div><div class="step-label">Load Data</div><div class="step-txt">Click Try Demo Data</div></div>
+      <div><div class="step-label">Load Data</div><div class="step-txt">Sample invoices &amp; payments</div></div>
     </div>
     <div class="step" id="step-2">
       <div class="step-num"><span>2</span></div>
@@ -292,13 +358,13 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
   </div>
 
-  <!-- INITIAL STATE -->
-  <div class="demo-panel" id="initial-panel">
+  <!-- INITIAL STATE (hidden for demo users, shown for public) -->
+  <div class="demo-panel" id="initial-panel" style="display:none">
     <div class="demo-panel-body">
-      <div class="load-state">
-        <div class="load-icon">📊</div>
-        <div class="load-title">Ready to see AR Match Pro in action</div>
-        <div class="load-sub">Click "Try Demo Data" to load 4 real invoices and 3 payments — including a multi-invoice allocation that would take your team 30 minutes to do manually.</div>
+      <div class="load-state" style="text-align:center;padding:40px 20px">
+        <div style="font-size:48px;margin-bottom:16px;opacity:.5">📊</div>
+        <div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px">Ready to see AR Match Pro in action</div>
+        <div style="font-size:13.5px;color:var(--t3);margin-bottom:24px">Click to load 4 real invoices and 3 payments — including a multi-invoice allocation that takes teams 30 minutes manually.</div>
         <button class="btn btn-green btn-lg" onclick="startDemo()">▶ Try Demo Data</button>
       </div>
     </div>
@@ -306,7 +372,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
   <!-- DATA LOADED PANEL (hidden initially) -->
   <div id="data-panel" style="display:none">
-    <!-- INVOICES -->
     <div class="demo-panel" style="margin-bottom:14px">
       <div class="demo-panel-hdr">
         <div class="demo-panel-dot"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
@@ -325,7 +390,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         </table>
       </div>
     </div>
-    <!-- REMITTANCE -->
     <div class="demo-panel" style="margin-bottom:14px">
       <div class="demo-panel-hdr">
         <div class="demo-panel-dot"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
@@ -336,26 +400,13 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <table class="data-tbl">
           <thead><tr><th>Payment Ref</th><th>Customer</th><th>PO Reference</th><th>Amount</th><th>Method</th><th>Note</th></tr></thead>
           <tbody>
-            <tr>
-              <td class="mono">ACH-882104</td><td>Apex Industrial Supply</td><td class="mono">PO-9001</td>
-              <td class="amt pos">$40,000</td><td><span style="font-size:11px;font-weight:600;color:var(--t2)">ACH</span></td>
-              <td style="font-size:11.5px;color:var(--t3)">Covers multiple invoices on PO</td>
-            </tr>
-            <tr>
-              <td class="mono">WIRE-44219</td><td>Northstar Semiconductor</td><td class="mono">PO-7742</td>
-              <td class="amt pos">$17,000</td><td><span style="font-size:11px;font-weight:600;color:var(--t2)">Wire</span></td>
-              <td style="font-size:11.5px;color:var(--am)">$1,000 short pay</td>
-            </tr>
-            <tr>
-              <td class="mono">CHK-10045</td><td>Meridian Medical Systems</td><td class="mono">INV-1004</td>
-              <td class="amt pos">$15,000</td><td><span style="font-size:11px;font-weight:600;color:var(--t2)">Check</span></td>
-              <td style="font-size:11.5px;color:var(--g)">Exact match</td>
-            </tr>
+            <tr><td class="mono">ACH-882104</td><td>Apex Industrial Supply</td><td class="mono">PO-9001</td><td class="amt pos">$40,000</td><td><span style="font-size:11px;font-weight:600;color:var(--t2)">ACH</span></td><td style="font-size:11.5px;color:var(--t3)">Covers multiple invoices on PO</td></tr>
+            <tr><td class="mono">WIRE-44219</td><td>Northstar Semiconductor</td><td class="mono">PO-7742</td><td class="amt pos">$17,000</td><td><span style="font-size:11px;font-weight:600;color:var(--t2)">Wire</span></td><td style="font-size:11.5px;color:var(--am)">$1,000 short pay</td></tr>
+            <tr><td class="mono">CHK-10045</td><td>Meridian Medical Systems</td><td class="mono">INV-1004</td><td class="amt pos">$15,000</td><td><span style="font-size:11px;font-weight:600;color:var(--t2)">Check</span></td><td style="font-size:11.5px;color:var(--g)">Exact match</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-    <!-- RUN BUTTON -->
     <div style="text-align:center;padding:16px 0 8px">
       <button class="btn btn-primary btn-lg" onclick="runMatchingDemo()" id="run-btn">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="4,2 14,8 4,14"/></svg>
@@ -379,8 +430,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
   <!-- RESULTS -->
   <div id="results-section">
-
-    <!-- KPI GRID -->
     <div class="kpi-grid" id="kpi-grid">
       <div class="kpi-card g" style="animation-delay:.05s"><div class="kpi-label">Match Rate</div><div class="kpi-val g">82%</div><div class="kpi-sub">3 of 4 invoices auto-matched</div></div>
       <div class="kpi-card p" style="animation-delay:.1s"><div class="kpi-label">Cash Matched</div><div class="kpi-val p">$55,000</div><div class="kpi-sub">Ready for posting export</div></div>
@@ -389,8 +438,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div class="kpi-card p" style="animation-delay:.25s"><div class="kpi-label">Manual Review Avoided</div><div class="kpi-val p">3 of 4</div><div class="kpi-sub">75% straight-through rate</div></div>
       <div class="kpi-card g" style="animation-delay:.3s"><div class="kpi-label">Estimated Cash Cleared</div><div class="kpi-val g">$55K</div><div class="kpi-sub">Posted to AR in SAP format</div></div>
     </div>
-
-    <!-- BEFORE / AFTER -->
     <div class="ba-grid">
       <div class="ba-col before">
         <div class="ba-title">❌ Before AR Match Pro</div>
@@ -403,14 +450,12 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div class="ba-col after">
         <div class="ba-title">✅ After AR Match Pro</div>
         <div class="ba-item"><span class="ba-icon">⚡</span>$40,000 ACH allocated across INV-1001 + INV-1002 in 8 sec</div>
-        <div class="ba-item"><span class="ba-icon">✓</span>PO group identified — exact subset match, ties to zero</div>
+        <div class="ba-item"><span class="ba-icon">✓</span>PO group identified — exact subset match, ties to $0</div>
         <div class="ba-item"><span class="ba-icon">🚨</span>Short pay flagged instantly with suggested action</div>
         <div class="ba-item"><span class="ba-icon">📤</span>SAP F-28 posting export ready immediately</div>
         <div class="ba-item"><span class="ba-icon">📈</span>82% automated — team handles only exceptions</div>
       </div>
     </div>
-
-    <!-- MATCH RESULTS TABLE -->
     <div class="demo-panel" style="margin-bottom:14px;animation:fadeUp .6s ease both;animation-delay:.15s">
       <div class="demo-panel-hdr">
         <div class="demo-panel-dot"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
@@ -421,107 +466,54 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <table class="data-tbl">
           <thead><tr><th>Invoice</th><th>Customer</th><th>Amount</th><th>Paid</th><th>Status</th><th>Why?</th></tr></thead>
           <tbody>
-            <tr>
-              <td class="mono">INV-1001</td><td>Apex Industrial Supply</td>
-              <td class="amt">$25,000</td><td class="amt pos">$25,000</td>
-              <td><span class="badge badge-multi">Multi-Match</span></td>
-              <td><span class="why-tip">🔗 PO-9001 group — $40K split across 2 invoices, ties to $0</span></td>
-            </tr>
-            <tr>
-              <td class="mono">INV-1002</td><td>Apex Industrial Supply</td>
-              <td class="amt">$15,000</td><td class="amt pos">$15,000</td>
-              <td><span class="badge badge-multi">Multi-Match</span></td>
-              <td><span class="why-tip">🔗 Same PO allocation — subset-sum exact</span></td>
-            </tr>
-            <tr>
-              <td class="mono">INV-1003</td><td>Northstar Semiconductor</td>
-              <td class="amt">$18,000</td><td class="amt" style="color:var(--am)">$17,000</td>
-              <td><span class="badge badge-close">Short Pay</span></td>
-              <td><span class="why-tip">⚠ $1,000 variance — PO-7742 match, short pay flagged</span></td>
-            </tr>
-            <tr>
-              <td class="mono">INV-1004</td><td>Meridian Medical Systems</td>
-              <td class="amt">$15,000</td><td class="amt pos">$15,000</td>
-              <td><span class="badge badge-exact">Exact Match</span></td>
-              <td><span class="why-tip">✓ Direct invoice match — CHK-10045 = INV-1004</span></td>
-            </tr>
+            <tr><td class="mono">INV-1001</td><td>Apex Industrial Supply</td><td class="amt">$25,000</td><td class="amt pos">$25,000</td><td><span class="badge badge-multi">Multi-Match</span></td><td><span class="why-tip">🔗 PO-9001 group — $40K split across 2 invoices</span></td></tr>
+            <tr><td class="mono">INV-1002</td><td>Apex Industrial Supply</td><td class="amt">$15,000</td><td class="amt pos">$15,000</td><td><span class="badge badge-multi">Multi-Match</span></td><td><span class="why-tip">🔗 Same PO allocation — subset-sum exact</span></td></tr>
+            <tr><td class="mono">INV-1003</td><td>Northstar Semiconductor</td><td class="amt">$18,000</td><td class="amt" style="color:var(--am)">$17,000</td><td><span class="badge badge-close">Short Pay</span></td><td><span class="why-tip">⚠ $1,000 variance — PO-7742 match, short pay flagged</span></td></tr>
+            <tr><td class="mono">INV-1004</td><td>Meridian Medical Systems</td><td class="amt">$15,000</td><td class="amt pos">$15,000</td><td><span class="badge badge-exact">Exact Match</span></td><td><span class="why-tip">✓ Direct invoice match — CHK-10045 = INV-1004</span></td></tr>
           </tbody>
         </table>
       </div>
     </div>
-
-    <!-- AI INSIGHTS -->
     <div class="insights-grid">
       <div class="insight-card"><div class="insight-icon">⚡</div><div><div class="insight-title">82% automated match rate</div><div class="insight-desc">3 of 4 invoices matched without any human intervention. Industry benchmark is 60–70%.</div></div></div>
       <div class="insight-card"><div class="insight-icon">🔗</div><div><div class="insight-title">Multi-invoice allocation detected</div><div class="insight-desc">$40,000 ACH automatically split across INV-1001 and INV-1002 using PO group + subset-sum logic.</div></div></div>
       <div class="insight-card"><div class="insight-icon">⚠</div><div><div class="insight-title">1 exception flagged</div><div class="insight-desc">INV-1003 has a $1,000 short pay. Suggested action: Chase customer or write off.</div></div></div>
       <div class="insight-card"><div class="insight-icon">📤</div><div><div class="insight-title">SAP F-28 export ready</div><div class="insight-desc">Invoice #, Document #, and Amount pre-filled. Import directly into SAP — no manual entry.</div></div></div>
     </div>
-
-    <!-- ROI BANNER -->
     <div class="roi-banner">
       <div class="roi-icon">💡</div>
-      <div class="roi-txt">
-        <h3>Estimated time saved: 6–10 hours per week</h3>
-        <p>Based on eliminating manual remittance matching and exception handling for a typical AR team</p>
-      </div>
-      <div class="roi-val">
-        <div class="roi-num">$2,000+</div>
-        <div class="roi-lbl">saved/month in labor</div>
-      </div>
+      <div class="roi-txt"><h3>Estimated time saved: 6–10 hours per week</h3><p>Based on eliminating manual remittance matching and exception handling for a typical AR team</p></div>
+      <div class="roi-val"><div class="roi-num">$2,000+</div><div class="roi-lbl">saved/month in labor</div></div>
     </div>
-
-    <!-- EXPORT BUTTON -->
     <div style="text-align:center;margin-bottom:16px;animation:fadeUp .6s ease both;animation-delay:.45s">
-      <button class="btn btn-ghost" onclick="downloadSampleExport()">
-        ⬇ Download Sample Posting Export
-      </button>
+      <button class="btn btn-ghost" onclick="downloadSampleExport()">⬇ Download Sample Posting Export</button>
       <div style="font-size:11.5px;color:var(--t3);margin-top:7px">SAP F-28 format · Invoice #, Payment Ref, Amount, Status</div>
     </div>
-
-    <!-- FEATURE LOCK -->
     <div class="lock-teaser">
       <span style="font-size:20px">🔒</span>
       <div class="lock-teaser-txt"><strong>Multi-invoice allocation</strong> is available on the Pro plan — the feature that just matched $40,000 across 2 invoices automatically.</div>
       <span style="font-size:18px;color:var(--pu)">↓</span>
     </div>
-
-    <!-- CTA -->
     <div class="cta-section">
       <div class="cta-title">Ready to automate your AR team?</div>
       <div class="cta-sub">Join teams using AR Match Pro to eliminate manual cash application. No ERP integration. No IT approval. Start today.</div>
       <div class="cta-btns">
-        <button class="btn btn-primary btn-lg" onclick="goToCheckout()">
-          💳 Start Pro — $999/month
-        </button>
-        <a class="btn btn-outline btn-lg" href="https://calendly.com/armatchpro" target="_blank">
-          📅 Book 15-Min Demo
-        </a>
+        <a class="btn btn-primary btn-lg" href="app.html?mode=demo">Open Full App in Demo Mode</a>
+        <a class="btn btn-outline btn-lg" href="https://calendly.com/armatchpro" target="_blank">📅 Book 15-Min Demo</a>
+        <a class="btn btn-ghost btn-lg" href="index.html#pricing">💳 View Pricing</a>
       </div>
       <div style="font-size:12px;color:var(--t3);margin-top:14px">Annual plan available — 2 months free · Cancel anytime</div>
     </div>
-
-    <!-- UPLOAD PROMPT -->
-    <div class="upload-section">
-      <div class="upload-title">Want to try with your own data?</div>
-      <div class="upload-sub">Upload your invoice aging and remittance file after creating your account. CSV, Excel, PDF, and scanned check stubs supported.</div>
-      <a class="btn btn-green" href="app.html">Create Free Account →</a>
-      <div class="trust-msg">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1L2 4v4c0 3.5 2.5 6 6 7 3.5-1 6-3.5 6-7V4L8 1z"/></svg>
-        Your files are processed locally in your browser. No server. No ERP connection required.
-      </div>
-    </div>
-
   </div><!-- end results -->
 
 </div><!-- end demo-wrap -->
 
 <script>
-let demoState = 'idle'; // idle → loaded → running → done
+var demoState = 'idle';
 
 function setStep(active){
-  for(let i=1;i<=4;i++){
-    const el=document.getElementById('step-'+i);
+  for(var i=1;i<=4;i++){
+    var el=document.getElementById('step-'+i);
     el.classList.remove('active','done');
     if(i<active)el.classList.add('done');
     if(i===active)el.classList.add('active');
@@ -536,7 +528,6 @@ function startDemo(){
   document.getElementById('results-section').classList.remove('show');
   document.getElementById('progress-overlay').classList.remove('show');
   setStep(2);
-  // Smooth scroll to data
   document.getElementById('data-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
@@ -549,7 +540,7 @@ async function runMatchingDemo(){
   document.getElementById('results-section').classList.remove('show');
   setStep(3);
 
-  const msgs=[
+  var msgs=[
     'Analyzing invoice and payment relationships…',
     'Checking invoice references…',
     'Matching PO groups…',
@@ -559,32 +550,27 @@ async function runMatchingDemo(){
     'Generating insights and posting export…',
     'Finalizing results…'
   ];
-  const bar=document.getElementById('prog-bar');
-  const msgEl=document.getElementById('prog-msg');
-  const matchEl=document.getElementById('prog-matches');
-  const excEl=document.getElementById('prog-exc');
+  var bar=document.getElementById('prog-bar');
+  var msgEl=document.getElementById('prog-msg');
+  var matchEl=document.getElementById('prog-matches');
+  var excEl=document.getElementById('prog-exc');
 
-  let pct=0, mi=0, mc=0, ec=0;
-  const steps=[
-    {p:15,m:0,e:0,delay:300},
-    {p:25,m:0,e:0,delay:250},
-    {p:38,m:1,e:0,delay:300},
-    {p:52,m:2,e:0,delay:350},
-    {p:65,m:2,e:0,delay:250},
-    {p:78,m:3,e:1,delay:300},
-    {p:90,m:3,e:1,delay:250},
-    {p:100,m:4,e:1,delay:350}
+  var steps=[
+    {p:15,m:0,e:0,delay:300},{p:25,m:0,e:0,delay:250},{p:38,m:1,e:0,delay:300},
+    {p:52,m:2,e:0,delay:350},{p:65,m:2,e:0,delay:250},{p:78,m:3,e:1,delay:300},
+    {p:90,m:3,e:1,delay:250},{p:100,m:4,e:1,delay:350}
   ];
-
-  for(const s of steps){
-    await new Promise(r=>setTimeout(r,s.delay));
+  var mi=0;
+  for(var si=0;si<steps.length;si++){
+    var s=steps[si];
+    await new Promise(function(r){setTimeout(r,s.delay);});
     bar.style.width=s.p+'%';
     matchEl.textContent=s.m;
     excEl.textContent=s.e;
-    msgEl.textContent=msgs[mi++]||msgs[msgs.length-1];
+    msgEl.textContent=msgs[mi]||msgs[msgs.length-1];
+    mi++;
   }
-
-  await new Promise(r=>setTimeout(r,500));
+  await new Promise(function(r){setTimeout(r,500);});
   document.getElementById('progress-overlay').classList.remove('show');
   document.getElementById('results-section').classList.add('show');
   setStep(4);
@@ -593,26 +579,64 @@ async function runMatchingDemo(){
 }
 
 function downloadSampleExport(){
-  const csv=`Invoice,Customer,PaymentRef,Amount,Status,PostingType
-INV-1001,Apex Industrial Supply,ACH-882104,25000.00,Matched,SAP F-28
-INV-1002,Apex Industrial Supply,ACH-882104,15000.00,Matched,SAP F-28
-INV-1003,Northstar Semiconductor,WIRE-44219,17000.00,Short Pay,Review Required
-INV-1004,Meridian Medical Systems,CHK-10045,15000.00,Exact Match,SAP F-28`;
-  const a=document.createElement('a');
+  var csv='Invoice,Customer,PaymentRef,Amount,Status,PostingType\nINV-1001,Apex Industrial Supply,ACH-882104,25000.00,Matched,SAP F-28\nINV-1002,Apex Industrial Supply,ACH-882104,15000.00,Matched,SAP F-28\nINV-1003,Northstar Semiconductor,WIRE-44219,17000.00,Short Pay,Review Required\nINV-1004,Meridian Medical Systems,CHK-10045,15000.00,Exact Match,SAP F-28';
+  var a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download='armp_demo_posting_export.csv';
   a.click();
 }
 
 function goToCheckout(){
-  // Connect to Stripe when ready
-  window.location.href='app.html';
+  window.location.href='index.html#pricing';
 }
 
-// Auto-start if coming from landing page demo button
-if(window.location.search.includes('auto=true')){
-  setTimeout(startDemo,800);
-}
+// ── INIT PAGE STATE ──
+document.addEventListener('DOMContentLoaded', function(){
+  var isMaster = localStorage.getItem('armp_session') === 'admin@armatchpro.com';
+
+  if(_isDemoUser && _demoAccessData){
+    // Signed-up demo user
+    document.getElementById('welcome-hero').style.display='block';
+    document.getElementById('public-hero').style.display='none';
+    document.getElementById('open-app-card').style.display='block';
+    document.getElementById('initial-panel').style.display='none';
+
+    // Populate welcome info
+    var firstName = _demoAccessData.firstName || _demoAccessData.fullName || 'Demo User';
+    document.getElementById('welcome-name').textContent = firstName;
+
+    var company = _demoAccessData.company || '';
+    if(company) document.getElementById('meta-company').textContent = company;
+
+    // Days remaining
+    if(_demoAccessData.expiresAt){
+      var ms = new Date(_demoAccessData.expiresAt) - new Date();
+      var days = Math.max(0, Math.ceil(ms/(1000*60*60*24)));
+      document.getElementById('meta-days').textContent = days + ' day' + (days===1?'':'s') + ' remaining';
+      document.getElementById('welcome-sub').textContent = 'Your '+days+'-day free demo is active. Open the full app to start matching invoices with sample data — no ERP integration required.';
+    }
+
+    // Step tracker reflects demo user state
+    setStep(1);
+
+  } else if(isMaster){
+    // Admin viewing demo page
+    document.getElementById('welcome-hero').style.display='none';
+    document.getElementById('public-hero').style.display='block';
+    document.getElementById('open-app-card').style.display='none';
+    document.getElementById('initial-panel').style.display='block';
+  } else {
+    // Public / no access — access gate handles blocking above
+    // Fallback: show public hero
+    document.getElementById('public-hero').style.display='block';
+    document.getElementById('initial-panel').style.display='block';
+  }
+
+  // Auto-start demo data if URL param
+  if(window.location.search.includes('auto=true') && !_isDemoUser){
+    setTimeout(startDemo, 800);
+  }
+});
 </script>
 </body>
 </html>

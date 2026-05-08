@@ -431,6 +431,18 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   }
 }
 
+/* ── LEAD MODAL MOBILE CENTERING ── */
+@media(max-width:600px){
+  .lead-modal{border-radius:16px 16px 0 0;position:fixed!important;bottom:0!important;left:0!important;right:0!important;top:auto!important;width:100%!important;max-width:100%!important;margin:0!important;max-height:90vh;overflow-y:auto;}
+  .lead-overlay{align-items:flex-end!important;}
+  .lead-header{padding:20px 20px 16px;text-align:center;}
+  .lead-body{padding:16px 20px 24px;}
+  .lead-body .lead-label,.lead-body .lead-input,.lead-body .lead-submit,.lead-body .lead-privacy{width:100%;}
+  .lead-submit{padding:14px;font-size:15px;}
+  .lead-success{padding:24px 20px;}
+  .lead-success h3{font-size:18px;}
+}
+
 </style>
 </head>
 <body>
@@ -1110,32 +1122,66 @@ async function submitLead(){
   const btn=document.getElementById('lead-submit-btn');
   btn.disabled=true;btn.textContent='Setting up your demo…';
 
-  // Parse first name
-  const firstName=name.split(' ')[0]||name;
+  // Parse name parts
+  const nameParts=name.trim().split(/\s+/);
+  const firstName=nameParts[0]||name;
+  const lastName=nameParts.slice(1).join(' ')||'';
 
-  // Save lead to localStorage
+  const now=new Date();
+  const expiresAt=new Date(now.getTime()+7*24*60*60*1000);
+
+  // Build full lead record
+  const leadRecord={
+    id:'lead_'+Date.now(),
+    fullName:name,
+    firstName:firstName,
+    lastName:lastName,
+    email:email,
+    company:company,
+    jobTitle:title,
+    phone:phone||'',
+    erp:erp,
+    invoiceVolume:volume,
+    signupDate:now.toISOString(),
+    demoStartDate:now.toISOString(),
+    demoExpiration:expiresAt.toISOString(),
+    demoStatus:'Demo Active',
+    source:'Free Demo',
+    contacted:false,
+    converted:false,
+    notes:''
+  };
+
+  // Save to armp_demo_leads
   try{
-    const leads=JSON.parse(localStorage.getItem('armp_leads')||'[]');
-    leads.push({name,email,company,title,phone,erp,volume,ts:new Date().toISOString(),source:'landing-page-demo'});
-    localStorage.setItem('armp_leads',JSON.stringify(leads));
+    const leads=JSON.parse(localStorage.getItem('armp_demo_leads')||'[]');
+    leads.unshift(leadRecord);
+    localStorage.setItem('armp_demo_leads',JSON.stringify(leads));
+  }catch(e){}
+
+  // Also save legacy armp_leads for backward compat
+  try{
+    const oldLeads=JSON.parse(localStorage.getItem('armp_leads')||'[]');
+    oldLeads.push({name,email,company,title,phone,erp,volume,ts:now.toISOString(),source:'landing-page-demo'});
+    localStorage.setItem('armp_leads',JSON.stringify(oldLeads));
   }catch(e){}
 
   // Save full demo access
-  const now=new Date();
-  const expiresAt=new Date(now.getTime()+7*24*60*60*1000);
   const demoAccess={
     enabled:true,
     email:email,
     firstName:firstName,
+    lastName:lastName,
     fullName:name,
     company:company,
     jobTitle:title,
-    phone:phone,
+    phone:phone||'',
     erp:erp,
     invoiceVolume:volume,
     startedAt:now.toISOString(),
     expiresAt:expiresAt.toISOString(),
-    plan:'demo'
+    plan:'demo',
+    granted:true
   };
   try{
     localStorage.setItem('armp_demo_access',JSON.stringify(demoAccess));
@@ -1151,7 +1197,7 @@ async function submitLead(){
         name,email,company,title,phone,erp,volume,
         _subject:'New AR Match Pro demo request — '+company,
         _replyto:email,
-        message:'Demo Request\n\nName: '+name+'\nEmail: '+email+'\nCompany: '+company+'\nJob Title: '+title+'\nPhone: '+(phone||'not provided')+'\nERP: '+erp+'\nVolume: '+volume+'\nTime: '+new Date().toLocaleString()
+        message:'Demo Request\n\nName: '+name+'\nEmail: '+email+'\nCompany: '+company+'\nJob Title: '+title+'\nPhone: '+(phone||'not provided')+'\nERP: '+erp+'\nVolume: '+volume+'\nTime: '+now.toLocaleString()
       })
     }).catch(function(e){console.log('Lead form note: backend unavailable, demo granted locally.',e);});
   }catch(e){console.log('Lead form note: fetch failed.',e);}
@@ -1162,12 +1208,12 @@ async function submitLead(){
   document.getElementById('lead-success-name').textContent=firstName;
   document.getElementById('lead-success-email').textContent=email;
 
-  // Animate progress bar then redirect to app.html?mode=demo
+  // Animate progress bar then redirect to demo.html?mode=demo
   const bar=document.getElementById('lead-progress');
   let pct=0;
   const interval=setInterval(function(){
     pct+=2;bar.style.width=pct+'%';
-    if(pct>=100){clearInterval(interval);window.location.href='app.html?mode=demo';}
+    if(pct>=100){clearInterval(interval);window.location.href='demo.html?mode=demo';}
   },50);
 }
 
