@@ -128,6 +128,7 @@ code, pre, .kpi-card-val, .recon-kpi-val, .cfo-metric-value,
   font-feature-settings: "zero" 0, "tnum" 1;
   -webkit-font-feature-settings: "zero" 0, "tnum" 1;
 }
+/* ── Enterprise emoji rendering fix ──
    Forces emoji in UI elements to render via system emoji font
    (Apple Color Emoji on Mac, Segoe UI Emoji on Windows)
    so they look crisp and consistent, not the browser default. */
@@ -141,12 +142,6 @@ code, pre, .kpi-card-val, .recon-kpi-val, .cfo-metric-value,
   font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 }
 /* Workflow bar icons already SVG — no override needed */
-.td-mono, .td-amt, .td-key, [class*="mono"], code,
-[style*="font-family:var(--mono)"], [style*="font-family: var(--mono)"] {
-  font-feature-settings: "zero" 0, "tnum" 1;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-}
 
 /* ── Scrollbars ── */
 * { scrollbar-width: thin; scrollbar-color: var(--bdr3) transparent; }
