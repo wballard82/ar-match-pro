@@ -2041,15 +2041,29 @@ body.app-active #app {
 .demo-expired-btn-home{font-size:13px;color:#4D6480;text-decoration:none;margin-top:6px;display:block;cursor:pointer;}
 .demo-expired-btn-home:hover{color:#8BA3C7;}
 
-/* ── Demo top badge ── */
-#demo-top-badge {
+/* ── Trial top badge ── */
+#demo-top-badge,
+.trial-badge {
   display:none;align-items:center;gap:8px;
   background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);
   color:#FCD34D;font-size:11.5px;font-weight:700;
   padding:4px 12px;border-radius:999px;
-  cursor:pointer;flex-shrink:0;
+  cursor:pointer;flex-shrink:0;transition:background .18s;
 }
-#demo-top-badge:hover{background:rgba(245,158,11,.2);}
+#demo-top-badge:hover,
+.trial-badge:hover{background:rgba(245,158,11,.22);}
+/* 3–4 days: amber pulse */
+.trial-badge-warn{
+  background:rgba(245,158,11,.16);border-color:rgba(245,158,11,.4);
+  animation:trialPulse 3s ease-in-out infinite;
+}
+/* 1–2 days: red urgent */
+.trial-badge-urgent{
+  background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);
+  color:#FCA5A5;
+  animation:trialPulse 1.8s ease-in-out infinite;
+}
+@keyframes trialPulse{0%,100%{box-shadow:none;}50%{box-shadow:0 0 0 3px rgba(245,158,11,.18);}}
 
 /* ── App Mobile ── */
 @media(max-width:600px){
@@ -2357,8 +2371,8 @@ body.app-active #app {
     </div>
 
     <div class="tn-actions">
-      <div id="demo-top-badge" onclick="showDemoPrompt()" title="Demo mode — click to upgrade">
-        ⚡ <span id="demo-days-label">Demo</span>
+      <div id="demo-top-badge" onclick="showTrialPrompt()" title="7-Day Free Trial — click to upgrade">
+        ⚡ <span id="demo-days-label">7-Day Free Trial</span>
       </div>
       <button class="tn-icon-btn" title="Import data" onclick="openImport('inv')">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 2v8M5 7l3 3 3-3"/></svg>
@@ -3770,7 +3784,7 @@ body.app-active #app {
             <div style="padding:16px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div>
                 <div style="font-size:14px;font-weight:700;color:var(--t1)">Current plan</div>
-                <div style="font-size:12.5px;color:var(--t3);margin-top:2px" id="settings-plan-name2">Demo plan</div>
+                <div style="font-size:12.5px;color:var(--t3);margin-top:2px" id="settings-plan-name2">Trial plan</div>
                 <div style="font-size:11.5px;color:var(--t3);margin-top:3px" id="settings-plan-features"></div>
               </div>
               <div style="display:flex;gap:8px">
@@ -4298,12 +4312,14 @@ const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action
 // ── Plans ──
 const PLANS={
   demo:{name:'Demo',level:0,rows:50,features:['invoice','po','amount']},
+  trial:{name:'7-Day Free Trial',level:0,rows:5000,features:['invoice','po','amount','multi']},
   starter:{name:'Starter',level:1,rows:5000,features:['invoice','po','amount']},
   pro:{name:'Pro',level:2,rows:Infinity,features:['invoice','po','so','del','trk','amount','multi','sap','netsuite']},
   team:{name:'Team',level:3,rows:Infinity,features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','audit','api']}
 };
-let USER_PLAN='demo';
+let USER_PLAN='trial';
 let IS_DEMO=true;
+let IS_TRIAL=false;
 let IS_MASTER=false;
 let CURRENT_USER='';
 const MASTER_ADMIN_EMAIL='admin@armatchpro.com';
@@ -4337,7 +4353,7 @@ function getUsers(){try{return JSON.parse(localStorage.getItem('armp_users')||'{
 function saveUser(email,data){const u=getUsers();u[email]=data;localStorage.setItem('armp_users',JSON.stringify(u))}
 
 // ── Plan utils ──
-function setPlan(plan){USER_PLAN=plan;const p=PLANS[plan];if(p){IS_DEMO=plan==='demo';}}
+function setPlan(plan){USER_PLAN=plan;const p=PLANS[plan];if(p){IS_DEMO=(plan==='demo'||plan==='trial');IS_TRIAL=(plan==='trial');}}
 function hasFeat(f){if(IS_MASTER)return true;return PLANS[USER_PLAN]?.features?.includes(f)}
 function checkFeature(f){
   if(hasFeat(f))return true;
@@ -4577,8 +4593,8 @@ function doRegister(){
 function doForgot(){toast('Password reset instructions sent if account exists.','');}
 
 function demoLogin(){
-  IS_DEMO=true;CURRENT_USER='demo@armatchpro.com';
-  launchApp({name:'Demo User',avatar:'',plan:'demo',isMaster:false});
+  IS_DEMO=true;IS_TRIAL=true;CURRENT_USER='trial@armatchpro.com';
+  launchApp({name:'Trial User',avatar:'',plan:'trial',isMaster:false});
 }
 
 function doLogout(){
@@ -4589,7 +4605,7 @@ function doLogout(){
   var ls=document.getElementById('login-screen');
   if(ls){ ls.style.display=''; ls.style.visibility=''; ls.style.pointerEvents=''; ls.style.zIndex=''; ls.style.opacity=''; }
   INV=[];PAY=[];RES=[];EXC=[];
-  IS_DEMO=true;CURRENT_USER='';IS_MASTER=false;
+  IS_DEMO=true;IS_TRIAL=false;CURRENT_USER='';IS_MASTER=false;
   // Reset demo UI
   var badge=document.getElementById('demo-top-badge');if(badge)badge.style.display='none';
   var dp=document.getElementById('demo-prompt-overlay');if(dp)dp.classList.remove('open');
@@ -4600,7 +4616,7 @@ function setUserDisplay(user){
   const init=(user.name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
   ['tn-avatar','profile-avatar'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=init;}});
   const un=document.getElementById('tn-uname');if(un)un.textContent=user.name||'User';
-  const pe=document.getElementById('sec-email-disp');if(pe)pe.textContent=IS_DEMO?'demo@armatchpro.com':CURRENT_USER;
+  const pe=document.getElementById('sec-email-disp');if(pe)pe.textContent=CURRENT_USER||(IS_TRIAL?'trial@armatchpro.com':'demo@armatchpro.com');
   // Split full name into first/last for new fields
   const nameParts=(user.name||'').trim().split(/\s+/);
   const fn=document.getElementById('profile-firstname-input');
@@ -4625,7 +4641,7 @@ function launchApp(user){
   setPlan(user.plan||'demo');
   if(!IS_DEMO){INV=[];PAY=[];RES=[];EXC=[];loadFromStorage();}
   rAll();updDash();updTop();initAuditTbl();
-  if(IS_DEMO)toast('Demo mode — click "Load sample data" to get started.');
+  if(IS_DEMO)toast((IS_TRIAL?'🚀 7-Day Free Trial active — load sample data to explore':'Demo mode — click "Load sample data" to get started.'));
   addAudit('Login','User: '+(user.name||CURRENT_USER));
 
   setTimeout(navToWorklist, 0);
@@ -6089,68 +6105,115 @@ function initLogoCanvas(){
 }
 
 // ══════════════════════════════════════════════════════════
-// DEMO ACCESS MANAGEMENT
+// TRIAL ACCESS MANAGEMENT
+// Backward-compatible: reads armp_demo_access OR armp_trial_access
+// Writes normalized armp_trial_access on every launch
 // ══════════════════════════════════════════════════════════
 
-function getDemoAccess(){
+function getTrialAccess(){
   try{
-    var raw=localStorage.getItem('armp_demo_access');
-    if(!raw)return null;
+    // Prefer new key, fall back to legacy demo key
+    var raw=localStorage.getItem('armp_trial_access')||localStorage.getItem('armp_demo_access');
+    if(!raw) return null;
     var d=JSON.parse(raw);
-    if(!d||!d.enabled)return null;
+    if(!d||(d.enabled!==true&&d.granted!==true)) return null;
     return d;
   }catch(e){return null;}
 }
 
-function isDemoExpired(d){
-  if(!d||!d.expiresAt)return true;
+function isTrialExpired(d){
+  if(!d||!d.expiresAt) return true;
   return new Date(d.expiresAt)<new Date();
 }
 
-function demoDaysRemaining(d){
-  if(!d||!d.expiresAt)return 0;
+function trialDaysRemaining(d){
+  if(!d||!d.expiresAt) return 0;
   var ms=new Date(d.expiresAt)-new Date();
   return Math.max(0,Math.ceil(ms/(1000*60*60*24)));
 }
 
-function showDemoExpiredScreen(){
+function normalizeTrialAccess(d){
+  // Ensure armp_trial_access is always written in the canonical schema
+  if(!d) return;
+  var now=new Date();
+  var startedAt=d.startedAt||d.ts||now.toISOString();
+  var expiresAt=d.expiresAt||(new Date(new Date(startedAt).getTime()+7*24*60*60*1000)).toISOString();
+  var normalized={
+    enabled:true,
+    plan:'trial',
+    email:d.email||d.workEmail||'',
+    fullName:d.fullName||d.name||d.firstName||'Trial User',
+    firstName:d.firstName||'',
+    lastName:d.lastName||'',
+    company:d.company||'',
+    startedAt:startedAt,
+    expiresAt:expiresAt,
+    source:'7-Day Free Trial'
+  };
+  try{localStorage.setItem('armp_trial_access',JSON.stringify(normalized));}catch(e){}
+  return normalized;
+}
+
+function showTrialExpiredScreen(){
   var ov=document.getElementById('demo-expired-overlay');
   if(ov)ov.classList.add('open');
 }
 
-function showDemoPrompt(){
+function showTrialPrompt(){
   var ov=document.getElementById('demo-prompt-overlay');
   if(ov)ov.classList.add('open');
 }
 
-function closeDemoPrompt(){
+function closeTrialPrompt(){
   var ov=document.getElementById('demo-prompt-overlay');
   if(ov)ov.classList.remove('open');
 }
 
-function initDemoBadge(daysLeft){
+// Legacy aliases — so any existing code calling showDemoPrompt() / closeDemoPrompt() still works
+function showDemoPrompt(){showTrialPrompt();}
+function closeDemoPrompt(){closeTrialPrompt();}
+function showDemoExpiredScreen(){showTrialExpiredScreen();}
+
+function initTrialBadge(daysLeft){
   var badge=document.getElementById('demo-top-badge');
   var label=document.getElementById('demo-days-label');
-  if(badge){badge.style.display='flex';}
-  if(label){label.textContent='Demo: '+daysLeft+' day'+(daysLeft===1?'':'s')+' left';}
+  // Urgency: 2 days or fewer → red pulse; 3–4 → amber; 5+ → standard
+  var urgency=daysLeft<=2?'urgent':daysLeft<=4?'warn':'';
+  if(badge){
+    badge.style.display='flex';
+    badge.className='trial-badge'+(urgency?' trial-badge-'+urgency:'');
+    badge.title='7-Day Free Trial — click to upgrade';
+  }
+  if(label){
+    label.textContent='7-Day Free Trial · '+daysLeft+' day'+(daysLeft===1?'':'s')+' left';
+  }
   var daysText=document.getElementById('demo-prompt-days-text');
   if(daysText){daysText.textContent=daysLeft+' day'+(daysLeft===1?'':'s')+' remaining';}
 }
 
-function launchDemoFromAccess(demoData){
+// Legacy alias
+function initDemoBadge(daysLeft){initTrialBadge(daysLeft);}
+
+function launchTrialFromAccess(trialData){
   IS_DEMO=true;
-  CURRENT_USER=demoData.email||'demo@armatchpro.com';
-  var displayName=demoData.fullName||demoData.firstName||'Demo User';
-  // Backfill lead record in armp_demo_leads for returning users (no duplicates)
-  backfillDemoLeadIfNeeded(demoData);
-  launchApp({name:displayName,avatar:'',plan:'demo',isMaster:false});
-  var days=demoDaysRemaining(demoData);
-  initDemoBadge(days);
-  // Show purchase prompt after app loads
+  IS_TRIAL=true;
+  CURRENT_USER=trialData.email||'trial@armatchpro.com';
+  var displayName=trialData.fullName||trialData.firstName||'Trial User';
+  // Write normalized trial access
+  normalizeTrialAccess(trialData);
+  // Backfill lead record
+  backfillDemoLeadIfNeeded(trialData);
+  launchApp({name:displayName,avatar:'',plan:'trial',isMaster:false});
+  var days=trialDaysRemaining(trialData);
+  initTrialBadge(days);
+  // Show trial upgrade prompt after app loads
   setTimeout(function(){
-    if(!IS_MASTER){showDemoPrompt();}
+    if(!IS_MASTER){showTrialPrompt();}
   },1200);
 }
+
+// Legacy alias — keeps existing call sites working
+function launchDemoFromAccess(d){launchTrialFromAccess(d);}
 
 function backfillDemoLeadIfNeeded(accessData){
   if(!accessData||!accessData.email) return;
@@ -6162,7 +6225,7 @@ function backfillDemoLeadIfNeeded(accessData){
     var expiresAt=accessData.expiresAt?new Date(accessData.expiresAt):new Date(now.getTime()+7*24*60*60*1000);
     leads.unshift({
       id:'lead_backfill_'+Date.now(),
-      fullName:accessData.fullName||accessData.firstName||'Demo User',
+      fullName:accessData.fullName||accessData.firstName||'Trial User',
       firstName:accessData.firstName||'',
       lastName:accessData.lastName||'',
       email:accessData.email,
@@ -6174,8 +6237,8 @@ function backfillDemoLeadIfNeeded(accessData){
       signupDate:accessData.startedAt||now.toISOString(),
       demoStartDate:accessData.startedAt||now.toISOString(),
       demoExpiration:expiresAt.toISOString(),
-      demoStatus:'Demo Active',
-      source:'Free Demo (backfilled)',
+      demoStatus:'Trial Active',
+      source:'7-Day Free Trial (backfilled)',
       contacted:false,
       converted:false,
       notes:''
@@ -6185,7 +6248,8 @@ function backfillDemoLeadIfNeeded(accessData){
 }
 
 function doLogoutDemoCleanup(){
-  // Keep armp_demo_access for re-entry within 7 days
+  IS_TRIAL=false;
+  // Keep armp_trial_access and armp_demo_access for re-entry within 7 days
 }
 
 // ══════════════════════════════════════════════════════════
@@ -6194,23 +6258,23 @@ function doLogoutDemoCleanup(){
 window.addEventListener('load',function(){
   initLogoCanvas();
   var params=new URLSearchParams(window.location.search);
+  var isTrial=params.get('mode')==='demo'||params.get('mode')==='trial'||params.get('demo')==='true';
 
-  // ── Demo mode via URL param ──
-  if(params.get('mode')==='demo'||params.get('demo')==='true'){
-    var demoData=getDemoAccess();
-    if(demoData){
-      if(isDemoExpired(demoData)){
-        showDemoExpiredScreen();
+  // ── Trial / Demo mode via URL param ──
+  if(isTrial){
+    var trialData=getTrialAccess();
+    if(trialData){
+      if(isTrialExpired(trialData)){
+        showTrialExpiredScreen();
         return;
       }
-      launchDemoFromAccess(demoData);
+      launchTrialFromAccess(trialData);
       return;
     } else {
-      // No stored demo access — fall through to regular login
-      // (might happen if localStorage was cleared)
-      IS_DEMO=true;CURRENT_USER='demo@armatchpro.com';
-      launchApp({name:'Demo User',avatar:'',plan:'demo',isMaster:false});
-      setTimeout(showDemoPrompt,1200);
+      // No stored trial access — grant anonymous trial session
+      IS_DEMO=true;IS_TRIAL=true;CURRENT_USER='trial@armatchpro.com';
+      launchApp({name:'Trial User',avatar:'',plan:'trial',isMaster:false});
+      setTimeout(showTrialPrompt,1200);
       return;
     }
   }
@@ -6230,19 +6294,19 @@ window.addEventListener('load',function(){
   var sess=localStorage.getItem('armp_session');
   if(sess){
     try{
-      if(sess===MASTER_ADMIN_EMAIL){CURRENT_USER=sess;IS_DEMO=false;launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});return;}
+      if(sess===MASTER_ADMIN_EMAIL){CURRENT_USER=sess;IS_DEMO=false;IS_TRIAL=false;launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});return;}
       var users=getUsers();
-      if(users[sess]){CURRENT_USER=sess;IS_DEMO=false;launchApp(users[sess]);}
+      if(users[sess]){CURRENT_USER=sess;IS_DEMO=false;IS_TRIAL=false;launchApp(users[sess]);}
       else localStorage.removeItem('armp_session');
     }catch(e){localStorage.removeItem('armp_session');}
   }
 
-  // ── Check for still-valid stored demo access on direct app.html load ──
-  // (user bookmarked app.html directly after demo signup)
-  var storedDemo=getDemoAccess();
-  if(storedDemo&&!isDemoExpired(storedDemo)&&!sess){
-    // Offer demo re-entry silently — show login but pre-check for returning demo users
-    // Demo users re-enter via app.html?mode=demo link; don't auto-bypass login here
+  // ── Returning trial user who bookmarked app.html directly ──
+  // (They signed up on landing page; trial access exists but no URL param)
+  var storedTrial=getTrialAccess();
+  if(storedTrial&&!isTrialExpired(storedTrial)&&!sess){
+    // Show login screen normally — trial re-entry is via app.html?mode=demo link
+    // Don't auto-bypass login on bare app.html visits for security
   }
 
   // Dark mode state
@@ -7156,7 +7220,7 @@ function renderDemoLeads(){
   // Auto-expire leads past their expiration date in storage
   var changed = false;
   leads.forEach(function(l){
-    if(l.demoStatus==='Demo Active' && l.demoExpiration && new Date(l.demoExpiration) < now){
+    if((l.demoStatus==='Demo Active'||l.demoStatus==='Trial Active') && l.demoExpiration && new Date(l.demoExpiration) < now){
       l.demoStatus = 'Expired';
       changed = true;
     }
@@ -7165,7 +7229,7 @@ function renderDemoLeads(){
 
   // Stats row
   var total = leads.length;
-  var active = leads.filter(function(l){ return l.demoStatus==='Demo Active'; }).length;
+  var active = leads.filter(function(l){ return l.demoStatus==='Demo Active'||l.demoStatus==='Trial Active'; }).length;
   var contacted = leads.filter(function(l){ return l.demoStatus==='Contacted'; }).length;
   var converted = leads.filter(function(l){ return l.demoStatus==='Converted'; }).length;
   var expired = leads.filter(function(l){ return l.demoStatus==='Expired'; }).length;
@@ -7202,8 +7266,8 @@ function renderDemoLeads(){
     var expDate = lead.demoExpiration ? new Date(lead.demoExpiration) : null;
     var isExpired = expDate && expDate < now;
     var daysLeft = expDate ? Math.max(0, Math.ceil((expDate - now)/(1000*60*60*24))) : '—';
-    var status = lead.demoStatus || 'Demo Active';
-    var statusColor = status==='Demo Active'?'var(--g-t)':status==='Contacted'?'var(--am-t)':status==='Converted'?'var(--cy-t)':'var(--r-t)';
+    var status = lead.demoStatus || 'Trial Active';
+    var statusColor = (status==='Demo Active'||status==='Trial Active')?'var(--g-t)':status==='Contacted'?'var(--am-t)':status==='Converted'?'var(--cy-t)':'var(--r-t)';
     var signupDate = lead.signupDate ? new Date(lead.signupDate).toLocaleDateString() : '—';
     var expDateStr = expDate ? expDate.toLocaleDateString() : '—';
     var daysDisplay = typeof daysLeft==='number' ? String(daysLeft) : daysLeft;
@@ -7552,27 +7616,27 @@ function closeReviewInlineDetail(){
 
 </script>
 
-<!-- ══ DEMO PURCHASE PROMPT ══ -->
+<!-- ══ TRIAL UPGRADE PROMPT ══ -->
 <div id="demo-prompt-overlay">
   <div id="demo-prompt-box">
-    <div class="demo-prompt-badge">⚡ Free Demo Active</div>
+    <div class="demo-prompt-badge">🚀 7-Day Free Trial Active</div>
     <div class="demo-prompt-days" id="demo-prompt-days-text">7 days remaining</div>
-    <h3>Your AR Match Pro demo is active.</h3>
-    <p>Upgrade to unlock production imports, exports, admin settings, and full workflow access. Your team can be live in minutes — no ERP integration required.</p>
+    <h3>Your 7-Day Free Trial is active.</h3>
+    <p>Upgrade to unlock unlimited production imports, full posting exports, admin settings, and complete workflow access. Your team can be live in minutes — no ERP integration required.</p>
     <div class="demo-prompt-btns">
       <button class="demo-prompt-btn-upgrade" onclick="window.open('https://armatchpro.com/#pricing','_blank')">🚀 Upgrade Now</button>
       <button class="demo-prompt-btn-book" onclick="window.open('https://calendly.com/armatchpro','_blank')">📅 Book a Demo</button>
-      <button class="demo-prompt-btn-continue" onclick="closeDemoPrompt()">Continue Demo</button>
+      <button class="demo-prompt-btn-continue" onclick="closeTrialPrompt()">Continue Trial</button>
     </div>
   </div>
 </div>
 
-<!-- ══ DEMO EXPIRED ══ -->
+<!-- ══ TRIAL EXPIRED ══ -->
 <div id="demo-expired-overlay">
   <div id="demo-expired-box">
     <div class="demo-expired-icon">⏰</div>
-    <h2>Your demo has expired.</h2>
-    <p>Your 7-day AR Match Pro demo has ended. Upgrade to a paid plan to continue matching invoices, running allocations, and exporting posting files.</p>
+    <h2>Your 7-Day Free Trial has expired.</h2>
+    <p>Your AR Match Pro trial has ended. Upgrade to a paid plan to continue matching invoices, running allocations, and exporting posting files.</p>
     <div class="demo-expired-btns">
       <button class="demo-expired-btn-upgrade" onclick="window.location.href='https://armatchpro.com/#pricing'">🚀 Upgrade Now</button>
       <button class="demo-expired-btn-book" onclick="window.open('https://calendly.com/armatchpro','_blank')">📅 Book a Demo</button>
