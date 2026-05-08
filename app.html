@@ -6015,6 +6015,8 @@ function launchDemoFromAccess(demoData){
   IS_DEMO=true;
   CURRENT_USER=demoData.email||'demo@armatchpro.com';
   var displayName=demoData.fullName||demoData.firstName||'Demo User';
+  // Backfill lead record in armp_demo_leads for returning users (no duplicates)
+  backfillDemoLeadIfNeeded(demoData);
   launchApp({name:displayName,avatar:'',plan:'demo',isMaster:false});
   var days=demoDaysRemaining(demoData);
   initDemoBadge(days);
@@ -6024,9 +6026,40 @@ function launchDemoFromAccess(demoData){
   },1200);
 }
 
+function backfillDemoLeadIfNeeded(accessData){
+  if(!accessData||!accessData.email) return;
+  try{
+    var leads=JSON.parse(localStorage.getItem('armp_demo_leads')||'[]');
+    var exists=leads.some(function(l){ return l.email&&l.email.toLowerCase()===accessData.email.toLowerCase(); });
+    if(exists) return;
+    var now=new Date();
+    var expiresAt=accessData.expiresAt?new Date(accessData.expiresAt):new Date(now.getTime()+7*24*60*60*1000);
+    leads.unshift({
+      id:'lead_backfill_'+Date.now(),
+      fullName:accessData.fullName||accessData.firstName||'Demo User',
+      firstName:accessData.firstName||'',
+      lastName:accessData.lastName||'',
+      email:accessData.email,
+      company:accessData.company||'',
+      jobTitle:accessData.jobTitle||'',
+      phone:accessData.phone||'',
+      erp:accessData.erp||'',
+      invoiceVolume:accessData.invoiceVolume||'',
+      signupDate:accessData.startedAt||now.toISOString(),
+      demoStartDate:accessData.startedAt||now.toISOString(),
+      demoExpiration:expiresAt.toISOString(),
+      demoStatus:'Demo Active',
+      source:'Free Demo (backfilled)',
+      contacted:false,
+      converted:false,
+      notes:''
+    });
+    localStorage.setItem('armp_demo_leads',JSON.stringify(leads));
+  }catch(e){}
+}
+
 function doLogoutDemoCleanup(){
-  // Also clear demo access on explicit logout
-  // (keep armp_demo_access for re-entry within 7 days)
+  // Keep armp_demo_access for re-entry within 7 days
 }
 
 // ══════════════════════════════════════════════════════════

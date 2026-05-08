@@ -590,12 +590,48 @@ function goToCheckout(){
   window.location.href='index.html#pricing';
 }
 
+// ── Backfill: ensure demo access exists in armp_demo_leads without duplicates ──
+function backfillDemoLeadIfNeeded(accessData){
+  if(!accessData||!accessData.email) return;
+  try{
+    var leads=JSON.parse(localStorage.getItem('armp_demo_leads')||'[]');
+    var exists=leads.some(function(l){ return l.email&&l.email.toLowerCase()===accessData.email.toLowerCase(); });
+    if(exists) return;
+    var now=new Date();
+    var expiresAt=accessData.expiresAt?new Date(accessData.expiresAt):new Date(now.getTime()+7*24*60*60*1000);
+    leads.unshift({
+      id:'lead_backfill_'+Date.now(),
+      fullName:accessData.fullName||accessData.firstName||'Demo User',
+      firstName:accessData.firstName||'',
+      lastName:accessData.lastName||'',
+      email:accessData.email,
+      company:accessData.company||'',
+      jobTitle:accessData.jobTitle||'',
+      phone:accessData.phone||'',
+      erp:accessData.erp||'',
+      invoiceVolume:accessData.invoiceVolume||'',
+      signupDate:accessData.startedAt||now.toISOString(),
+      demoStartDate:accessData.startedAt||now.toISOString(),
+      demoExpiration:expiresAt.toISOString(),
+      demoStatus:'Demo Active',
+      source:'Free Demo (backfilled)',
+      contacted:false,
+      converted:false,
+      notes:''
+    });
+    localStorage.setItem('armp_demo_leads',JSON.stringify(leads));
+  }catch(e){}
+}
+
 // ── INIT PAGE STATE ──
 document.addEventListener('DOMContentLoaded', function(){
   var isMaster = localStorage.getItem('armp_session') === 'admin@armatchpro.com';
 
   if(_isDemoUser && _demoAccessData){
-    // Signed-up demo user
+    // Backfill lead record for returning users
+    backfillDemoLeadIfNeeded(_demoAccessData);
+
+    // Signed-up demo user: show Open Full App, hide Try Demo Data
     document.getElementById('welcome-hero').style.display='block';
     document.getElementById('public-hero').style.display='none';
     document.getElementById('open-app-card').style.display='block';
@@ -616,23 +652,21 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('welcome-sub').textContent = 'Your '+days+'-day free demo is active. Open the full app to start matching invoices with sample data — no ERP integration required.';
     }
 
-    // Step tracker reflects demo user state
     setStep(1);
 
   } else if(isMaster){
-    // Admin viewing demo page
+    // Admin: show public demo flow
     document.getElementById('welcome-hero').style.display='none';
     document.getElementById('public-hero').style.display='block';
     document.getElementById('open-app-card').style.display='none';
     document.getElementById('initial-panel').style.display='block';
   } else {
-    // Public / no access — access gate handles blocking above
-    // Fallback: show public hero
+    // Public / no access — access gate handles blocking
     document.getElementById('public-hero').style.display='block';
     document.getElementById('initial-panel').style.display='block';
   }
 
-  // Auto-start demo data if URL param
+  // Auto-start demo data if URL param and not a signed-up user
   if(window.location.search.includes('auto=true') && !_isDemoUser){
     setTimeout(startDemo, 800);
   }

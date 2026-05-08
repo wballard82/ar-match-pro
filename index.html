@@ -447,6 +447,27 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 </head>
 <body>
 
+<!-- ══ NETLIFY FORM — hidden, for static detection by Netlify build bot ══ -->
+<!-- This form must exist in the HTML for Netlify to register it. AJAX submits reference it by name. -->
+<form name="demo-leads" netlify netlify-honeypot="bot-field" hidden aria-hidden="true">
+  <input type="hidden" name="form-name" value="demo-leads">
+  <input type="text" name="bot-field">
+  <input type="text" name="fullName">
+  <input type="text" name="firstName">
+  <input type="text" name="lastName">
+  <input type="email" name="workEmail">
+  <input type="text" name="company">
+  <input type="text" name="jobTitle">
+  <input type="tel" name="phone">
+  <input type="text" name="erp">
+  <input type="text" name="invoiceVolume">
+  <input type="text" name="signupAt">
+  <input type="text" name="demoStartAt">
+  <input type="text" name="expiresAt">
+  <input type="text" name="demoStatus">
+  <input type="text" name="source">
+</form>
+
 <header class="site-header">
   <div class="container nav">
     <a class="brand" href="#top">
@@ -1087,12 +1108,56 @@ function draw(){
   ctx.globalAlpha=1;requestAnimationFrame(draw);
 }
 draw();// ── LEAD CAPTURE ──
-const FORMSPREE_URL='https://formspree.io/f/xqenaooy';
+
+// ── Backfill: ensure a demo access record exists in armp_demo_leads (no duplicates) ──
+function backfillDemoLead(accessData){
+  if(!accessData||!accessData.email) return;
+  try{
+    var leads=JSON.parse(localStorage.getItem('armp_demo_leads')||'[]');
+    var exists=leads.some(function(l){ return l.email&&l.email.toLowerCase()===accessData.email.toLowerCase(); });
+    if(exists) return;
+    var now=new Date();
+    var expiresAt=accessData.expiresAt?new Date(accessData.expiresAt):new Date(now.getTime()+7*24*60*60*1000);
+    leads.unshift({
+      id:'lead_backfill_'+Date.now(),
+      fullName:accessData.fullName||accessData.firstName||'Demo User',
+      firstName:accessData.firstName||'',
+      lastName:accessData.lastName||'',
+      email:accessData.email,
+      company:accessData.company||'',
+      jobTitle:accessData.jobTitle||'',
+      phone:accessData.phone||'',
+      erp:accessData.erp||'',
+      invoiceVolume:accessData.invoiceVolume||'',
+      signupDate:accessData.startedAt||now.toISOString(),
+      demoStartDate:accessData.startedAt||now.toISOString(),
+      demoExpiration:expiresAt.toISOString(),
+      demoStatus:'Demo Active',
+      source:'Free Demo (backfilled)',
+      contacted:false,
+      converted:false,
+      notes:''
+    });
+    localStorage.setItem('armp_demo_leads',JSON.stringify(leads));
+  }catch(e){}
+}
+
+// Run backfill on page load for returning demo users
+(function(){
+  try{
+    var raw=localStorage.getItem('armp_demo_access');
+    if(!raw) return;
+    var access=JSON.parse(raw);
+    if(access&&(access.enabled||access.granted)&&access.email){
+      backfillDemoLead(access);
+    }
+  }catch(e){}
+})();
 
 function openLeadModal(){
   document.getElementById('lead-overlay').classList.add('open');
   document.body.style.overflow='hidden';
-  setTimeout(()=>document.getElementById('lead-name').focus(),300);
+  setTimeout(function(){ var el=document.getElementById('lead-name'); if(el) el.focus(); },300);
 }
 function closeLeadModal(){
   document.getElementById('lead-overlay').classList.remove('open');
@@ -1100,38 +1165,38 @@ function closeLeadModal(){
 }
 
 async function submitLead(){
-  const name=document.getElementById('lead-name').value.trim();
-  const email=document.getElementById('lead-email').value.trim();
-  const company=document.getElementById('lead-company').value.trim();
-  const title=document.getElementById('lead-title')?.value.trim()||'';
-  const phone=document.getElementById('lead-phone').value.trim();
-  const erp=document.getElementById('lead-erp')?.value||'';
-  const volume=document.getElementById('lead-volume')?.value||'';
-  const errEl=document.getElementById('lead-err');
+  var name=document.getElementById('lead-name').value.trim();
+  var email=document.getElementById('lead-email').value.trim();
+  var company=document.getElementById('lead-company').value.trim();
+  var title=(document.getElementById('lead-title')||{value:''}).value.trim();
+  var phone=document.getElementById('lead-phone').value.trim();
+  var erp=(document.getElementById('lead-erp')||{value:''}).value;
+  var volume=(document.getElementById('lead-volume')||{value:''}).value;
+  var errEl=document.getElementById('lead-err');
 
   if(!name||!email||!company||!title||!erp||!volume){
     errEl.textContent='Please fill in all required fields.';
-    errEl.style.display='block';return;
+    errEl.style.display='block'; return;
   }
   if(!email.includes('@')){
     errEl.textContent='Please enter a valid email address.';
-    errEl.style.display='block';return;
+    errEl.style.display='block'; return;
   }
   errEl.style.display='none';
 
-  const btn=document.getElementById('lead-submit-btn');
-  btn.disabled=true;btn.textContent='Setting up your demo…';
+  var btn=document.getElementById('lead-submit-btn');
+  btn.disabled=true; btn.textContent='Setting up your demo…';
 
   // Parse name parts
-  const nameParts=name.trim().split(/\s+/);
-  const firstName=nameParts[0]||name;
-  const lastName=nameParts.slice(1).join(' ')||'';
+  var nameParts=name.trim().split(/\s+/);
+  var firstName=nameParts[0]||name;
+  var lastName=nameParts.slice(1).join(' ')||'';
 
-  const now=new Date();
-  const expiresAt=new Date(now.getTime()+7*24*60*60*1000);
+  var now=new Date();
+  var expiresAt=new Date(now.getTime()+7*24*60*60*1000);
 
-  // Build full lead record
-  const leadRecord={
+  // Build normalized lead record
+  var leadRecord={
     id:'lead_'+Date.now(),
     fullName:name,
     firstName:firstName,
@@ -1152,22 +1217,23 @@ async function submitLead(){
     notes:''
   };
 
-  // Save to armp_demo_leads
+  // 1. Save to armp_demo_leads (dedup by email)
   try{
-    const leads=JSON.parse(localStorage.getItem('armp_demo_leads')||'[]');
+    var leads=JSON.parse(localStorage.getItem('armp_demo_leads')||'[]');
+    leads=leads.filter(function(l){ return !l.email||l.email.toLowerCase()!==email.toLowerCase(); });
     leads.unshift(leadRecord);
     localStorage.setItem('armp_demo_leads',JSON.stringify(leads));
   }catch(e){}
 
-  // Also save legacy armp_leads for backward compat
+  // 2. Save legacy armp_leads for backward compat
   try{
-    const oldLeads=JSON.parse(localStorage.getItem('armp_leads')||'[]');
-    oldLeads.push({name,email,company,title,phone,erp,volume,ts:now.toISOString(),source:'landing-page-demo'});
+    var oldLeads=JSON.parse(localStorage.getItem('armp_leads')||'[]');
+    oldLeads.push({name:name,email:email,company:company,title:title,phone:phone,erp:erp,volume:volume,ts:now.toISOString(),source:'landing-page-demo'});
     localStorage.setItem('armp_leads',JSON.stringify(oldLeads));
   }catch(e){}
 
-  // Save full demo access
-  const demoAccess={
+  // 3. Save full demo access to localStorage
+  var demoAccess={
     enabled:true,
     email:email,
     firstName:firstName,
@@ -1188,37 +1254,59 @@ async function submitLead(){
     localStorage.setItem('demoAccessGranted','true');
   }catch(e){}
 
-  // Fire-and-forget Formspree — NEVER block demo on failure
-  try{
-    fetch('https://formspree.io/f/xqenaooy',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify({
-        name,email,company,title,phone,erp,volume,
-        _subject:'New AR Match Pro demo request — '+company,
-        _replyto:email,
-        message:'Demo Request\n\nName: '+name+'\nEmail: '+email+'\nCompany: '+company+'\nJob Title: '+title+'\nPhone: '+(phone||'not provided')+'\nERP: '+erp+'\nVolume: '+volume+'\nTime: '+now.toLocaleString()
-      })
-    }).catch(function(e){console.log('Lead form note: backend unavailable, demo granted locally.',e);});
-  }catch(e){console.log('Lead form note: fetch failed.',e);}
+  // 4. Submit to Netlify Forms via fetch (fire-and-forget — NEVER blocks demo access)
+  var netlifyPayload=new URLSearchParams({
+    'form-name':'demo-leads',
+    'bot-field':'',
+    'fullName':name,
+    'firstName':firstName,
+    'lastName':lastName,
+    'workEmail':email,
+    'company':company,
+    'jobTitle':title,
+    'phone':phone||'',
+    'erp':erp,
+    'invoiceVolume':volume,
+    'signupAt':now.toISOString(),
+    'demoStartAt':now.toISOString(),
+    'expiresAt':expiresAt.toISOString(),
+    'demoStatus':'Demo Active',
+    'source':'Free Demo'
+  });
 
-  // Show success + countdown
+  // Submit async — do not await, never block user
+  (async function(){
+    try{
+      var res=await fetch('/',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:netlifyPayload.toString()
+      });
+      if(!res.ok){
+        console.warn('Netlify Forms note: submission returned '+res.status+'. Lead saved locally.');
+      }
+    }catch(err){
+      console.warn('Netlify Forms note: network unavailable. Lead saved locally.',err);
+    }
+  })();
+
+  // 5. Show success state immediately — do not wait for network
   document.getElementById('lead-form-wrap').style.display='none';
   document.getElementById('lead-success').style.display='block';
   document.getElementById('lead-success-name').textContent=firstName;
   document.getElementById('lead-success-email').textContent=email;
 
-  // Animate progress bar then redirect to demo.html?mode=demo
-  const bar=document.getElementById('lead-progress');
-  let pct=0;
-  const interval=setInterval(function(){
-    pct+=2;bar.style.width=pct+'%';
-    if(pct>=100){clearInterval(interval);window.location.href='demo.html?mode=demo';}
+  // 6. Animate progress bar then redirect to demo.html?mode=demo
+  var bar=document.getElementById('lead-progress');
+  var pct=0;
+  var interval=setInterval(function(){
+    pct+=2; bar.style.width=pct+'%';
+    if(pct>=100){ clearInterval(interval); window.location.href='demo.html?mode=demo'; }
   },50);
 }
 
 // Allow Enter key to submit lead form
-document.addEventListener('keydown',e=>{
+document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&document.getElementById('lead-overlay').classList.contains('open')){
     submitLead();
   }
