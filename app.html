@@ -120,7 +120,13 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--bdr3); border-radius: 2px; }
 
-/* ── Roboto Mono: plain open zeros everywhere — no slashes, no dots ── */
+/* ── KPI dot colors match number value colors in both themes ── */
+.kpi-dot-yellow { background:#D97706; }
+.kpi-dot-red    { background:#DC2626; }
+.kpi-dot-orange { background:#EA580C; }
+[data-theme="dark"] .kpi-dot-yellow { background:#FCD34D; }
+[data-theme="dark"] .kpi-dot-red    { background:#FCA5A5; }
+[data-theme="dark"] .kpi-dot-orange { background:#FB923C; }
 * { font-variant-numeric: normal; }
 .td-mono,.td-amt,.td-key,.td-num,.kpi-card-val,.recon-kpi-val,
 .pay-viz-val,.at-val,.dk-val,.rpt-kpi-val,.cfo-metric-value,
@@ -1969,8 +1975,15 @@ input:focus, select:focus, textarea:focus { outline: none; }
 
 /* ── REFACTOR PHASE: horizontal splits, account view, match priority ── */
 .ca-hsplit { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
-.ca-top-half { flex:0 0 auto; min-height:220px; max-height:55%; display:flex; flex-direction:column; overflow:hidden; border-bottom:2px solid var(--bdr2); }
-.ca-bottom-half { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:180px; }
+.ca-top-half { flex:0 0 auto; min-height:180px; display:flex; flex-direction:column; overflow:hidden; }
+.ca-bottom-half { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:280px; }
+.ca-drag-handle {
+  height:8px; background:var(--surface3); border-top:1px solid var(--bdr2); border-bottom:1px solid var(--bdr2);
+  cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  transition:background .15s; user-select:none;
+}
+.ca-drag-handle:hover { background:var(--bdr2); }
+.ca-drag-handle::after { content:''; display:block; width:32px; height:3px; border-radius:2px; background:var(--bdr3); }
 .ca-bottom-header { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:var(--surface2); border-bottom:1px solid var(--bdr); flex-shrink:0; }
 .ca-bottom-title { font-size:10px; font-weight:800; color:var(--t3); text-transform:uppercase; letter-spacing:.1em; display:flex; align-items:center; gap:8px; }
 .ca-bottom-tbl-wrap { flex:1; overflow:auto; }
@@ -2307,6 +2320,33 @@ body.app-active #app {
   </div>
 </div>
 
+<div id="contact-modal-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border-radius:18px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
+      <div>
+        <div style="font-size:15px;font-weight:800;color:var(--t1)">💬 Contact AR Match Pro</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px">Support · Questions · Feature requests</div>
+      </div>
+      <div onclick="closeContactModal()" style="cursor:pointer;font-size:20px;color:var(--t3);line-height:1;padding:4px 8px;border-radius:6px" onmouseover="this.style.background='var(--glass2)'" onmouseout="this.style.background=''">×</div>
+    </div>
+    <div id="contact-chat-msgs" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:200px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div>
+        <div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">
+          Hi! I'm the AR Match Pro support assistant. I can answer questions about cash application, matching logic, DSO, exceptions, settings, and more — or log a support ticket for you. How can I help?
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--bdr);display:flex;gap:8px;flex-shrink:0">
+      <input id="contact-chat-inp" type="text" placeholder="Ask anything about AR Match Pro…" autocomplete="off"
+        style="flex:1;padding:9px 14px;border:1.5px solid var(--bdr);border-radius:10px;background:var(--surface2);color:var(--t1);font-family:var(--font);font-size:13px;outline:none"
+        onkeydown="if(event.key==='Enter')sendContactMsg()"
+        onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bdr)'">
+      <button class="btn btn-p btn-sm" onclick="sendContactMsg()" style="flex-shrink:0">Send</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════
      APP SHELL
      ══════════════════════════════════════════ -->
@@ -2384,7 +2424,7 @@ body.app-active #app {
         Match Rate
       </div>
       <div class="kpi-card-val blue" id="kpi-rate">—</div>
-      <div class="kpi-card-sub" id="kpi-rate-sub">STP rate</div>
+      <div class="kpi-card-sub" id="kpi-rate-sub">Auto-Match Rate</div>
       <div class="kpi-sparkline" id="kpi-rate-spark" style="color:var(--pd)">
         <div class="kpi-spark-bar" style="height:60%"></div>
         <div class="kpi-spark-bar" style="height:72%"></div>
@@ -2397,7 +2437,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card kpi-yellow" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')" style="cursor:pointer;min-width:140px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:#D97706"></div>
+        <div class="kpi-dot kpi-dot-yellow"></div>
         Unapplied Cash
       </div>
       <div class="kpi-card-val yellow" id="kpi-unapplied">$0</div>
@@ -2405,7 +2445,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card kpi-red" onclick="var f=document.getElementById('ws-exc-type-filter');if(f)f.value='';setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)" style="cursor:pointer;min-width:120px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:#DC2626"></div>
+        <div class="kpi-dot kpi-dot-red"></div>
         Exceptions
       </div>
       <div class="kpi-card-val red" id="kpi-exc">0</div>
@@ -2413,7 +2453,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card kpi-orange" onclick="var f=document.getElementById('ws-exc-type-filter');if(f)f.value='Short pay';setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)" style="cursor:pointer;min-width:120px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:#EA580C"></div>
+        <div class="kpi-dot kpi-dot-orange"></div>
         Short Pays
       </div>
       <div class="kpi-card-val orange" id="kpi-shortpay">0</div>
@@ -2421,7 +2461,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card" onclick="sp('invoices');setTimeout(function(){var s=document.getElementById('inv-search');if(s)s.value='';document.querySelectorAll('#inv-filter-row .col-filter-inp').forEach(function(el){el.value='';});document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display='';});},80)" style="cursor:pointer;min-width:100px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:var(--t3)"></div>
+        <div class="kpi-dot" style="background:var(--t1)"></div>
         Invoices
       </div>
       <div class="kpi-card-val" id="kpi-inv-ct">0</div>
@@ -2429,7 +2469,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')" style="cursor:pointer;min-width:100px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:var(--t3)"></div>
+        <div class="kpi-dot" style="background:var(--t1)"></div>
         Payments
       </div>
       <div class="kpi-card-val" id="kpi-pay-ct">0</div>
@@ -2742,7 +2782,6 @@ body.app-active #app {
           <button class="ca-tab active" id="ca-tab-match" onclick="setCaTab('match',this)">To Be Matched</button>
           <button class="ca-tab" id="ca-tab-review" onclick="setCaTab('review',this)">Review</button>
           <button class="ca-tab" id="ca-tab-exc" onclick="setCaTab('exc',this)">Exceptions</button>
-          <button class="ca-tab" id="ca-tab-acct" onclick="setCaTab('acct',this)">Account Transaction</button>
           <button class="ca-tab" id="ca-tab-recon" onclick="setCaTab('recon',this)">Reconcile</button>
         </div>
 
@@ -2768,9 +2807,8 @@ body.app-active #app {
               <span class="ca-filter-label">From</span>
               <input type="date" id="ca-date-from" class="ca-filter-sel" onchange="caFilterUpdate()">
             </div>
-            <div class="ca-filter-item">
-              <span class="ca-filter-label">To</span>
-              <input type="date" id="ca-date-to" class="ca-filter-sel" onchange="caFilterUpdate()">
+            <div class="ca-filter-item" style="margin-left:auto">
+              <button class="btn btn-r btn-sm" onclick="if(confirm('Clear all payment data?')){PAY=[];saveToStorage();rRem();updDash();updTop();toast('Payment data cleared');}">Clear all</button>
             </div>
           </div>
 
@@ -2896,6 +2934,9 @@ body.app-active #app {
               </div>
             </div><!-- end ca-top-half -->
 
+            <!-- Drag handle -->
+            <div class="ca-drag-handle" id="ca-drag-handle" title="Drag to resize"></div>
+
             <!-- BOTTOM HALF: SAP FBL5N-style customer open items -->
             <div class="ca-bottom-half">
               <div class="ca-bottom-header">
@@ -2956,7 +2997,7 @@ body.app-active #app {
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
             <div style="font-size:12px;color:var(--t3)" id="review-ct">0 matched records</div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-outline btn-sm" onclick="clearMatchData()">Clear results</button>
+              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting file</button>
             </div>
           </div>
@@ -3023,54 +3064,13 @@ body.app-active #app {
           </div>
         </div>
 
-        <!-- ── TAB: ACCOUNT TRANSACTION ── -->
-        <div class="ws-tab-view" id="ws-acct">
-          <div class="acct-ws">
-            <div class="acct-left">
-              <div style="padding:10px 14px;border-bottom:1px solid var(--bdr);background:var(--surface2)">
-                <input class="inp" placeholder="Search customers…" oninput="filterAcctCustomers(this.value)" style="width:100%;font-size:12px">
-              </div>
-              <div id="acct-customer-list"><div class="empty" style="padding:24px 12px"><div class="empty-icon">👥</div><div class="empty-t">No customers</div><div class="empty-s">Import invoices to see accounts.</div></div></div>
-            </div>
-            <div class="acct-right">
-              <div id="acct-detail-empty" class="empty"><div class="empty-icon">🏢</div><div class="empty-t">Select a customer</div><div class="empty-s">Click a customer to view their full AR account activity.</div></div>
-              <div id="acct-detail" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-                <div id="acct-header" style="padding:14px 18px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                    <div><div style="font-size:17px;font-weight:800;color:var(--t1)" id="acct-cust-name">—</div><div style="font-size:12px;color:var(--t3);margin-top:2px" id="acct-cust-id">—</div></div>
-                    <button class="btn btn-outline btn-sm" onclick="openCustomerDrawer()">View full account</button>
-                  </div>
-                  <div class="aging-grid" id="acct-aging-grid"></div>
-                </div>
-                <div style="flex:1;overflow-y:auto">
-                  <div style="padding:8px 14px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);background:var(--surface2)">Open Invoices &amp; Activity</div>
-                  <table class="fbl5n-tbl" id="acct-inv-tbl">
-                    <thead>
-                      <tr>
-                        <th>Invoice #</th><th>Inv Date</th><th>Due Date</th><th>PO #</th><th>Sales Order</th>
-                        <th style="text-align:right">Amount</th><th style="text-align:right">Balance</th>
-                        <th>Aging</th><th>Status</th><th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody id="acct-inv-body"><tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">No invoices</div></div></td></tr></tbody>
-                  </table>
-                  <div style="padding:8px 14px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);border-top:2px solid var(--bdr);background:var(--surface2);margin-top:4px">Payment History</div>
-                  <table class="fbl5n-tbl" id="acct-pay-tbl">
-                    <thead><tr><th>TX ID</th><th>Date</th><th style="text-align:right">Amount</th><th>Method</th><th>PO Ref</th><th>Invoice Ref</th><th>Status</th></tr></thead>
-                    <tbody id="acct-pay-body"><tr><td colspan="7"><div class="empty" style="padding:16px"><div class="empty-t">No payments</div></div></td></tr></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- ── TAB: RECONCILE ── -->
         <div class="ws-tab-view" id="ws-recon">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
             <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" onclick="runMatch()">⚡ Auto-match</button>
+              <button class="btn btn-r btn-sm" onclick="if(confirm('Clear all match data?')){RES=[];saveToStorage();renderWsRecon();updDash();updTop();toast('Match data cleared');}">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
           </div>
@@ -3140,7 +3140,7 @@ body.app-active #app {
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-outline btn-sm" onclick="loadSampleInv()">Load sample</button>
-              <button class="btn btn-outline btn-sm" onclick="clearInvData()">Clear invoices</button>
+              <button class="btn btn-r btn-sm" onclick="clearInvData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="openImport('inv')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
                 Import invoices
@@ -3213,7 +3213,7 @@ body.app-active #app {
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-outline btn-sm" onclick="loadSampleRem()">Load sample</button>
-              <button class="btn btn-outline btn-sm" onclick="clearPayData()">Clear</button>
+              <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
               <button class="btn btn-outline btn-sm" onclick="addRemRowAfter()">+ Add row</button>
               <button class="btn btn-p btn-sm" onclick="openImport('rem')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
@@ -3277,7 +3277,7 @@ body.app-active #app {
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span id="post-ct" style="font-size:12.5px;color:var(--t3)">0 rows</span>
-              <button class="btn btn-outline btn-sm" onclick="clearMatchData()">Clear results</button>
+              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
                 Download
@@ -3552,7 +3552,7 @@ body.app-active #app {
               <div class="panel-title">Reports</div>
               <div class="panel-sub">Match rate · Exception aging · DSO · CFO-level metrics</div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="exportReporting()">Export PDF</button>
+            <button class="btn btn-outline btn-sm" onclick="exportReporting()">↓ Export CSV</button>
           </div>
         </div>
         <div class="panel-body">
@@ -3598,7 +3598,7 @@ body.app-active #app {
               <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8)">📊</div>
               <div class="rpt-kpi-label">Match Rate</div>
               <div class="rpt-kpi-val" id="rpt-rate">—</div>
-              <div class="rpt-kpi-sub" id="rpt-rate-s">STP rate</div>
+              <div class="rpt-kpi-sub" id="rpt-rate-s">Auto-Match Rate</div>
               <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-rate-bar" style="background:var(--p)"></div></div>
             </div>
             <div class="rpt-kpi-card">
@@ -3675,7 +3675,7 @@ body.app-active #app {
           <div class="panel-title">Settings</div>
           <div class="panel-sub">Account · Role · Matching engine · Appearance · Plans &amp; Pricing</div>
         </div>
-        <div class="panel-body" style="max-width:720px">
+        <div class="panel-body" style="max-width:960px;margin:0 auto;width:100%">
 
           <!-- Account -->
           <div class="settings-section">
@@ -3737,7 +3737,7 @@ body.app-active #app {
           <div class="settings-section">
             <div class="settings-section-title">📊 CFO Settings</div>
             <div class="settings-row">
-              <div><div class="settings-label">Target STP Rate</div><div class="settings-desc">Alert when straight-through processing falls below this</div></div>
+              <div><div class="settings-label">Target Auto-Match Rate</div><div class="settings-desc">Alert when straight-through processing falls below this</div></div>
               <div style="display:flex;align-items:center;gap:6px">
                 <input type="number" class="inp" id="cfo-s-stp" min="0" max="100" step="1" style="width:70px;text-align:right" value="80">
                 <span style="font-size:12px;color:var(--t3)">%</span>
@@ -3799,7 +3799,7 @@ body.app-active #app {
               </div>
             </div>
             <div style="font-size:12px;color:var(--t3);text-align:center">
-              Questions? <a href="mailto:info@armatchpro.com" style="color:var(--pd)">info@armatchpro.com</a> · <a href="https://calendly.com/armatchpro" target="_blank" style="color:var(--pd)">Book a demo</a>
+              Questions? <button class="btn btn-p btn-sm" onclick="openContactModal()" style="font-size:12px">💬 Contact AR Match Pro</button>
             </div>
           </div>
 
@@ -3930,7 +3930,7 @@ function _engUpdateRightPanel(){
     if(sharedPO.length>1)cards.push({priority:'med',icon:'🔗',title:`${sharedPO.length} Invoices Share PO ${p.po}`,body:'Likely a consolidated remittance. Consider applying to all invoices under this PO.',action:'Mark all matching PO',conf:87,confColor:'var(--am)'});
     // Exact subset match
     const exactSum=rows.reduce((s,r)=>s+r.inv.amt,0);
-    if(Math.abs(exactSum-p.amt)<0.01&&rows.length>1)cards.push({priority:'ok',icon:'✓',title:`${rows.length} Invoices Sum to Exact Payment`,body:`$${$f(p.amt)} matches total of all open invoices. Auto-apply all recommended.`,action:'Auto-apply all',conf:99,confColor:'var(--g)',actionFn:'engMarkAll()'});
+    if(Math.abs(exactSum-p.amt)<0.01&&rows.length>1)cards.push({priority:'ok',icon:'✓',title:`${rows.length} Invoices Sum to Exact Payment`,body:`${$f(p.amt)} matches total of all open invoices. Auto-apply all recommended.`,action:'Auto-apply all',conf:99,confColor:'var(--g)',actionFn:'engMarkAll()'});
     // Short pay likelihood
     const spRows=rows.filter(r=>p.amt<r.inv.amt&&p.amt>r.inv.amt*0.8);
     if(spRows.length)cards.push({priority:'med',icon:'⚠️',title:'Likely Short Pay Detected',body:`Payment is ${((1-p.amt/spRows[0].inv.amt)*100).toFixed(1)}% short of invoice ${spRows[0].inv.i}. Partial allocation or write-off may be needed.`,action:'Apply partial',conf:74,confColor:'var(--am)'});
@@ -3939,7 +3939,7 @@ function _engUpdateRightPanel(){
     if(dpRows.length)cards.push({priority:'low',icon:'💡',title:`${dpRows.length} Possible Down Payment Invoice(s)`,body:'These invoices may represent deposits or advance payments. Confirm with customer before applying.',conf:68,confColor:'var(--p)'});
     // Unapplied cash for this customer
     const custExc=EXC.filter(e=>(e.c||'').toLowerCase()===(p.c||'').toLowerCase()&&e.type==='Unapplied payment');
-    if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: $${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
+    if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: ${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
     // No invoices
     if(!rows.length)cards.push({priority:'high',icon:'🔍',title:'No Open Invoices Found',body:'No matching invoices for this customer. Payment may need to be posted as unapplied cash.',action:'Post as unapplied',conf:null,confColor:'var(--r)'});
     // Missing PO
@@ -3975,7 +3975,7 @@ function _engUpdateRightPanel(){
         <div style="padding:10px;background:var(--r-bg);border:1px solid rgba(239,68,68,.15);border-radius:9px;margin-bottom:7px">
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
             <span class="badge badge-r" style="font-size:10px">${e.type}</span>
-            <span style="font-size:11.5px;font-weight:700;color:var(--r-t)">$${$f(e.amt)}</span>
+            <span style="font-size:11.5px;font-weight:700;color:var(--r-t)">${$f(e.amt)}</span>
           </div>
           <div style="font-size:12px;color:var(--t2);line-height:1.4">${e.detail||'Exception detected'}</div>
           <div style="font-size:11.5px;color:var(--t3);margin-top:4px">${e.action||''}</div>
@@ -4031,9 +4031,9 @@ function engBuildAI(p,invs){
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));
   if(sharedPO.length>1)tips.push(`🔗 <strong>${sharedPO.length} invoices share PO ${p.po}</strong> — consolidated remittance likely`);
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
-  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to $${$f(p.amt)} · auto-apply recommended`);
+  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to ${$f(p.amt)} · auto-apply recommended`);
   const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);
-  if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by $${$f(sp[0].amt-p.amt)}`);
+  if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by ${$f(sp[0].amt-p.amt)}`);
   if(!invs.length)tips.push(`🔍 <strong>No open invoices</strong> for ${p.c||'this customer'} — consider posting as unapplied cash`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:5px 0;border-bottom:1px solid rgba(139,92,246,.08);line-height:1.5;font-size:12.5px;color:var(--t2)">${t}</div>`).join('');}
   else bar.style.display='none';
@@ -4068,7 +4068,7 @@ function renderWsExcPremium(){
     const sev=typeSev[ex.type]||'med';
     const icon=typeIcon[ex.type]||'⚠️';
     return`<div class="exc-card sev-${sev}">
-      <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">$${$f(ex.amt)}</div>
+      <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">${$f(ex.amt)}</div>
       <div class="exc-card-header">
         <span class="exc-card-type-icon">${icon}</span>
         <div style="flex:1;min-width:0;padding-right:80px">
@@ -4085,7 +4085,7 @@ function renderWsExcPremium(){
             <option value="">— Resolve —</option>
             <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
             <option>Write off</option><option>Bank fee</option>
-            <option>Wire transfer</option><option>Chase customer</option><option>Duplicate — reject</option>
+            <option>Chase customer</option><option>Duplicate — reject</option>
           </select>
           <input type="text" class="inp" style="flex:1;font-size:11.5px;padding:5px 10px;min-width:80px;max-width:140px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Add note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
           <span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Open</span>`
@@ -4126,12 +4126,12 @@ function renderWsReview(){
           <span>Acct: <strong style="color:var(--t1)">${r.a||'—'}</strong></span>
           <span>Inv: <strong style="color:var(--pd);font-family:var(--mono)">${r.i||'—'}</strong></span>
           ${r.po?`<span>PO: ${r.po}</span>`:''}
-          ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: $${$f(Math.abs(r.vr))}</span>`:''}
+          ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: ${$f(Math.abs(r.vr))}</span>`:''}
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">$${$f(r.pd)}</div>
-        <div style="font-size:11px;color:var(--t3)">of $${$f(r.oa)}</div>
+        <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">${$f(r.pd)}</div>
+        <div style="font-size:11px;color:var(--t3)">of ${$f(r.oa)}</div>
         <div style="font-size:11.5px;font-weight:700;color:${conf==='100%'?'var(--g-t)':'var(--am-t)'}">Conf: ${conf}</div>
       </div>
       <div style="flex-shrink:0;margin-left:12px" onclick="event.stopPropagation()">
@@ -4144,35 +4144,48 @@ function renderWsReview(){
 // ── Premium reconcile ──
 function renderWsRecon(){
   const list=document.getElementById('recon-list');const summary=document.getElementById('recon-summary');if(!list)return;
-  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
+  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc);
   const unmatched=PAY.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
-  if(summary)summary.innerHTML=`<strong style="color:var(--t1)">$${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">$${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
+  if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
   if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance and run matching to reconcile.</div></div>';return;}
-  const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
-  list.innerHTML=rows.map(item=>{
-    if(item.type==='matched'){const r=item.r;return`<div class="recon-item">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--g);flex-shrink:0;box-shadow:0 0 8px rgba(16,185,129,.4)"></div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--t1)">${r.c||'—'}</div>
-        <div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">${r.i||'—'} · ${r.po?'PO '+r.po:''}</div>
-      </div>
-      <div style="font-size:15px;font-weight:900;font-family:var(--mono);color:var(--g-t)">+$${$f(r.pd)}</div>
-      <span class="ws-badge ws-badge-ready" style="font-size:10.5px"><span class="ws-dot"></span>Reconciled</span>
-    </div>`;} 
-    else{const p=item.p;return`<div class="recon-item" style="border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.03)">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--am);flex-shrink:0;animation:pulseDot 2s ease-in-out infinite"></div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--t1)">${p.c||p.a||'Unknown'}</div>
-        <div style="font-size:11.5px;color:var(--t3);font-family:var(--mono)">${p.txId||p.po||'—'} · ${p.payDate?fmtDate(p.payDate):'—'}</div>
-      </div>
-      <div style="font-size:15px;font-weight:900;font-family:var(--mono);color:var(--am-t)">$${$f(p.amt)}</div>
-      <span class="ws-badge ws-badge-pending" style="font-size:10.5px"><span class="ws-dot"></span>Unreconciled</span>
-      <button class="btn btn-outline btn-xs" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">Apply</button>
-    </div>`;}
-  }).join('');
+  list.innerHTML=`<table class="tbl" style="width:100%">
+    <thead><tr>
+      <th>Customer</th><th>Invoice #</th><th>PO #</th>
+      <th style="text-align:right">Payment</th><th style="text-align:right">Applied</th>
+      <th style="text-align:right">Write-off</th><th style="text-align:right">Bank Fee</th>
+      <th style="text-align:right">Variance</th><th>Status</th>
+    </tr></thead><tbody>`+
+    matched.map((r,ri)=>{
+      const idx=RES.indexOf(r);
+      const wo=r.writeOff||0;const bf=r.bankFee||0;
+      const netVar=(r.vr||0)-wo-bf;
+      return`<tr>
+        <td style="font-weight:600;color:var(--t1)">${r.c||'—'}</td>
+        <td class="td-mono">${r.i||'—'}</td>
+        <td class="td-mono">${r.po||'—'}</td>
+        <td class="td-amt">${$f(r.oa||r.pd)}</td>
+        <td class="td-amt" style="color:var(--g-t)">${$f(r.pd)}</td>
+        <td style="text-align:right;padding:4px 8px"><input type="number" step="0.01" min="0" value="${wo||''}" placeholder="0.00"
+          style="width:80px;text-align:right;padding:3px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:${wo>0?'var(--am-t)':'var(--t1)'};font-family:var(--mono);font-size:12px"
+          oninput="RES[${idx}].writeOff=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?'var(--am-t)':'var(--t1)';saveToStorage()"></td>
+        <td style="text-align:right;padding:4px 8px"><input type="number" step="0.01" min="0" value="${bf||''}" placeholder="0.00"
+          style="width:80px;text-align:right;padding:3px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:${bf>0?'var(--pu-t)':'var(--t1)'};font-family:var(--mono);font-size:12px"
+          oninput="RES[${idx}].bankFee=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?'var(--pu-t)':'var(--t1)';saveToStorage()"></td>
+        <td class="td-amt" style="color:${Math.abs(netVar)<0.01?'var(--g-t)':'var(--r-t)'}">${Math.abs(netVar)<0.01?'Ties':''+$f(Math.abs(netVar))+(netVar<0?' CR':' DR')}</td>
+        <td><span class="ws-badge ${Math.abs(netVar)<0.01?'ws-badge-ready':'ws-badge-pending'}"><span class="ws-dot"></span>${Math.abs(netVar)<0.01?'Reconciled':'Open'}</span></td>
+      </tr>`;}).join('')+
+    unmatched.map(p=>`<tr style="background:rgba(245,158,11,.03)">
+      <td style="font-weight:600">${p.c||p.a||'Unknown'}</td>
+      <td class="td-mono">—</td><td class="td-mono">${p.po||p.txId||'—'}</td>
+      <td class="td-amt" style="color:var(--am-t)">${$f(p.amt)}</td>
+      <td>—</td><td>—</td><td>—</td>
+      <td class="td-amt" style="color:var(--am-t)">${$f(p.amt)}</td>
+      <td><span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Unreconciled</span></td>
+    </tr>`).join('')+
+    '</tbody></table>';
 }
 
 // ── Animate KPI updates ──
@@ -4429,8 +4442,8 @@ function updDash(){
   if(ins&&(RES.length||EXC.length))ins.innerHTML=`
     <div style="display:flex;flex-direction:column;gap:6px">
       <div class="ai-suggestion"><span class="ai-suggestion-icon">💚</span>Match rate: <strong>${rt.toFixed(1)}%</strong>${rt>=90?' — excellent!':rt>=70?' — good':' — needs attention'}</div>
-      ${sp_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">⚠️</span>Short pay total: <strong>$${$f(sp_tot)}</strong> — ${EXC.filter(e=>e.type==='Short pay').length} invoices</div>`:''}
-      ${ua_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">💙</span>Unapplied cash: <strong>$${$f(ua_tot)}</strong> pending decision</div>`:''}
+      ${sp_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">⚠️</span>Short pay total: <strong>${$f(sp_tot)}</strong> — ${EXC.filter(e=>e.type==='Short pay').length} invoices</div>`:''}
+      ${ua_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">💙</span>Unapplied cash: <strong>${$f(ua_tot)}</strong> pending decision</div>`:''}
       ${top?`<div class="ai-suggestion"><span class="ai-suggestion-icon">🔴</span>Top exception: <strong>${top[0]}</strong> — ${top[1]} case${top[1]!==1?'s':''}</div>`:''}
     </div>`;
 }
@@ -4446,7 +4459,7 @@ function updReporting(){
   const spc=EXC.filter(e=>e.type==='Short pay');
   setEl('rpt-matched',$fk(ma));setEl('rpt-matched-s',matched.length+' transactions');
   const rb=document.getElementById('rpt-matched-bar');if(rb)rb.style.width=rt.toFixed(1)+'%';
-  setEl('rpt-rate',rt.toFixed(1)+'%');setEl('rpt-rate-s','STP rate');
+  setEl('rpt-rate',rt.toFixed(1)+'%');setEl('rpt-rate-s','Auto-Match Rate');
   const rr=document.getElementById('rpt-rate-bar');if(rr)rr.style.width=rt.toFixed(1)+'%';
   setEl('rpt-unapplied',$fk(ua));setEl('rpt-unapplied-s','Pending decision');
   const ub=document.getElementById('rpt-unapplied-bar');if(ub)ub.style.width=(tp>0?ua/tp*100:0).toFixed(1)+'%';
@@ -4483,7 +4496,40 @@ function updReporting(){
     </div>`
   ).join('')||'<div class="empty" style="padding:16px"><div class="empty-t">No exceptions</div></div>';
 }
-function exportReporting(){toast('PDF export requires backend. Export data via Posting Export → Download.','warn');}
+function exportReporting(){
+  var rows=[['AR Match Pro — Reporting Export','','',''],['Generated',new Date().toLocaleString(),'',''],['','','','']];
+  // Summary
+  var tp=PAY.reduce(function(s,p){return s+p.amt;},0);
+  var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
+  var ma=matched.reduce(function(s,r){return s+r.pd;},0);
+  var ua=EXC.reduce(function(s,e){return s+e.amt;},0);
+  var rt=tp>0?(ma/tp*100):0;
+  var openBal=INV.filter(function(v){return !v.s||v.s==='Open';}).reduce(function(s,v){return s+v.amt;},0);
+  var dso=ma>0?Math.round((openBal/ma)*30):0;
+  rows.push(['SUMMARY','','','']);
+  rows.push(['Total Payments Received','$'+$f(tp),'','']);
+  rows.push(['Cash Matched','$'+$f(ma),'','']);
+  rows.push(['Unapplied Cash','$'+$f(ua),'','']);
+  rows.push(['Auto-Match Rate',rt.toFixed(2)+'%','','']);
+  rows.push(['DSO (Days Sales Outstanding)',dso+' days','','']);
+  rows.push(['Total Exceptions',EXC.length,'','']);
+  rows.push(['Short Pays',EXC.filter(function(e){return e.type==='Short pay';}).length,'','']);
+  rows.push(['','','','']);
+  // Match results
+  rows.push(['MATCH RESULTS','Customer','Invoice #','PO #','Amount Paid','Status']);
+  RES.forEach(function(r){rows.push([r.c||'',r.i||'',r.po||'','$'+$f(r.pd),r.st||'']);});
+  rows.push(['','','','','']);
+  // Exceptions
+  rows.push(['EXCEPTIONS','Customer','Type','Amount','Resolution']);
+  EXC.forEach(function(e){rows.push([e.c||e.a||'',e.type||'','$'+$f(e.amt),e.dec||'Open']);});
+  // Convert to CSV
+  var csv=rows.map(function(r){return r.map(function(c){var s=String(c||'');return s.includes(',')||s.includes('"')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='ARMatchPro_Report_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(a.href);
+  toast('✓ Report exported as CSV');
+}
 
 // ── Audit trail ──
 const GLOBAL_AUDIT=[];
@@ -4689,27 +4735,23 @@ function clearMatchData(){if(!confirm('Clear all match results?'))return;RES=[];
 function clearAllData(){if(!confirm('Clear all data?'))return;INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');}
 
 function resetAllData(){
-  showModal('Reset All Data',
-    '<div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:16px">' +
-    '<strong style="color:var(--r-t)">⚠️ This will permanently delete:</strong><br>' +
-    '• All invoices and remittance data<br>' +
-    '• All match results and exceptions<br>' +
-    '• All CFO period snapshots<br><br>' +
-    'CFO settings (rates, thresholds) will be preserved.' +
-    '</div>' +
-    '<div style="display:flex;gap:8px">' +
-    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>' +
-    '<button class="btn btn-sm" style="background:#DC2626;color:#fff;border-color:#DC2626" onclick="closeModal();_doResetAll()">Reset everything</button>' +
-    '</div>'
-  );
+  if(!confirm('⚠️ Reset ALL data?\n\nThis will permanently delete:\n• All invoices and remittance\n• All match results and exceptions\n• All CFO period snapshots\n\nCFO settings (rates, thresholds) will be preserved.\n\nThis cannot be undone.')){return;}
+  _doResetAll();
 }
 function _doResetAll(){
   INV=[];PAY=[];RES=[];EXC=[];CFO_SNAPSHOTS={};
   rAll();updDash();updTop();setStatus('ready');
-  ['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});
-  try{localStorage.removeItem('armp_cfo_snapshots');}catch(e){}
+  // Clear localStorage regardless of IS_DEMO flag
+  try{
+    ['inv','pay','res','exc'].forEach(k=>{
+      try{localStorage.removeItem(sk(k));}catch(e){}
+      // Also try without prefix in case sk() fails
+      try{localStorage.removeItem('armp_'+k);}catch(e){}
+    });
+    localStorage.removeItem('armp_cfo_snapshots');
+  }catch(e){}
   addAudit('Full reset','All data and CFO snapshots cleared');
-  toast('All data reset — CFO settings preserved');
+  toast('✓ All data reset — CFO settings preserved');
 }
 function saveSettings(){
   // Persist CFO settings
@@ -4796,7 +4838,7 @@ function rInv(){
       <td class="td-key" onclick="editCell(this,INV[${idx}],'i')">${v.i||'—'}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'po')">${v.po||'—'}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'so')">${v.so||'—'}</td>
-      <td class="td-amt ${v.amt<0?'neg':''}" onclick="editCell(this,INV[${idx}],'amt','number')">$${$f(v.amt)}</td>
+      <td class="td-amt ${v.amt<0?'neg':''}" onclick="editCell(this,INV[${idx}],'amt','number')">${$f(v.amt)}</td>
       <td onclick="editCell(this,INV[${idx}],'dt','select')"><span class="badge ${dtCls}">${dtLabel}</span></td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'dt2','date')">${fmtDate(v.dt2)}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'due','date')">${fmtDate(v.due)}</td>
@@ -4818,7 +4860,7 @@ function rRem(){
     return`<tr>
       <td class="td-mono">${p.a||'—'}</td>
       <td>${p.c||'—'}</td>
-      <td class="td-amt pos">$${$f(p.amt)}</td>
+      <td class="td-amt pos">${$f(p.amt)}</td>
       <td class="td-mono">${p.po||'—'}</td>
       <td class="td-key">${p.i||'—'}</td>
       <td class="td-mono" style="font-size:11px">${p.txId||'—'}</td>
@@ -4857,7 +4899,7 @@ function rExc(){
     if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div></td></tr>';return;}
     tb.innerHTML=shown.map(ex=>{const realIdx=EXC.indexOf(ex);return`<tr style="opacity:.75;background:var(--surface2)">
       <td class="td-mono">${ex.id}</td><td class="td-mono">${ex.a}</td><td>${ex.c}</td>
-      <td class="td-amt">$${$f(ex.amt)}</td><td class="td-mono">${ex.ref||'—'}</td>
+      <td class="td-amt">${$f(ex.amt)}</td><td class="td-mono">${ex.ref||'—'}</td>
       <td>${badge(ex.type)}</td>
       <td style="color:var(--t2);font-size:12px;max-width:180px;white-space:normal;line-height:1.4">${ex.detail||'—'}</td>
       <td style="color:var(--t3);font-size:12px">${ex.notes||'—'}</td>
@@ -4877,7 +4919,7 @@ function rExc(){
     return`<tr id="exc-row-${idx}">
       <td class="td-mono" style="font-weight:600;color:var(--t3)">${ex.id}</td>
       <td class="td-mono">${ex.a}</td><td>${ex.c}</td>
-      <td class="td-amt">$${$f(ex.amt)}</td>
+      <td class="td-amt">${$f(ex.amt)}</td>
       <td class="td-mono">${ex.ref||'—'}</td>
       <td>${badge(ex.type)}</td>
       <td style="color:var(--t2);max-width:180px;white-space:normal;font-size:12px;line-height:1.4">${ex.detail||'—'}</td>
@@ -4889,7 +4931,7 @@ function rExc(){
           <option ${ex.dec==='Post as Unapplied Cash'?'selected':''}>Post as Unapplied Cash</option>
           <option ${ex.dec==='Write off'?'selected':''}>Write off</option>
           <option ${ex.dec==='Bank fee'?'selected':''}>Bank fee</option>
-          <option ${ex.dec==='Wire transfer'?'selected':''}>Wire transfer</option>
+          
           <option ${ex.dec==='Chase customer'?'selected':''}>Chase customer</option>
           <option ${ex.dec==='Duplicate — reject'?'selected':''}>Duplicate — reject</option>
         </select>
@@ -4906,7 +4948,7 @@ function rPost(){
   const tb=document.getElementById('post-tb');if(!tb)return;
   if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations.</div></div></td></tr>';return;}
   const d=new Date().toISOString().split('T')[0];const dDisp=fmtDate(d);
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire_transfer_removed':'Payment'};
   const excBadge={'Apply to invoice':'badge-g','Post as Unapplied Cash':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
   tb.innerHTML=ap.map(r=>{
     const isExc=!!r.fromExc;
@@ -4922,7 +4964,7 @@ function rPost(){
       <td class="td-mono">${inv.so||r.so||'—'}</td>
       <td><span class="badge ${badgeCls}" style="font-size:10px">${typeLbl}</span></td>
       <td class="td-key">${r.d||r.id||'—'}</td>
-      <td class="td-amt pos">$${$f(r.pd)}</td>
+      <td class="td-amt pos">${$f(r.pd)}</td>
       <td class="td-amt ${r.vr<-.01?'neg':''}">${(!isExc&&r.vr<-.01)?'$'+$f(Math.abs(r.vr)):'—'}</td>
       <td><span class="badge badge-g">Approved</span></td>
     </tr>`;
@@ -4958,8 +5000,8 @@ function buildAllocWaterfall(p,idx){
     <tr style="background:rgba(59,130,246,.04)">
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-p" style="font-size:10px">Payment</span></td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);font-family:var(--mono);color:var(--pd);font-weight:700">${p.txId||p.po||p.i||'—'}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">($${$f(p.amt)})</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">($${$f(p.amt)})</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">(${$f(p.amt)})</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">(${$f(p.amt)})</td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-cy" style="font-size:10px">${p.m||'ACH'}</span></td>
     </tr>`;
   let running=p.amt;
@@ -4969,7 +5011,7 @@ function buildAllocWaterfall(p,idx){
     rows+=`<tr>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-gray" style="font-size:10px">Invoice</span></td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);font-family:var(--mono);color:var(--pd)">${r.i||r.po||'—'}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--g-t)">$${$f(r.pd)}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--g-t)">${$f(r.pd)}</td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);font-weight:700;color:${Math.abs(runAmt)<.01?'var(--g-t)':'var(--am-t)'}">
         ${Math.abs(runAmt)<.01?'$0.00':runAmt>0?'($'+$f(runAmt)+')':'$'+$f(Math.abs(runAmt))}
       </td>
@@ -5020,7 +5062,7 @@ function exportPost(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire_transfer_removed':'Payment'};
   const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Short Pay','Approved'];
   const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(!r.fromExc&&r.vr<-.01)?Math.abs(r.vr).toFixed(2):'0.00','Yes'];});
   csvDL([PH,...rows],'posting_'+d+'.csv');
@@ -5062,7 +5104,7 @@ function resolveException(idx,dec){
   if(!dec||dec==='— Select —')return;
   if(dec==='Apply to invoice'){
     const openInvs=INV.filter(v=>!v.s||v.s==='Open'||v.s==='Partial');
-    const opts=openInvs.map(v=>`<option value="${v.i}">${v.i} — ${v.c} — $${$f(v.amt)}</option>`).join('');
+    const opts=openInvs.map(v=>`<option value="${v.i}">${v.i} — ${v.c} — ${$f(v.amt)}</option>`).join('');
     showModal('Apply to Invoice',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select invoice to apply this payment to:</div>
       ${opts?`<select id="exc-inv-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:8px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
         <option value="">— Select from open invoices —</option>${opts}</select><div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:8px">— or enter manually —</div>`:''}
@@ -5173,7 +5215,7 @@ function engRefreshSel(){
     PAY.map((p,i)=>{
       const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
       const status=matched?'✓ ':p.dp?'↓ ':'';
-      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · $${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}`;
+      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · ${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}`;
       return`<option value="${i}" ${i===prev?'selected':''}>${label}</option>`;
     }).join('');
   const empty=document.getElementById('eng-empty');
@@ -5281,7 +5323,7 @@ function _legacyEngBuildAI(p,invs){
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));if(sharedPO.length>1)tips.push(`💡 ${sharedPO.length} invoices share PO ${p.po} — consolidated remittance`);
   if(!invs.length)tips.push('⚠️ No open invoices — post as unapplied cash?');
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
-  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✓ ${invs.length} invoices sum exactly to $${$f(p.amt)} — auto-apply all recommended`);
+  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✓ ${invs.length} invoices sum exactly to ${$f(p.amt)} — auto-apply all recommended`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:4px 0;border-bottom:1px solid rgba(139,92,246,.1);line-height:1.5;font-size:12.5px">${t}</div>`).join('');}
   else bar.style.display='none';
 }
@@ -5305,8 +5347,8 @@ function engRenderRows(){
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.po||'—'}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.so||'—'}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.d||'—'}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono)">$${$f(inv.amt)}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:${r.alreadyPaid?'var(--r-t)':r.selected&&balance<inv.amt?'var(--am-t)':'var(--t1)'}">$${$f(Math.max(0,balance))}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono)">${$f(inv.amt)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:${r.alreadyPaid?'var(--r-t)':r.selected&&balance<inv.amt?'var(--am-t)':'var(--t1)'}">${$f(Math.max(0,balance))}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right">
         <input type="number" min="0" step="0.01" value="${r.applyAmt>0?r.applyAmt:''}" placeholder="0.00"
           ${disabled||!r.selected?'disabled':''}
@@ -5501,7 +5543,7 @@ function renderPayQueue(){
     const stateLabel=matched?'Matched':exc?'Exception':p.dp?'Down Pay':'Pending';
     return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
-      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}</div><div class="pq-item-amt">$${$f(p.amt)}</div></div>
+      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
       <div class="pq-item-bot">
         <div class="pq-item-ref">${p.i||p.po||p.txId||'—'}</div>
         <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
@@ -5559,7 +5601,7 @@ function _legacy_renderWsReview(){
     const isLocked=r.fromAlloc||r.fromExc;
     const confClass=r.st==='Exact'||r.st==='Subset exact'?'conf-high':r.st==='Short pay'||r.st==='Overpay'?'conf-med':'conf-low';
     const conf=r.st==='Exact'?'100%':r.st==='Subset exact'?'98%':r.st==='Amount match'?'72%':r.st==='Short pay'?'61%':'—';
-    const vr=r.vr&&Math.abs(r.vr)>0.01?`<span class="badge badge-am" style="font-size:10px">Var $${$f(Math.abs(r.vr))}</span>`:'';
+    const vr=r.vr&&Math.abs(r.vr)>0.01?`<span class="badge badge-am" style="font-size:10px">Var ${$f(Math.abs(r.vr))}</span>`:'';
     return`<div class="review-item" onclick="reviewItemClick(${i})">
       <div style="width:3px;height:36px;border-radius:2px;background:${r.st==='Exact'||r.st==='Resolved'?'var(--g)':r.st==='Short pay'||r.st==='Overpay'?'var(--am)':'var(--p)'};flex-shrink:0"></div>
       <div>
@@ -5571,8 +5613,8 @@ function _legacy_renderWsReview(){
         <div style="font-size:11px;color:var(--t3)">${r.po?'PO '+r.po:''}</div>
       </div>
       <div>
-        <div class="review-item-amt">$${$f(r.pd)}</div>
-        <div style="font-size:11px;color:var(--t3);text-align:right">of $${$f(r.oa)}</div>
+        <div class="review-item-amt">${$f(r.pd)}</div>
+        <div style="font-size:11px;color:var(--t3);text-align:right">of ${$f(r.oa)}</div>
       </div>
       <div class="review-item-status"><span class="badge ${stBadge[r.st]||'badge-gray'}">${r.st||'—'}</span>${vr?'&nbsp;'+vr:''}</div>
       <div class="review-item-conf"><span class="${confClass}">${conf}</span></div>
@@ -5630,7 +5672,7 @@ function renderWsExc(){
         <div style="font-size:12px;color:var(--t2);max-width:220px">${ex.detail||'—'}</div>
         <div style="font-size:11px;color:var(--t3)">${ex.ref||''}</div>
       </div>
-      <div style="font-size:15px;font-weight:800;font-family:var(--mono);color:var(--am-t)">$${$f(ex.amt)}</div>
+      <div style="font-size:15px;font-weight:800;font-family:var(--mono);color:var(--am-t)">${$f(ex.amt)}</div>
       <div><span class="badge ${isResV?'badge-g':'badge-am'}">${ex.s||'Open'}</span></div>
       ${isResV?`<span class="badge badge-gray" style="font-size:10px">${ex.dec||'—'}</span><button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});renderWsExc()">↩ Revert</button>`
         :`<input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
@@ -5638,7 +5680,7 @@ function renderWsExc(){
            <option value="">— Resolve —</option>
            <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
            <option>Write off</option><option>Bank fee</option>
-           <option>Wire transfer</option><option>Chase customer</option><option>Duplicate — reject</option>
+           <option>Chase customer</option><option>Duplicate — reject</option>
          </select>`}
     </div>`;
   }).join('');
@@ -5669,7 +5711,7 @@ function renderAcctCustomers(){
     <div class="acct-customer-item${ACCT_SELECTED_CUSTOMER===cu.c?' active':''}" onclick="selectAcctCustomer('${(cu.c||'').replace(/'/g,"\'")}','${cu.a||''}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div class="acct-customer-name">${cu.c||cu.a||'Unknown'}</div>
-        <div class="acct-customer-balance">$${$fk(cu.balance)}</div>
+        <div class="acct-customer-balance">${$fk(cu.balance)}</div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:3px">
         <div class="acct-customer-meta">${cu.a||''}</div>
@@ -5715,10 +5757,10 @@ function selectAcctCustomer(custName,acctId){
   });
   const agingGrid=document.getElementById('acct-aging-grid');
   if(agingGrid)agingGrid.innerHTML=`
-    <div class="aging-bucket"><div class="aging-bucket-val">$${$fk(ageCur)}</div><div class="aging-bucket-lbl">Current</div></div>
-    <div class="aging-bucket${age30>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age30)}</div><div class="aging-bucket-lbl">1–30 days</div></div>
-    <div class="aging-bucket${age60>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age60)}</div><div class="aging-bucket-lbl">31–60 days</div></div>
-    <div class="aging-bucket${age90>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age90)}</div><div class="aging-bucket-lbl">61+ days</div></div>`;
+    <div class="aging-bucket"><div class="aging-bucket-val">${$fk(ageCur)}</div><div class="aging-bucket-lbl">Current</div></div>
+    <div class="aging-bucket${age30>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age30)}</div><div class="aging-bucket-lbl">1–30 days</div></div>
+    <div class="aging-bucket${age60>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age60)}</div><div class="aging-bucket-lbl">31–60 days</div></div>
+    <div class="aging-bucket${age90>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age90)}</div><div class="aging-bucket-lbl">61+ days</div></div>`;
   // Invoice table
   const invBody=document.getElementById('acct-inv-body');
   if(invBody)invBody.innerHTML=custInvs.length?custInvs.map((v,i)=>{
@@ -5732,8 +5774,8 @@ function selectAcctCustomer(custName,acctId){
       <td class="td-mono">${fmtDate(v.due)}</td>
       <td class="td-mono">${v.po||'—'}</td>
       <td class="td-mono">${v.so||'—'}</td>
-      <td class="td-amt">$${$f(v.amt)}</td>
-      <td class="td-amt ${bal>0?'':'pos'}">$${$f(bal)}</td>
+      <td class="td-amt">${$f(v.amt)}</td>
+      <td class="td-amt ${bal>0?'':'pos'}">${$f(bal)}</td>
       <td>${aging}</td>
       <td>${v.s?`<span class="badge ${v.s==='Exact'||v.s==='Applied'?'badge-g':v.s==='Short pay'||v.s==='Overpay'?'badge-am':'badge-gray'}">${v.s}</span>`:'<span style="color:var(--t3)">Open</span>'}</td>
       <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();engLoadPaymentForInv('${v.i||''}')">Apply</button></td>
@@ -5746,7 +5788,7 @@ function selectAcctCustomer(custName,acctId){
     return`<tr>
       <td class="td-key">${p.txId||'—'}</td>
       <td class="td-mono">${p.payDate?fmtDate(p.payDate):'—'}</td>
-      <td class="td-amt pos">$${$f(p.amt)}</td>
+      <td class="td-amt pos">${$f(p.amt)}</td>
       <td><span class="badge badge-gray" style="font-size:10px">${p.m||'—'}</span></td>
       <td class="td-mono">${p.po||'—'}</td>
       <td class="td-key">${p.i||'—'}</td>
@@ -5771,20 +5813,20 @@ function _legacy_renderWsRecon(){
   const unmatched=PAY.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
-  if(summary)summary.textContent=`$${$fk(totalMatched)} matched of $${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
+  if(summary)summary.textContent=`${$fk(totalMatched)} matched of ${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
   if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance data and run matching to reconcile.</div></div>';return;}
   const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
   list.innerHTML=rows.map(item=>{
     if(item.type==='matched'){const r=item.r;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
       <div class="recon-match-indicator" style="background:var(--g)"></div>
       <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--t1)">${r.c||'—'}</div><div style="font-size:11px;color:var(--t3)">Invoice ${r.i||'—'} · PO ${r.po||'—'}</div></div>
-      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">+$${$f(r.pd)}</div>
+      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">+${$f(r.pd)}</div>
       <span class="badge badge-g">Reconciled</span>
     </div>`;}
     else{const p=item.p;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
       <div class="recon-match-indicator" style="background:var(--am)"></div>
       <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--t1)">${p.c||p.a||'Unknown'}</div><div style="font-size:11px;color:var(--t3)">${p.txId||p.po||'—'} · ${p.payDate?fmtDate(p.payDate):'—'}</div></div>
-      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--am-t)">$${$f(p.amt)}</div>
+      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--am-t)">${$f(p.amt)}</div>
       <span class="badge badge-am">Unreconciled</span>
       <button class="btn btn-outline btn-xs" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">Apply</button>
     </div>`;}
@@ -5834,7 +5876,7 @@ function openCustomerDrawerForCustomer(custName,acctId){
   // Activity
   const actEl=document.getElementById('drawer-activity');
   if(actEl){
-    const acts=[...custPays.slice(-5).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">${p.m||'Payment'} — ${p.payDate?fmtDate(p.payDate):'—'}</span><span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">+$${$f(p.amt)}</span></div>`),...custInvs.slice(-3).reverse().map(v=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">Invoice ${v.i||'—'} issued</span><span style="font-family:var(--mono);font-weight:700;color:var(--am-t)">$${$f(v.amt)}</span></div>`)];
+    const acts=[...custPays.slice(-5).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">${p.m||'Payment'} — ${p.payDate?fmtDate(p.payDate):'—'}</span><span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">+${$f(p.amt)}</span></div>`),...custInvs.slice(-3).reverse().map(v=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">Invoice ${v.i||'—'} issued</span><span style="font-family:var(--mono);font-weight:700;color:var(--am-t)">${$f(v.amt)}</span></div>`)];
     actEl.innerHTML=acts.length?acts.join(''):'<div style="color:var(--t3);font-size:12px">No recent activity</div>';
   }
   // Exceptions
@@ -5881,7 +5923,7 @@ async function runMatch(){
     const useSO=document.getElementById('s-so')?.checked!==false;
     if(ni&&useInv){
       const h=INV.find(v=>norm(v.i)===ni&&(v.a===p.a||(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim()));
-      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance $${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment $${$f(p.amt)} vs invoice $${$f(h.amt)} — variance $${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
+      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
     }
     if(np&&usePO){const g=INV.filter(v=>norm(v.po)===np&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'PO',ec)){ec+=procGrp.ea;continue};}}
     if(ns&&useSO){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
@@ -5914,7 +5956,7 @@ function procGrp(g,p,tol,ref,ec){
   if(sub){sub.forEach(v=>{v.s='Subset exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Subset exact',m:ref+' subset',n:''});});return true;}
   const sorted=[...g].sort((a,b)=>new Date(a.dt2||'9999')-new Date(b.dt2||'9999'));let rem=p.amt;
   sorted.forEach(v=>{if(rem<=0)return;const al=Math.min(v.amt,rem);rem-=al;const st=Math.abs(al-v.amt)<=tol?'Exact':'Short pay';v.s=st;RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:al,vr:al-v.amt,st,m:ref+' oldest first',n:al<v.amt?'Partial':''});});
-  if(p.amt<gt){EXC.push({id:'EXC-'+String(ec).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.so||'—',type:'Short pay',detail:`Payment $${$f(p.amt)} short of ${ref} group $${$f(gt)} by $${$f(gt-p.amt)}`,action:'Chase balance or write off',dec:'',s:'Open'});procGrp.ea=1;}
+  if(p.amt<gt){EXC.push({id:'EXC-'+String(ec).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.so||'—',type:'Short pay',detail:`Payment ${$f(p.amt)} short of ${ref} group ${$f(gt)} by ${$f(gt-p.amt)}`,action:'Chase balance or write off',dec:'',s:'Open'});procGrp.ea=1;}
   return true;
 }
 function findSub(g,t,tol){const n=Math.min(g.length,16),gr=g.slice(0,n);function bt(i,c,s){if(Math.abs(s-t)<=tol)return c;if(s>t+tol||i>=gr.length)return null;return bt(i+1,[...c,gr[i]],s+gr[i].amt)||bt(i+1,c,s);}return bt(0,[],0);}
@@ -6318,10 +6360,11 @@ function agingChip(due){
   if(!due) return '<span class="aging-chip aging-na">—</span>';
   var d=new Date(due+'T00:00:00');
   var days=Math.floor((new Date()-d)/86400000);
-  if(days<0) return '<span class="aging-chip aging-cur">Current</span>';
-  if(days<=30) return '<span class="aging-chip aging-30">1–30d</span>';
-  if(days<=60) return '<span class="aging-chip aging-60">31–60d</span>';
-  return '<span class="aging-chip aging-90">61+d</span>';
+  if(days<0) return '<span class="aging-chip aging-cur">Current ('+Math.abs(days)+'d)</span>';
+  if(days===0) return '<span class="aging-chip aging-cur">Due today</span>';
+  if(days<=30) return '<span class="aging-chip aging-30">'+days+' days</span>';
+  if(days<=60) return '<span class="aging-chip aging-60">'+days+' days</span>';
+  return '<span class="aging-chip aging-90">'+days+' days</span>';
 }
 
 function renderFbl5n(tbodyId, filterAcct, filterCust){
@@ -6671,7 +6714,7 @@ var CFO_PERIOD='month';
 
 // CFO settings — persisted separately from invoice data
 var CFO_SETTINGS={
-  targetSTP: 80,          // % target for STP rate
+  targetSTP: 80,          // % target for Auto-Match Rate
   arRate: 65,             // $/hr fully-loaded AR rate
   subCost: 999,           // $/mo subscription cost for ROI multiple
   fyStartMonth: 1,        // 1=Jan fiscal year start
@@ -7268,6 +7311,89 @@ function closeReviewInlineDetail(){
   });
   _reviewOpenIdx = -1;
 }
+
+// ── AI Contact Modal ──
+function openContactModal(){
+  var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='flex';
+  setTimeout(function(){var i=document.getElementById('contact-chat-inp');if(i)i.focus();},100);
+}
+function closeContactModal(){
+  var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='none';
+}
+var _contactHistory=[{role:'user',content:'You are an AR Match Pro support assistant. AR Match Pro is an enterprise accounts receivable cash application SaaS. Help users with: cash application workflows, matching logic, DSO, exceptions, short pays, unapplied cash, reconciliation, CFO reporting, settings, and general AR/finance questions. Be concise, professional, and helpful. If the user wants to file a support ticket, ask for their name, email, and description, then confirm it was logged. Keep responses under 150 words.'}];
+async function sendContactMsg(){
+  var inp=document.getElementById('contact-chat-inp');if(!inp||!inp.value.trim())return;
+  var msg=inp.value.trim();inp.value='';
+  var msgs=document.getElementById('contact-chat-msgs');if(!msgs)return;
+  // Add user bubble
+  msgs.innerHTML+=`<div style="display:flex;justify-content:flex-end"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px;border-bottom-right-radius:4px;font-size:13px;max-width:85%;line-height:1.5">${msg}</div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  // Thinking indicator
+  var thinkId='think-'+Date.now();
+  msgs.innerHTML+=`<div id="${thinkId}" style="display:flex;gap:10px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t3)">Thinking…</div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  _contactHistory.push({role:'user',content:msg});
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,
+        messages:_contactHistory.filter(function(m){return m.role==='user'||m.role==='assistant';})
+      })
+    });
+    var data=await res.json();
+    var reply=(data.content&&data.content[0]&&data.content[0].text)||'Sorry, I had trouble responding. Please email info@armatchpro.com.';
+    _contactHistory.push({role:'assistant',content:reply});
+    var thinkEl=document.getElementById(thinkId);
+    if(thinkEl)thinkEl.outerHTML=`<div style="display:flex;gap:10px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">${reply.replace(/\n/g,'<br>')}</div></div>`;
+  }catch(e){
+    var thinkEl2=document.getElementById(thinkId);
+    if(thinkEl2)thinkEl2.outerHTML=`<div style="display:flex;gap:10px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;font-size:13px;color:var(--r-t)">Connection error. Please email info@armatchpro.com directly.</div></div>`;
+  }
+  msgs.scrollTop=msgs.scrollHeight;
+}
+(function(){
+  function initDragHandle(){
+    var handle=document.getElementById('ca-drag-handle');
+    if(!handle)return;
+    var topHalf=handle.previousElementSibling;
+    // walk back past comment nodes
+    var prev=handle.previousSibling;
+    while(prev&&prev.nodeType!==1)prev=prev.previousSibling;
+    topHalf=prev;
+    var container=handle.parentElement;
+    var dragging=false,startY=0,startH=0;
+    handle.addEventListener('mousedown',function(e){
+      dragging=true;startY=e.clientY;
+      startH=topHalf.getBoundingClientRect().height;
+      document.body.style.cursor='ns-resize';
+      document.body.style.userSelect='none';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove',function(e){
+      if(!dragging)return;
+      var delta=e.clientY-startY;
+      var newH=Math.max(180,Math.min(startH+delta,container.getBoundingClientRect().height-280));
+      topHalf.style.height=newH+'px';
+      topHalf.style.flex='0 0 auto';
+    });
+    document.addEventListener('mouseup',function(){
+      if(dragging){dragging=false;document.body.style.cursor='';document.body.style.userSelect='';}
+    });
+    // Touch support
+    handle.addEventListener('touchstart',function(e){
+      dragging=true;startY=e.touches[0].clientY;
+      startH=topHalf.getBoundingClientRect().height;e.preventDefault();
+    },{passive:false});
+    document.addEventListener('touchmove',function(e){
+      if(!dragging)return;
+      var delta=e.touches[0].clientY-startY;
+      var newH=Math.max(180,Math.min(startH+delta,container.getBoundingClientRect().height-280));
+      topHalf.style.height=newH+'px';topHalf.style.flex='0 0 auto';
+    },{passive:false});
+    document.addEventListener('touchend',function(){dragging=false;});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initDragHandle);}
+  else{setTimeout(initDragHandle,500);}
+})();
 
 </script>
 
