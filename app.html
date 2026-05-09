@@ -87,18 +87,17 @@
   --bdr:       rgba(0,0,0,.06);
   --bdr2:      rgba(0,0,0,.1);
   --bdr3:      rgba(0,0,0,.16);
-  /* Darker text hierarchy for legibility */
   --t1: #0A1628;
   --t2: #1E3A5F;
   --t3: #4A6585;
   --t4: #8AA0B8;
-  /* WCAG-AA semantic colors for light backgrounds */
+  /* WCAG-AA semantic colors for light bg */
   --g-t:   #065F46;
   --r-t:   #991B1B;
   --am-t:  #92400E;
   --pu-t:  #5B21B6;
   --cy-t:  #0C4A6E;
-  --pd:    #1D4ED8;
+  --pd:    #1E40AF;
   --p:     #1D4ED8;
   --ps:    #1E3A8A;
   --g-glow: rgba(16,185,129,.15);
@@ -2299,13 +2298,8 @@ body.app-active #app {
 
     <div class="tn-search">
       <span class="tn-search-icon">🔍</span>
-      <input type="text" placeholder="Search invoices, PO#, customers, accounts…" 
-        oninput="gsLive(this.value)" 
-        onkeydown="if(event.key==='Enter'){globalSearch(this.value);document.getElementById('gs-suggestions').style.display='none';}" 
-        onfocus="if(this.value)gsLive(this.value)"
-        onblur="setTimeout(function(){document.getElementById('gs-suggestions').style.display='none';},200)"
-        id="global-search" autocomplete="off">
-      <div id="gs-suggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:60;display:none;max-height:220px;overflow-y:auto;margin-top:3px"></div>
+      <input type="text" placeholder="Search invoices, PO#, customers…" onkeydown="if(event.key==='Enter'){globalSearch(this.value);document.getElementById('gs-drop').style.display='none';}" oninput="gsLive(this.value)" onblur="setTimeout(function(){var d=document.getElementById('gs-drop');if(d)d.style.display='none';},200)" id="global-search" autocomplete="off">
+      <div id="gs-drop" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;box-shadow:var(--shadow-md);z-index:60;max-height:240px;overflow-y:auto"></div>
     </div>
 
     <div class="tn-actions">
@@ -2316,7 +2310,10 @@ body.app-active #app {
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 1a5 5 0 015 5v3l1 2H2l1-2V6a5 5 0 015-5z"/><path d="M6.5 13.5a1.5 1.5 0 003 0"/></svg>
         <div class="notif-dot" id="notif-dot"></div>
       </button>
-      <button class="tn-icon-btn" id="dm-btn" onclick="toggleDark()" title="Toggle theme">🌙</button>
+      <button class="tn-icon-btn" id="dm-btn" onclick="toggleDark()" title="Toggle theme" style="display:flex;align-items:center;justify-content:center">
+        <svg id="dm-icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="dm-icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
       <div class="tn-divider"></div>
       <div class="tn-user" onclick="sp('settings')">
         <div class="tn-avatar" id="tn-avatar">AR</div>
@@ -2375,7 +2372,7 @@ body.app-active #app {
       <div class="kpi-card-val amber" id="kpi-unapplied">$0</div>
       <div class="kpi-card-sub">Pending decision</div>
     </div>
-    <div class="kpi-card kpi-red" onclick="(function(){var f=document.getElementById('ws-exc-type-filter');if(f)f.value='';setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,100);})()" style="cursor:pointer;min-width:120px">
+    <div class="kpi-card kpi-red" onclick="var f=document.getElementById('ws-exc-type-filter');if(f)f.value='';setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)" style="cursor:pointer;min-width:120px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--r-t)"></div>
         Exceptions
@@ -2383,7 +2380,7 @@ body.app-active #app {
       <div class="kpi-card-val red" id="kpi-exc">0</div>
       <div class="kpi-card-sub" id="kpi-exc-sub">Require action</div>
     </div>
-    <div class="kpi-card kpi-amber" style="min-width:120px">
+    <div class="kpi-card kpi-amber" onclick="var f=document.getElementById('ws-exc-type-filter');if(f)f.value='Short pay';setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)" style="cursor:pointer;min-width:120px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--am-t)"></div>
         Short Pays
@@ -2391,7 +2388,7 @@ body.app-active #app {
       <div class="kpi-card-val amber" id="kpi-shortpay">0</div>
       <div class="kpi-card-sub">Underpayments</div>
     </div>
-    <div class="kpi-card" onclick="sp('invoices');setTimeout(function(){var s=document.getElementById('inv-search');if(s)s.value='';document.querySelectorAll('#inv-filter-row [data-col]').forEach(function(el){el.value='';});document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display='';});},100)" style="cursor:pointer;min-width:100px">
+    <div class="kpi-card" onclick="sp('invoices');setTimeout(function(){var s=document.getElementById('inv-search');if(s)s.value='';document.querySelectorAll('#inv-filter-row [data-col]').forEach(function(el){el.value='';});document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display='';});},80)" style="cursor:pointer;min-width:100px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--t3)"></div>
         Invoices
@@ -3986,7 +3983,7 @@ function renderWsExcPremium(){
             <option>Write off</option><option>Bank fee</option>
             <option>Wire transfer</option><option>Chase customer</option><option>Duplicate — reject</option>
           </select>
-          <input type="text" class="inp" style="flex:1;font-size:11.5px;padding:5px 10px;min-width:80px;max-width:200px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Resolution notes…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
+          <input type="text" class="inp" style="flex:1;font-size:11.5px;padding:5px 10px;min-width:80px;max-width:140px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Add note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
           <span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Open</span>`
         }
       </div>
@@ -4217,7 +4214,10 @@ function toggleDark(){
   const html=document.documentElement;
   const dark=html.dataset.theme==='dark';
   html.dataset.theme=dark?'light':'dark';
-  const btn=document.getElementById('dm-btn');if(btn)btn.textContent=dark?'🌙':'☀️';
+  const moon=document.getElementById('dm-icon-moon');
+  const sun=document.getElementById('dm-icon-sun');
+  if(moon) moon.style.display=dark?'block':'none';
+  if(sun)  sun.style.display=dark?'none':'block';
   const sdm=document.getElementById('s-dm');if(sdm)sdm.checked=!dark;
 }
 
@@ -4453,47 +4453,36 @@ function launchApp(user){
 }
 
 function gsLive(q){
-  var sug=document.getElementById('gs-suggestions');if(!sug)return;
-  q=q.trim();
-  if(!q||q.length<2){sug.style.display='none';return;}
+  var drop=document.getElementById('gs-drop');if(!drop)return;
+  q=(q||'').trim();
+  if(q.length<2){drop.style.display='none';return;}
   var ql=q.toLowerCase();
   var hits=[];
-  // Search all invoice fields
   INV.forEach(function(v){
-    var fields=[v.c,v.a,v.i,v.po,v.so,String(v.amt),v.dt,v.d];
-    if(fields.some(function(f){return(f||'').toLowerCase().includes(ql);})){
-      hits.push({label:(v.c||'')+(v.i?' · '+v.i:'')+(v.po?' · PO '+v.po:''),sub:'Invoice · $'+(typeof $f==='function'?$f(v.amt):v.amt),type:'inv',query:q});
+    if([v.c,v.a,v.i,v.po,v.so,String(v.amt),v.d,v.dt].some(function(f){return(f||'').toLowerCase().includes(ql);})){
+      hits.push({label:(v.c||'—')+' · '+(v.i||'—'),sub:'Inv $'+(typeof $f==='function'?$f(v.amt):v.amt)+(v.po?' · PO '+v.po:''),q:q});
     }
   });
-  // Search payments
   PAY.forEach(function(p){
-    var fields=[p.c,p.a,p.i,p.po,p.txId,String(p.amt)];
-    if(fields.some(function(f){return(f||'').toLowerCase().includes(ql);})){
-      hits.push({label:(p.c||p.a||'')+(p.txId?' · '+p.txId:''),sub:'Payment · $'+(typeof $f==='function'?$f(p.amt):p.amt),type:'pay',query:q});
+    if([p.c,p.a,p.i,p.po,p.txId,String(p.amt)].some(function(f){return(f||'').toLowerCase().includes(ql);})){
+      hits.push({label:(p.c||p.a||'—')+' · '+(p.txId||'—'),sub:'Pmt $'+(typeof $f==='function'?$f(p.amt):p.amt),q:q});
     }
   });
-  // Deduplicate by label
   var seen={};hits=hits.filter(function(h){if(seen[h.label])return false;seen[h.label]=1;return true;}).slice(0,8);
-  if(!hits.length){sug.style.display='none';return;}
-  sug.innerHTML=hits.map(function(h){
-    return'<div style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;gap:12px;transition:background .12s" '+
-      'onmouseenter="this.style.background=\'var(--glass2)\'" onmouseleave="this.style.background=\'\'" '+
-      'onclick="globalSearch(\''+h.query.replace(/'/g,"\\'")+'\')" >'+
-      '<div><div style="font-size:12.5px;font-weight:600;color:var(--t1)">'+h.label+'</div>'+
-      '<div style="font-size:11px;color:var(--t3)">'+h.sub+'</div></div>'+
-      '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--pg);color:var(--pd);font-weight:700">'+h.type+'</span>'+
-    '</div>';
+  if(!hits.length){drop.style.display='none';return;}
+  drop.innerHTML=hits.map(function(h){
+    return'<div style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--bdr)" onmousedown="event.preventDefault();document.getElementById(\'global-search\').value=\''+h.q.replace(/'/g,"\\'")+ '\';globalSearch(\''+h.q.replace(/'/g,"\\'")+'\');document.getElementById(\'gs-drop\').style.display=\'none\'">'+
+      '<div style="font-size:12.5px;font-weight:600;color:var(--t1)">'+h.label+'</div>'+
+      '<div style="font-size:11px;color:var(--t3)">'+h.sub+'</div></div>';
   }).join('');
-  sug.style.display='block';
+  drop.style.display='block';
 }
 
 function globalSearch(q){
-  var sug=document.getElementById('gs-suggestions');if(sug)sug.style.display='none';
   if(!q)return;
-  // Always go to invoices and search all columns
+  var ql=q.toLowerCase();
   sp('invoices');
   var el=document.getElementById('inv-search');if(el)el.value=q;
-  var ql=q.toLowerCase();
   document.querySelectorAll('#inv-tb tr').forEach(function(tr){
     tr.style.display=tr.innerText.toLowerCase().includes(ql)?'':'none';
   });
@@ -5227,10 +5216,9 @@ function engApprove(){
   ENG_STATE='approved';engUpdateWS('approved');
   document.getElementById('eng-export-btn').style.display='inline-flex';
   const totalApplied=sel.reduce((s,r)=>s+r.applyAmt,0);
-  // Push approved allocations to RES immediately so Review tab shows them
+  // Push to RES immediately so Review tab reflects approved allocations
   sel.forEach(r=>{
-    const already=RES.find(res=>res.i===r.inv.i&&res.fromAlloc);
-    if(!already){
+    if(!RES.find(res=>res.i===r.inv.i&&res.fromAlloc)){
       const variance=r.applyAmt-r.inv.amt;
       RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.i||ENG_PAY.txId||'',id:ENG_PAY.txId||ENG_PAY.i||'',oa:r.inv.amt,pd:r.applyAmt,vr:variance,st:Math.abs(variance)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true,excCode:r.excCode||''});
     }
@@ -5238,9 +5226,8 @@ function engApprove(){
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
   addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
   saveToStorage();updDash();updTop();
-  // Navigate to Review tab
   setCaTab('review',document.getElementById('ca-tab-review'));
-  toast('✓ Allocation approved — '+sel.length+' invoice(s) moved to Review');
+  toast('✓ Approved — '+sel.length+' invoice(s) moved to Review tab');
 }
 
 function engExport(){
@@ -5714,17 +5701,17 @@ async function runMatch(){
   }
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
   overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
-  // Immediately render exceptions so they appear without tab-switching
+  // Immediately refresh so exceptions appear without tab-switching
   if(typeof renderWsExcPremium==='function') renderWsExcPremium();
   if(typeof renderWsReview==='function') renderWsReview();
-  // Auto-navigate: if on cash-app, show review if matches found, else exceptions
+  // Auto-navigate within cash-app to show results
   var caPanel=document.getElementById('p-cash-app');
   if(caPanel&&caPanel.classList.contains('active')){
-    if(RES.length>0){ setCaTab('review',document.getElementById('ca-tab-review')); }
-    else if(EXC.length>0){ setCaTab('exc',document.getElementById('ca-tab-exc')); }
+    if(RES.length>0) setCaTab('review',document.getElementById('ca-tab-review'));
+    else if(EXC.length>0) setCaTab('exc',document.getElementById('ca-tab-exc'));
   }
   addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions');
-  toast('✓ Matching done · '+RES.length+' results · '+EXC.length+' exceptions');
+  toast(`✓ Matching done · ${RES.length} results · ${EXC.length} exceptions`);
 }
 
 procGrp.ea=0;
@@ -5745,48 +5732,48 @@ function findSub(g,t,tol){const n=Math.min(g.length,16),gr=g.slice(0,n);function
 // ══════════════════════════════════════════════════════════
 function loadSampleInv(){
   INV=[
-    {c:'Acme Industrial',a:'40025016',i:'5104243542',po:'4220080799',so:'2103495110',amt:995,dt:'RV',dt2:'2024-05-15',due:'2024-06-14',d:'1000226191',s:''},
-    {c:'Nexus Semiconductor',a:'40084094',i:'5103599037',po:'4400667625',so:'2102858567',amt:1948.5,dt:'RV',dt2:'2023-01-20',due:'2023-02-19',d:'1000079150',s:''},
-    {c:'MedCore Solutions',a:'40016800',i:'5104007742',po:'4400688100',so:'2103470662',amt:12160,dt:'RV',dt2:'2024-03-10',due:'2024-04-09',d:'1000592557',s:''},
-    {c:'MedCore Solutions',a:'40016800',i:'5104387980',po:'5500000093',so:'2103891957',amt:7500,dt:'RV',dt2:'2024-08-05',due:'2024-09-04',d:'1000363570',s:''},
-    {c:'MedCore Solutions',a:'40016800',i:'5104865901',po:'4517920656',so:'2103672036',amt:3600,dt:'RV',dt2:'2025-09-15',due:'2025-10-15',d:'1000357207',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104854812',po:'4520591829',so:'2104211797',amt:23375,dt:'RV',dt2:'2025-09-04',due:'2025-11-03',d:'1000347699',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104872034',po:'4519244548',so:'2103953152',amt:1175,dt:'RV',dt2:'2025-09-18',due:'2025-11-17',d:'1000366374',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104868961',po:'4520051766',so:'2104105623',amt:1295,dt:'RV',dt2:'2025-09-16',due:'2025-11-15',d:'1000359467',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104866947',po:'4520652895',so:'2104224749',amt:26125,dt:'RV',dt2:'2025-09-15',due:'2025-11-14',d:'1000357669',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104868964',po:'4520652895',so:'2104224749',amt:7095,dt:'RV',dt2:'2025-09-16',due:'2025-11-15',d:'1000359470',s:''},
-    {c:'Delta Aerospace',a:'40017108',i:'5104860600',po:'4520763488',so:'2104247709',amt:33495,dt:'RV',dt2:'2025-09-11',due:'2025-11-10',d:'1000352074',s:''},
-    {c:'Orion Logistics',a:'40031200',i:'5104920100',po:'4521100001',so:'2104300001',amt:8750,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410001',s:''},
-    {c:'Orion Logistics',a:'40031200',i:'5104920101',po:'4521100001',so:'2104300002',amt:4250,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410002',s:''},
-    {c:'Vertex Energy',a:'40045600',i:'5104931500',po:'4521200001',so:'2104400001',amt:15000,dt:'RV',dt2:'2025-10-05',due:'2025-11-04',d:'1000420001',s:''},
-    {c:'Pinnacle Systems',a:'40058700',i:'5105001001',po:'4522100001',so:'2104500001',amt:28500,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500001',s:''},
-    {c:'Pinnacle Systems',a:'40058700',i:'5105001002',po:'4522100001',so:'2104500002',amt:11200,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500002',s:''},
-    {c:'MedCore Solutions',a:'40016800',i:'5104099001',po:'4400688100',so:'2103470662',amt:-1200,dt:'RV',dt2:'2024-03-20',due:'2024-04-19',d:'1000592558',s:''},
+    {c:'Acme Industrial',a:'40025016',i:'5104243542',po:'4220080799',so:'2103495110',amt:995,dt:'RV',dt2:'2024-05-15',due:'2024-06-14',d:'1000226191',bank:'JPM',s:''},
+    {c:'Nexus Semiconductor',a:'40084094',i:'5103599037',po:'4400667625',so:'2102858567',amt:1948.5,dt:'RV',dt2:'2023-01-20',due:'2023-02-19',d:'1000079150',bank:'JPM',s:''},
+    {c:'MedCore Solutions',a:'40016800',i:'5104007742',po:'4400688100',so:'2103470662',amt:12160,dt:'RV',dt2:'2024-03-10',due:'2024-04-09',d:'1000592557',bank:'BOA',s:''},
+    {c:'MedCore Solutions',a:'40016800',i:'5104387980',po:'5500000093',so:'2103891957',amt:7500,dt:'RV',dt2:'2024-08-05',due:'2024-09-04',d:'1000363570',bank:'BOA',s:''},
+    {c:'MedCore Solutions',a:'40016800',i:'5104865901',po:'4517920656',so:'2103672036',amt:3600,dt:'RV',dt2:'2025-09-15',due:'2025-10-15',d:'1000357207',bank:'BOA',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104854812',po:'4520591829',so:'2104211797',amt:23375,dt:'RV',dt2:'2025-09-04',due:'2025-11-03',d:'1000347699',bank:'JPM',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104872034',po:'4519244548',so:'2103953152',amt:1175,dt:'RV',dt2:'2025-09-18',due:'2025-11-17',d:'1000366374',bank:'JPM',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104868961',po:'4520051766',so:'2104105623',amt:1295,dt:'RV',dt2:'2025-09-16',due:'2025-11-15',d:'1000359467',bank:'JPM',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104866947',po:'4520652895',so:'2104224749',amt:26125,dt:'RV',dt2:'2025-09-15',due:'2025-11-14',d:'1000357669',bank:'JPM',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104868964',po:'4520652895',so:'2104224749',amt:7095,dt:'RV',dt2:'2025-09-16',due:'2025-11-15',d:'1000359470',bank:'JPM',s:''},
+    {c:'Delta Aerospace',a:'40017108',i:'5104860600',po:'4520763488',so:'2104247709',amt:33495,dt:'RV',dt2:'2025-09-11',due:'2025-11-10',d:'1000352074',bank:'JPM',s:''},
+    {c:'Orion Logistics',a:'40031200',i:'5104920100',po:'4521100001',so:'2104300001',amt:8750,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410001',bank:'JPM',s:''},
+    {c:'Orion Logistics',a:'40031200',i:'5104920101',po:'4521100001',so:'2104300002',amt:4250,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410002',bank:'JPM',s:''},
+    {c:'Vertex Energy',a:'40045600',i:'5104931500',po:'4521200001',so:'2104400001',amt:15000,dt:'RV',dt2:'2025-10-05',due:'2025-11-04',d:'1000420001',bank:'BOA',s:''},
+    {c:'Pinnacle Systems',a:'40058700',i:'5105001001',po:'4522100001',so:'2104500001',amt:28500,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500001',bank:'BOA',s:''},
+    {c:'Pinnacle Systems',a:'40058700',i:'5105001002',po:'4522100001',so:'2104500002',amt:11200,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500002',bank:'BOA',s:''},
+    {c:'MedCore Solutions',a:'40016800',i:'5104099001',po:'4400688100',so:'2103470662',amt:-1200,dt:'RV',dt2:'2024-03-20',due:'2024-04-19',d:'1000592558',bank:'BOA',s:''},
   ];
   rInv();updTop();setStatus('loaded');saveToStorage();
   addAudit('Sample invoices loaded','17 rows');
-  toast('17 invoices loaded');
+  toast('17 invoices loaded (JPM + BOA)');
 }
 
 function loadSampleRem(){
   PAY=[
-    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110001',payDate:'2026-05-01',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110002',payDate:'2026-05-01',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40016800',c:'MedCore Solutions',amt:7500,po:'',i:'5104387980',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884421',payDate:'2026-05-01',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40016800',c:'MedCore Solutions',amt:3600,po:'4517920656',i:'5104865901',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110003',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:1175,po:'4519244548',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110004',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:1295,po:'4520051766',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110005',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:33200,po:'4520652895',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884422',payDate:'2026-05-03',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:33495,po:'',i:'5104860600',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110006',payDate:'2026-05-03',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40016800',c:'MedCore Solutions',amt:1595,po:'4520683115',i:'',so:'',m:'Check',txType:'Check',txId:'5043',payDate:'2026-05-04',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40031200',c:'Orion Logistics',amt:13000,po:'4521100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884423',payDate:'2026-05-04',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40045600',c:'Vertex Energy',amt:15000,po:'',i:'5104931500',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110007',payDate:'2026-05-05',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40058700',c:'Pinnacle Systems',amt:39700,po:'4522100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884430',payDate:'2026-05-06',ccy:'USD',n:'PO group — covers invoices 5105001001 + 5105001002',coa:false,dp:false},
-    {a:'40999999',c:'Unknown Payer',amt:2500,po:'',i:'',so:'',m:'Check',txType:'Check',txId:'1188',payDate:'2026-05-05',ccy:'USD',n:'',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110001',payDate:'2026-05-01',ccy:'USD',n:'Down payment',bank:'JPM',coa:false,dp:true},
+    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110002',payDate:'2026-05-01',ccy:'USD',n:'Down payment',bank:'JPM',coa:false,dp:true},
+    {a:'40016800',c:'MedCore Solutions',amt:7500,po:'',i:'5104387980',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884421',payDate:'2026-05-01',ccy:'USD',n:'',bank:'BOA',coa:false,dp:false},
+    {a:'40016800',c:'MedCore Solutions',amt:3600,po:'4517920656',i:'5104865901',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110003',payDate:'2026-05-02',ccy:'USD',n:'',bank:'BOA',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:1175,po:'4519244548',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110004',payDate:'2026-05-02',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:1295,po:'4520051766',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110005',payDate:'2026-05-02',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:33200,po:'4520652895',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884422',payDate:'2026-05-03',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:33495,po:'',i:'5104860600',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110006',payDate:'2026-05-03',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40016800',c:'MedCore Solutions',amt:1595,po:'4520683115',i:'',so:'',m:'Check',txType:'Check',txId:'5043',payDate:'2026-05-04',ccy:'USD',n:'Down payment',bank:'BOA',coa:false,dp:true},
+    {a:'40031200',c:'Orion Logistics',amt:13000,po:'4521100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884423',payDate:'2026-05-04',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40045600',c:'Vertex Energy',amt:15000,po:'',i:'5104931500',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110007',payDate:'2026-05-05',ccy:'USD',n:'',bank:'BOA',coa:false,dp:false},
+    {a:'40058700',c:'Pinnacle Systems',amt:39700,po:'4522100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884430',payDate:'2026-05-06',ccy:'USD',n:'PO group — covers inv 5105001001 + 5105001002',bank:'BOA',coa:false,dp:false},
+    {a:'40999999',c:'Unknown Payer',amt:2500,po:'',i:'',so:'',m:'Check',txType:'Check',txId:'1188',payDate:'2026-05-05',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
   ];
   rRem();updTop();setStatus('loaded');saveToStorage();
   addAudit('Sample remittance loaded','13 rows');
-  toast('13 remittance lines loaded');
+  toast('13 remittance lines loaded (JPM + BOA)');
 }
 
 function loadDemoData(){loadSampleInv();loadSampleRem();}
@@ -6159,16 +6146,16 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
     tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
     return;
   }
-  // Sort: matching invoices bubble to top when a payment is selected
+  // Sort: matching invoices bubble to top when payment is loaded
   if(ENG_PAY){
     invs=invs.slice().sort(function(a,b){
       function score(v){
         var s=0;
         var row=ENG_ROWS.find(function(r){return r.inv.i===v.i;});
         if(row&&row.selected) s+=300;
-        if(ENG_PAY.i&&v.i&&norm(v.i)===norm(ENG_PAY.i)) s+=100;
-        if(ENG_PAY.po&&v.po&&norm(v.po)===norm(ENG_PAY.po)) s+=80;
-        if(ENG_PAY.so&&v.so&&norm(v.so)===norm(ENG_PAY.so)) s+=60;
+        if(ENG_PAY.i&&v.i&&(typeof norm==='function'?norm(v.i)===norm(ENG_PAY.i):v.i===ENG_PAY.i)) s+=100;
+        if(ENG_PAY.po&&v.po&&(typeof norm==='function'?norm(v.po)===norm(ENG_PAY.po):v.po===ENG_PAY.po)) s+=80;
+        if(ENG_PAY.so&&v.so&&(typeof norm==='function'?norm(v.so)===norm(ENG_PAY.so):v.so===ENG_PAY.so)) s+=60;
         if(Math.abs(v.amt-ENG_PAY.amt)<1) s+=40;
         return s;
       }
