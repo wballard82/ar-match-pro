@@ -2487,11 +2487,7 @@ body.app-active #app {
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 14V8M6 14V5M10 14V2M14 14V8"/></svg>
           Reports
         </div>
-        <div class="sb-item" id="sbi-audit" onclick="sp('audit')">
-          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 4h14M1 8h10M1 12h8"/></svg>
-          Audit Trail
-        </div>
-      </div>
+</div>
       <div class="sb-group">
         <div class="sb-group-label">Account</div>
         <div class="sb-item" id="sbi-settings" onclick="sp('settings')">
@@ -2777,6 +2773,9 @@ body.app-active #app {
               <span class="ca-filter-label">To</span>
               <input type="date" id="ca-date-to" class="ca-filter-sel" onchange="caFilterUpdate()">
             </div>
+            <div class="ca-filter-item" style="margin-left:auto">
+              <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
+            </div>
           </div>
 
           <!-- Horizontal split workspace -->
@@ -3032,6 +3031,10 @@ body.app-active #app {
                       <th onclick="sortFbl5nExc(8)" style="text-align:right">Open Balance<span class="si2"></span></th>
                       <th onclick="sortFbl5nExc(9)">Status<span class="si2"></span></th>
                     </tr>
+                  
+                    <tr class="fbl5n-filter-row" id="exc-fbl5n-filter-row">
+                      <th></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th>
+                    </tr>
                   </thead>
                   <tbody id="exc-open-items-body">
                     <tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">No open items — load invoice data to populate</div></div></td></tr>
@@ -3090,6 +3093,7 @@ body.app-active #app {
             <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" onclick="runMatch()">⚡ Auto-match</button>
+              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
           </div>
@@ -3277,6 +3281,18 @@ body.app-active #app {
                   <th>Status</th>
                   <th>Allocation</th>
                   <th style="width:60px">Actions</th>
+                </tr>
+                <tr class="fbl5n-filter-row" id="rem-filter-row">
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
+                  <th></th><th></th><th></th><th></th>
                 </tr>
               </thead>
               <tbody id="rem-tb">
@@ -3560,7 +3576,11 @@ body.app-active #app {
               <div class="panel-title">Reports</div>
               <div class="panel-sub">Match rate · Exception aging · DSO · CFO-level metrics</div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="exportReporting()">↓ Export CSV</button>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-outline btn-sm" onclick="exportReporting('csv')">↓ CSV</button>
+              <button class="btn btn-outline btn-sm" onclick="exportReporting('excel')">↓ Excel</button>
+              <button class="btn btn-outline btn-sm" onclick="exportReporting('pdf')">↓ PDF</button>
+            </div>
           </div>
         </div>
         <div class="panel-body">
@@ -3641,37 +3661,7 @@ body.app-active #app {
         </div>
       </div><!-- p-reporting -->
 
-      <!-- ════════════════ AUDIT TRAIL ════════════════ -->
-      <div class="panel" id="p-audit">
-        <div class="panel-header">
-          <div class="panel-header-row">
-            <div>
-              <div class="panel-title">Audit Trail</div>
-              <div class="panel-sub">Complete log of user actions · timestamps · changes</div>
-            </div>
-            <input class="inp" placeholder="Search audit log…" oninput="searchTbl('audit-tb',this.value)" style="width:220px;font-size:12.5px">
-          </div>
-        </div>
-        <div class="panel-body" style="padding:0">
-          <div class="tbl-wrap" style="border:none;border-radius:0">
-            <table class="tbl" id="audit-tb">
-              <thead>
-                <tr>
-                  <th onclick="sortTbl('audit-tb',0)">Timestamp<span class="si2"></span></th>
-                  <th onclick="sortTbl('audit-tb',1)">User<span class="si2"></span></th>
-                  <th onclick="sortTbl('audit-tb',2)">Action<span class="si2"></span></th>
-                  <th onclick="sortTbl('audit-tb',3)">Reference<span class="si2"></span></th>
-                </tr>
-              </thead>
-              <tbody id="audit-tbl-body">
-                <tr><td colspan="4"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No audit records</div><div class="empty-s">Actions are tracked automatically.</div></div></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
-      <!-- ════════════════ SETTINGS ════════════════ -->
       <div class="panel" id="p-settings">
         <div class="panel-header">
           <div class="panel-title">Settings</div>
@@ -4410,7 +4400,7 @@ function updReporting(){
     </div>`
   ).join('')||'<div class="empty" style="padding:16px"><div class="empty-t">No exceptions</div></div>';
 }
-function exportReporting(){
+function exportReporting(fmt){
   var rows=[['AR Match Pro — Reporting Export','',''],['Generated',new Date().toLocaleString(),''],['','','']];
   var tp=PAY.reduce(function(s,p){return s+p.amt;},0);
   var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
@@ -4433,6 +4423,48 @@ function exportReporting(){
   rows.push(['EXCEPTIONS','Customer','Type','Amount','Resolution']);
   EXC.forEach(function(e){rows.push([e.c||e.a||'',e.type||'','$'+$f(e.amt),e.dec||'Open']);});
   var csv=rows.map(function(r){return r.map(function(c){var s=String(c||'');return s.includes(',')?'"'+s+'"':s;}).join(',');}).join('\n');
+  if(fmt==='pdf'){
+    // Print-to-PDF: open a styled print window
+    var printWin=window.open('','_blank','width=900,height=700');
+    if(!printWin){toast('Allow pop-ups to export PDF','warn');return;}
+    var html='<!DOCTYPE html><html><head><title>AR Match Pro Report</title>'+
+      '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:24px}'+
+      'h1{font-size:16px;margin-bottom:4px}h2{font-size:13px;margin:16px 0 6px;border-bottom:1px solid #ccc}'+
+      'table{width:100%;border-collapse:collapse;margin-bottom:12px}'+
+      'th{background:#f0f4f8;padding:6px 8px;text-align:left;border:1px solid #ddd;font-size:11px}'+
+      'td{padding:5px 8px;border:1px solid #eee;font-size:11px}'+
+      '.kv{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px}'+
+      '.kv-item{}.kv-label{font-size:10px;color:#666;text-transform:uppercase}'+
+      '.kv-val{font-size:15px;font-weight:bold}</style></head><body>';
+    html+='<h1>AR Match Pro — Report</h1><div style="color:#666;font-size:11px">Generated: '+new Date().toLocaleString()+'</div>';
+    html+='<div class="kv" style="margin-top:12px">';
+    html+='<div class="kv-item"><div class="kv-label">Cash Matched</div><div class="kv-val">$'+$f(ma)+'</div></div>';
+    html+='<div class="kv-item"><div class="kv-label">Auto-Match Rate</div><div class="kv-val">'+rt.toFixed(1)+'%</div></div>';
+    html+='<div class="kv-item"><div class="kv-label">Unapplied Cash</div><div class="kv-val">$'+$f(ua)+'</div></div>';
+    html+='<div class="kv-item"><div class="kv-label">DSO</div><div class="kv-val">'+dso+' days</div></div>';
+    html+='<div class="kv-item"><div class="kv-label">Exceptions</div><div class="kv-val">'+EXC.length+'</div></div></div>';
+    html+='<h2>Match Results</h2><table><tr><th>Customer</th><th>Invoice</th><th>PO</th><th>Amount</th><th>Status</th></tr>';
+    RES.forEach(function(r){html+='<tr><td>'+r.c+'</td><td>'+r.i+'</td><td>'+(r.po||'—')+'</td><td>$'+$f(r.pd)+'</td><td>'+r.st+'</td></tr>';});
+    html+='</table><h2>Exceptions</h2><table><tr><th>Customer</th><th>Type</th><th>Amount</th><th>Resolution</th></tr>';
+    EXC.forEach(function(e){html+='<tr><td>'+(e.c||e.a||'')+'</td><td>'+e.type+'</td><td>$'+$f(e.amt)+'</td><td>'+(e.dec||'Open')+'</td></tr>';});
+    html+='</table></body></html>';
+    printWin.document.write(html);printWin.document.close();
+    printWin.focus();setTimeout(function(){printWin.print();},400);
+    toast('✓ PDF print dialog opened');
+    return;
+  }
+  if(fmt==='excel'){
+    // Excel via XLSX-compatible CSV with BOM for proper encoding
+    var bom='\uFEFF';
+    var xlsv=rows.map(function(r){return r.map(function(cell){var s=String(cell||'');return s.includes(',')||s.includes('"')?'"'+s.replace(/"/g,'""')+'"':s;}).join('\t');}).join('\n');
+    var blob=new Blob([bom+xlsv],{type:'application/vnd.ms-excel;charset=utf-8'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='ARMatchPro_Report_'+new Date().toISOString().slice(0,10)+'.xls';
+    a.click();URL.revokeObjectURL(a.href);
+    toast('✓ Report exported as Excel');
+    return;
+  }
+  // Default: CSV
   var blob=new Blob([csv],{type:'text/csv'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='ARMatchPro_Report_'+new Date().toISOString().slice(0,10)+'.csv';
@@ -4631,7 +4663,9 @@ function clearPayData(){showConfirm('Clear all remittance data?\n\nThis cannot b
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
 function clearAllData(){showConfirm('Clear all data?\n\nThis cannot be undone.',function(){INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');});}
 function resetAllData(){
-  showConfirm('⚠️ Reset ALL data?\n\nThis will permanently delete:\n• All invoices and remittance\n• All match results and exceptions\n\nThis cannot be undone.',function(){_doResetAll();});return;
+  showConfirm('⚠️ Reset ALL data?\n\nThis will permanently delete:\n• All invoices and remittance\n• All match results and exceptions\n\nThis cannot be undone.',function(){_doResetAll();});
+}
+function _doResetAll(){
   INV=[];PAY=[];RES=[];EXC=[];
   rAll();updDash();updTop();setStatus('ready');
   try{['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k));}catch(e){}});}catch(e){}
@@ -4998,19 +5032,24 @@ function resolveException(idx,dec){
   if(dec==='Post as Unapplied Cash'){
     const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
     const accts=Object.keys(acctMap).sort();
-    const opts=accts.map(a=>`<option value="${a}">${a}${acctMap[a]?' — '+acctMap[a]:''}</option>`).join('');
-    showModal('Post as Unapplied Cash',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select account to post unapplied cash:</div>
-      ${opts?`<select id="exc-acct-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:8px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
-        <option value="">— Select account —</option>${opts}</select><div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:8px">— or enter manually —</div>`:''}
-      <div style="position:relative;margin-bottom:14px">
-        <input type="text" id="exc-acct-manual" placeholder="Account # or customer name…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none" oninput="excAcctManualSearch(this.value)">
-        <div id="exc-acct-preview" style="font-size:11.5px;color:var(--g-t);margin-top:4px;padding-left:2px;min-height:18px"></div>
-        <div id="exc-acct-suggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:20;display:none;max-height:180px;overflow-y:auto"></div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-p btn-sm" onclick="confirmExcAcct(${idx})">Post as unapplied</button>
-        <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
-      </div>`);
+    showModal('Post as Unapplied Cash',
+      '<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px">Select customer account:</div>'+
+      '<div style="font-size:11.5px;color:var(--t3);margin-bottom:12px">Type to search — modal closes automatically on selection</div>'+
+      '<div style="position:relative;margin-bottom:6px">'+
+        '<input type="text" id="exc-acct-search" placeholder="Account # or customer name…" autocomplete="off"'+
+        ' style="width:100%;padding:10px 14px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"'+
+        ' oninput="excUnappliedSearch(this.value,'+idx+')"'+
+        ' onfocus="excUnappliedSearch(this.value,'+idx+')"'+
+        ' onkeydown="if(event.key===\'Escape\')closeModal()">'+
+        '<div id="exc-unapp-drop" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;box-shadow:var(--shadow-md);z-index:30;max-height:220px;overflow-y:auto;margin-top:3px;display:none"></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-top:10px">'+
+        '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+      '</div>'
+    );
+    // Focus the input after modal renders
+    const _excIdx=idx;
+    setTimeout(function(){var inp=document.getElementById('exc-acct-search');if(inp){inp.focus();excUnappliedSearch('',_excIdx);}},80);
     return;
   }
   ex.dec=dec;
@@ -5027,6 +5066,33 @@ function confirmExcInv(idx){
   closeModal();finalizeExcResolution(idx,'Apply to invoice');
 }
 
+function excUnappliedSearch(q,idx){
+  const drop=document.getElementById('exc-unapp-drop');if(!drop)return;
+  const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
+  const ql=(q||'').toLowerCase();
+  const keys=Object.keys(acctMap).sort().filter(a=>!ql||a.toLowerCase().includes(ql)||(acctMap[a]||'').toLowerCase().includes(ql));
+  if(!keys.length){drop.style.display='none';return;}
+  const rows=keys.map(function(a){
+    const label=a+(acctMap[a]?' — '+acctMap[a]:'');
+    return '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bdr)"'+
+      ' onmouseover="this.style.background=\'var(--glass2)\'"'+
+      ' onmouseout="this.style.background=\'\'"'+
+      ' onmousedown="event.preventDefault();excUnappliedConfirm('+idx+',this.dataset.acct,this.dataset.label)"'+
+      ' data-acct="'+a+'" data-label="'+label.replace(/"/g,'&quot;')+'">'+
+      '<div style="font-size:12.5px;font-weight:700;color:var(--t1);font-family:var(--mono)">'+a+'</div>'+
+      '<div style="font-size:11px;color:var(--t3)">'+(acctMap[a]||'')+'</div>'+
+      '</div>';
+  });
+  drop.innerHTML='<div style="padding:8px 14px;font-size:11px;color:var(--t3);border-bottom:1px solid var(--bdr)">Select account:</div>'+rows.join('');
+  drop.style.display='block';
+}
+function excUnappliedConfirm(idx,acctId,acctLabel){
+  closeModal();
+  const ex=EXC[idx];if(!ex)return;
+  ex.dec='Post as Unapplied Cash';ex.appliedToAcct=acctId;ex.appliedToAcctLabel=acctLabel;
+  finalizeExcResolution(idx,'Post as Unapplied Cash');
+  toast('✓ Posted as unapplied cash → '+acctLabel);
+}
 function confirmExcAcct(idx){
   const manual=document.getElementById('exc-acct-manual');
   const sel=document.getElementById('exc-acct-sel');
@@ -5407,17 +5473,28 @@ function engResetUI(){
 // ── Payment Queue ──
 function renderPayQueue(){
   const list=document.getElementById('pq-list');const ct=document.getElementById('pq-count');if(!list)return;
-  if(ct)ct.textContent='('+PAY.length+')';
+  // Get current bank filter
+  const bankSel=document.getElementById('ca-bank-sel');
+  const bankVal=bankSel?bankSel.value:'';
+  const bankCode=bankVal?bankVal.split('-')[0]:'';
+  const visiblePay=PAY.filter(function(p,i){
+    if(!bankCode)return true;
+    return !p.bank||p.bank===bankCode;
+  });
+  if(ct)ct.textContent='('+visiblePay.length+(bankCode?' · '+bankCode:'')+')';
   if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
+  if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankCode+'</div><div class="empty-s">Load '+bankCode+' sample data or select a different bank.</div></div>';return;}
   list.innerHTML=PAY.map((p,i)=>{
+    if(bankCode&&p.bank&&p.bank!==bankCode)return'';
     const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
     const exc=EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
     const isActive=ENG_PAY_IDX===i;
     const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':'var(--bdr3)';
     const stateLabel=matched?'Matched':exc?'Exception':p.dp?'Down Pay':'Pending';
+    const bankTag=p.bank?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--pg);color:var(--pd);font-weight:700;margin-left:4px">${p.bank}</span>`:'';
     return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
-      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}</div><div class="pq-item-amt">$${$f(p.amt)}</div></div>
+      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">$${$f(p.amt)}</div></div>
       <div class="pq-item-bot">
         <div class="pq-item-ref">${p.i||p.po||p.txId||'—'}</div>
         <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
@@ -5800,6 +5877,7 @@ function caFilterUpdate(){
     document.querySelectorAll('#rem-tb tr').forEach(function(tr){tr.style.display='';});
   }
   if(typeof engRefreshSel==='function')engRefreshSel();
+  renderPayQueue();
 }
 </script>
 <script>
@@ -6385,6 +6463,24 @@ function fbl5nApplyRow(invI){
   if(row&&!row.selected){ fbl5nCheckRow(invI,true); }
   else if(!ENG_PAY){ toast('Select a payment first from the queue above','warn'); }
 }
+function filterFbl5nExc(){
+  var filterRow=document.getElementById('exc-fbl5n-filter-row');
+  if(!filterRow)return;
+  var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');
+  var filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});
+  var rows=document.querySelectorAll('#exc-open-items-body tr');
+  rows.forEach(function(tr){
+    if(tr.querySelector('td[colspan]')){tr.style.display='';return;}
+    var cells=tr.querySelectorAll('td');
+    var show=true;
+    filters.forEach(function(f,fi){
+      if(!f)return;
+      var cell=cells[fi];if(!cell)return;
+      if(!cell.innerText.toLowerCase().includes(f))show=false;
+    });
+    tr.style.display=show?'':'none';
+  });
+}
 function filterFbl5n(){
   var filterRow=document.getElementById('fbl5n-filter-row');
   if(!filterRow)return;
@@ -6482,6 +6578,24 @@ function clearInvFilters(){
   var ct=document.getElementById('inv-ct'); if(ct&&INV.length) ct.textContent=INV.length+' rows · click any cell to edit';
 }
 
+function filterRemTable(){
+  var filterRow=document.getElementById('rem-filter-row');
+  if(!filterRow)return;
+  var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');
+  var filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});
+  // rem-tb is the tbody; target its rows
+  document.querySelectorAll('#rem-tb tr').forEach(function(tr){
+    if(tr.querySelector('td[colspan]')){tr.style.display='';return;}
+    var cells=tr.querySelectorAll('td');
+    var show=true;
+    filters.forEach(function(f,fi){
+      if(!f)return;
+      var cell=cells[fi];if(!cell)return;
+      if(!(cell.innerText||cell.textContent||'').toLowerCase().includes(f))show=false;
+    });
+    tr.style.display=show?'':'none';
+  });
+}
 function filterRemAll(q){
   var mf=(document.getElementById('rem-method-filter')||{}).value||'';
   var cf=(document.getElementById('rem-ccy-filter')||{}).value||'';
