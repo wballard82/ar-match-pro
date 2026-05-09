@@ -7393,55 +7393,326 @@ function closeReviewInlineDetail(){
 }
 
 
-// ── Help Modal ──
-var HELP_PDF_B64 = null; // lazily loaded
-var HELP_SECTIONS = [
-  ['🚀','Getting Started','Login, sample data, navigation',"sp('worklist')"],
-  ['💳','Cash Application','Match payments to invoices',"setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')"],
-  ['⚠️','Exceptions','Resolve unmatched payments',"setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)"],
-  ['⚖️','Reconcile','Write-offs, bank fees, variance',"setCaTab('recon',document.getElementById('ca-tab-recon'));sp('cash-app')"],
-  ['📊','Reports &amp; CFO','Metrics, DSO, Auto-Match Rate',"sp('reporting')"],
-  ['⚙️','Settings','Engine rules, CFO thresholds, plans',"sp('settings')"],
-  ['📤','Posting Export','ERP file columns and formats',"sp('posting')"],
-  ['🔧','Troubleshooting','Common issues and fixes',"openContactModal()"],
-];
-function openHelpModal(){
+// ── In-App Manual ──────────────────────────────────────────────────────────
+var HELP_CONTENT = {
+  index: null, // built dynamically
+  sections: [
+    {
+      id:'start', icon:'🚀', title:'Getting Started',
+      sub:'Login · Sample data · Navigation',
+      nav: null,
+      content:`
+        <h3>Logging In</h3>
+        <p>Navigate to your AR Match Pro URL and enter your credentials. New users can register from the login screen. If you have a license key, enter it during registration to activate your plan.</p>
+        <h3>Demo Mode</h3>
+        <p>Click <strong>Try Demo</strong> on the login screen to explore all features with pre-loaded sample data. In demo mode, data is not saved between sessions and export features require Starter plan or above.</p>
+        <h3>Loading Sample Data</h3>
+        <p>Go to <strong>Invoices</strong> and click <strong>Load sample</strong> to populate 17 sample invoices including Pinnacle Systems. Go to <strong>Remittance</strong> and click <strong>Load JPM</strong> or <strong>Load BOA</strong> to load payments for each bank account.</p>
+        <div class="hm-tip">💡 Load both JPM and BOA sample data, then run Auto-Match to see a full matching cycle — exact matches, short pays, and multi-invoice PO group matches.</div>
+        <h3>Navigation</h3>
+        <table><thead><tr><th>Section</th><th>Purpose</th></tr></thead><tbody>
+        <tr><td>Today's Work</td><td>Dashboard showing urgent exceptions and pending tasks</td></tr>
+        <tr><td>Cash Application</td><td>Main workspace: match, review, reconcile, export</td></tr>
+        <tr><td>Invoices</td><td>View, edit, import, and manage all open invoices</td></tr>
+        <tr><td>Remittance</td><td>View, edit, import, and manage all incoming payments</td></tr>
+        <tr><td>CFO Summary</td><td>Executive dashboard: period metrics, DSO, ROI</td></tr>
+        <tr><td>Posting Export</td><td>Final review and ERP posting file download</td></tr>
+        <tr><td>Reports</td><td>Match rate, DSO, exception breakdown, export</td></tr>
+        <tr><td>Settings</td><td>Account, matching rules, CFO thresholds, plans</td></tr>
+        </tbody></table>
+        <h3>Key Concepts</h3>
+        <table><thead><tr><th>Term</th><th>Definition</th></tr></thead><tbody>
+        <tr><td>Auto-Match Rate</td><td>% of payments matched automatically without human input. Above 80% is excellent.</td></tr>
+        <tr><td>DSO</td><td>Days Sales Outstanding = (Open Balance ÷ Matched Revenue) × 30. Lower is better.</td></tr>
+        <tr><td>Unapplied Cash</td><td>Payments received but not yet matched to an invoice.</td></tr>
+        <tr><td>Short Pay</td><td>Payment less than the invoice amount — variance requires resolution.</td></tr>
+        <tr><td>Exception</td><td>Payment that could not be auto-matched — needs manual review.</td></tr>
+        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP, NetSuite, Dynamics) to post cash entries.</td></tr>
+        </tbody></table>`
+    },
+    {
+      id:'cash', icon:'💳', title:'Cash Application',
+      sub:'Payment queue · Open items · Matching · Approve',
+      nav:"setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')",
+      content:`
+        <h3>Overview</h3>
+        <p>Cash Application is the core workspace with four tabs: <strong>To Be Matched</strong>, <strong>Review</strong>, <strong>Exceptions</strong>, and <strong>Reconcile</strong>.</p>
+        <h3>Payment Queue</h3>
+        <p>The top panel lists all imported payments. Each card shows customer name, amount, method, bank tag, and status (Pending / Matched / Exception). Use the <strong>bank account filter</strong> to show only JPM or BOA payments. Click any payment to load it for allocation.</p>
+        <h3>Customer Open Items</h3>
+        <p>The bottom panel shows open invoices for the selected payment's account. Invoices are automatically sorted by relevance — best matches appear first. All columns support sorting (click header) and per-column filtering (type in the filter row). Drag the divider handle to resize the split.</p>
+        <h3>Auto-Matching Engine</h3>
+        <p>Click <strong>⚡ Auto-match all</strong> to run matching across all payments. The engine tries these methods in order:</p>
+        <table><thead><tr><th>Priority</th><th>Method</th><th>Description</th></tr></thead><tbody>
+        <tr><td>1</td><td>Invoice #</td><td>Payment references an exact invoice number</td></tr>
+        <tr><td>2</td><td>PO Group</td><td>Sum of all open invoices on the same PO = payment amount</td></tr>
+        <tr><td>3</td><td>PO Subset</td><td>A subset of invoices on the same PO = payment amount</td></tr>
+        <tr><td>4</td><td>Sales Order</td><td>Match by Sales Order reference</td></tr>
+        <tr><td>5</td><td>Amount</td><td>Same account + matching dollar amount</td></tr>
+        <tr><td>6</td><td>Exception</td><td>No match found — flagged for manual review</td></tr>
+        </tbody></table>
+        <div class="hm-tip">💡 Pinnacle Systems example: $39,700 payment on PO 4522100001 auto-matches to invoices 5105001001 ($28,500) + 5105001002 ($11,200). Combined = $39,700. Exact match.</div>
+        <h3>Manual Allocation</h3>
+        <p>Select a payment, then check invoice rows in Customer Open Items. The running total shows applied vs remaining. Click <strong>✓ Approve</strong> when the allocation ties to zero — approved records move immediately to the Review tab.</p>
+        <h3>Multi-Account Allocation</h3>
+        <p>A single payment can be split across multiple customer accounts. Select the payment, change the Account filter in Customer Open Items to a different account, select invoices, and apply. Repeat for each account.</p>`
+    },
+    {
+      id:'exc', icon:'⚠️', title:'Exceptions',
+      sub:'Types · Resolution flows · Apply to invoice',
+      nav:"setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)",
+      content:`
+        <h3>What Are Exceptions?</h3>
+        <p>Exceptions are payments that could not be automatically matched. They appear in the Exceptions tab and on Today's Work dashboard.</p>
+        <h3>Exception Types</h3>
+        <table><thead><tr><th>Type</th><th>Cause</th><th>Action</th></tr></thead><tbody>
+        <tr><td>Short Pay</td><td>Payment less than invoice amount</td><td>Write off difference or chase balance</td></tr>
+        <tr><td>Overpay</td><td>Payment exceeds invoice amount</td><td>Return excess or apply credit memo</td></tr>
+        <tr><td>Unmatched</td><td>No invoice/PO reference found</td><td>Contact customer; check remittance details</td></tr>
+        <tr><td>Missing PO</td><td>PO required but not provided</td><td>Request PO from customer or sales team</td></tr>
+        <tr><td>Duplicate</td><td>Possible duplicate payment detected</td><td>Verify with bank; reject if confirmed</td></tr>
+        <tr><td>Unapplied</td><td>No allocation instructions</td><td>Apply to oldest open invoice or hold</td></tr>
+        <tr><td>Bank Fee</td><td>Bank deducted fees from payment</td><td>Book to bank fee GL account</td></tr>
+        </tbody></table>
+        <h3>Resolution Options</h3>
+        <p><strong>Apply to Invoice</strong> — Closes the modal and navigates to Customer Open Items, pre-filtered to the exception's account. Click any invoice row to see a confirmation (amount, variance). Confirm to resolve and move to Review.</p>
+        <p><strong>Post as Unapplied Cash</strong> — Opens an account search popup. Type an account number or customer name. Click any result to post immediately — the popup closes automatically.</p>
+        <p><strong>Write Off</strong> — Marks the variance as a write-off. Appears in the Write-off column in Reconcile.</p>
+        <p><strong>Bank Fee</strong> — Marks the variance as a bank fee. Appears in the Bank Fee column in Reconcile.</p>
+        <p><strong>Chase Customer</strong> — Holds the exception for follow-up. Stays Open on Today's Work.</p>
+        <p><strong>Duplicate — Reject</strong> — Marks as duplicate. No posting entry created.</p>
+        <div class="hm-warn">⚠️ Resolved exceptions can be reverted to Open status using the Revert button on the resolved exception card.</div>`
+    },
+    {
+      id:'recon', icon:'⚖️', title:'Reconcile',
+      sub:'Write-offs · Bank fees · Variance reconciliation',
+      nav:"setCaTab('recon',document.getElementById('ca-tab-recon'));sp('cash-app')",
+      content:`
+        <h3>Overview</h3>
+        <p>The Reconcile tab provides a line-by-line view of matched payments vs invoices, with editable Write-off and Bank Fee columns to close variances.</p>
+        <h3>Column Reference</h3>
+        <table><thead><tr><th>Column</th><th>Description</th></tr></thead><tbody>
+        <tr><td>Customer</td><td>Customer name from the matched invoice</td></tr>
+        <tr><td>Invoice #</td><td>Invoice number</td></tr>
+        <tr><td>PO #</td><td>Purchase order number (if available)</td></tr>
+        <tr><td>Payment</td><td>Original invoice amount</td></tr>
+        <tr><td>Applied</td><td>Amount actually applied to the invoice</td></tr>
+        <tr><td>Write-off</td><td><strong>Editable</strong> — enter any amount to write off (short pay, disputed)</td></tr>
+        <tr><td>Bank Fee</td><td><strong>Editable</strong> — enter any bank-deducted fee amount</td></tr>
+        <tr><td>Variance</td><td>Net of Applied minus Write-off minus Bank Fee. "Ties" = zero balance.</td></tr>
+        <tr><td>Status</td><td>Reconciled (zero variance) or Open (variance remaining)</td></tr>
+        </tbody></table>
+        <div class="hm-note">ℹ️ Write-off and Bank Fee fields are only editable for rows with a remaining variance (short pays, overpays). Exactly matched rows show read-only dashes.</div>
+        <div class="hm-tip">💡 Enter write-off amounts to close small variances within your company's tolerance. This keeps the Variance column at "Ties" for clean ERP posting.</div>
+        <h3>Export Posting File</h3>
+        <p>Click <strong>↓ Export posting</strong> to download the posting file in CSV, Excel, or PDF format. The export includes Write-off and Bank Fee columns so your ERP can book them to the correct GL accounts.</p>`
+    },
+    {
+      id:'reports', icon:'📊', title:'Reports & CFO',
+      sub:'Metrics · DSO · Auto-Match Rate · Period tracking',
+      nav:"sp('reporting')",
+      content:`
+        <h3>Reports Panel</h3>
+        <p>Provides operational metrics for AR managers and controllers. All metrics update automatically after each matching run.</p>
+        <table><thead><tr><th>Metric</th><th>Description</th></tr></thead><tbody>
+        <tr><td>Cash Matched</td><td>Total dollar amount matched in this session</td></tr>
+        <tr><td>Auto-Match Rate</td><td>% of payments matched automatically (STP rate)</td></tr>
+        <tr><td>Unapplied Cash</td><td>Total unresolved payment amount pending decision</td></tr>
+        <tr><td>Short Pays</td><td>Count and total amount of underpayments</td></tr>
+        <tr><td>DSO</td><td>(Open Invoice Balance ÷ Matched Revenue) × 30</td></tr>
+        <tr><td>Exception Aging</td><td>Count of exceptions in Open status</td></tr>
+        <tr><td>Top Issue Type</td><td>Most common exception category in the dataset</td></tr>
+        </tbody></table>
+        <h3>Export Formats</h3>
+        <p><strong>CSV</strong> — Summary metrics, match results, and exception breakdown. Compatible with Excel and data warehouses.</p>
+        <p><strong>Excel</strong> — Tab-delimited .xls with UTF-8 encoding for Excel import.</p>
+        <p><strong>PDF</strong> — Opens a print-optimized window. Use Print → Save as PDF.</p>
+        <h3>CFO Summary</h3>
+        <p>Executive dashboard with period metrics. Toggle between <strong>Month / Quarter / YTD</strong>. Metrics accumulate automatically — every matching run records peak values in the background, even after invoice data is cleared.</p>
+        <table><thead><tr><th>KPI</th><th>Formula</th></tr></thead><tbody>
+        <tr><td>Auto-Match Rate</td><td>Matched $ ÷ Total Payments $</td></tr>
+        <tr><td>DSO</td><td>(Open Balance ÷ Matched Revenue) × 30</td></tr>
+        <tr><td>Exception Rate</td><td>Open Exceptions ÷ Total Payments</td></tr>
+        <tr><td>ROI Multiple</td><td>Labor saved $ ÷ Subscription cost $/mo</td></tr>
+        <tr><td>Hours Saved</td><td>Auto-matched count × 8 min ÷ 60</td></tr>
+        <tr><td>Labor Savings $</td><td>Hours Saved × AR hourly rate (configurable)</td></tr>
+        </tbody></table>
+        <div class="hm-tip">💡 Alerts fire as colored banners when KPIs breach thresholds. Configure target STP%, DSO limit, and exception rate in Settings → CFO Settings.</div>`
+    },
+    {
+      id:'settings', icon:'⚙️', title:'Settings',
+      sub:'Account · Matching engine · CFO settings · Plans',
+      nav:"sp('settings')",
+      content:`
+        <h3>Account</h3>
+        <table><thead><tr><th>Setting</th><th>Description</th></tr></thead><tbody>
+        <tr><td>Name</td><td>Display name shown in the top navigation bar</td></tr>
+        <tr><td>Email</td><td>Your login email address</td></tr>
+        <tr><td>Role</td><td>AR role: Specialist / Manager / Controller / CFO / Admin</td></tr>
+        <tr><td>Theme</td><td>Toggle dark/light using the moon/sun icon in the topnav</td></tr>
+        </tbody></table>
+        <h3>Matching Engine</h3>
+        <table><thead><tr><th>Setting</th><th>Description</th></tr></thead><tbody>
+        <tr><td>Match Priority</td><td>Drag rules to reorder: Invoice #, PO, SO, Amount</td></tr>
+        <tr><td>Tolerance ($)</td><td>Dollar amount within which a match is exact (default $1.00)</td></tr>
+        <tr><td>Invoice # Matching</td><td>Enable/disable direct invoice number matching pass</td></tr>
+        <tr><td>PO Matching</td><td>Enable/disable purchase order matching pass</td></tr>
+        <tr><td>SO Matching</td><td>Enable/disable sales order matching pass</td></tr>
+        </tbody></table>
+        <h3>CFO Settings</h3>
+        <table><thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead><tbody>
+        <tr><td>Target Auto-Match Rate</td><td>80%</td><td>Alert when STP falls below this</td></tr>
+        <tr><td>AR Labor Rate</td><td>$65/hr</td><td>Fully-loaded hourly rate for ROI calculation</td></tr>
+        <tr><td>Subscription Cost</td><td>$999/mo</td><td>Used for ROI multiple calculation</td></tr>
+        <tr><td>Fiscal Year Start</td><td>January</td><td>First month of your fiscal year</td></tr>
+        <tr><td>DSO Alert</td><td>45 days</td><td>Alert when DSO exceeds this threshold</td></tr>
+        <tr><td>Exception Rate Alert</td><td>10%</td><td>Alert when exception rate exceeds this</td></tr>
+        </tbody></table>
+        <h3>Change Plan</h3>
+        <table><thead><tr><th>Plan</th><th>Price</th><th>Features</th></tr></thead><tbody>
+        <tr><td>Demo</td><td>Free</td><td>Sample data only · Explore all features</td></tr>
+        <tr><td>Starter</td><td>$299/mo</td><td>Up to 1,000 invoices/mo · CSV export · Email support</td></tr>
+        <tr><td>Pro</td><td>$599/mo</td><td>Unlimited invoices · All exports · CFO dashboard · Priority support</td></tr>
+        <tr><td>Team</td><td>$999/mo</td><td>All Pro + Multi-user · ERP posting · SLA guarantee</td></tr>
+        </tbody></table>`
+    },
+    {
+      id:'posting', icon:'📤', title:'Posting Export',
+      sub:'ERP file columns · CSV / Excel / PDF formats',
+      nav:"sp('posting')",
+      content:`
+        <h3>Overview</h3>
+        <p>The Posting Export panel shows all approved records ready for ERP import. This is the final step before data enters your accounting system.</p>
+        <h3>Export Columns</h3>
+        <table><thead><tr><th>Column</th><th>SAP Field</th><th>Description</th></tr></thead><tbody>
+        <tr><td>Account</td><td>KUNNR</td><td>Customer account number</td></tr>
+        <tr><td>Customer</td><td>NAME1</td><td>Customer name</td></tr>
+        <tr><td>Payment Date</td><td>BUDAT</td><td>Posting date (date of export)</td></tr>
+        <tr><td>Invoice #</td><td>BELNR</td><td>Invoice document number</td></tr>
+        <tr><td>PO #</td><td>EBELN</td><td>Purchase order number</td></tr>
+        <tr><td>Sales Order</td><td>VBELN</td><td>Sales order number</td></tr>
+        <tr><td>Type</td><td>BLART</td><td>Invoice / Adjustment / Payment</td></tr>
+        <tr><td>Document #</td><td>AUGBL</td><td>Clearing document number</td></tr>
+        <tr><td>Post Amount</td><td>WRBTR</td><td>Amount being posted</td></tr>
+        <tr><td>Write-off</td><td>WMWST</td><td>Write-off amount (blank = none)</td></tr>
+        <tr><td>Bank Fee</td><td>ZTERM</td><td>Bank fee amount (blank = none)</td></tr>
+        </tbody></table>
+        <h3>Download Formats</h3>
+        <table><thead><tr><th>Format</th><th>File</th><th>Best For</th></tr></thead><tbody>
+        <tr><td>CSV</td><td>.csv</td><td>Universal ERP import; most accounting systems</td></tr>
+        <tr><td>Excel</td><td>.xls</td><td>Manual review; pivot tables; Excel-based workflows</td></tr>
+        <tr><td>PDF</td><td>Print</td><td>Approval documentation; archiving; audit trail</td></tr>
+        </tbody></table>
+        <div class="hm-note">ℹ️ Always review the Reconcile tab before exporting. Enter any write-offs and bank fees so the export balances correctly in your ERP.</div>`
+    },
+    {
+      id:'help', icon:'🔧', title:'Troubleshooting',
+      sub:'Common issues · Fixes · Support',
+      nav:null,
+      content:`
+        <h3>Common Issues</h3>
+        <table><thead><tr><th>Issue</th><th>Cause</th><th>Solution</th></tr></thead><tbody>
+        <tr><td>Matching finds no results</td><td>Account # mismatch</td><td>Verify account numbers match exactly between invoices and remittance. Edit cells inline in the Invoices panel.</td></tr>
+        <tr><td>Payment queue empty after bank filter</td><td>Data loaded without bank tags</td><td>Use Load JPM or Load BOA buttons. Import files should include a "bank" column (JPM or BOA).</td></tr>
+        <tr><td>DSO shows "—"</td><td>No matched revenue yet</td><td>Run matching first. DSO requires at least one matched record as the denominator.</td></tr>
+        <tr><td>Exception won't resolve</td><td>Invoice already matched or account not found</td><td>Check invoice status in Invoices panel. Ensure the target account exists in your data.</td></tr>
+        <tr><td>Export produces empty file</td><td>No approved records in Review</td><td>Run matching and click ✓ Approve in the allocation workspace before exporting.</td></tr>
+        <tr><td>CFO metrics show zero</td><td>No matching run in current period</td><td>Run matching at least once. CFO snapshots record automatically after each run.</td></tr>
+        <tr><td>Reset button not working</td><td>Browser blocks confirm dialogs</td><td>Allow dialogs/popups for this site in browser settings, then try again.</td></tr>
+        <tr><td>Slashed zeros in numbers</td><td>Browser font feature override</td><td>Hard-reload: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac).</td></tr>
+        <tr><td>Modal doesn't close</td><td>Click event blocked</td><td>Click the × button or press Escape. Cancel always closes any modal.</td></tr>
+        <tr><td>Column data appears shifted</td><td>Import file has wrong columns</td><td>Re-import with a correctly formatted file. Use Load Sample to see expected column structure.</td></tr>
+        </tbody></table>
+        <h3>Getting Help</h3>
+        <table><thead><tr><th>Channel</th><th>How</th></tr></thead><tbody>
+        <tr><td>AI Support Chat</td><td>Click 💬 Contact AR Match Pro in Settings or use the ? Help button</td></tr>
+        <tr><td>Email</td><td>info@armatchpro.com — include your account email and issue description</td></tr>
+        <tr><td>PDF Guide</td><td>Download the full PDF from the Help modal (↓ PDF button at top)</td></tr>
+        </tbody></table>
+        <div style="margin-top:20px;text-align:center">
+          <button class="btn btn-p" onclick="closeHelpModal();openContactModal()" style="font-size:13px">💬 Open Support Chat</button>
+        </div>`
+    },
+  ]
+};
+
+// Inline manual styles (injected once)
+var _helpStyled=false;
+function helpInjectStyles(){
+  if(_helpStyled)return;_helpStyled=true;
+  var s=document.createElement('style');
+  s.textContent=`
+    .hm-body{padding:28px 32px;font-family:var(--font);color:var(--t2);font-size:13.5px;line-height:1.65}
+    .hm-body h2{font-size:18px;font-weight:800;color:var(--t1);margin:0 0 18px}
+    .hm-body h3{font-size:13px;font-weight:700;color:var(--t1);margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--bdr)}
+    .hm-body p{margin:0 0 10px;color:var(--t2)}
+    .hm-body strong{color:var(--t1)}
+    .hm-body table{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:12.5px}
+    .hm-body th{background:var(--p);color:#fff;padding:7px 10px;text-align:left;font-weight:700;font-size:11.5px}
+    .hm-body td{padding:7px 10px;border-bottom:1px solid var(--bdr);vertical-align:top;color:var(--t2)}
+    .hm-body tr:nth-child(even) td{background:var(--surface2)}
+    .hm-tip{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:12.5px;color:var(--g-t)}
+    .hm-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:12.5px;color:var(--am-t)}
+    .hm-note{background:var(--surface2);border:1px solid var(--bdr2);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:12.5px;color:var(--t3)}
+    .hm-card{display:flex;flex-direction:column;padding:16px;border:1.5px solid var(--bdr);border-radius:12px;background:var(--surface2);cursor:pointer;transition:border-color .15s,background .15s,transform .1s;gap:6px}
+    .hm-card:hover{border-color:var(--p);background:var(--pg);transform:translateY(-2px)}
+    .hm-card-icon{font-size:26px}
+    .hm-card-title{font-size:13px;font-weight:700;color:var(--t1)}
+    .hm-card-sub{font-size:11px;color:var(--t3);line-height:1.4}
+    .hm-card-arrow{margin-top:auto;font-size:11px;color:var(--pd);font-weight:600}
+  `;
+  document.head.appendChild(s);
+}
+
+function openHelpModal(sectionId){
+  helpInjectStyles();
   var o=document.getElementById('help-modal-overlay');if(o)o.style.display='flex';
-  var grid=document.getElementById('help-grid');
-  if(grid){
-    grid.innerHTML=HELP_SECTIONS.map(function(s,i){
-      return'<div onclick="closeHelpModal();'+s[3]+'" style="padding:14px;border:1px solid var(--bdr);border-radius:10px;background:var(--surface2);cursor:pointer;transition:border-color .15s,background .15s" '+
-        'onmouseover="this.style.borderColor=\'var(--p)\';this.style.background=\'var(--pg)\'" '+
-        'onmouseout="this.style.borderColor=\'var(--bdr)\';this.style.background=\'var(--surface2)\'">'+
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'+
-          '<div style="font-size:22px">'+s[0]+'</div>'+
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>'+
-        '</div>'+
-        '<div style="font-size:12.5px;font-weight:700;color:var(--t1);margin-bottom:2px">'+s[1]+'</div>'+
-        '<div style="font-size:11px;color:var(--t3)">'+s[2]+'</div>'+
-      '</div>';
-    }).join('');
-  }
+  if(sectionId) helpShowSection(sectionId);
+  else helpShowIndex();
 }
 function closeHelpModal(){var o=document.getElementById('help-modal-overlay');if(o)o.style.display='none';}
-function downloadHelp(e){
-  e.preventDefault();
-  // Fetch the PDF from the same origin and trigger download
-  fetch('ARMatchPro_UserGuide.pdf')
-    .then(function(r){
-      if(!r.ok)throw new Error('PDF not found');
-      return r.blob();
-    })
-    .then(function(blob){
-      var url=URL.createObjectURL(blob);
-      var a=document.createElement('a');a.href=url;a.download='ARMatchPro_UserGuide.pdf';
-      a.click();URL.revokeObjectURL(url);
-    })
-    .catch(function(){
-      // Fallback: open in new tab if fetch fails (cross-origin or local file)
-      window.open('ARMatchPro_UserGuide.pdf','_blank');
-    });
+
+function helpShowIndex(){
+  var body=document.getElementById('help-body');
+  var backBtn=document.getElementById('help-back-btn');
+  var hTitle=document.getElementById('help-header-title');
+  var hSub=document.getElementById('help-header-sub');
+  if(backBtn)backBtn.style.display='none';
+  if(hTitle)hTitle.textContent='📖 AR Match Pro — User Guide';
+  if(hSub)hSub.textContent='Complete reference · v1.0 · Click any section to read';
+  if(!body)return;
+  body.innerHTML='<div class="hm-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    HELP_CONTENT.sections.map(function(s){
+      var navJs=s.nav?'closeHelpModal();'+s.nav:'';
+      return'<div class="hm-card" onclick="helpShowSection(\''+s.id+'\')" >'+
+        '<div class="hm-card-icon">'+s.icon+'</div>'+
+        '<div class="hm-card-title">'+s.title+'</div>'+
+        '<div class="hm-card-sub">'+s.sub+'</div>'+
+        '<div class="hm-card-arrow">Read more →</div>'+
+      '</div>';
+    }).join('')+
+  '</div></div>';
 }
+
+function helpShowSection(id){
+  var sec=HELP_CONTENT.sections.find(function(s){return s.id===id;});
+  if(!sec)return;
+  var body=document.getElementById('help-body');
+  var backBtn=document.getElementById('help-back-btn');
+  var hTitle=document.getElementById('help-header-title');
+  var hSub=document.getElementById('help-header-sub');
+  if(backBtn)backBtn.style.display='inline-block';
+  if(hTitle)hTitle.textContent=sec.icon+' '+sec.title;
+  if(hSub)hSub.textContent=sec.sub;
+  var goBtn=sec.nav?'<button onclick="closeHelpModal();'+sec.nav+'" class="btn btn-p btn-sm" style="font-size:12px;margin-bottom:18px">→ Open this section in the app</button>':'';
+  if(body){
+    body.innerHTML='<div class="hm-body">'+goBtn+sec.content+'</div>';
+    body.scrollTop=0;
+  }
+}
+
+// Legacy stub — keep downloadHelp for the PDF link
+function downloadHelp(e){}
 
 // ── Drag handle ──
 (function(){
@@ -7507,28 +7778,23 @@ async function sendContactMsg(){
   </div>
 </div>
 
-<!-- ── HELP MODAL ── -->
-<div id="help-modal-overlay" style="display:none;position:fixed;inset:0;z-index:210;background:rgba(0,0,0,.75);align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-  <div style="background:var(--surface);border-radius:18px;width:580px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);overflow:hidden">
-    <div style="background:linear-gradient(135deg,#1D4ED8,#2563EB);padding:20px 24px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:2px">📖 AR Match Pro User Guide</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.75)">Complete reference manual · v1.0 · May 2026</div>
+<!-- ── IN-APP MANUAL ── -->
+<div id="help-modal-overlay" style="display:none;position:fixed;inset:0;z-index:210;background:rgba(0,0,0,.6);align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+  <div style="background:var(--surface);border-radius:20px;width:780px;max-width:96vw;height:88vh;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.4);overflow:hidden">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1D4ED8,#2563EB);padding:16px 22px;flex-shrink:0;display:flex;align-items:center;gap:12px">
+      <button id="help-back-btn" onclick="helpShowIndex()" style="display:none;background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600">← Back</button>
+      <div style="flex:1">
+        <div id="help-header-title" style="font-size:16px;font-weight:800;color:#fff">📖 AR Match Pro — User Guide</div>
+        <div id="help-header-sub" style="font-size:11px;color:rgba(255,255,255,.7);margin-top:1px">Complete reference · v1.0 · Click any section to read</div>
       </div>
-      <div onclick="closeHelpModal()" style="cursor:pointer;color:rgba(255,255,255,.7);font-size:22px;padding:4px 10px;border-radius:8px;line-height:1" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background=''">×</div>
+      <a href="ARMatchPro_UserGuide.pdf" download="ARMatchPro_UserGuide.pdf" style="text-decoration:none;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:5px 12px;font-size:11.5px;font-weight:600;white-space:nowrap">↓ PDF</a>
+      <div onclick="closeHelpModal()" style="cursor:pointer;color:rgba(255,255,255,.7);font-size:22px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background=''">×</div>
     </div>
-    <div style="flex:1;overflow-y:auto;padding:24px">
-      <div style="background:var(--pg);border:1.5px solid rgba(59,130,246,.25);border-radius:12px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px">
-        <div style="font-size:36px;flex-shrink:0">📄</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px">ARMatchPro_UserGuide.pdf</div>
-          <div style="font-size:12px;color:var(--t3)">Full user guide · 15 sections · Printable PDF</div>
-        </div>
-        <a id="help-pdf-link" href="#" download="ARMatchPro_UserGuide.pdf" onclick="downloadHelp(event)" class="btn btn-p btn-sm" style="text-decoration:none;flex-shrink:0;display:inline-flex;align-items:center;gap:5px">↓ Download PDF</a>
-      </div>
-      <div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:12px">Quick Reference</div>
-      <div id="help-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"></div>
-    </div>
+
+    <!-- Body -->
+    <div id="help-body" style="flex:1;overflow-y:auto;padding:0"></div>
   </div>
 </div>
 </body>
