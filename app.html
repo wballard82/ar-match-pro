@@ -2040,6 +2040,20 @@ body.app-active #app {
   font-family:var(--font); outline:none; box-sizing:border-box;
 }
 .fbl5n-filter-inp:focus { border-color:var(--p); }
+
+/* ── ZERO FIX: disable slashed zeros everywhere, all fonts ── */
+* {
+  font-feature-settings: "zero" 0 !important;
+  -webkit-font-feature-settings: "zero" 0 !important;
+}
+.td-mono, .td-amt, .td-num, .td-key, .kpi-card-val,
+.rpt-kpi-val, .cfo-metric-value, .at-val, .dk-val,
+.pay-viz-val, .eng-h-amt, .pq-item-amt, [class*="mono"] {
+  font-feature-settings: "zero" 0, "tnum" 1, "liga" 0 !important;
+  -webkit-font-feature-settings: "zero" 0, "tnum" 1, "liga" 0 !important;
+  font-variant-numeric: tabular-nums;
+  font-variant-ligatures: none;
+}
 </style>
 </head>
 <body>
@@ -2891,10 +2905,7 @@ body.app-active #app {
                       <div class="ca-right-section-hdr"><div class="ca-right-section-title">⚠️ Exceptions</div></div>
                       <div class="ca-right-section-body" id="ca-exc-right"><div style="font-size:12px;color:var(--t3)">No exceptions for current payment.</div></div>
                     </div>
-                    <div class="ca-right-section" style="flex:1;overflow:hidden">
-                      <div class="ca-right-section-hdr"><div class="ca-right-section-title">📋 Audit Trail</div></div>
-                      <div class="ca-right-section-body" id="eng-audit-right" style="max-height:200px;overflow-y:auto"><div style="font-size:12px;color:var(--t3)">Actions appear here.</div></div>
-                    </div>
+                    <div id="eng-audit-right" style="display:none"></div>
                   </div>
                 </div>
               </div>
@@ -3741,7 +3752,7 @@ body.app-active #app {
               </div>
             </div>
             <div style="font-size:12px;color:var(--t3);text-align:center">
-              Questions? <button class="btn btn-p btn-sm" onclick="openContactModal()" style="font-size:12px">💬 Contact AR Match Pro</button>
+              <button class="btn btn-p btn-sm" onclick="openContactModal()" style="font-size:12px">💬 Contact AR Match Pro</button>
             </div>
           </div>
 
@@ -4633,7 +4644,8 @@ function showModal(title,bodyHtml){
 function closeModal(){const o=document.getElementById('exc-modal-overlay');if(o)o.classList.remove('open');}
 function showConfirm(msg,onYes,yesLabel,yesClass){
   yesLabel=yesLabel||'Confirm';yesClass=yesClass||'btn-r';
-  // Store callback globally so inline onclick can reach it
+  var overlay=document.getElementById('exc-modal-overlay');
+  if(!overlay){if(window.confirm(msg))onYes&&onYes();return;}
   window._confirmCb=onYes;
   showModal('Confirm',
     '<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:20px;white-space:pre-line">'+msg+'</div>'+
@@ -4663,12 +4675,19 @@ function clearPayData(){showConfirm('Clear all remittance data?\n\nThis cannot b
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
 function clearAllData(){showConfirm('Clear all data?\n\nThis cannot be undone.',function(){INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');});}
 function resetAllData(){
-  showConfirm('⚠️ Reset ALL data?\n\nThis will permanently delete:\n• All invoices and remittance\n• All match results and exceptions\n\nThis cannot be undone.',function(){_doResetAll();});
+  if(!window.confirm('Reset ALL data?\n\nThis will clear:\n• All invoices\n• All remittance / payments\n• All match results\n• All exceptions\n\nThis cannot be undone.'))return;
+  _doResetAll();
 }
 function _doResetAll(){
   INV=[];PAY=[];RES=[];EXC=[];
   rAll();updDash();updTop();setStatus('ready');
-  try{['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k));}catch(e){}});}catch(e){}
+  // Clear localStorage — try both prefixed and unprefixed keys
+  var keys=['inv','pay','res','exc'];
+  keys.forEach(function(k){
+    try{localStorage.removeItem(sk(k));}catch(e){}
+    try{localStorage.removeItem('armp_'+k);}catch(e){}
+    try{localStorage.removeItem(k);}catch(e){}
+  });
   addAudit('Full reset','All data cleared');
   toast('✓ All data reset');
 }
