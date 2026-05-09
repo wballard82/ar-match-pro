@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AR Match Pro v1778185567</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════
    AR MATCH PRO v5.2 — ENTERPRISE FINTECH POLISH
@@ -59,7 +59,7 @@
   --sidebar-w: 224px;
   --topnav-h:  56px;
   --font: 'Roboto', system-ui, sans-serif;
-  --mono: 'Roboto Mono', 'Menlo', monospace;
+  --mono: 'Roboto Mono', monospace;
 
   /* ── Radii ── */
   --r4: 4px; --r6: 6px; --r8: 8px; --r10: 10px;
@@ -91,7 +91,6 @@
   --t2: #1E3A5F;
   --t3: #3D5A7A;
   --t4: #7A95B0;
-  /* WCAG-AA semantic text on white */
   --g-t:   #065F46;
   --r-t:   #991B1B;
   --am-t:  #92400E;
@@ -119,25 +118,6 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
 * { scrollbar-width: thin; scrollbar-color: var(--bdr3) transparent; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--bdr3); border-radius: 2px; }
-
-/* ── KPI dot colors match number value colors in both themes ── */
-.kpi-dot-yellow { background:#D97706; }
-.kpi-dot-red    { background:#DC2626; }
-.kpi-dot-orange { background:#EA580C; }
-[data-theme="dark"] .kpi-dot-yellow { background:#FCD34D; }
-[data-theme="dark"] .kpi-dot-red    { background:#FCA5A5; }
-[data-theme="dark"] .kpi-dot-orange { background:#FB923C; }
-* { font-variant-numeric: normal; }
-.td-mono,.td-amt,.td-key,.td-num,.kpi-card-val,.recon-kpi-val,
-.pay-viz-val,.at-val,.dk-val,.rpt-kpi-val,.cfo-metric-value,
-.cfo-roi-digits,[style*="font-family:var(--mono)"],
-input[type="number"],code,pre {
-  font-family: var(--mono);
-  font-feature-settings: "kern" 1, "liga" 0, "calt" 0, "zero" 0, "tnum" 1;
-  -webkit-font-feature-settings: "kern" 1, "liga" 0, "calt" 0, "zero" 0, "tnum" 1;
-  font-variant-numeric: tabular-nums;
-  font-variant-ligatures: none;
-}
 
 /* ═══════════════════════════════════════════════════════════
    LOGIN
@@ -426,14 +406,9 @@ input[type="number"],code,pre {
   transition:color .3s;
 }
 .kpi-card-val.green { color:var(--g-t); }
-.kpi-card-val.red   { color:#991B1B; }
+.kpi-card-val.red { color:var(--r-t); }
 .kpi-card-val.amber { color:var(--am-t); }
-.kpi-card-val.blue  { color:var(--pd); }
-.kpi-card-val.yellow { color:#92400E; }
-.kpi-card-val.orange { color:#C2410C; }
-[data-theme="dark"] .kpi-card-val.red    { color:#FCA5A5; }
-[data-theme="dark"] .kpi-card-val.yellow { color:#FCD34D; }
-[data-theme="dark"] .kpi-card-val.orange { color:#FB923C; }
+.kpi-card-val.blue { color:var(--pd); }
 .kpi-card-sub {
   font-size:9.5px; font-weight:600; color:var(--t3); white-space:nowrap;
   display:flex; align-items:center; gap:3px;
@@ -1247,24 +1222,16 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 [data-theme="light"] {
   --bg:      #EDF1F7;
   --surface: #FFFFFF;
-  --surface2: #F4F7FB;
+  --surface2: #F5F8FC;
   --surface3: #EBF0F7;
   --surface4: #E2EAF3;
   --bdr:  rgba(60,100,160,.07);
   --bdr2: rgba(60,100,160,.12);
   --bdr3: rgba(60,100,160,.18);
   --t1: #0A1628;
-  --t2: #1E3A5F;
-  --t3: #3D5A7A;
-  --t4: #7A95B0;
-  --g-t:   #065F46;
-  --r-t:   #991B1B;
-  --am-t:  #92400E;
-  --pu-t:  #5B21B6;
-  --cy-t:  #0C4A6E;
-  --pd:    #1E40AF;
-  --p:     #1D4ED8;
-  --ps:    #1E3A8A;
+  --t2: #2E4E78;
+  --t3: #6B8EBF;
+  --t4: #A8C0DC;
   --glass:  rgba(0,0,0,.012);
   --glass2: rgba(0,0,0,.025);
   --glass3: rgba(0,0,0,.045);
@@ -1306,9 +1273,7 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 .kpi-card.kpi-green::before { background: linear-gradient(90deg, var(--g), var(--cy)); }
 .kpi-card.kpi-blue::before  { background: linear-gradient(90deg, var(--p), var(--pu)); }
 .kpi-card.kpi-amber::before { background: linear-gradient(90deg, var(--am), var(--r)); }
-.kpi-card.kpi-red::before   { background: linear-gradient(90deg, #DC2626, #EF4444); }
-.kpi-card.kpi-yellow::before { background: linear-gradient(90deg, #D97706, #F59E0B); }
-.kpi-card.kpi-orange::before { background: linear-gradient(90deg, #EA580C, #F97316); }
+.kpi-card.kpi-red::before   { background: linear-gradient(90deg, var(--r), #FF6B9D); }
 .kpi-card:hover::before { opacity: 1; }
 .kpi-card-val {
   font-size: 22px;
@@ -1975,15 +1940,11 @@ input:focus, select:focus, textarea:focus { outline: none; }
 
 /* ── REFACTOR PHASE: horizontal splits, account view, match priority ── */
 .ca-hsplit { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
-.ca-top-half { flex:0 0 auto; min-height:180px; display:flex; flex-direction:column; overflow:hidden; }
-.ca-bottom-half { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:280px; }
-.ca-drag-handle {
-  height:8px; background:var(--surface3); border-top:1px solid var(--bdr2); border-bottom:1px solid var(--bdr2);
-  cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center;
-  transition:background .15s; user-select:none;
-}
+.ca-top-half { flex:0 0 auto; min-height:180px; height:320px; display:flex; flex-direction:column; overflow:hidden; }
+.ca-drag-handle { height:8px; background:var(--surface3); border-top:1px solid var(--bdr2); border-bottom:1px solid var(--bdr2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; user-select:none; }
+.ca-drag-handle::after { content:""; display:block; width:32px; height:3px; border-radius:2px; background:var(--bdr3); }
 .ca-drag-handle:hover { background:var(--bdr2); }
-.ca-drag-handle::after { content:''; display:block; width:32px; height:3px; border-radius:2px; background:var(--bdr3); }
+.ca-bottom-half { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:280px; }
 .ca-bottom-header { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:var(--surface2); border-bottom:1px solid var(--bdr); flex-shrink:0; }
 .ca-bottom-title { font-size:10px; font-weight:800; color:var(--t3); text-transform:uppercase; letter-spacing:.1em; display:flex; align-items:center; gap:8px; }
 .ca-bottom-tbl-wrap { flex:1; overflow:auto; }
@@ -2320,33 +2281,6 @@ body.app-active #app {
   </div>
 </div>
 
-<div id="contact-modal-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-  <div style="background:var(--surface);border-radius:18px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
-      <div>
-        <div style="font-size:15px;font-weight:800;color:var(--t1)">💬 Contact AR Match Pro</div>
-        <div style="font-size:12px;color:var(--t3);margin-top:2px">Support · Questions · Feature requests</div>
-      </div>
-      <div onclick="closeContactModal()" style="cursor:pointer;font-size:20px;color:var(--t3);line-height:1;padding:4px 8px;border-radius:6px" onmouseover="this.style.background='var(--glass2)'" onmouseout="this.style.background=''">×</div>
-    </div>
-    <div id="contact-chat-msgs" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:200px">
-      <div style="display:flex;gap:10px;align-items:flex-start">
-        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div>
-        <div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">
-          Hi! I'm the AR Match Pro support assistant. I can answer questions about cash application, matching logic, DSO, exceptions, settings, and more — or log a support ticket for you. How can I help?
-        </div>
-      </div>
-    </div>
-    <div style="padding:12px 16px;border-top:1px solid var(--bdr);display:flex;gap:8px;flex-shrink:0">
-      <input id="contact-chat-inp" type="text" placeholder="Ask anything about AR Match Pro…" autocomplete="off"
-        style="flex:1;padding:9px 14px;border:1.5px solid var(--bdr);border-radius:10px;background:var(--surface2);color:var(--t1);font-family:var(--font);font-size:13px;outline:none"
-        onkeydown="if(event.key==='Enter')sendContactMsg()"
-        onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bdr)'">
-      <button class="btn btn-p btn-sm" onclick="sendContactMsg()" style="flex-shrink:0">Send</button>
-    </div>
-  </div>
-</div>
-
 <!-- ══════════════════════════════════════════
      APP SHELL
      ══════════════════════════════════════════ -->
@@ -2383,7 +2317,7 @@ body.app-active #app {
       </button>
       <button class="tn-icon-btn" id="dm-btn" onclick="toggleDark()" title="Toggle theme" style="display:flex;align-items:center;justify-content:center">
         <svg id="dm-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg id="dm-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="dm-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
       <div class="tn-divider"></div>
       <div class="tn-user" onclick="sp('settings')">
@@ -2459,7 +2393,7 @@ body.app-active #app {
       <div class="kpi-card-val orange" id="kpi-shortpay">0</div>
       <div class="kpi-card-sub">Underpayments</div>
     </div>
-    <div class="kpi-card" onclick="sp('invoices');setTimeout(function(){var s=document.getElementById('inv-search');if(s)s.value='';document.querySelectorAll('#inv-filter-row .col-filter-inp').forEach(function(el){el.value='';});document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display='';});},80)" style="cursor:pointer;min-width:100px">
+    <div class="kpi-card" onclick="sp('invoices');setTimeout(function(){var s=document.getElementById('inv-search');if(s)s.value='';document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display='';});},80)" style="cursor:pointer;min-width:100px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:var(--t1)"></div>
         Invoices
@@ -2807,8 +2741,9 @@ body.app-active #app {
               <span class="ca-filter-label">From</span>
               <input type="date" id="ca-date-from" class="ca-filter-sel" onchange="caFilterUpdate()">
             </div>
-            <div class="ca-filter-item" style="margin-left:auto">
-              <button class="btn btn-r btn-sm" onclick="if(confirm('Clear all payment data?')){PAY=[];saveToStorage();rRem();updDash();updTop();toast('Payment data cleared');}">Clear all</button>
+            <div class="ca-filter-item">
+              <span class="ca-filter-label">To</span>
+              <input type="date" id="ca-date-to" class="ca-filter-sel" onchange="caFilterUpdate()">
             </div>
           </div>
 
@@ -2933,10 +2868,7 @@ body.app-active #app {
                 </div>
               </div>
             </div><!-- end ca-top-half -->
-
-            <!-- Drag handle -->
-            <div class="ca-drag-handle" id="ca-drag-handle" title="Drag to resize"></div>
-
+            <div class="ca-drag-handle" id="ca-drag-handle"></div>
             <!-- BOTTOM HALF: SAP FBL5N-style customer open items -->
             <div class="ca-bottom-half">
               <div class="ca-bottom-header">
@@ -2948,16 +2880,12 @@ body.app-active #app {
                   <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account</span>
                   <div style="position:relative">
                     <input type="text" id="ca-acct-input" class="ca-acct-sel" placeholder="Search account…" autocomplete="off"
-                      style="min-width:220px;cursor:text"
-                      oninput="caAcctInputSearch(this.value)"
+                      style="min-width:220px;cursor:text" oninput="caAcctInputSearch(this.value)"
                       onblur="setTimeout(function(){var d=document.getElementById('ca-acct-drop');if(d)d.style.display='none';},200)"
                       onfocus="caAcctInputSearch(this.value)">
                     <div id="ca-acct-drop" style="display:none;position:absolute;top:100%;left:0;right:0;min-width:280px;background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;box-shadow:var(--shadow-md);z-index:50;max-height:220px;overflow-y:auto;margin-top:3px"></div>
                   </div>
-                  <!-- Hidden select kept for JS compatibility -->
-                  <select id="ca-acct-dropdown" style="display:none" onchange="caAcctDropdownChange(this.value)">
-                    <option value="">All accounts</option>
-                  </select>
+                  <select id="ca-acct-dropdown" style="display:none" onchange="caAcctDropdownChange(this.value)"><option value="">All accounts</option></select>
                   <button class="btn btn-ghost btn-xs" onclick="caAcctInputClear()">✕ Clear</button>
                 </div>
               </div>
@@ -3064,13 +2992,54 @@ body.app-active #app {
           </div>
         </div>
 
+        <!-- ── TAB: ACCOUNT TRANSACTION ── -->
+        <div class="ws-tab-view" id="ws-acct">
+          <div class="acct-ws">
+            <div class="acct-left">
+              <div style="padding:10px 14px;border-bottom:1px solid var(--bdr);background:var(--surface2)">
+                <input class="inp" placeholder="Search customers…" oninput="filterAcctCustomers(this.value)" style="width:100%;font-size:12px">
+              </div>
+              <div id="acct-customer-list"><div class="empty" style="padding:24px 12px"><div class="empty-icon">👥</div><div class="empty-t">No customers</div><div class="empty-s">Import invoices to see accounts.</div></div></div>
+            </div>
+            <div class="acct-right">
+              <div id="acct-detail-empty" class="empty"><div class="empty-icon">🏢</div><div class="empty-t">Select a customer</div><div class="empty-s">Click a customer to view their full AR account activity.</div></div>
+              <div id="acct-detail" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+                <div id="acct-header" style="padding:14px 18px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                    <div><div style="font-size:17px;font-weight:800;color:var(--t1)" id="acct-cust-name">—</div><div style="font-size:12px;color:var(--t3);margin-top:2px" id="acct-cust-id">—</div></div>
+                    <button class="btn btn-outline btn-sm" onclick="openCustomerDrawer()">View full account</button>
+                  </div>
+                  <div class="aging-grid" id="acct-aging-grid"></div>
+                </div>
+                <div style="flex:1;overflow-y:auto">
+                  <div style="padding:8px 14px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);background:var(--surface2)">Open Invoices &amp; Activity</div>
+                  <table class="fbl5n-tbl" id="acct-inv-tbl">
+                    <thead>
+                      <tr>
+                        <th>Invoice #</th><th>Inv Date</th><th>Due Date</th><th>PO #</th><th>Sales Order</th>
+                        <th style="text-align:right">Amount</th><th style="text-align:right">Balance</th>
+                        <th>Aging</th><th>Status</th><th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="acct-inv-body"><tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">No invoices</div></div></td></tr></tbody>
+                  </table>
+                  <div style="padding:8px 14px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);border-top:2px solid var(--bdr);background:var(--surface2);margin-top:4px">Payment History</div>
+                  <table class="fbl5n-tbl" id="acct-pay-tbl">
+                    <thead><tr><th>TX ID</th><th>Date</th><th style="text-align:right">Amount</th><th>Method</th><th>PO Ref</th><th>Invoice Ref</th><th>Status</th></tr></thead>
+                    <tbody id="acct-pay-body"><tr><td colspan="7"><div class="empty" style="padding:16px"><div class="empty-t">No payments</div></div></td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- ── TAB: RECONCILE ── -->
         <div class="ws-tab-view" id="ws-recon">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
             <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" onclick="runMatch()">⚡ Auto-match</button>
-              <button class="btn btn-r btn-sm" onclick="if(confirm('Clear all match data?')){RES=[];saveToStorage();renderWsRecon();updDash();updTop();toast('Match data cleared');}">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
           </div>
@@ -3376,10 +3345,6 @@ body.app-active #app {
             </div>
           </div>
 
-          <!-- CFO Alerts -->
-          <div id="cfo-alerts" style="margin-bottom:12px"></div>
-          <div style="font-size:11px;color:var(--t3);text-align:right;margin-bottom:4px" id="cfo-snapshot-lbl"></div>
-
           <!-- Savings callout -->
           <div class="cfo-savings-callout" id="cfo-savings-callout">
             <div class="cfo-savings-icon">💰</div>
@@ -3393,14 +3358,6 @@ body.app-active #app {
 
           <!-- Key metrics grid -->
           <div class="cfo-grid">
-            <div class="cfo-metric-card">
-              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--cy),var(--p))"></div>
-              <div class="cfo-metric-icon" style="background:var(--cy-bg)">📅</div>
-              <div class="cfo-metric-label">Days Sales Outstanding</div>
-              <div class="cfo-metric-value" id="cfo-dso">—</div>
-              <div class="cfo-metric-trend" style="color:var(--t3)">Open balance ÷ matched × 30</div>
-              <div class="cfo-metric-sub" id="cfo-metric-sub-stp">Target: 80%+</div>
-            </div>
             <div class="cfo-metric-card">
               <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--g),var(--cy))"></div>
               <div class="cfo-metric-icon" style="background:var(--g-bg)">💚</div>
@@ -3559,12 +3516,6 @@ body.app-active #app {
           <!-- Exception aging KPIs -->
           <div class="rpt-hero">
             <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#0EA5E9,#0284C7)">📅</div>
-              <div class="rpt-kpi-label">Days Sales Outstanding</div>
-              <div class="rpt-kpi-val" id="rpt-dso" style="color:var(--cy-t)">—</div>
-              <div class="rpt-kpi-sub">Open balance ÷ matched × 30</div>
-            </div>
-            <div class="rpt-kpi-card">
               <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#EF4444,#B91C1C)">⏰</div>
               <div class="rpt-kpi-label">Exception Aging (Open)</div>
               <div class="rpt-kpi-val" id="rpt-exc-age">—</div>
@@ -3702,6 +3653,7 @@ body.app-active #app {
                 <option value="admin">Admin</option>
               </select>
             </div>
+
           </div>
 
           <!-- Matching Engine Priority -->
@@ -3733,59 +3685,8 @@ body.app-active #app {
             </div>
           </div>
 
-          <!-- CFO Settings -->
-          <div class="settings-section">
-            <div class="settings-section-title">📊 CFO Settings</div>
-            <div class="settings-row">
-              <div><div class="settings-label">Target Auto-Match Rate</div><div class="settings-desc">Alert when straight-through processing falls below this</div></div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input type="number" class="inp" id="cfo-s-stp" min="0" max="100" step="1" style="width:70px;text-align:right" value="80">
-                <span style="font-size:12px;color:var(--t3)">%</span>
-              </div>
-            </div>
-            <div class="settings-row">
-              <div><div class="settings-label">AR Labor Rate</div><div class="settings-desc">Fully-loaded hourly rate used in ROI calculation</div></div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:12px;color:var(--t3)">$</span>
-                <input type="number" class="inp" id="cfo-s-rate" min="0" step="1" style="width:80px;text-align:right" value="65">
-                <span style="font-size:12px;color:var(--t3)">/hr</span>
-              </div>
-            </div>
-            <div class="settings-row">
-              <div><div class="settings-label">Subscription Cost</div><div class="settings-desc">Monthly cost used for ROI multiple calculation</div></div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:12px;color:var(--t3)">$</span>
-                <input type="number" class="inp" id="cfo-s-sub" min="0" step="1" style="width:90px;text-align:right" value="999">
-                <span style="font-size:12px;color:var(--t3)">/mo</span>
-              </div>
-            </div>
-            <div class="settings-row">
-              <div><div class="settings-label">Fiscal Year Start</div><div class="settings-desc">First month of your fiscal year</div></div>
-              <select class="sel" id="cfo-s-fy" style="font-size:12.5px;min-width:140px">
-                <option value="1">January</option><option value="2">February</option><option value="3">March</option>
-                <option value="4">April</option><option value="5">May</option><option value="6">June</option>
-                <option value="7">July</option><option value="8">August</option><option value="9">September</option>
-                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div><div class="settings-label">DSO Alert Threshold</div><div class="settings-desc">Flag DSO when it exceeds this number of days</div></div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input type="number" class="inp" id="cfo-s-dso" min="0" step="1" style="width:70px;text-align:right" value="45">
-                <span style="font-size:12px;color:var(--t3)">days</span>
-              </div>
-            </div>
-            <div class="settings-row">
-              <div><div class="settings-label">Exception Rate Alert</div><div class="settings-desc">Flag when exception rate exceeds this threshold</div></div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input type="number" class="inp" id="cfo-s-exc" min="0" max="100" step="1" style="width:70px;text-align:right" value="10">
-                <span style="font-size:12px;color:var(--t3)">%</span>
-              </div>
-            </div>
-          </div>
-
           <!-- Plans -->
-          <div class="settings-section" id="settings-plans-anchor">
+          <div class="settings-section">
             <div class="settings-section-title">💳 Plans &amp; Pricing</div>
             <div style="padding:16px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div>
@@ -3794,7 +3695,7 @@ body.app-active #app {
                 <div style="font-size:11.5px;color:var(--t3);margin-top:3px" id="settings-plan-features"></div>
               </div>
               <div style="display:flex;gap:8px">
-                <button class="btn btn-outline btn-sm" id="settings-downgrade-btn" onclick="document.querySelector('[data-section=plans]')?.scrollIntoView({behavior:'smooth'})||document.getElementById('settings-plans-anchor')?.scrollIntoView({behavior:'smooth'})" style="display:none">Change</button>
+                <button class="btn btn-outline btn-sm" id="settings-downgrade-btn" onclick="sp('settings');setTimeout(function(){document.getElementById('settings-plans-anchor')?.scrollIntoView({behavior:'smooth'});},300)" style="display:none">Change</button>
                 <button class="btn btn-upgrade btn-sm" id="settings-upgrade-btn" onclick="showUpgrade('Upgrade your plan','')">Upgrade</button>
               </div>
             </div>
@@ -3930,7 +3831,7 @@ function _engUpdateRightPanel(){
     if(sharedPO.length>1)cards.push({priority:'med',icon:'🔗',title:`${sharedPO.length} Invoices Share PO ${p.po}`,body:'Likely a consolidated remittance. Consider applying to all invoices under this PO.',action:'Mark all matching PO',conf:87,confColor:'var(--am)'});
     // Exact subset match
     const exactSum=rows.reduce((s,r)=>s+r.inv.amt,0);
-    if(Math.abs(exactSum-p.amt)<0.01&&rows.length>1)cards.push({priority:'ok',icon:'✓',title:`${rows.length} Invoices Sum to Exact Payment`,body:`${$f(p.amt)} matches total of all open invoices. Auto-apply all recommended.`,action:'Auto-apply all',conf:99,confColor:'var(--g)',actionFn:'engMarkAll()'});
+    if(Math.abs(exactSum-p.amt)<0.01&&rows.length>1)cards.push({priority:'ok',icon:'✓',title:`${rows.length} Invoices Sum to Exact Payment`,body:`$${$f(p.amt)} matches total of all open invoices. Auto-apply all recommended.`,action:'Auto-apply all',conf:99,confColor:'var(--g)',actionFn:'engMarkAll()'});
     // Short pay likelihood
     const spRows=rows.filter(r=>p.amt<r.inv.amt&&p.amt>r.inv.amt*0.8);
     if(spRows.length)cards.push({priority:'med',icon:'⚠️',title:'Likely Short Pay Detected',body:`Payment is ${((1-p.amt/spRows[0].inv.amt)*100).toFixed(1)}% short of invoice ${spRows[0].inv.i}. Partial allocation or write-off may be needed.`,action:'Apply partial',conf:74,confColor:'var(--am)'});
@@ -3939,7 +3840,7 @@ function _engUpdateRightPanel(){
     if(dpRows.length)cards.push({priority:'low',icon:'💡',title:`${dpRows.length} Possible Down Payment Invoice(s)`,body:'These invoices may represent deposits or advance payments. Confirm with customer before applying.',conf:68,confColor:'var(--p)'});
     // Unapplied cash for this customer
     const custExc=EXC.filter(e=>(e.c||'').toLowerCase()===(p.c||'').toLowerCase()&&e.type==='Unapplied payment');
-    if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: ${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
+    if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: $${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
     // No invoices
     if(!rows.length)cards.push({priority:'high',icon:'🔍',title:'No Open Invoices Found',body:'No matching invoices for this customer. Payment may need to be posted as unapplied cash.',action:'Post as unapplied',conf:null,confColor:'var(--r)'});
     // Missing PO
@@ -3975,7 +3876,7 @@ function _engUpdateRightPanel(){
         <div style="padding:10px;background:var(--r-bg);border:1px solid rgba(239,68,68,.15);border-radius:9px;margin-bottom:7px">
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
             <span class="badge badge-r" style="font-size:10px">${e.type}</span>
-            <span style="font-size:11.5px;font-weight:700;color:var(--r-t)">${$f(e.amt)}</span>
+            <span style="font-size:11.5px;font-weight:700;color:var(--r-t)">$${$f(e.amt)}</span>
           </div>
           <div style="font-size:12px;color:var(--t2);line-height:1.4">${e.detail||'Exception detected'}</div>
           <div style="font-size:11.5px;color:var(--t3);margin-top:4px">${e.action||''}</div>
@@ -4031,9 +3932,9 @@ function engBuildAI(p,invs){
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));
   if(sharedPO.length>1)tips.push(`🔗 <strong>${sharedPO.length} invoices share PO ${p.po}</strong> — consolidated remittance likely`);
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
-  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to ${$f(p.amt)} · auto-apply recommended`);
+  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to $${$f(p.amt)} · auto-apply recommended`);
   const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);
-  if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by ${$f(sp[0].amt-p.amt)}`);
+  if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by $${$f(sp[0].amt-p.amt)}`);
   if(!invs.length)tips.push(`🔍 <strong>No open invoices</strong> for ${p.c||'this customer'} — consider posting as unapplied cash`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:5px 0;border-bottom:1px solid rgba(139,92,246,.08);line-height:1.5;font-size:12.5px;color:var(--t2)">${t}</div>`).join('');}
   else bar.style.display='none';
@@ -4068,7 +3969,7 @@ function renderWsExcPremium(){
     const sev=typeSev[ex.type]||'med';
     const icon=typeIcon[ex.type]||'⚠️';
     return`<div class="exc-card sev-${sev}">
-      <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">${$f(ex.amt)}</div>
+      <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">$${$f(ex.amt)}</div>
       <div class="exc-card-header">
         <span class="exc-card-type-icon">${icon}</span>
         <div style="flex:1;min-width:0;padding-right:80px">
@@ -4126,12 +4027,12 @@ function renderWsReview(){
           <span>Acct: <strong style="color:var(--t1)">${r.a||'—'}</strong></span>
           <span>Inv: <strong style="color:var(--pd);font-family:var(--mono)">${r.i||'—'}</strong></span>
           ${r.po?`<span>PO: ${r.po}</span>`:''}
-          ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: ${$f(Math.abs(r.vr))}</span>`:''}
+          ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: $${$f(Math.abs(r.vr))}</span>`:''}
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">${$f(r.pd)}</div>
-        <div style="font-size:11px;color:var(--t3)">of ${$f(r.oa)}</div>
+        <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">$${$f(r.pd)}</div>
+        <div style="font-size:11px;color:var(--t3)">of $${$f(r.oa)}</div>
         <div style="font-size:11.5px;font-weight:700;color:${conf==='100%'?'var(--g-t)':'var(--am-t)'}">Conf: ${conf}</div>
       </div>
       <div style="flex-shrink:0;margin-left:12px" onclick="event.stopPropagation()">
@@ -4158,24 +4059,33 @@ function renderWsRecon(){
       <th style="text-align:right">Write-off</th><th style="text-align:right">Bank Fee</th>
       <th style="text-align:right">Variance</th><th>Status</th>
     </tr></thead><tbody>`+
-    matched.map((r,ri)=>{
+    matched.map(r=>{
       const idx=RES.indexOf(r);
       const wo=r.writeOff||0;const bf=r.bankFee||0;
       const netVar=(r.vr||0)-wo-bf;
+      const tied=Math.abs(netVar)<0.01;
+      // Only editable when NOT exactly reconciled (i.e. has variance = short pay etc)
+      const editable=!tied||(wo>0||bf>0);
+      const woField=editable
+        ?`<input type="number" step="0.01" min="0" value="${wo||''}" placeholder="0.00"
+            style="width:76px;text-align:right;padding:3px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:${wo>0?'var(--am-t)':'var(--t1)'};font-family:var(--mono);font-size:12px"
+            oninput="RES[${idx}].writeOff=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?'var(--am-t)':'var(--t1)';saveToStorage();renderWsRecon()">`
+        :`<span style="font-size:12px;color:var(--t3);font-family:var(--mono)">${wo>0?$f(wo):'—'}</span>`;
+      const bfField=editable
+        ?`<input type="number" step="0.01" min="0" value="${bf||''}" placeholder="0.00"
+            style="width:76px;text-align:right;padding:3px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:${bf>0?'var(--pu-t)':'var(--t1)'};font-family:var(--mono);font-size:12px"
+            oninput="RES[${idx}].bankFee=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?'var(--pu-t)':'var(--t1)';saveToStorage();renderWsRecon()">`
+        :`<span style="font-size:12px;color:var(--t3);font-family:var(--mono)">${bf>0?$f(bf):'—'}</span>`;
       return`<tr>
         <td style="font-weight:600;color:var(--t1)">${r.c||'—'}</td>
         <td class="td-mono">${r.i||'—'}</td>
         <td class="td-mono">${r.po||'—'}</td>
         <td class="td-amt">${$f(r.oa||r.pd)}</td>
         <td class="td-amt" style="color:var(--g-t)">${$f(r.pd)}</td>
-        <td style="text-align:right;padding:4px 8px"><input type="number" step="0.01" min="0" value="${wo||''}" placeholder="0.00"
-          style="width:80px;text-align:right;padding:3px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:${wo>0?'var(--am-t)':'var(--t1)'};font-family:var(--mono);font-size:12px"
-          oninput="RES[${idx}].writeOff=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?'var(--am-t)':'var(--t1)';saveToStorage()"></td>
-        <td style="text-align:right;padding:4px 8px"><input type="number" step="0.01" min="0" value="${bf||''}" placeholder="0.00"
-          style="width:80px;text-align:right;padding:3px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:${bf>0?'var(--pu-t)':'var(--t1)'};font-family:var(--mono);font-size:12px"
-          oninput="RES[${idx}].bankFee=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?'var(--pu-t)':'var(--t1)';saveToStorage()"></td>
-        <td class="td-amt" style="color:${Math.abs(netVar)<0.01?'var(--g-t)':'var(--r-t)'}">${Math.abs(netVar)<0.01?'Ties':''+$f(Math.abs(netVar))+(netVar<0?' CR':' DR')}</td>
-        <td><span class="ws-badge ${Math.abs(netVar)<0.01?'ws-badge-ready':'ws-badge-pending'}"><span class="ws-dot"></span>${Math.abs(netVar)<0.01?'Reconciled':'Open'}</span></td>
+        <td style="text-align:right;padding:4px 8px">${woField}</td>
+        <td style="text-align:right;padding:4px 8px">${bfField}</td>
+        <td class="td-amt" style="color:${tied?'var(--g-t)':'var(--r-t)'}">${tied?'Ties':$f(Math.abs(netVar))+(netVar<0?' CR':' DR')}</td>
+        <td><span class="ws-badge ${tied?'ws-badge-ready':'ws-badge-pending'}"><span class="ws-dot"></span>${tied?'Reconciled':'Open'}</span></td>
       </tr>`;}).join('')+
     unmatched.map(p=>`<tr style="background:rgba(245,158,11,.03)">
       <td style="font-weight:600">${p.c||p.a||'Unknown'}</td>
@@ -4275,46 +4185,6 @@ function loadFromStorage(){
 function getUsers(){try{return JSON.parse(localStorage.getItem('armp_users')||'{}')}catch(e){return {}}}
 function saveUser(email,data){const u=getUsers();u[email]=data;localStorage.setItem('armp_users',JSON.stringify(u))}
 
-function saveCfoSettings(){
-  try{localStorage.setItem('armp_cfo_settings',JSON.stringify(CFO_SETTINGS));}catch(e){}
-}
-function loadCfoSettings(){
-  try{const s=localStorage.getItem('armp_cfo_settings');if(s)CFO_SETTINGS=Object.assign(CFO_SETTINGS,JSON.parse(s));}catch(e){}
-}
-function saveCfoSnapshots(){
-  try{localStorage.setItem('armp_cfo_snapshots',JSON.stringify(CFO_SNAPSHOTS));}catch(e){}
-}
-function loadCfoSnapshots(){
-  try{const s=localStorage.getItem('armp_cfo_snapshots');if(s)CFO_SNAPSHOTS=JSON.parse(s);}catch(e){}
-}
-function recordCfoSnapshot(){
-  // Called after every match run — accumulates metrics keyed by YYYY-MM
-  const now=new Date();
-  const monthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  const qtr=Math.floor(now.getMonth()/3)+1;
-  const qtrKey=now.getFullYear()+'-Q'+qtr;
-  const ytdKey=now.getFullYear()+'-YTD';
-  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc);
-  const ma=matched.reduce((s,r)=>s+r.pd,0);
-  const tp=PAY.reduce((s,p)=>s+p.amt,0);
-  const excCt=EXC.length;
-  const payCt=PAY.length;
-  const openBal=INV.filter(v=>!v.s||v.s==='Open'||v.s==='Partial').reduce((s,v)=>s+v.amt,0);
-  function merge(key){
-    if(!CFO_SNAPSHOTS[key])CFO_SNAPSHOTS[key]={matched:0,total:0,exceptions:0,payments:0,openBal:0,runs:0};
-    const snap=CFO_SNAPSHOTS[key];
-    snap.matched=Math.max(snap.matched,ma);
-    snap.total=Math.max(snap.total,tp);
-    snap.exceptions=Math.max(snap.exceptions,excCt);
-    snap.payments=Math.max(snap.payments,payCt);
-    snap.openBal=Math.max(snap.openBal,openBal);
-    snap.runs=(snap.runs||0)+1;
-    snap.lastRun=new Date().toISOString();
-  }
-  merge(monthKey);merge(qtrKey);merge(ytdKey);
-  saveCfoSnapshots();
-}
-
 // ── Plan utils ──
 function setPlan(plan){USER_PLAN=plan;const p=PLANS[plan];if(p){IS_DEMO=plan==='demo';}}
 function hasFeat(f){if(IS_MASTER)return true;return PLANS[USER_PLAN]?.features?.includes(f)}
@@ -4371,9 +4241,7 @@ function toggleDark(){
   const html=document.documentElement;
   const dark=html.dataset.theme==='dark';
   html.dataset.theme=dark?'light':'dark';
-  const moon=document.getElementById('dm-moon'),sun=document.getElementById('dm-sun');
-  if(moon) moon.style.display=dark?'block':'none';
-  if(sun)  sun.style.display=dark?'none':'block';
+  const moon=document.getElementById('dm-moon'),sun=document.getElementById('dm-sun');if(moon)moon.style.display=dark?'block':'none';if(sun)sun.style.display=dark?'none':'block';
   const sdm=document.getElementById('s-dm');if(sdm)sdm.checked=!dark;
 }
 
@@ -4442,8 +4310,8 @@ function updDash(){
   if(ins&&(RES.length||EXC.length))ins.innerHTML=`
     <div style="display:flex;flex-direction:column;gap:6px">
       <div class="ai-suggestion"><span class="ai-suggestion-icon">💚</span>Match rate: <strong>${rt.toFixed(1)}%</strong>${rt>=90?' — excellent!':rt>=70?' — good':' — needs attention'}</div>
-      ${sp_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">⚠️</span>Short pay total: <strong>${$f(sp_tot)}</strong> — ${EXC.filter(e=>e.type==='Short pay').length} invoices</div>`:''}
-      ${ua_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">💙</span>Unapplied cash: <strong>${$f(ua_tot)}</strong> pending decision</div>`:''}
+      ${sp_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">⚠️</span>Short pay total: <strong>$${$f(sp_tot)}</strong> — ${EXC.filter(e=>e.type==='Short pay').length} invoices</div>`:''}
+      ${ua_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">💙</span>Unapplied cash: <strong>$${$f(ua_tot)}</strong> pending decision</div>`:''}
       ${top?`<div class="ai-suggestion"><span class="ai-suggestion-icon">🔴</span>Top exception: <strong>${top[0]}</strong> — ${top[1]} case${top[1]!==1?'s':''}</div>`:''}
     </div>`;
 }
@@ -4469,11 +4337,6 @@ function updReporting(){
   const ageEl=document.getElementById('rpt-exc-age');
   const openExc=EXC.filter(e=>!e.s||e.s==='Open');
   if(ageEl)ageEl.textContent=openExc.length?openExc.length+' open':'—';
-  // DSO
-  const openBal=INV.filter(v=>!v.s||v.s==='Open'||v.s==='Partial').reduce((s,v)=>s+v.amt,0);
-  const dso=ma>0?Math.round((openBal/ma)*30):null;
-  const dsoEl=document.getElementById('rpt-dso');
-  if(dsoEl){dsoEl.textContent=dso!==null?dso+' days':'—';dsoEl.style.color=dso===null?'var(--cy-t)':dso>(CFO_SETTINGS.alertDSO||45)?'var(--r-t)':dso>30?'var(--am-t)':'var(--g-t)';}
   const cn={};EXC.forEach(e=>{cn[e.type]=(cn[e.type]||0)+1;});
   const top=Object.entries(cn).sort((a,b)=>b[1]-a[1])[0];
   const topEl=document.getElementById('rpt-top-issue');if(topEl)topEl.textContent=top?top[0].split(' ')[0]:'—';
@@ -4497,8 +4360,7 @@ function updReporting(){
   ).join('')||'<div class="empty" style="padding:16px"><div class="empty-t">No exceptions</div></div>';
 }
 function exportReporting(){
-  var rows=[['AR Match Pro — Reporting Export','','',''],['Generated',new Date().toLocaleString(),'',''],['','','','']];
-  // Summary
+  var rows=[['AR Match Pro — Reporting Export','',''],['Generated',new Date().toLocaleString(),''],['','','']];
   var tp=PAY.reduce(function(s,p){return s+p.amt;},0);
   var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
   var ma=matched.reduce(function(s,r){return s+r.pd;},0);
@@ -4506,24 +4368,20 @@ function exportReporting(){
   var rt=tp>0?(ma/tp*100):0;
   var openBal=INV.filter(function(v){return !v.s||v.s==='Open';}).reduce(function(s,v){return s+v.amt;},0);
   var dso=ma>0?Math.round((openBal/ma)*30):0;
-  rows.push(['SUMMARY','','','']);
-  rows.push(['Total Payments Received','$'+$f(tp),'','']);
-  rows.push(['Cash Matched','$'+$f(ma),'','']);
-  rows.push(['Unapplied Cash','$'+$f(ua),'','']);
-  rows.push(['Auto-Match Rate',rt.toFixed(2)+'%','','']);
-  rows.push(['DSO (Days Sales Outstanding)',dso+' days','','']);
-  rows.push(['Total Exceptions',EXC.length,'','']);
-  rows.push(['Short Pays',EXC.filter(function(e){return e.type==='Short pay';}).length,'','']);
-  rows.push(['','','','']);
-  // Match results
-  rows.push(['MATCH RESULTS','Customer','Invoice #','PO #','Amount Paid','Status']);
+  rows.push(['SUMMARY','','']);
+  rows.push(['Total Payments','$'+$f(tp),'']);
+  rows.push(['Cash Matched','$'+$f(ma),'']);
+  rows.push(['Unapplied Cash','$'+$f(ua),'']);
+  rows.push(['Auto-Match Rate',rt.toFixed(2)+'%','']);
+  rows.push(['DSO',dso+' days','']);
+  rows.push(['Exceptions',EXC.length,'']);
+  rows.push(['','','']);
+  rows.push(['MATCH RESULTS','Customer','Invoice #','PO #','Amount','Status']);
   RES.forEach(function(r){rows.push([r.c||'',r.i||'',r.po||'','$'+$f(r.pd),r.st||'']);});
   rows.push(['','','','','']);
-  // Exceptions
   rows.push(['EXCEPTIONS','Customer','Type','Amount','Resolution']);
   EXC.forEach(function(e){rows.push([e.c||e.a||'',e.type||'','$'+$f(e.amt),e.dec||'Open']);});
-  // Convert to CSV
-  var csv=rows.map(function(r){return r.map(function(c){var s=String(c||'');return s.includes(',')||s.includes('"')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}).join('\n');
+  var csv=rows.map(function(r){return r.map(function(c){var s=String(c||'');return s.includes(',')?'"'+s+'"':s;}).join(',');}).join('\n');
   var blob=new Blob([csv],{type:'text/csv'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='ARMatchPro_Report_'+new Date().toISOString().slice(0,10)+'.csv';
@@ -4639,7 +4497,6 @@ function launchApp(user){
   setUserDisplay(user);
   setPlan(user.plan||'demo');
   if(!IS_DEMO){INV=[];PAY=[];RES=[];EXC=[];loadFromStorage();}
-  loadCfoSettings();loadCfoSnapshots();
   rAll();updDash();updTop();initAuditTbl();
   if(IS_DEMO)toast('Demo mode — click "Load sample data" to get started.');
   addAudit('Login','User: '+(user.name||CURRENT_USER));
@@ -4648,43 +4505,20 @@ function launchApp(user){
 }
 
 function gsLive(q){
-  var drop=document.getElementById('gs-drop'); if(!drop) return;
-  q=(q||'').trim();
-  if(q.length<2){drop.style.display='none';return;}
-  var ql=q.toLowerCase();
-  var hits=[]; var seen={};
-  INV.forEach(function(v){
-    if([v.c,v.a,v.i,v.po,v.so,v.d,v.t,v.dl,v.dt,String(v.amt),(v.s||'')].some(function(f){return(f||'').toLowerCase().includes(ql);})){
-      var key=(v.c||'')+'|'+(v.i||'');
-      if(!seen[key]){seen[key]=1;hits.push({label:(v.c||'—')+' · '+(v.i||'—'),sub:'Invoice · $'+(typeof $f==='function'?$f(v.amt):v.amt)+(v.po?' · PO '+v.po:''),q:q});}
-    }
-  });
-  PAY.forEach(function(p){
-    if([p.c,p.a,p.i,p.po,p.txId,String(p.amt)].some(function(f){return(f||'').toLowerCase().includes(ql);})){
-      var key='pay|'+(p.c||'')+'|'+(p.txId||'');
-      if(!seen[key]){seen[key]=1;hits.push({label:(p.c||'—')+' · '+(p.txId||'—'),sub:'Payment · $'+(typeof $f==='function'?$f(p.amt):p.amt),q:q});}
-    }
-  });
+  var drop=document.getElementById('gs-drop');if(!drop)return;
+  q=(q||'').trim();if(q.length<2){drop.style.display='none';return;}
+  var ql=q.toLowerCase();var hits=[];var seen={};
+  INV.forEach(function(v){if([v.c,v.a,v.i,v.po,v.so,v.d,String(v.amt)].some(function(f){return(f||'').toLowerCase().includes(ql);})){var k=(v.c||'')+'|'+(v.i||'');if(!seen[k]){seen[k]=1;hits.push({label:(v.c||'—')+' · '+(v.i||'—'),sub:'Invoice · $'+(typeof $f==='function'?$f(v.amt):v.amt)+(v.po?' · PO '+v.po:''),q:q});}}});
+  PAY.forEach(function(p){if([p.c,p.a,p.i,p.po,p.txId,String(p.amt)].some(function(f){return(f||'').toLowerCase().includes(ql);})){var k='p|'+(p.txId||'');if(!seen[k]){seen[k]=1;hits.push({label:(p.c||'—')+' · '+(p.txId||'—'),sub:'Payment · $'+(typeof $f==='function'?$f(p.amt):p.amt),q:q});}}});
   hits=hits.slice(0,8);
   if(!hits.length){drop.style.display='none';return;}
-  drop.innerHTML=hits.map(function(h){
-    var esc=h.q.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return'<div style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--bdr)" onmouseover="this.style.background=\'var(--glass2)\'" onmouseleave="this.style.background=\'\'" onmousedown="event.preventDefault();document.getElementById(\'global-search\').value=\''+esc+'\';globalSearch(\''+esc+'\');document.getElementById(\'gs-drop\').style.display=\'none\'">'+
-      '<div style="font-size:12.5px;font-weight:600;color:var(--t1)">'+h.label+'</div>'+
-      '<div style="font-size:11px;color:var(--t3)">'+h.sub+'</div></div>';
-  }).join('');
+  drop.innerHTML=hits.map(function(h){var e=h.q.replace(/\\/g,'\\\\').replace(/'/g,"\\'");return'<div style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--bdr)" onmouseover="this.style.background=\'var(--glass2)\'" onmouseout="this.style.background=\'\'  " onmousedown="event.preventDefault();document.getElementById(\'global-search\').value=\''+e+'\';globalSearch(\''+e+'\');document.getElementById(\'gs-drop\').style.display=\'none\'"><div style="font-size:12.5px;font-weight:600;color:var(--t1)">'+h.label+'</div><div style="font-size:11px;color:var(--t3)">'+h.sub+'</div></div>';}).join('');
   drop.style.display='block';
 }
-
 function globalSearch(q){
-  if(!q)return;
-  var ql=q.toLowerCase();
-  sp('invoices');
+  if(!q)return;var ql=q.toLowerCase();sp('invoices');
   var el=document.getElementById('inv-search');if(el)el.value=q;
-  // Search all columns
-  document.querySelectorAll('#inv-tb tr').forEach(function(tr){
-    tr.style.display=tr.innerText.toLowerCase().includes(ql)?'':'none';
-  });
+  document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display=tr.innerText.toLowerCase().includes(ql)?'':'none';});
 }
 
 // ── Modals ──
@@ -4733,43 +4567,15 @@ function clearInvData(){if(!confirm('Clear all invoice data?'))return;INV=[];sav
 function clearPayData(){if(!confirm('Clear all remittance data?'))return;PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittance data');toast('Remittance data cleared');}
 function clearMatchData(){if(!confirm('Clear all match results?'))return;RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');}
 function clearAllData(){if(!confirm('Clear all data?'))return;INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');}
-
 function resetAllData(){
-  if(!confirm('⚠️ Reset ALL data?\n\nThis will permanently delete:\n• All invoices and remittance\n• All match results and exceptions\n• All CFO period snapshots\n\nCFO settings (rates, thresholds) will be preserved.\n\nThis cannot be undone.')){return;}
-  _doResetAll();
-}
-function _doResetAll(){
-  INV=[];PAY=[];RES=[];EXC=[];CFO_SNAPSHOTS={};
+  if(!confirm('⚠️ Reset ALL data?\n\nThis will permanently delete:\n• All invoices and remittance\n• All match results and exceptions\n\nThis cannot be undone.'))return;
+  INV=[];PAY=[];RES=[];EXC=[];
   rAll();updDash();updTop();setStatus('ready');
-  // Clear localStorage regardless of IS_DEMO flag
-  try{
-    ['inv','pay','res','exc'].forEach(k=>{
-      try{localStorage.removeItem(sk(k));}catch(e){}
-      // Also try without prefix in case sk() fails
-      try{localStorage.removeItem('armp_'+k);}catch(e){}
-    });
-    localStorage.removeItem('armp_cfo_snapshots');
-  }catch(e){}
-  addAudit('Full reset','All data and CFO snapshots cleared');
-  toast('✓ All data reset — CFO settings preserved');
+  try{['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k));}catch(e){}});}catch(e){}
+  addAudit('Full reset','All data cleared');
+  toast('✓ All data reset');
 }
-function saveSettings(){
-  // Persist CFO settings
-  var stp=document.getElementById('cfo-s-stp');if(stp&&stp.value)CFO_SETTINGS.targetSTP=parseFloat(stp.value)||80;
-  var rate=document.getElementById('cfo-s-rate');if(rate&&rate.value)CFO_SETTINGS.arRate=parseFloat(rate.value)||65;
-  var sub=document.getElementById('cfo-s-sub');if(sub&&sub.value)CFO_SETTINGS.subCost=parseFloat(sub.value)||999;
-  var fy=document.getElementById('cfo-s-fy');if(fy)CFO_SETTINGS.fyStartMonth=parseInt(fy.value)||1;
-  var dsoT=document.getElementById('cfo-s-dso');if(dsoT&&dsoT.value)CFO_SETTINGS.alertDSO=parseFloat(dsoT.value)||45;
-  var excT=document.getElementById('cfo-s-exc');if(excT&&excT.value)CFO_SETTINGS.alertExc=parseFloat(excT.value)||10;
-  saveCfoSettings();
-  toast('Settings saved');
-}
-function populateCfoSettingsInputs(){
-  var f=function(id,val){var el=document.getElementById(id);if(el)el.value=val;};
-  f('cfo-s-stp',CFO_SETTINGS.targetSTP);f('cfo-s-rate',CFO_SETTINGS.arRate);
-  f('cfo-s-sub',CFO_SETTINGS.subCost);f('cfo-s-fy',CFO_SETTINGS.fyStartMonth);
-  f('cfo-s-dso',CFO_SETTINGS.alertDSO);f('cfo-s-exc',CFO_SETTINGS.alertExc);
-}
+function saveSettings(){toast('Settings saved');}
 function filterDash(t){if(t==='exceptions')sp('exceptions');else sp('cash-app');}
 function filterByStatus(s){sp('exceptions');}
 function showRegister(){showLfView('register');}
@@ -4838,7 +4644,7 @@ function rInv(){
       <td class="td-key" onclick="editCell(this,INV[${idx}],'i')">${v.i||'—'}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'po')">${v.po||'—'}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'so')">${v.so||'—'}</td>
-      <td class="td-amt ${v.amt<0?'neg':''}" onclick="editCell(this,INV[${idx}],'amt','number')">${$f(v.amt)}</td>
+      <td class="td-amt ${v.amt<0?'neg':''}" onclick="editCell(this,INV[${idx}],'amt','number')">$${$f(v.amt)}</td>
       <td onclick="editCell(this,INV[${idx}],'dt','select')"><span class="badge ${dtCls}">${dtLabel}</span></td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'dt2','date')">${fmtDate(v.dt2)}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'due','date')">${fmtDate(v.due)}</td>
@@ -4860,7 +4666,7 @@ function rRem(){
     return`<tr>
       <td class="td-mono">${p.a||'—'}</td>
       <td>${p.c||'—'}</td>
-      <td class="td-amt pos">${$f(p.amt)}</td>
+      <td class="td-amt pos">$${$f(p.amt)}</td>
       <td class="td-mono">${p.po||'—'}</td>
       <td class="td-key">${p.i||'—'}</td>
       <td class="td-mono" style="font-size:11px">${p.txId||'—'}</td>
@@ -4899,7 +4705,7 @@ function rExc(){
     if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div></td></tr>';return;}
     tb.innerHTML=shown.map(ex=>{const realIdx=EXC.indexOf(ex);return`<tr style="opacity:.75;background:var(--surface2)">
       <td class="td-mono">${ex.id}</td><td class="td-mono">${ex.a}</td><td>${ex.c}</td>
-      <td class="td-amt">${$f(ex.amt)}</td><td class="td-mono">${ex.ref||'—'}</td>
+      <td class="td-amt">$${$f(ex.amt)}</td><td class="td-mono">${ex.ref||'—'}</td>
       <td>${badge(ex.type)}</td>
       <td style="color:var(--t2);font-size:12px;max-width:180px;white-space:normal;line-height:1.4">${ex.detail||'—'}</td>
       <td style="color:var(--t3);font-size:12px">${ex.notes||'—'}</td>
@@ -4919,7 +4725,7 @@ function rExc(){
     return`<tr id="exc-row-${idx}">
       <td class="td-mono" style="font-weight:600;color:var(--t3)">${ex.id}</td>
       <td class="td-mono">${ex.a}</td><td>${ex.c}</td>
-      <td class="td-amt">${$f(ex.amt)}</td>
+      <td class="td-amt">$${$f(ex.amt)}</td>
       <td class="td-mono">${ex.ref||'—'}</td>
       <td>${badge(ex.type)}</td>
       <td style="color:var(--t2);max-width:180px;white-space:normal;font-size:12px;line-height:1.4">${ex.detail||'—'}</td>
@@ -4931,7 +4737,7 @@ function rExc(){
           <option ${ex.dec==='Post as Unapplied Cash'?'selected':''}>Post as Unapplied Cash</option>
           <option ${ex.dec==='Write off'?'selected':''}>Write off</option>
           <option ${ex.dec==='Bank fee'?'selected':''}>Bank fee</option>
-          
+          <option ${ex.dec==='Wire transfer'?'selected':''}>Wire transfer</option>
           <option ${ex.dec==='Chase customer'?'selected':''}>Chase customer</option>
           <option ${ex.dec==='Duplicate — reject'?'selected':''}>Duplicate — reject</option>
         </select>
@@ -4948,7 +4754,7 @@ function rPost(){
   const tb=document.getElementById('post-tb');if(!tb)return;
   if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations.</div></div></td></tr>';return;}
   const d=new Date().toISOString().split('T')[0];const dDisp=fmtDate(d);
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire_transfer_removed':'Payment'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
   const excBadge={'Apply to invoice':'badge-g','Post as Unapplied Cash':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
   tb.innerHTML=ap.map(r=>{
     const isExc=!!r.fromExc;
@@ -4964,7 +4770,7 @@ function rPost(){
       <td class="td-mono">${inv.so||r.so||'—'}</td>
       <td><span class="badge ${badgeCls}" style="font-size:10px">${typeLbl}</span></td>
       <td class="td-key">${r.d||r.id||'—'}</td>
-      <td class="td-amt pos">${$f(r.pd)}</td>
+      <td class="td-amt pos">$${$f(r.pd)}</td>
       <td class="td-amt ${r.vr<-.01?'neg':''}">${(!isExc&&r.vr<-.01)?'$'+$f(Math.abs(r.vr)):'—'}</td>
       <td><span class="badge badge-g">Approved</span></td>
     </tr>`;
@@ -5000,8 +4806,8 @@ function buildAllocWaterfall(p,idx){
     <tr style="background:rgba(59,130,246,.04)">
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-p" style="font-size:10px">Payment</span></td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);font-family:var(--mono);color:var(--pd);font-weight:700">${p.txId||p.po||p.i||'—'}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">(${$f(p.amt)})</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">(${$f(p.amt)})</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">($${$f(p.amt)})</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">($${$f(p.amt)})</td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-cy" style="font-size:10px">${p.m||'ACH'}</span></td>
     </tr>`;
   let running=p.amt;
@@ -5011,7 +4817,7 @@ function buildAllocWaterfall(p,idx){
     rows+=`<tr>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-gray" style="font-size:10px">Invoice</span></td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);font-family:var(--mono);color:var(--pd)">${r.i||r.po||'—'}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--g-t)">${$f(r.pd)}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--g-t)">$${$f(r.pd)}</td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);font-weight:700;color:${Math.abs(runAmt)<.01?'var(--g-t)':'var(--am-t)'}">
         ${Math.abs(runAmt)<.01?'$0.00':runAmt>0?'($'+$f(runAmt)+')':'$'+$f(Math.abs(runAmt))}
       </td>
@@ -5062,7 +4868,7 @@ function exportPost(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire_transfer_removed':'Payment'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
   const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Short Pay','Approved'];
   const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(!r.fromExc&&r.vr<-.01)?Math.abs(r.vr).toFixed(2):'0.00','Yes'];});
   csvDL([PH,...rows],'posting_'+d+'.csv');
@@ -5104,7 +4910,7 @@ function resolveException(idx,dec){
   if(!dec||dec==='— Select —')return;
   if(dec==='Apply to invoice'){
     const openInvs=INV.filter(v=>!v.s||v.s==='Open'||v.s==='Partial');
-    const opts=openInvs.map(v=>`<option value="${v.i}">${v.i} — ${v.c} — ${$f(v.amt)}</option>`).join('');
+    const opts=openInvs.map(v=>`<option value="${v.i}">${v.i} — ${v.c} — $${$f(v.amt)}</option>`).join('');
     showModal('Apply to Invoice',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select invoice to apply this payment to:</div>
       ${opts?`<select id="exc-inv-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:8px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
         <option value="">— Select from open invoices —</option>${opts}</select><div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:8px">— or enter manually —</div>`:''}
@@ -5215,7 +5021,7 @@ function engRefreshSel(){
     PAY.map((p,i)=>{
       const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
       const status=matched?'✓ ':p.dp?'↓ ':'';
-      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · ${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}`;
+      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · $${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}`;
       return`<option value="${i}" ${i===prev?'selected':''}>${label}</option>`;
     }).join('');
   const empty=document.getElementById('eng-empty');
@@ -5323,7 +5129,7 @@ function _legacyEngBuildAI(p,invs){
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));if(sharedPO.length>1)tips.push(`💡 ${sharedPO.length} invoices share PO ${p.po} — consolidated remittance`);
   if(!invs.length)tips.push('⚠️ No open invoices — post as unapplied cash?');
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
-  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✓ ${invs.length} invoices sum exactly to ${$f(p.amt)} — auto-apply all recommended`);
+  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✓ ${invs.length} invoices sum exactly to $${$f(p.amt)} — auto-apply all recommended`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:4px 0;border-bottom:1px solid rgba(139,92,246,.1);line-height:1.5;font-size:12.5px">${t}</div>`).join('');}
   else bar.style.display='none';
 }
@@ -5347,8 +5153,8 @@ function engRenderRows(){
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.po||'—'}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.so||'—'}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.d||'—'}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono)">${$f(inv.amt)}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:${r.alreadyPaid?'var(--r-t)':r.selected&&balance<inv.amt?'var(--am-t)':'var(--t1)'}">${$f(Math.max(0,balance))}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono)">$${$f(inv.amt)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:${r.alreadyPaid?'var(--r-t)':r.selected&&balance<inv.amt?'var(--am-t)':'var(--t1)'}">$${$f(Math.max(0,balance))}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right">
         <input type="number" min="0" step="0.01" value="${r.applyAmt>0?r.applyAmt:''}" placeholder="0.00"
           ${disabled||!r.selected?'disabled':''}
@@ -5451,13 +5257,7 @@ function engApprove(){
   ENG_STATE='approved';engUpdateWS('approved');
   document.getElementById('eng-export-btn').style.display='inline-flex';
   const totalApplied=sel.reduce((s,r)=>s+r.applyAmt,0);
-  // Push approved rows into RES immediately so Review tab reflects them
-  sel.forEach(r=>{
-    if(!RES.find(res=>res.i===r.inv.i&&res.fromAlloc)){
-      const vr=r.applyAmt-r.inv.amt;
-      RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.i||ENG_PAY.txId||'',id:ENG_PAY.txId||ENG_PAY.i||'',oa:r.inv.amt,pd:r.applyAmt,vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});
-    }
-  });
+  sel.forEach(r=>{if(!RES.find(res=>res.i===r.inv.i&&res.fromAlloc)){const vr=r.applyAmt-r.inv.amt;RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.txId||'',id:ENG_PAY.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});}});
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
   addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
   saveToStorage();updDash();updTop();
@@ -5543,7 +5343,7 @@ function renderPayQueue(){
     const stateLabel=matched?'Matched':exc?'Exception':p.dp?'Down Pay':'Pending';
     return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
-      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
+      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}</div><div class="pq-item-amt">$${$f(p.amt)}</div></div>
       <div class="pq-item-bot">
         <div class="pq-item-ref">${p.i||p.po||p.txId||'—'}</div>
         <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
@@ -5601,7 +5401,7 @@ function _legacy_renderWsReview(){
     const isLocked=r.fromAlloc||r.fromExc;
     const confClass=r.st==='Exact'||r.st==='Subset exact'?'conf-high':r.st==='Short pay'||r.st==='Overpay'?'conf-med':'conf-low';
     const conf=r.st==='Exact'?'100%':r.st==='Subset exact'?'98%':r.st==='Amount match'?'72%':r.st==='Short pay'?'61%':'—';
-    const vr=r.vr&&Math.abs(r.vr)>0.01?`<span class="badge badge-am" style="font-size:10px">Var ${$f(Math.abs(r.vr))}</span>`:'';
+    const vr=r.vr&&Math.abs(r.vr)>0.01?`<span class="badge badge-am" style="font-size:10px">Var $${$f(Math.abs(r.vr))}</span>`:'';
     return`<div class="review-item" onclick="reviewItemClick(${i})">
       <div style="width:3px;height:36px;border-radius:2px;background:${r.st==='Exact'||r.st==='Resolved'?'var(--g)':r.st==='Short pay'||r.st==='Overpay'?'var(--am)':'var(--p)'};flex-shrink:0"></div>
       <div>
@@ -5613,8 +5413,8 @@ function _legacy_renderWsReview(){
         <div style="font-size:11px;color:var(--t3)">${r.po?'PO '+r.po:''}</div>
       </div>
       <div>
-        <div class="review-item-amt">${$f(r.pd)}</div>
-        <div style="font-size:11px;color:var(--t3);text-align:right">of ${$f(r.oa)}</div>
+        <div class="review-item-amt">$${$f(r.pd)}</div>
+        <div style="font-size:11px;color:var(--t3);text-align:right">of $${$f(r.oa)}</div>
       </div>
       <div class="review-item-status"><span class="badge ${stBadge[r.st]||'badge-gray'}">${r.st||'—'}</span>${vr?'&nbsp;'+vr:''}</div>
       <div class="review-item-conf"><span class="${confClass}">${conf}</span></div>
@@ -5672,7 +5472,7 @@ function renderWsExc(){
         <div style="font-size:12px;color:var(--t2);max-width:220px">${ex.detail||'—'}</div>
         <div style="font-size:11px;color:var(--t3)">${ex.ref||''}</div>
       </div>
-      <div style="font-size:15px;font-weight:800;font-family:var(--mono);color:var(--am-t)">${$f(ex.amt)}</div>
+      <div style="font-size:15px;font-weight:800;font-family:var(--mono);color:var(--am-t)">$${$f(ex.amt)}</div>
       <div><span class="badge ${isResV?'badge-g':'badge-am'}">${ex.s||'Open'}</span></div>
       ${isResV?`<span class="badge badge-gray" style="font-size:10px">${ex.dec||'—'}</span><button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});renderWsExc()">↩ Revert</button>`
         :`<input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
@@ -5711,7 +5511,7 @@ function renderAcctCustomers(){
     <div class="acct-customer-item${ACCT_SELECTED_CUSTOMER===cu.c?' active':''}" onclick="selectAcctCustomer('${(cu.c||'').replace(/'/g,"\'")}','${cu.a||''}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div class="acct-customer-name">${cu.c||cu.a||'Unknown'}</div>
-        <div class="acct-customer-balance">${$fk(cu.balance)}</div>
+        <div class="acct-customer-balance">$${$fk(cu.balance)}</div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:3px">
         <div class="acct-customer-meta">${cu.a||''}</div>
@@ -5757,10 +5557,10 @@ function selectAcctCustomer(custName,acctId){
   });
   const agingGrid=document.getElementById('acct-aging-grid');
   if(agingGrid)agingGrid.innerHTML=`
-    <div class="aging-bucket"><div class="aging-bucket-val">${$fk(ageCur)}</div><div class="aging-bucket-lbl">Current</div></div>
-    <div class="aging-bucket${age30>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age30)}</div><div class="aging-bucket-lbl">1–30 days</div></div>
-    <div class="aging-bucket${age60>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age60)}</div><div class="aging-bucket-lbl">31–60 days</div></div>
-    <div class="aging-bucket${age90>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age90)}</div><div class="aging-bucket-lbl">61+ days</div></div>`;
+    <div class="aging-bucket"><div class="aging-bucket-val">$${$fk(ageCur)}</div><div class="aging-bucket-lbl">Current</div></div>
+    <div class="aging-bucket${age30>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age30)}</div><div class="aging-bucket-lbl">1–30 days</div></div>
+    <div class="aging-bucket${age60>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age60)}</div><div class="aging-bucket-lbl">31–60 days</div></div>
+    <div class="aging-bucket${age90>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age90)}</div><div class="aging-bucket-lbl">61+ days</div></div>`;
   // Invoice table
   const invBody=document.getElementById('acct-inv-body');
   if(invBody)invBody.innerHTML=custInvs.length?custInvs.map((v,i)=>{
@@ -5774,8 +5574,8 @@ function selectAcctCustomer(custName,acctId){
       <td class="td-mono">${fmtDate(v.due)}</td>
       <td class="td-mono">${v.po||'—'}</td>
       <td class="td-mono">${v.so||'—'}</td>
-      <td class="td-amt">${$f(v.amt)}</td>
-      <td class="td-amt ${bal>0?'':'pos'}">${$f(bal)}</td>
+      <td class="td-amt">$${$f(v.amt)}</td>
+      <td class="td-amt ${bal>0?'':'pos'}">$${$f(bal)}</td>
       <td>${aging}</td>
       <td>${v.s?`<span class="badge ${v.s==='Exact'||v.s==='Applied'?'badge-g':v.s==='Short pay'||v.s==='Overpay'?'badge-am':'badge-gray'}">${v.s}</span>`:'<span style="color:var(--t3)">Open</span>'}</td>
       <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();engLoadPaymentForInv('${v.i||''}')">Apply</button></td>
@@ -5788,7 +5588,7 @@ function selectAcctCustomer(custName,acctId){
     return`<tr>
       <td class="td-key">${p.txId||'—'}</td>
       <td class="td-mono">${p.payDate?fmtDate(p.payDate):'—'}</td>
-      <td class="td-amt pos">${$f(p.amt)}</td>
+      <td class="td-amt pos">$${$f(p.amt)}</td>
       <td><span class="badge badge-gray" style="font-size:10px">${p.m||'—'}</span></td>
       <td class="td-mono">${p.po||'—'}</td>
       <td class="td-key">${p.i||'—'}</td>
@@ -5813,20 +5613,20 @@ function _legacy_renderWsRecon(){
   const unmatched=PAY.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
-  if(summary)summary.textContent=`${$fk(totalMatched)} matched of ${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
+  if(summary)summary.textContent=`$${$fk(totalMatched)} matched of $${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
   if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance data and run matching to reconcile.</div></div>';return;}
   const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
   list.innerHTML=rows.map(item=>{
     if(item.type==='matched'){const r=item.r;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
       <div class="recon-match-indicator" style="background:var(--g)"></div>
       <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--t1)">${r.c||'—'}</div><div style="font-size:11px;color:var(--t3)">Invoice ${r.i||'—'} · PO ${r.po||'—'}</div></div>
-      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">+${$f(r.pd)}</div>
+      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">+$${$f(r.pd)}</div>
       <span class="badge badge-g">Reconciled</span>
     </div>`;}
     else{const p=item.p;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
       <div class="recon-match-indicator" style="background:var(--am)"></div>
       <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--t1)">${p.c||p.a||'Unknown'}</div><div style="font-size:11px;color:var(--t3)">${p.txId||p.po||'—'} · ${p.payDate?fmtDate(p.payDate):'—'}</div></div>
-      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--am-t)">${$f(p.amt)}</div>
+      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--am-t)">$${$f(p.amt)}</div>
       <span class="badge badge-am">Unreconciled</span>
       <button class="btn btn-outline btn-xs" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">Apply</button>
     </div>`;}
@@ -5876,7 +5676,7 @@ function openCustomerDrawerForCustomer(custName,acctId){
   // Activity
   const actEl=document.getElementById('drawer-activity');
   if(actEl){
-    const acts=[...custPays.slice(-5).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">${p.m||'Payment'} — ${p.payDate?fmtDate(p.payDate):'—'}</span><span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">+${$f(p.amt)}</span></div>`),...custInvs.slice(-3).reverse().map(v=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">Invoice ${v.i||'—'} issued</span><span style="font-family:var(--mono);font-weight:700;color:var(--am-t)">${$f(v.amt)}</span></div>`)];
+    const acts=[...custPays.slice(-5).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">${p.m||'Payment'} — ${p.payDate?fmtDate(p.payDate):'—'}</span><span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">+$${$f(p.amt)}</span></div>`),...custInvs.slice(-3).reverse().map(v=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">Invoice ${v.i||'—'} issued</span><span style="font-family:var(--mono);font-weight:700;color:var(--am-t)">$${$f(v.amt)}</span></div>`)];
     actEl.innerHTML=acts.length?acts.join(''):'<div style="color:var(--t3);font-size:12px">No recent activity</div>';
   }
   // Exceptions
@@ -5923,7 +5723,7 @@ async function runMatch(){
     const useSO=document.getElementById('s-so')?.checked!==false;
     if(ni&&useInv){
       const h=INV.find(v=>norm(v.i)===ni&&(v.a===p.a||(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim()));
-      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
+      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance $${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment $${$f(p.amt)} vs invoice $${$f(h.amt)} — variance $${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
     }
     if(np&&usePO){const g=INV.filter(v=>norm(v.po)===np&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'PO',ec)){ec+=procGrp.ea;continue};}}
     if(ns&&useSO){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
@@ -5936,14 +5736,9 @@ async function runMatch(){
   }
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
   overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
-  if(typeof renderWsExcPremium==='function') renderWsExcPremium();
-  if(typeof renderWsReview==='function') renderWsReview();
-  recordCfoSnapshot();
-  var caPanel=document.getElementById('p-cash-app');
-  if(caPanel&&caPanel.classList.contains('active')){
-    if(RES.length>0) setCaTab('review',document.getElementById('ca-tab-review'));
-    else if(EXC.length>0) setCaTab('exc',document.getElementById('ca-tab-exc'));
-  }
+  if(typeof renderWsExcPremium==='function')renderWsExcPremium();
+  if(typeof renderWsReview==='function')renderWsReview();
+  var caPanel=document.getElementById('p-cash-app');if(caPanel&&caPanel.classList.contains('active')){if(RES.length>0)setCaTab('review',document.getElementById('ca-tab-review'));else if(EXC.length>0)setCaTab('exc',document.getElementById('ca-tab-exc'));}
   addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions');
   toast(`✓ Matching done · ${RES.length} results · ${EXC.length} exceptions`);
 }
@@ -5956,7 +5751,7 @@ function procGrp(g,p,tol,ref,ec){
   if(sub){sub.forEach(v=>{v.s='Subset exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Subset exact',m:ref+' subset',n:''});});return true;}
   const sorted=[...g].sort((a,b)=>new Date(a.dt2||'9999')-new Date(b.dt2||'9999'));let rem=p.amt;
   sorted.forEach(v=>{if(rem<=0)return;const al=Math.min(v.amt,rem);rem-=al;const st=Math.abs(al-v.amt)<=tol?'Exact':'Short pay';v.s=st;RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:al,vr:al-v.amt,st,m:ref+' oldest first',n:al<v.amt?'Partial':''});});
-  if(p.amt<gt){EXC.push({id:'EXC-'+String(ec).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.so||'—',type:'Short pay',detail:`Payment ${$f(p.amt)} short of ${ref} group ${$f(gt)} by ${$f(gt-p.amt)}`,action:'Chase balance or write off',dec:'',s:'Open'});procGrp.ea=1;}
+  if(p.amt<gt){EXC.push({id:'EXC-'+String(ec).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.so||'—',type:'Short pay',detail:`Payment $${$f(p.amt)} short of ${ref} group $${$f(gt)} by $${$f(gt-p.amt)}`,action:'Chase balance or write off',dec:'',s:'Open'});procGrp.ea=1;}
   return true;
 }
 function findSub(g,t,tol){const n=Math.min(g.length,16),gr=g.slice(0,n);function bt(i,c,s){if(Math.abs(s-t)<=tol)return c;if(s>t+tol||i>=gr.length)return null;return bt(i+1,[...c,gr[i]],s+gr[i].amt)||bt(i+1,c,s);}return bt(0,[],0);}
@@ -5981,6 +5776,8 @@ function loadSampleInv(){
     {c:'Orion Logistics',a:'40031200',i:'5104920101',po:'4521100001',so:'2104300002',amt:4250,dt:'RV',dt2:'2025-10-01',due:'2025-10-31',d:'1000410002',s:''},
     {c:'Vertex Energy',a:'40045600',i:'5104931500',po:'4521200001',so:'2104400001',amt:15000,dt:'RV',dt2:'2025-10-05',due:'2025-11-04',d:'1000420001',s:''},
     {c:'MedCore Solutions',a:'40016800',i:'5104099001',po:'4400688100',so:'2103470662',amt:-1200,dt:'RV',dt2:'2024-03-20',due:'2024-04-19',d:'1000592558',s:''},
+    {c:'Pinnacle Systems',a:'40058700',i:'5105001001',po:'4522100001',so:'2104500001',amt:28500,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500001',s:''},
+    {c:'Pinnacle Systems',a:'40058700',i:'5105001002',po:'4522100001',so:'2104500002',amt:11200,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500002',s:''},
   ];
   rInv();updTop();setStatus('loaded');saveToStorage();
   addAudit('Sample invoices loaded','15 rows');
@@ -6001,6 +5798,7 @@ function loadSampleRem(){
     {a:'40031200',c:'Orion Logistics',amt:13000,po:'4521100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884423',payDate:'2026-05-04',ccy:'USD',n:'',coa:false,dp:false},
     {a:'40045600',c:'Vertex Energy',amt:15000,po:'',i:'5104931500',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110007',payDate:'2026-05-05',ccy:'USD',n:'',coa:false,dp:false},
     {a:'40999999',c:'Unknown Payer',amt:2500,po:'',i:'',so:'',m:'Check',txType:'Check',txId:'1188',payDate:'2026-05-05',ccy:'USD',n:'',coa:false,dp:false},
+    {a:'40058700',c:'Pinnacle Systems',amt:39700,po:'4522100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884430',payDate:'2026-05-06',ccy:'USD',n:'PO group — covers inv 5105001001 + 5105001002',coa:false,dp:false},
   ];
   rRem();updTop();setStatus('loaded');saveToStorage();
   addAudit('Sample remittance loaded','12 rows');
@@ -6374,24 +6172,16 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
     if(filterCust && (v.c||'').toLowerCase()!==filterCust.toLowerCase()) return false;
     return true;
   });
-  // Sort: highest-confidence matches bubble to top when a payment is loaded
   if(ENG_PAY){
     var n=function(s){return(s||'').replace(/\s/g,'').toLowerCase();};
     invs=invs.slice().sort(function(a,b){
-      function score(v){
-        var s=0;
-        var row=ENG_ROWS.find(function(r){return r.inv.i===v.i;});
-        if(row&&row.selected) s+=300;
-        if(ENG_PAY.i  &&v.i  &&n(v.i)  ===n(ENG_PAY.i))  s+=100;
-        if(ENG_PAY.po &&v.po &&n(v.po) ===n(ENG_PAY.po))  s+=80;
-        if(ENG_PAY.so &&v.so &&n(v.so) ===n(ENG_PAY.so))  s+=60;
-        if(ENG_PAY.dl &&v.dl &&n(v.dl) ===n(ENG_PAY.dl))  s+=50;
-        if(ENG_PAY.t  &&v.t  &&n(v.t)  ===n(ENG_PAY.t))   s+=50;
-        if(Math.abs(v.amt-(ENG_PAY.amt||0))<1) s+=40;
-        return s;
-      }
-      return score(b)-score(a);
-    });
+      function score(v){var s=0;
+        if(ENG_PAY.i&&v.i&&n(v.i)===n(ENG_PAY.i))s+=100;
+        if(ENG_PAY.po&&v.po&&n(v.po)===n(ENG_PAY.po))s+=80;
+        if(ENG_PAY.so&&v.so&&n(v.so)===n(ENG_PAY.so))s+=60;
+        if(Math.abs(v.amt-(ENG_PAY.amt||0))<1)s+=40;
+        return s;}
+      return score(b)-score(a);});
   }
   if(!invs.length){
     tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
@@ -6454,6 +6244,27 @@ function refreshFbl5n(){
 function sortFbl5n(ci){ sortTbl('ca-open-items-tbl',ci); }
 function sortFbl5nExc(ci){ sortTbl('exc-open-items-tbl',ci); }
 
+function caAcctInputSearch(q){
+  var drop=document.getElementById('ca-acct-drop');if(!drop)return;
+  var accts={};INV.forEach(function(v){if(v.a&&v.c)accts[v.a]=v.c;});PAY.forEach(function(p){if(p.a&&p.c&&!accts[p.a])accts[p.a]=p.c;});
+  var ql=(q||'').toLowerCase();
+  var keys=Object.keys(accts).sort().filter(function(a){return !ql||a.toLowerCase().includes(ql)||(accts[a]||'').toLowerCase().includes(ql);});
+  var html='<div style="padding:8px 14px;cursor:pointer;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)" onmousedown="event.preventDefault();caAcctSelect(\'\',\'All accounts\')">All accounts</div>';
+  html+=keys.map(function(a){return'<div style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between" onmousedown="event.preventDefault();caAcctSelect(\''+a+'\',\''+a+' — '+(accts[a]||'')+'\')"><div><div style="font-size:12.5px;font-weight:600;color:var(--t1);font-family:var(--mono)">'+a+'</div><div style="font-size:11px;color:var(--t3)">'+(accts[a]||'')+'</div></div></div>';}).join('');
+  drop.innerHTML=html;drop.style.display=keys.length?'block':'none';
+}
+function caAcctSelect(acct,label){
+  var inp=document.getElementById('ca-acct-input');if(inp)inp.value=label||acct;
+  var drop=document.getElementById('ca-acct-drop');if(drop)drop.style.display='none';
+  var sel=document.getElementById('ca-acct-dropdown');if(sel)sel.value=acct;
+  caAcctDropdownChange(acct);
+}
+function caAcctInputClear(){
+  var inp=document.getElementById('ca-acct-input');if(inp)inp.value='';
+  var drop=document.getElementById('ca-acct-drop');if(drop)drop.style.display='none';
+  var sel=document.getElementById('ca-acct-dropdown');if(sel)sel.value='';
+  caAcctDropdownChange('');
+}
 function caAcctDropdownChange(acct){
   var labelEl=document.getElementById('ca-bottom-cust-label');
   if(labelEl){
@@ -6463,37 +6274,6 @@ function caAcctDropdownChange(acct){
     } else { labelEl.textContent='— all accounts'; }
   }
   renderFbl5n('ca-open-items-body',acct,'');
-}
-
-function caAcctInputSearch(q){
-  var drop=document.getElementById('ca-acct-drop'); if(!drop) return;
-  var accts={}; INV.forEach(function(v){if(v.a&&v.c)accts[v.a]=v.c;}); PAY.forEach(function(p){if(p.a&&p.c&&!accts[p.a])accts[p.a]=p.c;});
-  var ql=(q||'').toLowerCase();
-  var keys=Object.keys(accts).sort().filter(function(a){ return !ql||a.toLowerCase().includes(ql)||(accts[a]||'').toLowerCase().includes(ql); });
-  if(!keys.length){drop.style.display='none';return;}
-  // Always show "All accounts" option first
-  var html='<div style="padding:8px 14px;cursor:pointer;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)" onmousedown="event.preventDefault();caAcctSelect(\'\',\'All accounts\')">All accounts</div>';
-  html+=keys.map(function(a){
-    return'<div style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center" onmousedown="event.preventDefault();caAcctSelect(\''+a+'\',\''+a+' — '+(accts[a]||'')+'\')" onmouseover="this.style.background=\'var(--glass2)\'" onmouseleave="this.style.background=\'\'">'+
-      '<div><div style="font-size:12.5px;font-weight:600;color:var(--t1);font-family:var(--mono)">'+a+'</div>'+
-      '<div style="font-size:11px;color:var(--t3)">'+( accts[a]||'')+'</div></div>'+
-    '</div>';
-  }).join('');
-  drop.innerHTML=html; drop.style.display='block';
-}
-
-function caAcctSelect(acct, label){
-  var inp=document.getElementById('ca-acct-input'); if(inp) inp.value=label||acct;
-  var drop=document.getElementById('ca-acct-drop'); if(drop) drop.style.display='none';
-  var sel=document.getElementById('ca-acct-dropdown'); if(sel) sel.value=acct;
-  caAcctDropdownChange(acct);
-}
-
-function caAcctInputClear(){
-  var inp=document.getElementById('ca-acct-input'); if(inp) inp.value='';
-  var drop=document.getElementById('ca-acct-drop'); if(drop) drop.style.display='none';
-  var sel=document.getElementById('ca-acct-dropdown'); if(sel) sel.value='';
-  caAcctDropdownChange('');
 }
 
 function excAcctDropdownChange(acct){ renderFbl5n('exc-open-items-body',acct,''); }
@@ -6711,20 +6491,6 @@ function navToWorklist(){
 // CFO SUMMARY ENGINE
 // ═══════════════════════════════════════════════════════════
 var CFO_PERIOD='month';
-
-// CFO settings — persisted separately from invoice data
-var CFO_SETTINGS={
-  targetSTP: 80,          // % target for Auto-Match Rate
-  arRate: 65,             // $/hr fully-loaded AR rate
-  subCost: 999,           // $/mo subscription cost for ROI multiple
-  fyStartMonth: 1,        // 1=Jan fiscal year start
-  alertSTP: 60,           // alert threshold: STP below this %
-  alertExc: 10,           // alert threshold: exception rate above this %
-  alertDSO: 45            // alert threshold: DSO above this days
-};
-
-// CFO snapshots — accumulate across sessions keyed by YYYY-MM
-var CFO_SNAPSHOTS={};
 function setCfoPeriod(p,btn){
   CFO_PERIOD=p;
   document.querySelectorAll('.cfo-period-btn').forEach(function(b){b.classList.remove('active');});
@@ -6735,49 +6501,21 @@ function setCfoPeriod(p,btn){
 function updateCfoSummary(){
   var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   var setW=function(id,w){var el=document.getElementById(id);if(el)el.style.width=w;};
-  var arRate=CFO_SETTINGS.arRate||65;
-  var subCost=CFO_SETTINGS.subCost||999;
-  var targetSTP=CFO_SETTINGS.targetSTP||80;
-  var now=new Date();
-  var periodKey,periodLabel;
-  if(CFO_PERIOD==='quarter'){
-    periodKey=now.getFullYear()+'-Q'+(Math.floor(now.getMonth()/3)+1);
-    periodLabel='This quarter';
-  } else if(CFO_PERIOD==='ytd'){
-    periodKey=now.getFullYear()+'-YTD';
-    periodLabel='Year to date';
-  } else {
-    periodKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-    periodLabel='This month';
-  }
-  var snap=CFO_SNAPSHOTS[periodKey]||null;
+  // Period multiplier: month=1x, quarter=3x, ytd=12x (annualized estimation)
+  var periodMult = CFO_PERIOD==='quarter'?3:CFO_PERIOD==='ytd'?12:1;
+  var periodLabel = CFO_PERIOD==='quarter'?'This quarter':CFO_PERIOD==='ytd'?'Year to date':'This month';
+  var tp=PAY.reduce(function(s,p){return s+p.amt;},0)*periodMult;
   var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
-  var liveMa=matched.reduce(function(s,r){return s+r.pd;},0);
-  var liveTp=PAY.reduce(function(s,p){return s+p.amt;},0);
-  var ma=snap?Math.max(snap.matched,liveMa):liveMa;
-  var tp=snap?Math.max(snap.total,liveTp):liveTp;
-  var excCt=snap?Math.max(snap.exceptions,EXC.length):EXC.length;
-  var payCt=snap?Math.max(snap.payments,PAY.length):PAY.length;
+  var ma=matched.reduce(function(s,r){return s+r.pd;},0)*periodMult;
   var ua=EXC.reduce(function(s,e){return s+e.amt;},0);
   var spc=EXC.filter(function(e){return e.type==='Short pay';});
   var spAmt=spc.reduce(function(s,e){return s+e.amt;},0);
   var rt=tp>0?(ma/tp*100):0;
-  var autoCount=matched.length;
+  var autoCount=matched.length*periodMult;
   var hoursSaved=autoCount*8/60;
-  var dollarsSaved=hoursSaved*arRate;
-  var roiMultiple=dollarsSaved>0?(dollarsSaved/subCost).toFixed(1)+'x':'—';
-  // DSO = (open balance / matched revenue) * 30
-  var openBal=INV.filter(function(v){return !v.s||v.s==='Open'||v.s==='Partial';}).reduce(function(s,v){return s+v.amt;},0);
-  var dso=ma>0?Math.round((openBal/ma)*30):null;
-  var dsoEl=document.getElementById('cfo-dso');
-  if(dsoEl){dsoEl.textContent=dso!==null?dso+' days':'—';dsoEl.style.color=dso===null?'var(--t1)':dso>CFO_SETTINGS.alertDSO?'var(--r-t)':dso>30?'var(--am-t)':'var(--g-t)';}
-  // Alerts
-  var alertHtml='';
-  if(rt>0&&rt<CFO_SETTINGS.alertSTP)alertHtml+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:8px;margin-bottom:6px;font-size:12px;color:var(--r-t)">⚠️ STP '+rt.toFixed(1)+'% below target '+targetSTP+'%</div>';
-  if(payCt>0&&excCt/payCt*100>CFO_SETTINGS.alertExc)alertHtml+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;margin-bottom:6px;font-size:12px;color:var(--am-t)">⚠️ Exception rate '+(excCt/payCt*100).toFixed(1)+'% exceeds '+CFO_SETTINGS.alertExc+'%</div>';
-  if(dso!==null&&dso>CFO_SETTINGS.alertDSO)alertHtml+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:8px;margin-bottom:6px;font-size:12px;color:var(--r-t)">⚠️ DSO '+dso+' days exceeds threshold '+CFO_SETTINGS.alertDSO+'</div>';
-  var alertEl=document.getElementById('cfo-alerts');if(alertEl)alertEl.innerHTML=alertHtml;
-  // Hero
+  var dollarsSaved=hoursSaved*65;
+
+  // Hero: Cash Application Performance
   if(autoCount>0){
     setEl('cfo-hours-saved','$'+$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
     setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received ('+periodLabel+')');
@@ -6785,56 +6523,60 @@ function updateCfoSummary(){
     setEl('cfo-hours-saved','No matches yet');
     setEl('cfo-hero-sub','Import data and run matching to see performance');
   }
-  setEl('cfo-hero-matched',$fk(tp));
+  setEl('cfo-hero-matched',$fk(tp));       // Cash Received
   setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'—');
-  setEl('cfo-hero-payments',payCt);
-  setEl('cfo-hero-invoices',autoCount);
+  setEl('cfo-hero-payments',PAY.length);
+  setEl('cfo-hero-invoices',matched.length);
+
+  // Savings callout: Cash Received vs Cash Matched
   if(tp>0){
     setEl('cfo-savings-headline','$'+$fk(ma)+' in cash matched of $'+$fk(tp)+' received');
     var bodyEl=document.getElementById('cfo-savings-body');
-    if(bodyEl)bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched · <strong>'+(tp>0?((ma/tp)*100).toFixed(1)+'%':'—')+'</strong> STP · <strong>$'+$fk(ua)+'</strong> unapplied';
+    if(bodyEl) bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched · <strong>'+(tp>0?((ma/tp)*100).toFixed(1)+'%':'—')+'</strong> straight-through rate · <strong>$'+$fk(ua)+'</strong> unapplied';
   } else {
     setEl('cfo-savings-headline','Import data to see cash flow summary');
     var be2=document.getElementById('cfo-savings-body');
-    if(be2)be2.textContent='Load sample data or import invoices and remittance to begin.';
+    if(be2) be2.textContent='Load sample data or import invoices and remittance to begin.';
   }
+
   setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
-  var stpEl=document.getElementById('cfo-stp-trend');if(stpEl)stpEl.style.color=rt>=targetSTP?'var(--g-t)':rt>=targetSTP*0.75?'var(--am-t)':'var(--r-t)';
-  var stpSub=document.getElementById('cfo-metric-sub-stp');if(stpSub)stpSub.textContent='Target: '+targetSTP+'%+';
+  var stpEl=document.getElementById('cfo-stp-trend'); if(stpEl) stpEl.style.color=rt>=80?'var(--g-t)':rt>=50?'var(--am-t)':'var(--r-t)';
   var openExcCt=EXC.filter(function(e){return !e.s||e.s==='Open';}).length;
-  setEl('cfo-exc-rate',payCt>0?(openExcCt/payCt*100).toFixed(1)+'%':'—');
+  setEl('cfo-exc-rate',PAY.length>0?(openExcCt/PAY.length*100).toFixed(1)+'%':'—');
   setEl('cfo-exc-count',openExcCt+' open exception'+(openExcCt!==1?'s':''));
   setEl('cfo-shortpay-amt','$'+$f(spAmt));
   setEl('cfo-shortpay-count',spc.length+' invoice'+(spc.length!==1?'s':'')+' affected');
-  var spTrend=document.getElementById('cfo-shortpay-trend');if(spTrend)spTrend.style.color=spc.length>0?'var(--r-t)':'var(--t3)';
+  var spTrend=document.getElementById('cfo-shortpay-trend'); if(spTrend) spTrend.style.color=spc.length>0?'var(--r-t)':'var(--t3)';
   setEl('cfo-unapplied','$'+$f(ua));
   setEl('cfo-total',$fk(tp));
-  setEl('cfo-total-sub',INV.length+' invoices · '+payCt+' payments');
+  setEl('cfo-total-sub',INV.length+' invoices · '+PAY.length+' payments');
   setEl('cfo-roi-auto',autoCount);
   setEl('cfo-roi-hours',hoursSaved.toFixed(1)+' hrs');
   setEl('cfo-roi-dollars','$'+$f(dollarsSaved));
-  setEl('cfo-roi-multiple',roiMultiple);
+  // ROI multiple = labor savings / Pro plan cost ($999/mo)
+  var roiMultiple = dollarsSaved > 0 ? (dollarsSaved/999).toFixed(1)+'x' : '—';
+  setEl('cfo-roi-multiple', roiMultiple);
   setEl('cfo-bar-auto-val',autoCount);
-  setEl('cfo-bar-exc-val',excCt);
+  setEl('cfo-bar-exc-val',EXC.length);
   setEl('cfo-bar-unapp-val',PAY.filter(function(p){return p.coa;}).length);
-  var total=Math.max(autoCount+excCt+PAY.filter(function(p){return p.coa;}).length,1);
+  var total=Math.max(autoCount+EXC.length+PAY.filter(function(p){return p.coa;}).length,1);
   setTimeout(function(){
     setW('cfo-bar-auto',(autoCount/total*100).toFixed(1)+'%');
-    setW('cfo-bar-exc',(excCt/total*100).toFixed(1)+'%');
+    setW('cfo-bar-exc',(EXC.length/total*100).toFixed(1)+'%');
     setW('cfo-bar-unapp',(PAY.filter(function(p){return p.coa;}).length/total*100).toFixed(1)+'%');
   },100);
+  // Match breakdown
   var cn={};RES.forEach(function(r){cn[r.st]=(cn[r.st]||0)+1;});
   var tt=Object.values(cn).reduce(function(s,v){return s+v;},0)||1;
   var co={Exact:'#10B981','Subset exact':'#3B82F6','Short pay':'#F59E0B',Overpay:'#F97316','Amount match':'#8B5CF6'};
   var mbEl=document.getElementById('cfo-match-breakdown');
-  var mlEl=document.getElementById('cfo-match-total-lbl');if(mlEl)mlEl.textContent=RES.length+' total records';
-  if(mbEl)mbEl.innerHTML=Object.entries(cn).length?Object.entries(cn).map(function(e){return '<div class="cfo-bar-row"><div class="cfo-bar-label">'+e[0]+'</div><div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:'+(e[1]/tt*100).toFixed(1)+'%;background:'+(co[e[0]]||'var(--p)')+'"></div></div><div class="cfo-bar-val">'+e[1]+'</div></div>';}).join(''):'<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
+  var mlEl=document.getElementById('cfo-match-total-lbl'); if(mlEl) mlEl.textContent=RES.length+' total records';
+  if(mbEl) mbEl.innerHTML=Object.entries(cn).length?Object.entries(cn).map(function(e){ return '<div class="cfo-bar-row"><div class="cfo-bar-label">'+e[0]+'</div><div class="cfo-bar-track" style="height:6px"><div class="cfo-bar-fill" style="width:'+(e[1]/tt*100).toFixed(1)+'%;background:'+(co[e[0]]||'var(--p)')+'"></div></div><div class="cfo-bar-val">'+e[1]+'</div></div>'; }).join(''):'<div style="color:var(--t3);font-size:12.5px;text-align:center;padding:20px 0">No match data yet</div>';
+  // Exception summary
   var excByType={};EXC.forEach(function(e){excByType[e.type]=excByType[e.type]||{count:0,amt:0};excByType[e.type].count++;excByType[e.type].amt+=e.amt;});
   var excIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦'};
   var excSumEl=document.getElementById('cfo-exc-summary');
-  if(excSumEl)excSumEl.innerHTML=Object.entries(excByType).length?Object.entries(excByType).map(function(e){return '<div class="cfo-exc-row"><span style="font-size:16px">'+(excIcon[e[0]]||'⚠️')+'</span><div style="flex:1"><div style="font-weight:700;color:var(--t1)">'+e[0]+'</div><div style="font-size:11px;color:var(--t3)">'+e[1].count+' case'+(e[1].count>1?'s':'')+'</div></div><div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$'+$fk(e[1].amt)+'</div></div>';}).join(''):'<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
-  var snapLbl=document.getElementById('cfo-snapshot-lbl');
-  if(snapLbl&&snap&&snap.lastRun)snapLbl.textContent='Last run: '+new Date(snap.lastRun).toLocaleDateString();
+  if(excSumEl) excSumEl.innerHTML=Object.entries(excByType).length?Object.entries(excByType).map(function(e){ return '<div class="cfo-exc-row"><span style="font-size:16px">'+(excIcon[e[0]]||'⚠️')+'</span><div style="flex:1"><div style="font-weight:700;color:var(--t1)">'+e[0]+'</div><div style="font-size:11px;color:var(--t3)">'+e[1].count+' case'+(e[1].count>1?'s':'')+'</div></div><div style="font-family:var(--mono);font-weight:800;color:var(--am-t)">$'+$fk(e[1].amt)+'</div></div>'; }).join(''):'<div class="cfo-exc-row" style="color:var(--t3)">✅ No exceptions detected</div>';
 }
 
 function updateCfoSummaryClean(){ updateCfoSummary(); }
@@ -6861,12 +6603,8 @@ engLoadPayment = function(idx){
     if(ENG_PAY&&ENG_PAY.a){
       var sel=document.getElementById('ca-acct-dropdown');
       if(sel) sel.value=ENG_PAY.a;
-      var accts={}; INV.forEach(function(v){if(v.a&&v.c)accts[v.a]=v.c;});
       var lbl=document.getElementById('ca-bottom-cust-label');
-      if(lbl) lbl.textContent=ENG_PAY.a+(accts[ENG_PAY.a]?' — '+accts[ENG_PAY.a]:'');
-      // Also update the autocomplete text input
-      var inp=document.getElementById('ca-acct-input');
-      if(inp) inp.value=ENG_PAY.a+(accts[ENG_PAY.a]?' — '+accts[ENG_PAY.a]:'');
+      if(lbl){ var accts={}; INV.forEach(function(v){if(v.a&&v.c)accts[v.a]=v.c;}); lbl.textContent=ENG_PAY.a+(accts[ENG_PAY.a]?' — '+accts[ENG_PAY.a]:''); }
     }
     refreshFbl5n();
   },50);
@@ -6982,7 +6720,7 @@ sp = function(id){
     return;
   }
   _origSp(id);
-  if(id==='settings'){ initRole(); renderMpRules(); renderSettingsPlans(); populateCfoSettingsInputs(); setTimeout(function(){ renderMpRules(); },100); }
+  if(id==='settings'){ initRole(); renderMpRules(); renderSettingsPlans(); setTimeout(function(){ renderMpRules(); },100); }
   if(id==='cash-app') setTimeout(function(){ populateAllAcctDropdowns(); refreshFbl5n(); },100);
   if(id==='reporting') setTimeout(updReporting,50);
 };
@@ -7312,90 +7050,69 @@ function closeReviewInlineDetail(){
   _reviewOpenIdx = -1;
 }
 
+
+// ── Drag handle ──
+(function(){
+  function init(){
+    var handle=document.getElementById('ca-drag-handle');if(!handle)return;
+    var topHalf=handle.previousElementSibling;
+    var prev=handle.previousSibling;
+    while(prev&&prev.nodeType!==1)prev=prev.previousSibling;
+    if(prev)topHalf=prev;
+    var container=handle.parentElement;
+    var dragging=false,startY=0,startH=0;
+    handle.addEventListener('mousedown',function(e){dragging=true;startY=e.clientY;startH=topHalf.getBoundingClientRect().height;document.body.style.cursor='ns-resize';document.body.style.userSelect='none';e.preventDefault();});
+    document.addEventListener('mousemove',function(e){if(!dragging)return;var newH=Math.max(180,Math.min(startH+(e.clientY-startY),container.getBoundingClientRect().height-280));topHalf.style.height=newH+'px';topHalf.style.flex='0 0 auto';});
+    document.addEventListener('mouseup',function(){if(dragging){dragging=false;document.body.style.cursor='';document.body.style.userSelect='';}});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else setTimeout(init,600);
+})();
+
 // ── AI Contact Modal ──
-function openContactModal(){
-  var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='flex';
-  setTimeout(function(){var i=document.getElementById('contact-chat-inp');if(i)i.focus();},100);
-}
-function closeContactModal(){
-  var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='none';
-}
-var _contactHistory=[{role:'user',content:'You are an AR Match Pro support assistant. AR Match Pro is an enterprise accounts receivable cash application SaaS. Help users with: cash application workflows, matching logic, DSO, exceptions, short pays, unapplied cash, reconciliation, CFO reporting, settings, and general AR/finance questions. Be concise, professional, and helpful. If the user wants to file a support ticket, ask for their name, email, and description, then confirm it was logged. Keep responses under 150 words.'}];
+function openContactModal(){var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='flex';setTimeout(function(){var i=document.getElementById('contact-chat-inp');if(i)i.focus();},100);}
+function closeContactModal(){var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='none';}
+var _cHist=[{role:'user',content:'You are an AR Match Pro support assistant for enterprise AR cash application software. Help with: matching logic, exceptions, short pays, DSO, reconciliation, CFO reporting, settings. Be concise and professional under 120 words per reply.'}];
 async function sendContactMsg(){
   var inp=document.getElementById('contact-chat-inp');if(!inp||!inp.value.trim())return;
   var msg=inp.value.trim();inp.value='';
   var msgs=document.getElementById('contact-chat-msgs');if(!msgs)return;
-  // Add user bubble
-  msgs.innerHTML+=`<div style="display:flex;justify-content:flex-end"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px;border-bottom-right-radius:4px;font-size:13px;max-width:85%;line-height:1.5">${msg}</div></div>`;
+  msgs.innerHTML+=`<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px;border-bottom-right-radius:4px;font-size:13px;max-width:85%;line-height:1.5">${msg}</div></div>`;
   msgs.scrollTop=msgs.scrollHeight;
-  // Thinking indicator
-  var thinkId='think-'+Date.now();
-  msgs.innerHTML+=`<div id="${thinkId}" style="display:flex;gap:10px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t3)">Thinking…</div></div>`;
+  var tid='t'+Date.now();
+  msgs.innerHTML+=`<div id="${tid}" style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;font-size:13px;color:var(--t3)">Thinking…</div></div>`;
   msgs.scrollTop=msgs.scrollHeight;
-  _contactHistory.push({role:'user',content:msg});
+  _cHist.push({role:'user',content:msg});
   try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,
-        messages:_contactHistory.filter(function(m){return m.role==='user'||m.role==='assistant';})
-      })
-    });
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:250,messages:_cHist.filter(m=>m.role==='user'||m.role==='assistant')})});
     var data=await res.json();
-    var reply=(data.content&&data.content[0]&&data.content[0].text)||'Sorry, I had trouble responding. Please email info@armatchpro.com.';
-    _contactHistory.push({role:'assistant',content:reply});
-    var thinkEl=document.getElementById(thinkId);
-    if(thinkEl)thinkEl.outerHTML=`<div style="display:flex;gap:10px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">${reply.replace(/\n/g,'<br>')}</div></div>`;
-  }catch(e){
-    var thinkEl2=document.getElementById(thinkId);
-    if(thinkEl2)thinkEl2.outerHTML=`<div style="display:flex;gap:10px;align-items:flex-start"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;font-size:13px;color:var(--r-t)">Connection error. Please email info@armatchpro.com directly.</div></div>`;
-  }
+    var reply=(data.content&&data.content[0]&&data.content[0].text)||'Sorry, connection error. Email info@armatchpro.com.';
+    _cHist.push({role:'assistant',content:reply});
+    var el=document.getElementById(tid);
+    if(el)el.outerHTML=`<div style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">${reply.replace(/\n/g,'<br>')}</div></div>`;
+  }catch(e){var el2=document.getElementById(tid);if(el2)el2.querySelector('div:last-child').textContent='Connection error. Please email info@armatchpro.com.';}
   msgs.scrollTop=msgs.scrollHeight;
 }
-(function(){
-  function initDragHandle(){
-    var handle=document.getElementById('ca-drag-handle');
-    if(!handle)return;
-    var topHalf=handle.previousElementSibling;
-    // walk back past comment nodes
-    var prev=handle.previousSibling;
-    while(prev&&prev.nodeType!==1)prev=prev.previousSibling;
-    topHalf=prev;
-    var container=handle.parentElement;
-    var dragging=false,startY=0,startH=0;
-    handle.addEventListener('mousedown',function(e){
-      dragging=true;startY=e.clientY;
-      startH=topHalf.getBoundingClientRect().height;
-      document.body.style.cursor='ns-resize';
-      document.body.style.userSelect='none';
-      e.preventDefault();
-    });
-    document.addEventListener('mousemove',function(e){
-      if(!dragging)return;
-      var delta=e.clientY-startY;
-      var newH=Math.max(180,Math.min(startH+delta,container.getBoundingClientRect().height-280));
-      topHalf.style.height=newH+'px';
-      topHalf.style.flex='0 0 auto';
-    });
-    document.addEventListener('mouseup',function(){
-      if(dragging){dragging=false;document.body.style.cursor='';document.body.style.userSelect='';}
-    });
-    // Touch support
-    handle.addEventListener('touchstart',function(e){
-      dragging=true;startY=e.touches[0].clientY;
-      startH=topHalf.getBoundingClientRect().height;e.preventDefault();
-    },{passive:false});
-    document.addEventListener('touchmove',function(e){
-      if(!dragging)return;
-      var delta=e.touches[0].clientY-startY;
-      var newH=Math.max(180,Math.min(startH+delta,container.getBoundingClientRect().height-280));
-      topHalf.style.height=newH+'px';topHalf.style.flex='0 0 auto';
-    },{passive:false});
-    document.addEventListener('touchend',function(){dragging=false;});
-  }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initDragHandle);}
-  else{setTimeout(initDragHandle,500);}
-})();
 
 </script>
 
+<div id="contact-modal-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div style="background:var(--surface);border-radius:18px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
+      <div><div style="font-size:15px;font-weight:800;color:var(--t1)">💬 Contact AR Match Pro</div><div style="font-size:12px;color:var(--t3);margin-top:2px">Support · Questions · Feature requests</div></div>
+      <div onclick="closeContactModal()" style="cursor:pointer;font-size:20px;color:var(--t3);padding:4px 8px;border-radius:6px">×</div>
+    </div>
+    <div id="contact-chat-msgs" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:4px;min-height:200px">
+      <div style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">Hi! I'm the AR Match Pro support assistant. Ask me anything about cash application, matching logic, exceptions, DSO, or settings — or I can log a support ticket for you.</div></div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--bdr);display:flex;gap:8px;flex-shrink:0">
+      <input id="contact-chat-inp" type="text" placeholder="Ask anything about AR Match Pro…" autocomplete="off"
+        style="flex:1;padding:9px 14px;border:1.5px solid var(--bdr);border-radius:10px;background:var(--surface2);color:var(--t1);font-family:var(--font);font-size:13px;outline:none"
+        onkeydown="if(event.key==='Enter')sendContactMsg()"
+        onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bdr)'">
+      <button class="btn btn-p btn-sm" onclick="sendContactMsg()" style="flex-shrink:0">Send</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
