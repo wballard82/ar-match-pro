@@ -405,10 +405,28 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
   font-family:var(--mono); letter-spacing:-.5px; line-height:1;
   transition:color .3s;
 }
-.kpi-card-val.green { color:var(--g-t); }
-.kpi-card-val.red { color:var(--r-t); }
-.kpi-card-val.amber { color:var(--am-t); }
-.kpi-card-val.blue { color:var(--pd); }
+.kpi-card-val.green  { color:var(--g-t); }
+.kpi-card-val.red    { color:var(--r); }
+.kpi-card-val.amber  { color:var(--am-t); }
+.kpi-card-val.blue   { color:var(--pd); }
+.kpi-card-val.yellow { color:var(--am); }
+.kpi-card-val.orange { color:#F97316; }
+[data-theme="dark"] .kpi-card-val.red    { color:var(--r); }
+[data-theme="dark"] .kpi-card-val.yellow { color:var(--am); }
+[data-theme="dark"] .kpi-card-val.orange { color:#FB923C; }
+[data-theme="light"] .kpi-card-val.red    { color:#DC2626; }
+[data-theme="light"] .kpi-card-val.yellow { color:#D97706; }
+[data-theme="light"] .kpi-card-val.orange { color:#EA580C; }
+/* KPI dot colors — always match value number */
+.kpi-dot-green  { background:var(--g-t) !important; }
+.kpi-dot-blue   { background:var(--pd) !important; }
+.kpi-dot-yellow { background:var(--am) !important; }
+.kpi-dot-red    { background:var(--r) !important; }
+.kpi-dot-orange { background:#F97316 !important; }
+.kpi-dot-plain  { background:var(--t1) !important; }
+[data-theme="light"] .kpi-dot-yellow { background:#D97706 !important; }
+[data-theme="light"] .kpi-dot-red    { background:#DC2626 !important; }
+[data-theme="light"] .kpi-dot-orange { background:#EA580C !important; }
 .kpi-card-sub {
   font-size:9.5px; font-weight:600; color:var(--t3); white-space:nowrap;
   display:flex; align-items:center; gap:3px;
@@ -1273,7 +1291,9 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 .kpi-card.kpi-green::before { background: linear-gradient(90deg, var(--g), var(--cy)); }
 .kpi-card.kpi-blue::before  { background: linear-gradient(90deg, var(--p), var(--pu)); }
 .kpi-card.kpi-amber::before { background: linear-gradient(90deg, var(--am), var(--r)); }
-.kpi-card.kpi-red::before   { background: linear-gradient(90deg, var(--r), #FF6B9D); }
+.kpi-card.kpi-red::before    { background: linear-gradient(90deg, #DC2626, #EF4444); }
+.kpi-card.kpi-yellow::before { background: linear-gradient(90deg, #D97706, #F59E0B); }
+.kpi-card.kpi-orange::before { background: linear-gradient(90deg, #EA580C, #F97316); }
 .kpi-card:hover::before { opacity: 1; }
 .kpi-card-val {
   font-size: 22px;
@@ -2008,6 +2028,18 @@ body.app-active #app {
   display: flex !important;
   pointer-events: auto !important;
 }
+
+/* Customer Open Items column filters */
+.fbl5n-filter-row th {
+  padding:3px 4px !important;
+  background:var(--surface3);
+}
+.fbl5n-filter-inp {
+  width:100%; padding:3px 6px; font-size:11px; border:1px solid var(--bdr);
+  border-radius:5px; background:var(--surface); color:var(--t1);
+  font-family:var(--font); outline:none; box-sizing:border-box;
+}
+.fbl5n-filter-inp:focus { border-color:var(--p); }
 </style>
 </head>
 <body>
@@ -2334,7 +2366,7 @@ body.app-active #app {
   <div class="kpi-strip">
     <div class="kpi-card kpi-green" onclick="setCaTab('recon',document.getElementById('ca-tab-recon'));sp('cash-app')" style="cursor:pointer;min-width:150px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:var(--g-t)"></div>
+        <div class="kpi-dot kpi-dot-green"></div>
         Cash Matched
       </div>
       <div class="kpi-card-val green" id="kpi-matched">$0</div>
@@ -2354,7 +2386,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card kpi-blue" onclick="sp('reporting')" style="cursor:pointer;min-width:130px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:var(--pd)"></div>
+        <div class="kpi-dot kpi-dot-blue"></div>
         Match Rate
       </div>
       <div class="kpi-card-val blue" id="kpi-rate">—</div>
@@ -2395,7 +2427,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card" onclick="sp('invoices');setTimeout(function(){var s=document.getElementById('inv-search');if(s)s.value='';document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display='';});},80)" style="cursor:pointer;min-width:100px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:var(--t1)"></div>
+        <div class="kpi-dot kpi-dot-plain"></div>
         Invoices
       </div>
       <div class="kpi-card-val" id="kpi-inv-ct">0</div>
@@ -2403,7 +2435,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')" style="cursor:pointer;min-width:100px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:var(--t1)"></div>
+        <div class="kpi-dot kpi-dot-plain"></div>
         Payments
       </div>
       <div class="kpi-card-val" id="kpi-pay-ct">0</div>
@@ -2837,7 +2869,7 @@ body.app-active #app {
 
                   <div class="alloc-fully-bar" id="alloc-fully">✅ Payment fully allocated — click Approve</div>
 
-                  <div id="eng-audit-wrap" style="display:none;flex-shrink:0">
+                  <div id="eng-audit-wrap" style="display:none;flex-shrink:0;height:0;overflow:hidden">
                     <div style="padding:6px 14px;background:var(--surface2);border-top:1px solid var(--bdr)"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">Allocation Audit</div></div>
                     <div id="eng-audit-list" style="padding:4px 14px;max-height:70px;overflow-y:auto;background:var(--surface)"></div>
                   </div>
@@ -2909,6 +2941,24 @@ body.app-active #app {
                       <th onclick="sortFbl5n(12)">Status<span class="si2"></span></th>
                       <th style="text-align:center">Conf%</th>
                       <th>Action</th>
+                    </tr>
+                    <tr class="fbl5n-filter-row" id="fbl5n-filter-row">
+                      <th></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th></th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody id="ca-open-items-body">
@@ -3181,7 +3231,8 @@ body.app-active #app {
               <div class="panel-sub" id="rem-ct">0 rows · ACH · Wire · Check · Lockbox</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="loadSampleRem()">Load sample</button>
+              <button class="btn btn-outline btn-sm" onclick="loadSampleRemJPM()" title="Load JP Morgan sample payments">Load JPM</button>
+              <button class="btn btn-outline btn-sm" onclick="loadSampleRemBOA()" title="Load Bank of America sample payments">Load BOA</button>
               <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
               <button class="btn btn-outline btn-sm" onclick="addRemRowAfter()">+ Add row</button>
               <button class="btn btn-p btn-sm" onclick="openImport('rem')">
@@ -3279,8 +3330,8 @@ body.app-active #app {
                   <th onclick="sortTbl('post-tbl',6)">Type<span class="si2"></span></th>
                   <th onclick="sortTbl('post-tbl',7)">Document<span class="si2"></span></th>
                   <th onclick="sortTbl('post-tbl',8)" style="text-align:right">Post Amount<span class="si2"></span></th>
-                  <th onclick="sortTbl('post-tbl',9)" style="text-align:right">Short Pay<span class="si2"></span></th>
-                  <th onclick="sortTbl('post-tbl',10)">Approved<span class="si2"></span></th>
+                  <th onclick="sortTbl('post-tbl',9)" style="text-align:right">Write-off<span class="si2"></span></th>
+                  <th onclick="sortTbl('post-tbl',10)" style="text-align:right">Bank Fee<span class="si2"></span></th>
                 </tr>
               </thead>
               <tbody id="post-tb">
@@ -3695,7 +3746,7 @@ body.app-active #app {
                 <div style="font-size:11.5px;color:var(--t3);margin-top:3px" id="settings-plan-features"></div>
               </div>
               <div style="display:flex;gap:8px">
-                <button class="btn btn-outline btn-sm" id="settings-downgrade-btn" onclick="sp('settings');setTimeout(function(){document.getElementById('settings-plans-anchor')?.scrollIntoView({behavior:'smooth'});},300)" style="display:none">Change</button>
+                <button class="btn btn-outline btn-sm" id="settings-downgrade-btn" onclick="showChangePlanModal()" style="display:none">Change Plan</button>
                 <button class="btn btn-upgrade btn-sm" id="settings-upgrade-btn" onclick="showUpgrade('Upgrade your plan','')">Upgrade</button>
               </div>
             </div>
@@ -3797,7 +3848,7 @@ console.log('AR Match Pro v60736518 — fixed build loading');
 // ── Phase 2 polish additions ──
 function clearAllExceptions(){
   if(!EXC.length){toast('No exceptions to clear');return;}
-  if(!confirm('Clear all '+EXC.length+' exception records? This cannot be undone.'))return;
+  showConfirm('Clear all '+EXC.length+' exception records?\n\nThis cannot be undone.',function(){EXC=[];saveToStorage();if(typeof renderWsExcPremium==='function')renderWsExcPremium();rExc();updDash();updTop();addAudit('Cleared exceptions');toast('Exceptions cleared');});return;
   EXC=[];
   saveToStorage();
   rExc();
@@ -4113,7 +4164,7 @@ function animateKpiVal(id,newVal){
 const _origClearAllExceptions=clearAllExceptions;
 function _legacyClearAllExceptions(){
   if(!EXC.length){toast('No exceptions to clear');return;}
-  if(!confirm('Clear all '+EXC.length+' exception records? This action cannot be undone.'))return;
+  showConfirm('Clear all '+EXC.length+' exception records?\n\nThis cannot be undone.',function(){EXC=[];saveToStorage();if(typeof renderWsExcPremium==='function')renderWsExcPremium();rExc();updDash();updTop();addAudit('Cleared exceptions');toast('Exceptions cleared');});return;
   // Animate cards out
   document.querySelectorAll('.exc-card').forEach((el,i)=>{
     setTimeout(()=>{el.style.transition='all .3s ease';el.style.opacity='0';el.style.transform='translateX(20px)';},i*40);
@@ -4548,6 +4599,18 @@ function showModal(title,bodyHtml){
   if(overlay)overlay.classList.add('open');
 }
 function closeModal(){const o=document.getElementById('exc-modal-overlay');if(o)o.classList.remove('open');}
+function showConfirm(msg,onYes,yesLabel,yesClass){
+  yesLabel=yesLabel||'Confirm';yesClass=yesClass||'btn-r';
+  // Store callback globally so inline onclick can reach it
+  window._confirmCb=onYes;
+  showModal('Confirm',
+    '<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:20px;white-space:pre-line">'+msg+'</div>'+
+    '<div style="display:flex;gap:8px">'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn btn-sm '+yesClass+'" onclick="closeModal();window._confirmCb&&window._confirmCb()">'+yesLabel+'</button>'+
+    '</div>'
+  );
+}
 function showProgress(msg,pct){
   const pp=document.getElementById('parse-progress');if(pp)pp.style.display='block';
   const pm=document.getElementById('parse-msg');if(pm)pm.textContent=msg;
@@ -4563,12 +4626,12 @@ function swTab(t,el){
 }
 
 // ── Clear data ──
-function clearInvData(){if(!confirm('Clear all invoice data?'))return;INV=[];saveToStorage();rInv();updDash();updTop();addAudit('Cleared invoice data');toast('Invoice data cleared');}
-function clearPayData(){if(!confirm('Clear all remittance data?'))return;PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittance data');toast('Remittance data cleared');}
-function clearMatchData(){if(!confirm('Clear all match results?'))return;RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');}
-function clearAllData(){if(!confirm('Clear all data?'))return;INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');}
+function clearInvData(){showConfirm('Clear all invoice data?\n\nThis cannot be undone.',function(){INV=[];saveToStorage();rInv();updDash();updTop();addAudit('Cleared invoice data');toast('Invoice data cleared');});}
+function clearPayData(){showConfirm('Clear all remittance data?\n\nThis cannot be undone.',function(){PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittance data');toast('Remittance data cleared');});}
+function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
+function clearAllData(){showConfirm('Clear all data?\n\nThis cannot be undone.',function(){INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');});}
 function resetAllData(){
-  if(!confirm('⚠️ Reset ALL data?\n\nThis will permanently delete:\n• All invoices and remittance\n• All match results and exceptions\n\nThis cannot be undone.'))return;
+  showConfirm('⚠️ Reset ALL data?\n\nThis will permanently delete:\n• All invoices and remittance\n• All match results and exceptions\n\nThis cannot be undone.',function(){_doResetAll();});return;
   INV=[];PAY=[];RES=[];EXC=[];
   rAll();updDash();updTop();setStatus('ready');
   try{['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k));}catch(e){}});}catch(e){}
@@ -4737,7 +4800,7 @@ function rExc(){
           <option ${ex.dec==='Post as Unapplied Cash'?'selected':''}>Post as Unapplied Cash</option>
           <option ${ex.dec==='Write off'?'selected':''}>Write off</option>
           <option ${ex.dec==='Bank fee'?'selected':''}>Bank fee</option>
-          <option ${ex.dec==='Wire transfer'?'selected':''}>Wire transfer</option>
+          
           <option ${ex.dec==='Chase customer'?'selected':''}>Chase customer</option>
           <option ${ex.dec==='Duplicate — reject'?'selected':''}>Duplicate — reject</option>
         </select>
@@ -4771,8 +4834,9 @@ function rPost(){
       <td><span class="badge ${badgeCls}" style="font-size:10px">${typeLbl}</span></td>
       <td class="td-key">${r.d||r.id||'—'}</td>
       <td class="td-amt pos">$${$f(r.pd)}</td>
-      <td class="td-amt ${r.vr<-.01?'neg':''}">${(!isExc&&r.vr<-.01)?'$'+$f(Math.abs(r.vr)):'—'}</td>
-      <td><span class="badge badge-g">Approved</span></td>
+      <!-- short pay col removed -->
+      <td class="td-amt" style="color:var(--am-t)">${r.writeOff>0?$f(r.writeOff):'—'}</td>
+      <td class="td-amt" style="color:var(--pu-t)">${r.bankFee>0?$f(r.bankFee):'—'}</td>
     </tr>`;
   }).join('');
 }
@@ -4869,8 +4933,8 @@ function exportPost(){
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
   const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
-  const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Short Pay','Approved'];
-  const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(!r.fromExc&&r.vr<-.01)?Math.abs(r.vr).toFixed(2):'0.00','Yes'];});
+  const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Write-off','Bank Fee'];
+  const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(r.writeOff||0).toFixed(2),(r.bankFee||0).toFixed(2)];});
   csvDL([PH,...rows],'posting_'+d+'.csv');
   addAudit('Posting export downloaded',ap.length+' rows');
   toast('Posting file exported · '+ap.length+' rows');
@@ -4909,16 +4973,26 @@ function resolveException(idx,dec){
   const ex=EXC[idx];if(!ex)return;
   if(!dec||dec==='— Select —')return;
   if(dec==='Apply to invoice'){
-    const openInvs=INV.filter(v=>!v.s||v.s==='Open'||v.s==='Partial');
-    const opts=openInvs.map(v=>`<option value="${v.i}">${v.i} — ${v.c} — $${$f(v.amt)}</option>`).join('');
-    showModal('Apply to Invoice',`<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px">Select invoice to apply this payment to:</div>
-      ${opts?`<select id="exc-inv-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:8px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
-        <option value="">— Select from open invoices —</option>${opts}</select><div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:8px">— or enter manually —</div>`:''}
-      <input type="text" id="exc-inv-manual" placeholder="Invoice # (manual entry)" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:7px;font-size:13px;margin-bottom:14px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none">
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-p btn-sm" onclick="confirmExcInv(${idx})">Apply to invoice</button>
-        <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
-      </div>`);
+    // Navigate to To Be Matched tab, pre-filter Customer Open Items to this account
+    const ex2=EXC[idx];
+    closeModal();
+    // Store pending exception so invoice row click can resolve it
+    window._pendingExcApply={idx,ex:ex2};
+    // Navigate
+    setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app');
+    // Pre-filter open items to this customer's account
+    setTimeout(function(){
+      const acctInp=document.getElementById('ca-acct-input');
+      const acctSel=document.getElementById('ca-acct-dropdown');
+      if(acctInp)acctInp.value=(ex2.a||'')+(ex2.c?' — '+ex2.c:'');
+      if(acctSel)acctSel.value=ex2.a||'';
+      renderFbl5n('ca-open-items-body',ex2.a||'','');
+      // Show a banner in the open items header
+      const lbl=document.getElementById('ca-bottom-cust-label');
+      if(lbl)lbl.innerHTML='<span style="color:var(--am-t);font-weight:700">📌 Click an invoice to apply '+ex2.id+' ($'+$f(ex2.amt)+')</span>';
+      // Scroll open items into view
+      const el=document.getElementById('ca-open-items-tbl');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    },150);
     return;
   }
   if(dec==='Post as Unapplied Cash'){
@@ -5041,7 +5115,7 @@ function engLoadPayment(idx){
   set('eng-h-method',p.m||p.txType||'—');set('eng-h-ccy',p.ccy||'USD');
   const remEl=document.getElementById('eng-h-rem');if(remEl)remEl.style.color='var(--pd)';
   ['eng-full-badge','eng-locked-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  ['eng-grid-wrap','eng-audit-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});const ph=document.getElementById('eng-header');if(ph)ph.style.display='flex';
+  ['eng-grid-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});const ph=document.getElementById('eng-header');if(ph)ph.style.display='flex';
   const aw=document.getElementById('alloc-totals');if(aw)aw.style.display='none';
   document.getElementById('eng-export-btn').style.display='none';
   document.getElementById('eng-approve-btn').style.display='inline-flex';
@@ -5428,7 +5502,8 @@ function _legacy_renderWsReview(){
 function reviewItemClick(idx){const r=RES[idx];if(!r)return;openCustomerDrawerForCustomer(r.c,r.a);}
 function reopenResultItem(idx){
   const r=RES[idx];if(!r)return;
-  if(!confirm('Remove this match result?'))return;
+  // confirm replaced by showConfirm
+  
   RES.splice(idx,1);
   const inv=INV.find(v=>v.i===r.i);if(inv)inv.s='';
   saveToStorage();renderWsReview();updDash();updTop();
@@ -5692,8 +5767,38 @@ function closeCustomerDrawer(){
 
 // ── Cash App top filters ──
 function caFilterUpdate(){
-  // NOTE: ca-bank-sel is a BANK account selector (JP Morgan, BofA) — never overwrite it
-  // Only refresh the payment queue when filters change
+  // Filter payment queue by selected bank, currency, and date range
+  var bankSel=document.getElementById('ca-bank-sel');
+  var bankVal=bankSel?bankSel.value:'';
+  // Extract bank code: "JPM-1234567890" → "JPM", "BOA-9876543210" → "BOA"
+  var bankCode=bankVal?bankVal.split('-')[0]:'';
+  var ccySel=document.getElementById('ca-ccy-sel');
+  var ccyVal=ccySel?ccySel.value:'';
+  var dateFrom=document.getElementById('ca-date-from');
+  var dateTo=document.getElementById('ca-date-to');
+  var fromD=dateFrom&&dateFrom.value?new Date(dateFrom.value):null;
+  var toD=dateTo&&dateTo.value?new Date(dateTo.value):null;
+  // Filter PAY queue rows
+  var items=document.querySelectorAll('#pq-list .pq-item');
+  items.forEach(function(item,i){
+    var p=PAY[i];if(!p)return;
+    var show=true;
+    if(bankCode&&p.bank&&p.bank!==bankCode)show=false;
+    if(ccyVal&&p.ccy&&p.ccy!==ccyVal)show=false;
+    if(fromD&&p.payDate&&new Date(p.payDate)<fromD)show=false;
+    if(toD&&p.payDate&&new Date(p.payDate)>toD)show=false;
+    item.style.display=show?'':'none';
+  });
+  // Also filter the remittance table
+  if(bankCode){
+    document.querySelectorAll('#rem-tb tr').forEach(function(tr,i){
+      if(i===0)return;// header
+      var p=PAY[i-1];if(!p)return;
+      tr.style.display=(!p.bank||p.bank===bankCode)?'':'none';
+    });
+  } else {
+    document.querySelectorAll('#rem-tb tr').forEach(function(tr){tr.style.display='';});
+  }
   if(typeof engRefreshSel==='function')engRefreshSel();
 }
 </script>
@@ -5784,26 +5889,38 @@ function loadSampleInv(){
   toast('15 invoices loaded (incl. 1 credit memo)');
 }
 
-function loadSampleRem(){
-  PAY=[
-    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110001',payDate:'2026-05-01',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110002',payDate:'2026-05-01',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40016800',c:'MedCore Solutions',amt:7500,po:'',i:'5104387980',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884421',payDate:'2026-05-01',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40016800',c:'MedCore Solutions',amt:3600,po:'4517920656',i:'5104865901',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110003',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:1175,po:'4519244548',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110004',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:1295,po:'4520051766',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110005',payDate:'2026-05-02',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:33200,po:'4520652895',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884422',payDate:'2026-05-03',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40017108',c:'Delta Aerospace',amt:33495,po:'',i:'5104860600',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110006',payDate:'2026-05-03',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40016800',c:'MedCore Solutions',amt:1595,po:'4520683115',i:'',so:'',m:'Check',txType:'Check',txId:'5043',payDate:'2026-05-04',ccy:'USD',n:'Down payment',coa:false,dp:true},
-    {a:'40031200',c:'Orion Logistics',amt:13000,po:'4521100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884423',payDate:'2026-05-04',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40045600',c:'Vertex Energy',amt:15000,po:'',i:'5104931500',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110007',payDate:'2026-05-05',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40999999',c:'Unknown Payer',amt:2500,po:'',i:'',so:'',m:'Check',txType:'Check',txId:'1188',payDate:'2026-05-05',ccy:'USD',n:'',coa:false,dp:false},
-    {a:'40058700',c:'Pinnacle Systems',amt:39700,po:'4522100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884430',payDate:'2026-05-06',ccy:'USD',n:'PO group — covers inv 5105001001 + 5105001002',coa:false,dp:false},
+function loadSampleRemJPM(){
+  // JPM: Delta Aerospace, Orion Logistics, Vertex Energy, Unknown Payer
+  var jpm=[
+    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110001',payDate:'2026-05-01',ccy:'USD',n:'Down payment',bank:'JPM',coa:false,dp:true},
+    {a:'40017108',c:'Delta Aerospace',amt:975,po:'4520591829',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110002',payDate:'2026-05-01',ccy:'USD',n:'Down payment',bank:'JPM',coa:false,dp:true},
+    {a:'40017108',c:'Delta Aerospace',amt:1175,po:'4519244548',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110004',payDate:'2026-05-02',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:1295,po:'4520051766',i:'',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110005',payDate:'2026-05-02',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:33200,po:'4520652895',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884422',payDate:'2026-05-03',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40017108',c:'Delta Aerospace',amt:33495,po:'',i:'5104860600',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110006',payDate:'2026-05-03',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40031200',c:'Orion Logistics',amt:13000,po:'4521100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884423',payDate:'2026-05-04',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40045600',c:'Vertex Energy',amt:15000,po:'',i:'5104931500',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110007',payDate:'2026-05-05',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
+    {a:'40999999',c:'Unknown Payer',amt:2500,po:'',i:'',so:'',m:'Check',txType:'Check',txId:'1188',payDate:'2026-05-05',ccy:'USD',n:'',bank:'JPM',coa:false,dp:false},
   ];
+  PAY=PAY.filter(function(p){return p.bank!=='JPM';}).concat(jpm);
   rRem();updTop();setStatus('loaded');saveToStorage();
-  addAudit('Sample remittance loaded','12 rows');
-  toast('12 remittance lines loaded');
+  addAudit('Sample JPM remittance loaded','9 rows');
+  toast('9 JPM remittance lines loaded');
 }
+function loadSampleRemBOA(){
+  // BOA: MedCore Solutions, Pinnacle Systems
+  var boa=[
+    {a:'40016800',c:'MedCore Solutions',amt:7500,po:'',i:'5104387980',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884421',payDate:'2026-05-01',ccy:'USD',n:'',bank:'BOA',coa:false,dp:false},
+    {a:'40016800',c:'MedCore Solutions',amt:3600,po:'4517920656',i:'5104865901',so:'',m:'ACH',txType:'ACH',txId:'ACH202600110003',payDate:'2026-05-02',ccy:'USD',n:'',bank:'BOA',coa:false,dp:false},
+    {a:'40016800',c:'MedCore Solutions',amt:1595,po:'4520683115',i:'',so:'',m:'Check',txType:'Check',txId:'5043',payDate:'2026-05-04',ccy:'USD',n:'Down payment',bank:'BOA',coa:false,dp:true},
+    {a:'40058700',c:'Pinnacle Systems',amt:39700,po:'4522100001',i:'',so:'',m:'Wire',txType:'Wire',txId:'WIRE-FED-884430',payDate:'2026-05-06',ccy:'USD',n:'PO group — covers inv 5105001001 + 5105001002',bank:'BOA',coa:false,dp:false},
+  ];
+  PAY=PAY.filter(function(p){return p.bank!=='BOA';}).concat(boa);
+  rRem();updTop();setStatus('loaded');saveToStorage();
+  addAudit('Sample BOA remittance loaded','4 rows');
+  toast('4 BOA remittance lines loaded');
+}
+function loadSampleRem(){loadSampleRemJPM();loadSampleRemBOA();}
 
 function loadDemoData(){loadSampleInv();loadSampleRem();}
 
@@ -6128,7 +6245,7 @@ function renderSettingsPlans(){
 }
 
 function showDowngradeModal(){
-  showModal('Downgrade Plan','<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:16px">This is a simulated demo — no actual billing change occurs.<br><br>In production, downgrading would take effect at end of billing period.</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-p btn-sm" onclick="closeModal();toast(\'Downgrade simulated — no billing changed\')">Confirm (demo)</button></div>');
+  showChangePlanModal();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -6222,9 +6339,41 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
 }
 
 function fbl5nRowClick(invI){
+  // Check if we're in exception-apply mode
+  if(window._pendingExcApply){
+    var pea=window._pendingExcApply;
+    var inv=INV.find(function(v){return v.i===invI;});
+    if(!inv){window._pendingExcApply=null;return;}
+    // Show confirmation step
+    showModal('Apply Exception to Invoice',
+      '<div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:16px">'+
+      '<strong style="color:var(--t1)">Confirm application:</strong><br><br>'+
+      'Payment: <strong>'+pea.ex.id+'</strong> — '+pea.ex.c+'<br>'+
+      'Amount: <strong style="color:var(--g-t)">$'+$f(pea.ex.amt)+'</strong><br><br>'+
+      '→ Invoice: <strong>'+inv.i+'</strong> — '+inv.c+'<br>'+
+      'Invoice Amt: <strong>$'+$f(inv.amt)+'</strong><br>'+
+      (Math.abs(pea.ex.amt-inv.amt)>0.01?'<span style="color:var(--am-t)">⚠️ Variance: $'+$f(Math.abs(pea.ex.amt-inv.amt))+'</span>':'<span style="color:var(--g-t)">✓ Ties to zero</span>')+
+      '</div>'+
+      '<div style="display:flex;gap:8px">'+
+      '<button class="btn btn-outline btn-sm" onclick="closeModal();window._pendingExcApply=null;var lbl=document.getElementById(\'ca-bottom-cust-label\');if(lbl)lbl.textContent=\'— select account or payment\';">Cancel</button>'+
+      '<button class="btn btn-p btn-sm" onclick="closeModal();_confirmExcApplyToInv('+pea.idx+',\''+inv.i+'\')">Apply to invoice</button>'+
+      '</div>'
+    );
+    return;
+  }
   var row=ENG_ROWS.find(function(r){ return r.inv.i===invI; });
   if(row) engToggleRow(ENG_ROWS.indexOf(row),!row.selected);
   refreshFbl5n();
+}
+function _confirmExcApplyToInv(idx,invRef){
+  window._pendingExcApply=null;
+  var lbl=document.getElementById('ca-bottom-cust-label');if(lbl)lbl.textContent='— select account or payment';
+  var ex=EXC[idx];if(!ex)return;
+  ex.dec='Apply to invoice';ex.appliedToInv=invRef;
+  finalizeExcResolution(idx,'Apply to invoice');
+  // Revert to exceptions tab
+  setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');
+  setTimeout(renderWsExcPremium,100);
 }
 function fbl5nCheckRow(invI,checked){
   var row=ENG_ROWS.find(function(r){ return r.inv.i===invI; });
@@ -6235,6 +6384,27 @@ function fbl5nApplyRow(invI){
   var row=ENG_ROWS.find(function(r){ return r.inv.i===invI; });
   if(row&&!row.selected){ fbl5nCheckRow(invI,true); }
   else if(!ENG_PAY){ toast('Select a payment first from the queue above','warn'); }
+}
+function filterFbl5n(){
+  var filterRow=document.getElementById('fbl5n-filter-row');
+  if(!filterRow)return;
+  var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');
+  var filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});
+  var rows=document.querySelectorAll('#ca-open-items-body tr');
+  rows.forEach(function(tr){
+    if(tr.querySelector('td[colspan]')){tr.style.display='';return;} // empty state row
+    var cells=tr.querySelectorAll('td');
+    var show=true;
+    // inputs align to cols: 0=checkbox(skip), 1=account, 2=customer, 3=inv, 4=invdate,
+    // 5=duedate, 6=aging, 7=po, 8=so, 9=doc, 10=origamt, 11=bal, 12=applied, 13=status
+    filters.forEach(function(f,fi){
+      if(!f)return;
+      var cell=cells[fi];
+      if(!cell)return;
+      if(!cell.innerText.toLowerCase().includes(f))show=false;
+    });
+    tr.style.display=show?'':'none';
+  });
 }
 function refreshFbl5n(){
   var acct=(document.getElementById('ca-acct-dropdown')||{}).value||'';
@@ -6498,6 +6668,43 @@ function setCfoPeriod(p,btn){
   updateCfoSummary();
 }
 
+function showChangePlanModal(){
+  const PLANS_DEF=[
+    {key:'demo',name:'Demo',price:'Free',desc:'Try all features with sample data. No billing.',color:'var(--t3)',features:'Sample data only · No export'},
+    {key:'starter',name:'Starter',price:'$299/mo',desc:'For small AR teams. Real data import & export.',color:'var(--cy)',features:'Up to 1,000 invoices/mo · CSV export · Email support'},
+    {key:'pro',name:'Pro',price:'$599/mo',desc:'Advanced matching, CFO reporting, full export.',color:'var(--p)',features:'Unlimited invoices · All exports · CFO dashboard · Priority support'},
+    {key:'team',name:'Team',price:'$999/mo',desc:'Multi-user, audit trail, ERP posting.',color:'var(--pu)',features:'All Pro features · Multi-user · Audit trail · ERP posting · SLA'},
+  ];
+  const levels={demo:0,starter:1,pro:2,team:3};
+  const cur=USER_PLAN||'demo';
+  const curLvl=levels[cur]||0;
+  const cards=PLANS_DEF.map(function(p){
+    const isCur=p.key===cur;
+    const isUp=(levels[p.key]||0)>curLvl;
+    const isDown=(levels[p.key]||0)<curLvl;
+    const action=isCur?'<span style="font-size:11px;color:var(--t3);font-style:italic">Current plan</span>':
+      isUp?'<button class="btn btn-p btn-sm" style="font-size:11.5px" onclick="simPlanChange(\''+p.key+'\')">Upgrade →</button>':
+           '<button class="btn btn-outline btn-sm" style="font-size:11.5px" onclick="simPlanChange(\''+p.key+'\')">Downgrade</button>';
+    return'<div style="padding:14px;border:1.5px solid '+(isCur?'var(--p)':'var(--bdr)')+';border-radius:12px;background:'+(isCur?'var(--pg)':'var(--surface)')+';flex:1;min-width:140px">'+
+      '<div style="font-size:13px;font-weight:800;color:'+p.color+';margin-bottom:2px">'+p.name+'</div>'+
+      '<div style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--t1);margin-bottom:6px">'+p.price+'</div>'+
+      '<div style="font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:10px">'+p.desc+'</div>'+
+      '<div style="font-size:10.5px;color:var(--t3);line-height:1.6;margin-bottom:12px">'+p.features+'</div>'+
+      action+'</div>';
+  }).join('');
+  showModal('Change Plan',
+    '<div style="font-size:12px;color:var(--t3);margin-bottom:14px">Current plan: <strong style="color:var(--pd)">'+
+    (PLANS_DEF.find(function(p){return p.key===cur;})||{name:cur}).name+'</strong> · Changes take effect at end of billing period.</div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px">'+cards+'</div>'
+  );
+}
+function simPlanChange(newPlan){
+  closeModal();
+  const oldPlan=USER_PLAN;USER_PLAN=newPlan;
+  if(typeof renderSettingsPlans==='function')renderSettingsPlans();
+  addAudit('Plan change simulated',oldPlan+' → '+newPlan);
+  toast('✓ Plan changed to '+newPlan+' (simulated — no billing change)');
+}
 function updateCfoSummary(){
   var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   var setW=function(id,w){var el=document.getElementById(id);if(el)el.style.width=w;};
