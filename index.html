@@ -822,7 +822,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <span id="price-starter" style="font-size:48px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'JetBrains Mono',monospace;line-height:1">$799</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-starter-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Billed as $7,990/year</div>
+        <div id="price-starter-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Billed as $8,388/year</div>
         <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Up to 5,000 rows/month</div>
@@ -849,7 +849,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <span id="price-pro" style="font-size:48px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'JetBrains Mono',monospace;line-height:1">$1,599</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Billed as $15,990/year</div>
+        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Billed as $16,788/year</div>
         <div style="height:1px;background:rgba(14,165,233,.25);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Starter, plus:</div>
@@ -878,7 +878,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <span id="price-team" style="font-size:42px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'JetBrains Mono',monospace;line-height:1">$2,999</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-team-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Billed from $29,990/year</div>
+        <div id="price-team-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Billed as $29,988/year</div>
         <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Pro, plus:</div>
@@ -1109,12 +1109,12 @@ function setBilling(type){
   document.getElementById('bill-monthly').style.color = monthly ? '#0F172A' : 'rgba(255,255,255,.55)';
   document.getElementById('bill-annual').style.background = monthly ? 'transparent' : '#fff';
   document.getElementById('bill-annual').style.color = monthly ? 'rgba(255,255,255,.55)' : '#0F172A';
-  document.getElementById('price-starter').textContent = monthly ? '$799' : '$666';
-  document.getElementById('price-pro').textContent = monthly ? '$1,599' : '$1,333';
+  document.getElementById('price-starter').textContent = monthly ? '$799' : '$699';
+  document.getElementById('price-pro').textContent = monthly ? '$1,599' : '$1,399';
   document.getElementById('price-team').textContent = monthly ? '$2,999' : '$2,499';
-  document.getElementById('price-starter-annual').textContent = monthly ? 'No long-term commitment' : 'Billed as $7,990/year';
-  document.getElementById('price-pro-annual').textContent = monthly ? 'No long-term commitment' : 'Billed as $15,990/year';
-  document.getElementById('price-team-annual').textContent = monthly ? 'No long-term commitment' : 'Billed from $29,990/year';
+  document.getElementById('price-starter-annual').textContent = monthly ? 'No long-term commitment' : 'Billed as $8,388/year';
+  document.getElementById('price-pro-annual').textContent = monthly ? 'No long-term commitment' : 'Billed as $16,788/year';
+  document.getElementById('price-team-annual').textContent = monthly ? 'No long-term commitment' : 'Billed as $29,988/year';
 }
 setBilling('annual');
 function dismissCookie(){
