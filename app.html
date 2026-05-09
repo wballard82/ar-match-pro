@@ -7396,22 +7396,27 @@ function closeReviewInlineDetail(){
 // ── Help Modal ──
 var HELP_PDF_B64 = null; // lazily loaded
 var HELP_SECTIONS = [
-  ['🚀','Getting Started','Login, sample data, navigation'],
-  ['💳','Cash Application','Match payments to invoices'],
-  ['⚠️','Exceptions','Resolve unmatched payments'],
-  ['⚖️','Reconcile','Write-offs, bank fees, variance'],
-  ['📊','Reports & CFO','Metrics, DSO, Auto-Match Rate'],
-  ['⚙️','Settings','Engine rules, CFO thresholds, plans'],
-  ['📤','Posting Export','ERP file columns and formats'],
-  ['🔧','Troubleshooting','Common issues and fixes'],
+  ['🚀','Getting Started','Login, sample data, navigation',"sp('worklist')"],
+  ['💳','Cash Application','Match payments to invoices',"setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')"],
+  ['⚠️','Exceptions','Resolve unmatched payments',"setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)"],
+  ['⚖️','Reconcile','Write-offs, bank fees, variance',"setCaTab('recon',document.getElementById('ca-tab-recon'));sp('cash-app')"],
+  ['📊','Reports &amp; CFO','Metrics, DSO, Auto-Match Rate',"sp('reporting')"],
+  ['⚙️','Settings','Engine rules, CFO thresholds, plans',"sp('settings')"],
+  ['📤','Posting Export','ERP file columns and formats',"sp('posting')"],
+  ['🔧','Troubleshooting','Common issues and fixes',"openContactModal()"],
 ];
 function openHelpModal(){
   var o=document.getElementById('help-modal-overlay');if(o)o.style.display='flex';
   var grid=document.getElementById('help-grid');
-  if(grid&&!grid.children.length){
-    grid.innerHTML=HELP_SECTIONS.map(function(s){
-      return'<div style="padding:12px;border:1px solid var(--bdr);border-radius:10px;background:var(--surface2)">'+
-        '<div style="font-size:18px;margin-bottom:4px">'+s[0]+'</div>'+
+  if(grid){
+    grid.innerHTML=HELP_SECTIONS.map(function(s,i){
+      return'<div onclick="closeHelpModal();'+s[3]+'" style="padding:14px;border:1px solid var(--bdr);border-radius:10px;background:var(--surface2);cursor:pointer;transition:border-color .15s,background .15s" '+
+        'onmouseover="this.style.borderColor=\'var(--p)\';this.style.background=\'var(--pg)\'" '+
+        'onmouseout="this.style.borderColor=\'var(--bdr)\';this.style.background=\'var(--surface2)\'">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'+
+          '<div style="font-size:22px">'+s[0]+'</div>'+
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>'+
+        '</div>'+
         '<div style="font-size:12.5px;font-weight:700;color:var(--t1);margin-bottom:2px">'+s[1]+'</div>'+
         '<div style="font-size:11px;color:var(--t3)">'+s[2]+'</div>'+
       '</div>';
@@ -7522,11 +7527,7 @@ async function sendContactMsg(){
         <a id="help-pdf-link" href="#" download="ARMatchPro_UserGuide.pdf" onclick="downloadHelp(event)" class="btn btn-p btn-sm" style="text-decoration:none;flex-shrink:0;display:inline-flex;align-items:center;gap:5px">↓ Download PDF</a>
       </div>
       <div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:12px">Quick Reference</div>
-      <div id="help-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px"></div>
-      <div style="border-top:1px solid var(--bdr);padding-top:16px;display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:12px;color:var(--t3)">Need more help?</div>
-        <button class="btn btn-p btn-sm" onclick="closeHelpModal();openContactModal()" style="font-size:12px">💬 Contact Support</button>
-      </div>
+      <div id="help-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"></div>
     </div>
   </div>
 </div>
