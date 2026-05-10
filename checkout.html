@@ -68,8 +68,8 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
       </button>
       <div class="trust" style="margin-top:12px">
         <div class="trust-item">🔒 Secure payment</div>
-        <div class="trust-item">↩ Cancel anytime</div>
         <div class="trust-item">⚡ Instant access</div>
+        <div class="trust-item">🌐 Browser-based · no install</div>
       </div>
       <div class="divider">or</div>
       <button class="manual-btn" onclick="showManual()">Request invoice / pay later</button>
@@ -113,9 +113,9 @@ const _PRICES = {
   team:    'price_1TTblGK5o648Z7Jzg4vSZT01'
 };
 const _PLANS = {
-  starter:{name:'Starter Plan',price:'$399',mo:'$399/mo',feats:['1 user · Up to 5,000 rows/mo','Invoice # & PO # matching','Amount tolerance','Basic exceptions report','Generic CSV export','Email support']},
-  pro:    {name:'Pro Plan',    price:'$999',mo:'$999/mo',feats:['Everything in Starter','Unlimited rows','Multi-invoice allocation','SO, Delivery & Tracking match','Exception dashboard','SAP F-28 & NetSuite export','Priority support']},
-  team:   {name:'Team Plan',  price:'$1,999',mo:'$1,999/mo',feats:['3–10 users · Everything in Pro','Roles & permissions','Audit logs','Saved matching workflows','CFO reporting dashboard','Dedicated onboarding','SLA support']}
+  starter:{name:'Starter Plan',price:'$799',mo:'$799/mo',feats:['1–2 users · Up to 5,000 rows/mo','Invoice & Amount matching','PO matching','Manual review queue','Basic posting exports (CSV)','Audit trail','Limited PDF exports','Standard support']},
+  pro:    {name:'Pro Plan',    price:'$1,599',mo:'$1,599/mo',feats:['Everything in Starter','Unlimited rows processed','Multi-invoice allocation','SAP F-28 exports','NetSuite exports','AI-assisted matching','Confidence scoring','Advanced exception management','Reconciliation workspace','Workflow approvals','CFO dashboards','Multiple bank accounts','Priority support']},
+  team:   {name:'Team Plan',  price:'$2,999',mo:'$2,999/mo',feats:['Everything in Pro','Multi-user collaboration','Role-based permissions','Advanced approval workflows','Custom export mapping','Enterprise workflow configuration','Dedicated onboarding','Custom implementation support','SLA support options','Priority feature access']}
 };
 
 const params=new URLSearchParams(window.location.search);

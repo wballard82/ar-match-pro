@@ -739,8 +739,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <button class="lead-close" onclick="closeLeadModal()">×</button>
     <div class="lead-header">
       <div class="lead-header-mark">AR</div>
-      <h3>Try AR Match Pro — Free Demo</h3>
-      <p>Enter your details and we'll send you straight into the live demo. No credit card required.</p>
+      <h3>Start Your 7-Day Free Trial</h3>
+      <p>Full Pro access — multi-invoice allocation, AI matching, SAP/NetSuite exports, CFO dashboards. No credit card required.</p>
     </div>
     <div id="lead-form-wrap">
       <div class="lead-body">
@@ -777,10 +777,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <option value="Other">Other</option>
         </select>
         <button class="lead-submit" id="lead-submit-btn" onclick="submitLead()">
-          ▶ Start free demo
+          ▶ Start 7-day free trial
         </button>
         <div class="lead-privacy">
-          🔒 Your information is sent directly to our team at info@armatchpro.com.<br>We never share your data. Your files are processed securely. No ERP connection required.
+          🔒 7-day Pro trial · Full access · No credit card required · Your data never leaves your browser.
         </div>
       </div>
     </div>
@@ -1281,7 +1281,9 @@ async function submitLead(){
     invoiceVolume:volume,
     startedAt:now.toISOString(),
     expiresAt:expiresAt.toISOString(),
-    plan:'demo',
+    plan:'pro',
+    demoTier:'pro-trial',
+    trialDays:7,
     granted:true
   };
   try{

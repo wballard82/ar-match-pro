@@ -2216,20 +2216,20 @@ body.app-active #app {
       <div class="upgrade-grid">
         <div class="upgrade-card">
           <div class="upgrade-plan">Starter</div>
-          <div class="upgrade-price">$399<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats">1 user · 5,000 rows<br><strong>Invoice + PO matching</strong><br>CSV export · Email support</div>
+          <div class="upgrade-price">$799<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
+          <div class="upgrade-feats">1–2 users · 5,000 rows<br><strong>Invoice + PO matching</strong><br>CSV export · Standard support</div>
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('starter')">Select Starter</button>
         </div>
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
-          <div class="upgrade-price">$999<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · SO/Del/Trk<br>SAP F-28 · NetSuite · Priority</div>
+          <div class="upgrade-price">$1,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 · NetSuite · CFO dashboards</div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select Pro</button>
         </div>
         <div class="upgrade-card">
           <div class="upgrade-plan">Team</div>
-          <div class="upgrade-price">$1,999<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats">3–10 users · Roles<br>Audit logs · <strong>Workflows</strong><br>Onboarding · SLA</div>
+          <div class="upgrade-price">$2,999<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
+          <div class="upgrade-feats">Multi-user · Roles &amp; permissions<br>Audit logs · <strong>Approval workflows</strong><br>Dedicated onboarding · SLA</div>
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('team')">Select Team</button>
         </div>
       </div>
@@ -2249,20 +2249,20 @@ body.app-active #app {
       <div class="upgrade-grid">
         <div class="upgrade-card">
           <div class="upgrade-plan">Starter</div>
-          <div class="upgrade-price">$399<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats">1 user · 5,000 rows<br><strong>Invoice + PO matching</strong><br>CSV export</div>
+          <div class="upgrade-price">$799<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
+          <div class="upgrade-feats">1–2 users · 5,000 rows<br><strong>Invoice + PO matching</strong><br>CSV export</div>
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('starter')">Select</button>
         </div>
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
-          <div class="upgrade-price">$999<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · SAP/NetSuite</div>
+          <div class="upgrade-price">$1,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP/NetSuite<br>CFO dashboards · Reconcile</div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select</button>
         </div>
         <div class="upgrade-card">
           <div class="upgrade-plan">Team</div>
-          <div class="upgrade-price">$1,999<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats">Multi-user · Audit · SLA</div>
+          <div class="upgrade-price">$2,999<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
+          <div class="upgrade-feats">Multi-user · Roles · Audit · SLA</div>
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('team')">Select</button>
         </div>
       </div>
@@ -2379,7 +2379,7 @@ body.app-active #app {
 
   <!-- KPI STRIP — Executive-level metrics -->
   <div class="kpi-strip">
-    <div class="kpi-card kpi-green" onclick="setCaTab('recon',document.getElementById('ca-tab-recon'));sp('cash-app')" style="cursor:pointer;min-width:150px">
+    <div class="kpi-card kpi-green" onclick="if(checkFeature('reconcile')){setCaTab('recon',document.getElementById('ca-tab-recon'));sp('cash-app');}" style="cursor:pointer;min-width:150px">
       <div class="kpi-card-label">
         <div class="kpi-dot kpi-dot-green"></div>
         Cash Matched
@@ -2490,7 +2490,7 @@ body.app-active #app {
       </div>
       <div class="sb-group">
         <div class="sb-group-label">Reports</div>
-        <div class="sb-item" id="sbi-cfo" onclick="sp('cfo')">
+        <div class="sb-item" id="sbi-cfo" onclick="if(checkFeature('cfo'))sp('cfo')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12l3-4 3 2 3-5 3 3"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
           CFO Summary
         </div>
@@ -2759,7 +2759,7 @@ body.app-active #app {
           <button class="ca-tab active" id="ca-tab-match" onclick="setCaTab('match',this)">To Be Matched</button>
           <button class="ca-tab" id="ca-tab-review" onclick="setCaTab('review',this)">Review</button>
           <button class="ca-tab" id="ca-tab-exc" onclick="setCaTab('exc',this)">Exceptions</button>
-          <button class="ca-tab" id="ca-tab-recon" onclick="setCaTab('recon',this)">Reconcile</button>
+          <button class="ca-tab" id="ca-tab-recon" onclick="if(checkFeature('reconcile'))setCaTab('recon',this)">Reconcile</button>
         </div>
 
         <!-- ── TAB: TO BE MATCHED (horizontal split) ── -->
@@ -3339,8 +3339,8 @@ body.app-active #app {
             <div class="fmt-pills">
               <button class="fmt-pill active" onclick="selFmt(this)">CSV</button>
               <button class="fmt-pill" onclick="selFmt(this)">Excel</button>
-              <button class="fmt-pill" onclick="selFmt(this)">SAP</button>
-              <button class="fmt-pill" onclick="selFmt(this);checkFeature('netsuite')">NetSuite</button>
+              <button class="fmt-pill" onclick="if(checkFeature('sap'))selFmt(this)">SAP</button>
+              <button class="fmt-pill" onclick="if(checkFeature('netsuite'))selFmt(this)">NetSuite</button>
               <button class="fmt-pill" onclick="selFmt(this);checkFeature('dynamics')">Dynamics AX</button>
             </div>
             <input class="inp" placeholder="Search…" oninput="searchTbl('post-tb',this.value)" style="margin-left:auto;width:160px;font-size:12.5px">
@@ -3572,7 +3572,7 @@ body.app-active #app {
                 </div>
               </div>
               <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6">
-                * 8 minutes is the industry average for manual invoice-to-payment matching. Labor cost assumes $65/hr fully-loaded AR specialist rate. ROI multiple = labor cost saved ÷ Pro plan cost ($999/mo). Actual results will vary.
+                * 8 minutes is the industry average for manual invoice-to-payment matching. Labor cost assumes $65/hr fully-loaded AR specialist rate. ROI multiple = labor cost saved ÷ Pro plan cost ($1,599/mo). Actual results will vary.
               </div>
             </div>
           </div>
@@ -3876,6 +3876,10 @@ function _engUpdateRightPanel(){
   const rows=ENG_ROWS;
 
   if(aiRight){
+    if(!hasFeat('ai')){
+      aiRight.innerHTML='<div style="padding:14px;text-align:center"><div style="font-size:20px;margin-bottom:8px">🤖</div><div style="font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:6px">AI Suggestions</div><div style="font-size:11.5px;color:var(--t3);line-height:1.6;margin-bottom:12px">AI-assisted matching insights are available on the Pro plan.</div><button class="btn btn-p btn-xs" onclick="checkFeature(\'ai\')">Upgrade to Pro</button></div>';
+      // Skip rest of AI panel
+    } else {
     const cards=[];
     // Duplicate detection
     const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&((q.i&&q.i===p.i)||(q.txId&&q.txId===p.txId)));
@@ -3921,6 +3925,7 @@ function _engUpdateRightPanel(){
     }else{
       aiRight.innerHTML='<div style="padding:12px;font-size:12px;color:var(--t3);text-align:center;line-height:1.7">No suggestions for this payment.<br><span style="font-size:11px">All signals look clean.</span></div>';
     }
+    } // end hasFeat('ai') else
   }
 
   if(excRight&&p){
@@ -4200,10 +4205,10 @@ const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action
 
 // ── Plans ──
 const PLANS={
-  demo:{name:'Demo',level:0,rows:50,features:['invoice','po','amount']},
-  starter:{name:'Starter',level:1,rows:5000,features:['invoice','po','amount']},
-  pro:{name:'Pro',level:2,rows:Infinity,features:['invoice','po','so','del','trk','amount','multi','sap','netsuite']},
-  team:{name:'Team',level:3,rows:Infinity,features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','audit','api']}
+  demo:   {name:'Demo',    level:0, rows:50,       price:'Free',    features:['invoice','po','amount']},
+  starter:{name:'Starter', level:1, rows:5000,     price:'$799/mo', features:['invoice','po','amount','manual-queue','csv-export','audit-trail','limited-pdf']},
+  pro:    {name:'Pro',     level:2, rows:Infinity,  price:'$1,599/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports']},
+  team:   {name:'Team',   level:3, rows:Infinity,  price:'$2,999/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports','audit-log','roles','custom-export','onboarding','sla','priority-feature']}
 };
 let USER_PLAN='demo';
 let IS_DEMO=true;
@@ -4244,7 +4249,15 @@ function setPlan(plan){USER_PLAN=plan;const p=PLANS[plan];if(p){IS_DEMO=plan==='
 function hasFeat(f){if(IS_MASTER)return true;return PLANS[USER_PLAN]?.features?.includes(f)}
 function checkFeature(f){
   if(hasFeat(f))return true;
-  showUpgrade('Feature requires upgrade','This feature is available on Pro and Team plans.');
+  const proFeats=['multi','sap','netsuite','ai','cfo','reconcile','so','del','trk','confidence','workflow-approvals','multi-bank','advanced-exports'];
+  const teamFeats=['audit-log','roles','custom-export','onboarding','sla','priority-feature'];
+  if(teamFeats.includes(f)){
+    showUpgrade('Team plan required','This feature is available on the Team plan — multi-user collaboration, roles, audit logs, and dedicated onboarding.');
+  } else if(proFeats.includes(f)){
+    showUpgrade('Pro plan required','This feature is available on the Pro plan — multi-invoice allocation, SAP/NetSuite exports, AI-assisted matching, CFO dashboards, and reconciliation workspace.');
+  } else {
+    showUpgrade('Upgrade to unlock','This feature requires a paid plan.');
+  }
   return false;
 }
 
@@ -4551,7 +4564,23 @@ function doForgot(){toast('Password reset instructions sent if account exists.',
 
 function demoLogin(){
   IS_DEMO=true;CURRENT_USER='demo@armatchpro.com';
-  launchApp({name:'Demo User',avatar:'',plan:'demo',isMaster:false});
+  // Read plan from demo access record — supports Pro trial from landing page
+  var demoPlan='demo';
+  var demoName='Demo User';
+  try{
+    var raw=localStorage.getItem('armp_demo_access');
+    if(raw){
+      var acc=JSON.parse(raw);
+      if(acc&&(acc.enabled||acc.granted)){
+        // Check not expired
+        if(!acc.expiresAt||new Date(acc.expiresAt)>new Date()){
+          demoPlan=acc.plan||'demo';
+          demoName=acc.firstName||acc.fullName||'Demo User';
+        }
+      }
+    }
+  }catch(e){}
+  launchApp({name:demoName,avatar:'',plan:demoPlan,isMaster:false});
 }
 
 function doLogout(){
@@ -5908,6 +5937,14 @@ function caFilterUpdate(){
 async function runMatch(){
   if(!INV.length){toast('Import invoices first','warn');return;}
   if(!PAY.length){toast('Import remittance first','warn');return;}
+  // ── Row limit gate ──
+  const rowLimit=PLANS[USER_PLAN]?.rows||50;
+  if(INV.length>rowLimit){
+    const planName=PLANS[USER_PLAN]?.name||'current';
+    if(!checkFeature('_exceed_rows')){/* handled by showUpgrade below */}
+    showUpgrade('Row limit reached',`Your ${planName} plan supports up to ${rowLimit.toLocaleString()} invoice rows. You have ${INV.length.toLocaleString()} rows imported. Upgrade to Pro for unlimited rows.`);
+    return;
+  }
   const overlay=document.getElementById('match-progress');overlay.classList.add('show');setStatus('running');
   const msgs=['Normalizing references…','Running invoice # pass…','Running PO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
   let mi=0;
@@ -5929,8 +5966,8 @@ async function runMatch(){
       const h=INV.find(v=>norm(v.i)===ni&&(v.a===p.a||(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim()));
       if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance $${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment $${$f(p.amt)} vs invoice $${$f(h.amt)} — variance $${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
     }
-    if(np&&usePO){const g=INV.filter(v=>norm(v.po)===np&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'PO',ec)){ec+=procGrp.ea;continue};}}
-    if(ns&&useSO){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
+    if(np&&usePO&&hasFeat('multi')){const g=INV.filter(v=>norm(v.po)===np&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'PO',ec)){ec+=procGrp.ea;continue};}}
+    if(ns&&useSO&&hasFeat('so')){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
     const am=INV.filter(v=>v.a===p.a&&Math.abs(v.amt-p.amt)<=tol&&!v.s);
     if(am.length===1){am[0].s='Amount match';RES.push({c:am[0].c,a:am[0].a,i:am[0].i,po:am[0].po,so:am[0].so,d:am[0].d,oa:am[0].amt,pd:p.amt,vr:p.amt-am[0].amt,st:'Amount match',m:'Amount match',n:'Customer + amount'});continue;}
     // Duplicate check
@@ -6185,6 +6222,18 @@ window.addEventListener('load',()=>{
       if(users[sess]){CURRENT_USER=sess;IS_DEMO=false;launchApp(users[sess]);}
       else localStorage.removeItem('armp_session');
     }catch(e){localStorage.removeItem('armp_session');}
+  } else {
+    // Check for active demo access (7-day Pro trial from landing page)
+    try{
+      var raw=localStorage.getItem('armp_demo_access');
+      if(raw){
+        var acc=JSON.parse(raw);
+        if(acc&&(acc.enabled||acc.granted)&&acc.expiresAt&&new Date(acc.expiresAt)>new Date()){
+          // Auto-restore demo session with the plan granted at signup
+          demoLogin();return;
+        }
+      }
+    }catch(e){}
   }
   // Dark mode state
   const sdm=document.getElementById('s-dm');if(sdm)sdm.checked=true;
@@ -6805,10 +6854,10 @@ function setCfoPeriod(p,btn){
 
 function showChangePlanModal(){
   const PLANS_DEF=[
-    {key:'demo',name:'Demo',price:'Free',desc:'Try all features with sample data. No billing.',color:'var(--t3)',features:'Sample data only · No export'},
-    {key:'starter',name:'Starter',price:'$299/mo',desc:'For small AR teams. Real data import & export.',color:'var(--cy)',features:'Up to 1,000 invoices/mo · CSV export · Email support'},
-    {key:'pro',name:'Pro',price:'$599/mo',desc:'Advanced matching, CFO reporting, full export.',color:'var(--p)',features:'Unlimited invoices · All exports · CFO dashboard · Priority support'},
-    {key:'team',name:'Team',price:'$999/mo',desc:'Multi-user, audit trail, ERP posting.',color:'var(--pu)',features:'All Pro features · Multi-user · Audit trail · ERP posting · SLA'},
+    {key:'demo',name:'Demo',price:'Free',desc:'Try all features with sample data. No billing.',color:'var(--t3)',features:'Sample data only · 50 rows · Invoice + PO matching'},
+    {key:'starter',name:'Starter',price:'$799/mo',desc:'For SMB AR teams transitioning from spreadsheets.',color:'var(--cy)',features:'Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support'},
+    {key:'pro',name:'Pro',price:'$1,599/mo',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CFO dashboards · Reconcile · Priority support'},
+    {key:'team',name:'Team',price:'$2,999/mo',desc:'Multi-user collaboration, enterprise workflows, dedicated onboarding.',color:'var(--pu)',features:'All Pro features · Multi-user · Roles & permissions · Audit logs · Approval workflows · Custom exports · SLA'},
   ];
   const levels={demo:0,starter:1,pro:2,team:3};
   const cur=USER_PLAN||'demo';
@@ -6895,7 +6944,7 @@ function updateCfoSummary(){
   setEl('cfo-roi-auto',autoCount);
   setEl('cfo-roi-hours',hoursSaved.toFixed(1)+' hrs');
   setEl('cfo-roi-dollars','$'+$f(dollarsSaved));
-  // ROI multiple = labor savings / Pro plan cost ($999/mo)
+  // ROI multiple = labor savings / Pro plan cost ($1,599/mo)
   var roiMultiple = dollarsSaved > 0 ? (dollarsSaved/999).toFixed(1)+'x' : '—';
   setEl('cfo-roi-multiple', roiMultiple);
   setEl('cfo-bar-auto-val',autoCount);
@@ -7563,7 +7612,7 @@ var HELP_CONTENT = {
         <table><thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead><tbody>
         <tr><td>Target Auto-Match Rate</td><td>80%</td><td>Alert when STP falls below this</td></tr>
         <tr><td>AR Labor Rate</td><td>$65/hr</td><td>Fully-loaded hourly rate for ROI calculation</td></tr>
-        <tr><td>Subscription Cost</td><td>$999/mo</td><td>Used for ROI multiple calculation</td></tr>
+        <tr><td>Subscription Cost</td><td>$1,599/mo</td><td>Used for ROI multiple calculation (defaults to Pro plan rate)</td></tr>
         <tr><td>Fiscal Year Start</td><td>January</td><td>First month of your fiscal year</td></tr>
         <tr><td>DSO Alert</td><td>45 days</td><td>Alert when DSO exceeds this threshold</td></tr>
         <tr><td>Exception Rate Alert</td><td>10%</td><td>Alert when exception rate exceeds this</td></tr>
@@ -7571,9 +7620,9 @@ var HELP_CONTENT = {
         <h3>Change Plan</h3>
         <table><thead><tr><th>Plan</th><th>Price</th><th>Features</th></tr></thead><tbody>
         <tr><td>Demo</td><td>Free</td><td>Sample data only · Explore all features</td></tr>
-        <tr><td>Starter</td><td>$299/mo</td><td>Up to 1,000 invoices/mo · CSV export · Email support</td></tr>
-        <tr><td>Pro</td><td>$599/mo</td><td>Unlimited invoices · All exports · CFO dashboard · Priority support</td></tr>
-        <tr><td>Team</td><td>$999/mo</td><td>All Pro + Multi-user · ERP posting · SLA guarantee</td></tr>
+        <tr><td>Starter</td><td>$799/mo</td><td>Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support</td></tr>
+        <tr><td>Pro</td><td>$1,599/mo</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CFO dashboards · Reconcile · Priority support</td></tr>
+        <tr><td>Team</td><td>$2,999/mo</td><td>All Pro + Multi-user · Roles &amp; permissions · Audit logs · Approval workflows · Custom exports · SLA</td></tr>
         </tbody></table>`
     },
     {
