@@ -508,6 +508,7 @@ let isSeeking=false, wasPlayingBeforeSeek=false;
 function onSeekStart(){
   isSeeking=true;
   wasPlayingBeforeSeek=playing;
+  cancelAnimationFrame(raf);
   synth.cancel();
 }
 function onSeekInput(val){
@@ -540,8 +541,11 @@ function onSeekInput(val){
 function onSeekEnd(){
   isSeeking=false;
   if(wasPlayingBeforeSeek){
+    playing=true;
     startTs=Date.now()-elapsed;
+    document.getElementById('pause-overlay').classList.remove('show');
     speakScene(cur);
+    raf=requestAnimationFrame(tick);
   }
 }
 function updateProg(){
