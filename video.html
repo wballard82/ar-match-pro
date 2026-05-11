@@ -161,25 +161,31 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .player:hover .yt-ctrl,.yt-ctrl.active{opacity:1}
 /* Seek bar */
 .yt-seek{
-  position:relative;width:100%;height:16px;cursor:pointer;
-  display:flex;align-items:center;margin-bottom:6px;
+  position:relative;width:100%;height:20px;cursor:pointer;
+  display:flex;align-items:center;margin-bottom:4px;
 }
-.yt-seek-buf,.yt-seek-fill{
-  position:absolute;height:3px;border-radius:2px;
+.yt-seek-buf{
+  position:absolute;left:0;right:0;height:3px;border-radius:2px;
+  background:rgba(255,255,255,.25);pointer-events:none;
   transition:height .15s;
-  pointer-events:none;
 }
-.yt-seek-buf{width:100%;background:rgba(255,255,255,.25);left:0}
-.yt-seek-fill{background:#f00;left:0;width:0%}
+.yt-seek-fill{
+  position:absolute;left:0;height:3px;border-radius:2px;
+  background:#f00;width:0%;pointer-events:none;
+  transition:height .15s;
+}
 .yt-seek-thumb{
-  position:absolute;right:-6px;top:50%;transform:translateY(-50%);
-  width:12px;height:12px;border-radius:50%;background:#f00;
-  opacity:1;transition:opacity .15s, width .15s, height .15s;
-  cursor:grab;
+  position:absolute;top:50%;
+  width:13px;height:13px;border-radius:50%;background:#f00;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  box-shadow:0 0 4px rgba(0,0,0,.5);
+  transition:width .12s,height .12s;
+  left:0%;
 }
 .yt-seek:hover .yt-seek-buf,
 .yt-seek:hover .yt-seek-fill{height:5px}
-.yt-seek:hover .yt-seek-thumb{opacity:1;width:14px;height:14px;right:-7px}
+.yt-seek:hover .yt-seek-thumb{width:16px;height:16px}
 /* Bottom row */
 .yt-row{display:flex;align-items:center;justify-content:space-between}
 .yt-left,.yt-right{display:flex;align-items:center;gap:4px}
@@ -321,9 +327,8 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
          onmousedown="event.stopPropagation();seekStart(event)"
          ontouchstart="event.stopPropagation();seekStart(event)">
       <div class="yt-seek-buf"></div>
-      <div class="yt-seek-fill" id="prog-fill" style="width:0%">
-        <div class="yt-seek-thumb"></div>
-      </div>
+      <div class="yt-seek-fill" id="prog-fill" style="width:0%"></div>
+      <div class="yt-seek-thumb" id="seek-thumb" style="left:0%"></div>
     </div>
     <!-- Bottom row -->
     <div class="yt-row">
@@ -484,10 +489,12 @@ function tick(){
 
 function updateProg(){
   const pct=Math.min(elapsed/TOTAL*100,100);
-  const fill=document.getElementById('prog-fill');if(fill)fill.style.width=pct+'%';
+  const fill=document.getElementById('prog-fill');
+  if(fill)fill.style.width=pct+'%';
+  const thumb=document.getElementById('seek-thumb');
+  if(thumb)thumb.style.left=pct+'%';
   const s=Math.floor(elapsed/1000);
   const timeStr=Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
-  const durEl=document.getElementById('dur-el');
   const totalSec=Math.round(TOTAL/1000);
   const durStr=Math.floor(totalSec/60)+':'+(totalSec%60<10?'0':'')+totalSec%60;
   const timeEl=document.getElementById('time-el');
