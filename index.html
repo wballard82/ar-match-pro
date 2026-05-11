@@ -14,6 +14,9 @@
   --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+/* Disable slashed zeros in JetBrains Mono throughout */
+*{font-variant-numeric:normal}
+[style*="JetBrains"],[style*="--mono"],code,pre{font-feature-settings:'zero' 0;font-variant-ligatures:none}
 html{scroll-padding-top:80px;scroll-behavior:smooth}
 body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.5;overflow-x:hidden}
 a{text-decoration:none;color:inherit}
@@ -229,8 +232,10 @@ button,input{font-family:inherit}
 .footer{background:#06101E;color:rgba(255,255,255,.65);padding:60px 0 40px}
 .footer-grid{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:32px}
 .footer h4{color:#fff;font-size:12px;font-weight:900;margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em}
+.footer ul{list-style:none;padding:0;margin:0}
 .footer a{display:block;margin:9px 0;color:rgba(255,255,255,.55);font-size:14px;transition:.15s}
 .footer a:hover{color:#fff}
+.footer-col-head{font-size:12px;font-weight:900;margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em;background:linear-gradient(135deg,#0EA5E9,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .footer-brand-desc{margin-top:14px;max-width:300px;font-size:14px;line-height:1.6;color:rgba(255,255,255,.5)}
 .socials{display:flex;gap:9px;margin-top:16px}
 .socials a{width:34px;height:34px;border:1px solid rgba(255,255,255,.14);border-radius:50%;display:grid;place-items:center;margin:0;font-size:13px;font-weight:700;transition:.15s}
@@ -627,41 +632,41 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div style="background:linear-gradient(135deg,#07111F,#0F172A);border-radius:14px;padding:22px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10B981,#0EA5E9)"></div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Cash Matched</div>
-        <div style="font-size:36px;font-weight:800;color:#34D399;font-family:'JetBrains Mono',monospace;letter-spacing:-2px;line-height:1;margin-bottom:6px">$55,000</div>
+        <div style="font-size:36px;font-weight:800;color:#34D399;font-family:'JetBrains Mono',monospace;font-feature-settings:'zero' 0;letter-spacing:-2px;line-height:1;margin-bottom:6px">$55,000</div>
         <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Ready for posting export</div>
       </div>
       <div style="background:linear-gradient(135deg,#07111F,#0F172A);border-radius:14px;padding:22px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#0EA5E9,#8B5CF6)"></div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Automation Rate</div>
-        <div style="font-size:36px;font-weight:800;color:#7DD3FC;font-family:'JetBrains Mono',monospace;letter-spacing:-2px;line-height:1;margin-bottom:6px">82%</div>
+        <div style="font-size:36px;font-weight:800;color:#7DD3FC;font-family:'JetBrains Mono',monospace;font-feature-settings:'zero' 0;letter-spacing:-2px;line-height:1;margin-bottom:6px">82%</div>
         <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Manual review reduced</div>
       </div>
       <div style="background:linear-gradient(135deg,#07111F,#0F172A);border-radius:14px;padding:22px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#F59E0B,#EF4444)"></div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Unapplied Cash Risk</div>
-        <div style="font-size:36px;font-weight:800;color:#F59E0B;font-family:'JetBrains Mono',monospace;letter-spacing:-2px;line-height:1;margin-bottom:6px">$1,000</div>
+        <div style="font-size:36px;font-weight:800;color:#F59E0B;font-family:'JetBrains Mono',monospace;font-feature-settings:'zero' 0;letter-spacing:-2px;line-height:1;margin-bottom:6px">$1,000</div>
         <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Open exceptions requiring action</div>
       </div>
     </div>
     <div class="cfo-stat-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:36px">
       <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:11px;padding:16px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:var(--navy);font-family:'JetBrains Mono',monospace;letter-spacing:-1px">32d</div>
+        <div style="font-size:22px;font-weight:800;color:var(--navy);font-family:'JetBrains Mono',monospace;letter-spacing:-1px;font-feature-settings:'zero' 0">32 days</div>
         <div style="font-size:11px;color:#64748B;margin-top:4px;font-weight:600">Days Sales Outstanding</div>
       </div>
       <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:11px;padding:16px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:var(--navy);font-family:'JetBrains Mono',monospace;letter-spacing:-1px">3.2%</div>
+        <div style="font-size:22px;font-weight:800;color:var(--navy);font-family:'JetBrains Mono',monospace;font-feature-settings:'zero' 0;letter-spacing:-1px">3.2%</div>
         <div style="font-size:11px;color:#64748B;margin-top:4px;font-weight:600">Payment Error Rate</div>
       </div>
       <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:11px;padding:16px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:#10B981;font-family:'JetBrains Mono',monospace;letter-spacing:-1px">78%</div>
+        <div style="font-size:22px;font-weight:800;color:#10B981;font-family:'JetBrains Mono',monospace;font-feature-settings:'zero' 0;letter-spacing:-1px">78%</div>
         <div style="font-size:11px;color:#64748B;margin-top:4px;font-weight:600">Automation Efficiency</div>
       </div>
       <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:11px;padding:16px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:#10B981;font-family:'JetBrains Mono',monospace;letter-spacing:-1px">74%</div>
+        <div style="font-size:22px;font-weight:800;color:#10B981;font-family:'JetBrains Mono',monospace;font-feature-settings:'zero' 0;letter-spacing:-1px">74%</div>
         <div style="font-size:11px;color:#64748B;margin-top:4px;font-weight:600">STP Rate</div>
       </div>
       <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:11px;padding:16px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:#F59E0B;font-family:'JetBrains Mono',monospace;letter-spacing:-1px">1.8%</div>
+        <div style="font-size:22px;font-weight:800;color:#F59E0B;font-family:'JetBrains Mono',monospace;font-feature-settings:'zero' 0;letter-spacing:-1px">1.8%</div>
         <div style="font-size:11px;color:#64748B;margin-top:4px;font-weight:600">Unapplied Cash %</div>
       </div>
     </div>

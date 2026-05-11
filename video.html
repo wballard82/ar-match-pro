@@ -174,11 +174,12 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .yt-seek-thumb{
   position:absolute;right:-6px;top:50%;transform:translateY(-50%);
   width:12px;height:12px;border-radius:50%;background:#f00;
-  opacity:0;transition:opacity .15s;
+  opacity:1;transition:opacity .15s, width .15s, height .15s;
+  cursor:grab;
 }
 .yt-seek:hover .yt-seek-buf,
 .yt-seek:hover .yt-seek-fill{height:5px}
-.yt-seek:hover .yt-seek-thumb{opacity:1}
+.yt-seek:hover .yt-seek-thumb{opacity:1;width:14px;height:14px;right:-7px}
 /* Bottom row */
 .yt-row{display:flex;align-items:center;justify-content:space-between}
 .yt-left,.yt-right{display:flex;align-items:center;gap:4px}
@@ -221,7 +222,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 <div style="font-family:'Inter',sans-serif;font-size:18px;font-weight:800;color:#fff;letter-spacing:-.3px;text-align:center">AR Match Pro <span style="color:var(--p)">·</span> Product Overview</div>
 
 <!-- PLAYER -->
-<div class="player" id="player" onclick="handlePlayerClick()">
+<div class="player" id="player">
   <div class="grid-bg" id="grid-bg"></div>
 
   <!-- SCENE 0: Brand -->
@@ -570,15 +571,18 @@ function toggleMute(){
 // ── YOUTUBE-STYLE SEEK ──
 let seeking=false;
 function seekStart(e){
+  e.preventDefault();
+  e.stopPropagation();
   seeking=true;
   seekMove(e);
-  const up=()=>{
+  const up=(ev)=>{
     seeking=false;
     document.removeEventListener('mousemove',seekMove);
     document.removeEventListener('mouseup',up);
     document.removeEventListener('touchmove',seekMove);
     document.removeEventListener('touchend',up);
-    // Do NOT interrupt audio when seeking — let it continue unaffected
+    // If dragged, resume speech from new position
+    if(playing&&!synth.speaking){setTimeout(()=>{if(playing&&!synth.speaking)speakScene(cur);},80);}
   };
   document.addEventListener('mousemove',seekMove);
   document.addEventListener('mouseup',up);
