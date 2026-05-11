@@ -39,8 +39,8 @@ button,input{font-family:inherit}
 .btn-light:hover{border-color:var(--p);color:var(--pd)}
 .btn-ghost{background:linear-gradient(135deg,#7DD3FC,#34D399);color:#06101E;border:0;box-shadow:0 8px 18px rgba(14,165,233,.16)}
 .btn-ghost:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(14,165,233,.24)}
-.btn-demo{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.3);backdrop-filter:blur(4px)}
-.btn-demo:hover{background:rgba(255,255,255,.2)}
+.btn-demo{background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border:0;box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.btn-demo:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(14,165,233,.4)}
 
 /* LEAD CAPTURE MODAL */
 .lead-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
@@ -549,7 +549,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
       <div class="grid-3">
         <div class="feature-card"><div class="feature-icon">📋</div><h3>Today's Work — at a glance</h3><p>Your daily worklist surfaces what needs action now: exceptions to resolve, payments to allocate, and matched records ready to export. No digging through tables.</p></div>
-        <div class="feature-card"><div class="feature-icon">🔗</div><h3>Advanced matching logic</h3><p>Match by Invoice #, PO #, Sales Order, Delivery, Tracking, and amount tolerance — in automatic priority order. Multi-invoice allocation handles consolidated payments and ties them to zero.</p></div>
+        <div class="feature-card"><div class="feature-icon">🔗</div><h3>Advanced matching logic</h3><p>Match by Invoice, Purchase Order, Sales Order, Delivery, Tracking, and amount tolerance — in automatic priority order. Multi-invoice allocation handles consolidated payments and ties them to zero.</p></div>
         <div class="feature-card"><div class="feature-icon">🤖</div><h3>AI suggestions per payment</h3><p>Each payment gets real-time AI insights: duplicate detection, short-pay likelihood, consolidated PO remittances, unapplied cash netting, and confidence-scored match recommendations.</p></div>
       </div>
     </div>
@@ -609,7 +609,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
     <!-- CTA row -->
     <div class="diff-cta-row" style="text-align:center">
-      <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:var(--shadow2);margin-right:12px">▶ Try free demo</button>
+      <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(14,165,233,.3);margin-right:12px">▶ Try free demo</button>
       <button onclick="window.open('https://calendly.com/armatchpro','_blank')" style="padding:15px 32px;background:#fff;color:var(--navy);border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font)">📅 Book a 30-Minute Demo</button>
     </div>
   </div>
@@ -726,7 +726,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
       <div style="text-align:center">
         <p style="color:rgba(255,255,255,.4);font-size:14px;margin-bottom:20px">See it match a real $40,000 multi-invoice payment in under 60 seconds.</p>
-        <button onclick="openLeadModal()" style="display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 24px rgba(16,185,129,.3);transition:all .18s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">▶ Try Free Demo</button>
+        <button onclick="openLeadModal()" style="display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(14,165,233,.3);transition:all .18s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">▶ Try Free Demo</button>
         <div style="font-size:12px;color:rgba(255,255,255,.25);margin-top:10px">No login required · Takes 60 seconds</div>
       </div>
     </div>
@@ -893,7 +893,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Priority feature access</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Custom pricing available</div>
         </div>
-        <button onclick="window.open('https://calendly.com/armatchpro','_blank')" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Book a Call</button>
+        <button onclick="goCheckout('team')" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Get Team</button>
       </div>
     </div>
 
@@ -908,8 +908,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">🌐 Secure browser-based workflow</div>
       </div>
       <div class="pricing-bottom-btns" style="display:flex;gap:12px">
-        <button onclick="openLeadModal()" style="padding:12px 22px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">▶ Try free demo</button>
-        <button onclick="window.open('https://calendly.com/armatchpro','_blank')" style="padding:12px 22px;background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">📅 Book a demo</button>
+        <button onclick="openLeadModal()" style="padding:12px 22px;background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 20px rgba(14,165,233,.3)">▶ Try free demo</button>
       </div>
     </div>
   </div>
@@ -1093,7 +1092,7 @@ function qfPick(val,nextState){
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#0284C7);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else {
         msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter from $799/month or Pro at $1,599/month. Try the demo first, no commitment.`;
-        cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:var(--g);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Start free demo</a>`;
+        cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Start free demo</a>`;
       }
       addBotQMsg(msg+'<br>'+cta);
       setTimeout(()=>{
@@ -1421,9 +1420,9 @@ const LP_FAQ={
   "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP, NetSuite, or QuickBooks, import it into AR Match Pro, run the match, and export a posting file back. No integration, no IT approval, no setup time.",
   "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
   "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
-  "Which plan?":"Starter ($399/mo) covers Invoice and PO matching for up to 5,000 rows/month — best for individual AR specialists. Pro ($999/mo) adds unlimited rows, multi-invoice allocation, SO/Delivery/Tracking matching, and SAP/NetSuite exports — the right choice for most accounting teams. Team ($1,999/mo) adds multi-user access, audit logs, and CFO reporting.",
-  "Book demo?":"Click 'Try Free Demo' on this page to fill out a quick form and get instant access. Or book a 30-minute live walkthrough at calendly.com/armatchpro — we'll match a real payment with you.",
-  "Pricing?":"Starter is $399/month (1 user, up to 5,000 rows, Invoice + PO matching). Pro is $999/month (unlimited rows, multi-invoice allocation, SAP + NetSuite export, exception dashboard). Team is $1,999/month (3–10 users, audit logs, CFO reporting, dedicated onboarding). All plans cancel anytime."
+  "Which plan?":"Starter ($799/mo) covers Invoice and PO matching for up to 5,000 rows/month — best for 1–2 user AR teams transitioning from spreadsheets. Pro ($1,599/mo) adds unlimited rows, multi-invoice allocation, AI-assisted matching, SAP/NetSuite exports, and CFO dashboards — the right choice for most accounting teams. Team ($2,999/mo) adds multi-user collaboration, role-based permissions, audit logs, and dedicated onboarding.",
+  "Book demo?":"Click 'Try Free Demo' on this page to start a 7-day Pro trial — full access, no credit card required. Or book a 30-minute live walkthrough at calendly.com/armatchpro — we'll match a real payment with you.",
+  "Pricing?":"Starter is $799/month (1–2 users, up to 5,000 rows, Invoice + PO matching, CSV export). Pro is $1,599/month (unlimited rows, multi-invoice allocation, AI matching, SAP F-28 + NetSuite export, CFO dashboards, reconcile workspace). Team is $2,999/month (multi-user, roles, audit logs, approval workflows, dedicated onboarding, SLA). Annual billing saves ~10%."
 };
 let lpChatOpen=false;
 function toggleLpChat(){
