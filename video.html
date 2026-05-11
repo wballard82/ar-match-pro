@@ -31,86 +31,6 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));width:0%;transition:width .25s linear;border-radius:0 2px 2px 0}
 
 /* ── CONTROLS ── */
-/* ── YOUTUBE-STYLE CONTROLS ── */
-.ctrl-bar{
-  position:absolute;bottom:0;left:0;right:0;z-index:30;
-  background:linear-gradient(transparent,rgba(0,0,0,.85));
-  padding:32px 14px 12px;
-  opacity:0;transition:opacity .25s;
-  display:flex;flex-direction:column;gap:6px;
-}
-.player:hover .ctrl-bar,.ctrl-bar.always-show{opacity:1}
-/* Progress / seek bar */
-.yt-progress{
-  position:relative;width:100%;height:4px;background:rgba(255,255,255,.25);
-  border-radius:2px;cursor:pointer;flex-shrink:0;
-  transition:height .15s;
-}
-.yt-progress:hover{height:6px}
-.yt-prog-fill{
-  height:100%;background:#f00;border-radius:2px;pointer-events:none;
-  position:relative;
-}
-.yt-prog-fill::after{
-  content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);
-  width:12px;height:12px;border-radius:50%;background:#f00;
-  opacity:0;transition:opacity .15s;
-}
-.yt-progress:hover .yt-prog-fill::after{opacity:1}
-/* Bottom row */
-.yt-controls{display:flex;align-items:center;gap:8px}
-.c-btn{
-  width:34px;height:34px;border-radius:50%;border:none;
-  background:none;color:#fff;font-size:16px;cursor:pointer;
-  display:grid;place-items:center;transition:.15s;flex-shrink:0;padding:0;
-}
-.c-btn:hover{background:rgba(255,255,255,.15);border-radius:50%}
-.yt-vol{display:flex;align-items:center;gap:4px}
-.yt-vol-slider{
-  -webkit-appearance:none;appearance:none;
-  width:60px;height:3px;background:rgba(255,255,255,.5);
-  border-radius:2px;cursor:pointer;outline:none;
-  transition:width .2s;
-}
-.yt-vol-slider::-webkit-slider-thumb{
-  -webkit-appearance:none;width:12px;height:12px;
-  border-radius:50%;background:#fff;cursor:pointer;
-}
-.yt-time{font-size:12px;color:rgba(255,255,255,.85);font-family:'JetBrains Mono',monospace;white-space:nowrap;flex-shrink:0}
-.yt-spacer{flex:1}
-.yt-fullscreen{font-size:14px}<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>AR Match Pro — Product Overview</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --p:#0EA5E9;--pd:#0284C7;--g:#10B981;--gd:#059669;--am:#F59E0B;--r:#EF4444;--pu:#8B5CF6;
-  --navy:#050D1A;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
-}
-html,body{height:100%;background:#000;font-family:var(--font);-webkit-font-smoothing:antialiased}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:16px;gap:14px}
-
-/* ── PLAYER ── */
-.player{width:100%;max-width:880px;aspect-ratio:16/9;position:relative;background:var(--navy);overflow:hidden;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.3),0 32px 100px rgba(0,0,0,.7);cursor:pointer}
-.player::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 50% 0%,rgba(14,165,233,.06),transparent 70%);pointer-events:none}
-
-/* ── GRID BG ── */
-.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(14,165,233,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.04) 1px,transparent 1px);background-size:44px 44px;opacity:0;transition:opacity .6s}
-.grid-bg.show{opacity:1}
-
-/* ── SCENES ── */
-.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 52px;opacity:0;transition:opacity .55s ease}
-.scene.show{opacity:1}
-
-/* ── PROGRESS ── */
-.prog-wrap{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.08);z-index:20}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--p),var(--g));width:0%;transition:width .25s linear;border-radius:0 2px 2px 0}
-
-/* ── CONTROLS ── */
 .ctrl-bar{position:absolute;bottom:8px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:12px;z-index:30;opacity:0;transition:opacity .2s;padding:0 16px}
 .player:hover .ctrl-bar{opacity:1}
 .c-btn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(10,20,35,.7);backdrop-filter:blur(8px);color:#fff;font-size:13px;cursor:pointer;display:grid;place-items:center;transition:.15s;flex-shrink:0}
@@ -338,7 +258,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
   <div class="scene" id="s2">
     <div class="sol-ew">Introducing AR Match Pro</div>
     <div class="sol-h">One click.<br><span class="hi">Everything matched.</span></div>
-    <div class="sol-d">Import your invoice aging and remittance file. AR Match Pro auto-matches by Invoice #, PO #, Sales Order — and allocates one payment across multiple invoices automatically.</div>
+    <div class="sol-d">Import your invoice aging and remittance file. AR Match Pro auto-matches by Invoice, Purchase Order, Sales Order, Delivery, and Tracking — and allocates one payment across multiple invoices automatically.</div>
     <div class="match-vis">
       <div class="mv-invs">
         <div class="mv-inv"><span>INV-1001</span><span>$25,000</span></div>
@@ -364,7 +284,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
       <div class="how-step"><div class="how-ico">📁</div><div class="how-lbl">Import data</div><div class="how-desc">CSV, Excel, PDF or image — drag and drop</div></div>
       <div class="how-step"><div class="how-ico">⚡</div><div class="how-lbl">Run matching</div><div class="how-desc">Invoice, PO, SO matched in seconds</div></div>
       <div class="how-step"><div class="how-ico">🚨</div><div class="how-lbl">Review exceptions</div><div class="how-desc">Short pays flagged — one-click decisions</div></div>
-      <div class="how-step"><div class="how-ico">📤</div><div class="how-lbl">Export to SAP</div><div class="how-desc">F-28 posting file — no manual entry</div></div>
+      <div class="how-step"><div class="how-ico">📤</div><div class="how-lbl">Export to ERP</div><div class="how-desc">SAP F-28 or NetSuite — no manual entry</div></div>
     </div>
   </div>
 
@@ -383,10 +303,10 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
   <div class="scene" id="s5">
     <div class="cta-ew">Start today — no ERP required</div>
     <div class="cta-h">AR matching,<br><span>fully automated.</span></div>
-    <div class="cta-sub">Join AR teams eliminating manual cash application.</div>
+    <div class="cta-sub">7-day free Pro trial — no credit card required.</div>
     <div class="cta-btns-v">
-      <a class="cta-v-p" href="app.html">Start Pro — $999/mo</a>
-      <a class="cta-v-s" href="https://calendly.com/armatchpro" target="_blank">📅 Book a Demo</a>
+      <a class="cta-v-p" href="checkout.html?plan=pro">Start Pro — $1,599/mo</a>
+      <a class="cta-v-s" href="index.html#pricing" target="_blank">🗓 View all plans</a>
     </div>
     <div class="domain-v">armatchpro.com</div>
   </div>
@@ -397,8 +317,8 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
   <div class="yt-ctrl" id="yt-ctrl">
     <!-- Seek bar -->
     <div class="yt-seek" id="yt-seek"
-         onmousedown="seekStart(event)"
-         ontouchstart="seekStart(event)">
+         onmousedown="event.stopPropagation();seekStart(event)"
+         ontouchstart="event.stopPropagation();seekStart(event)">
       <div class="yt-seek-buf"></div>
       <div class="yt-seek-fill" id="prog-fill" style="width:0%">
         <div class="yt-seek-thumb"></div>
@@ -445,12 +365,12 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 <script>
 // ── SCENE DATA ──
 const SCENES=[
-  {id:'s0',dur:7000,vo:"Match remittance to invoices in minutes — no ERP integration required. Welcome to AR Match Pro — remittance matching, fully automated."},
+  {id:'s0',dur:7000,vo:"Match remittance to invoices in minutes — no ERP integration required. Welcome to AR Match Pro — cash application, fully automated."},
   {id:'s1',dur:10000,vo:"One payment covers six invoices, but the customer only sends a PO number. Your team spends 30 minutes per payment figuring it out. Short pays sit unresolved for weeks. And unapplied cash? Invisible to your CFO until month end."},
-  {id:'s2',dur:9500,vo:"AR Match Pro changes all of that. Import your invoice aging and remittance file. The engine auto-matches by invoice number, PO number, and sales order — and allocates one payment across multiple invoices automatically. In seconds."},
-  {id:'s3',dur:9000,vo:"Drag in your files. Run matching. Review the exceptions your team actually needs to see. Then export a posting file directly to SAP or NetSuite — no manual entry, no ERP integration required."},
-  {id:'s4',dur:8500,vo:"Teams using AR Match Pro see an 82% auto-match rate — well above the industry average. What used to take hours happens in 8 seconds. That's two thousand dollars or more back in your budget every month."},
-  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that can require long implementation and ERP integration, AR Match Pro focuses on fast remittance matching for Accounting and AR teams. No installation. No ERP integration. No IT approval needed. Start today at AR Match Pro dot com."}
+  {id:'s2',dur:9500,vo:"AR Match Pro changes all of that. Import your invoice aging and remittance file. The engine auto-matches by Invoice number, Purchase Order, Sales Order, Delivery, and Tracking — and allocates one payment across multiple invoices automatically. In seconds."},
+  {id:'s3',dur:9000,vo:"Drag in your files. Run matching. Review the exceptions your team actually needs to see. Then export a posting file directly to SAP F-28 or NetSuite — no manual entry, no ERP integration required."},
+  {id:'s4',dur:8500,vo:"Teams using AR Match Pro see an 82% auto-match rate — well above the industry average. What used to take hours happens in 8 seconds. That is two thousand dollars or more back in your budget every month."},
+  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation and ERP integration, AR Match Pro is live the same day. Starter plans begin at 799 dollars per month. Pro unlocks unlimited rows, AI-assisted matching, and CFO dashboards at 1,599 per month. No installation. No IT approval needed. Start today at AR Match Pro dot com."}
 ];
 const TOTAL=SCENES.reduce((s,sc)=>s+sc.dur,0);
 
@@ -632,11 +552,12 @@ function toggleMute(){
   muted=!muted;
   const volSlider=document.getElementById('vol-slider');
   if(muted){
-    synth.cancel();
+    if(utt){try{utt.volume=0;}catch(e){}}
     if(volSlider)volSlider.value=0;
   } else {
+    if(utt){try{utt.volume=1;}catch(e){}}
     if(volSlider)volSlider.value=100;
-    if(playing)speakScene(cur);
+    if(playing&&!synth.speaking){setTimeout(()=>{if(playing&&!synth.speaking)speakScene(cur);},80);}
   }
   const icon=document.getElementById('vol-icon');
   if(icon){
