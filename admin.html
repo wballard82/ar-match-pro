@@ -246,11 +246,12 @@ tr:hover td{background:rgba(14,165,233,.03)}
         <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px">
           <div><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Demo leads</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Contact forms submitted via the landing page "Try free demo" button</div></div>
           <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn btn-p btn-sm" id="leads-sync-btn" onclick="syncNetlifyLeads(false)">↻ Sync Netlify</button>
             <button class="btn btn-outline btn-sm" onclick="exportLeads()">Export CSV</button>
             <button class="btn btn-danger btn-sm" onclick="clearLeads()">Clear all</button>
           </div>
         </div>
-        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Phone</th><th>Date</th><th>Actions</th></tr></thead><tbody id="leads-tbody"><tr><td colspan="6"><div class="em"><div class="em-icon">🎯</div><div class="em-t">No leads yet</div><div style="font-size:12px;color:var(--t3);margin-top:4px">Leads appear here when someone submits the demo form on your landing page.</div></div></td></tr></tbody></table></div></div>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Title</th><th>Phone</th><th>ERP</th><th>Volume</th><th>Plan</th><th>Trial Expires</th><th>Source</th><th>Date</th><th>Actions</th></tr></thead><tbody id="leads-tbody"><tr><td colspan="12"><div class="em"><div class="em-icon">🎯</div><div class="em-t">No leads yet</div><div style="font-size:12px;color:var(--t3);margin-top:4px">Leads appear here when someone submits the demo form on your landing page.</div></div></td></tr></tbody></table></div></div>
       </div>
 
       <!-- KEYS -->
@@ -386,17 +387,68 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter')doAuth()});
 
 function getUsers(){return JSON.parse(localStorage.getItem('armp_users')||'{}')}
 function saveUsers(u){localStorage.setItem('armp_users',JSON.stringify(u))}
-function getLeads(){return JSON.parse(localStorage.getItem('armp_leads')||'[]')}
+
+// ── LEAD STORAGE ──
+function getLocalLeads(){
+  const a=JSON.parse(localStorage.getItem('armp_leads')||'[]');
+  const b=JSON.parse(localStorage.getItem('armp_demo_leads')||'[]');
+  const merged={};
+  [...a,...b].forEach(l=>{
+    const key=(l.email||l.workEmail||'').toLowerCase();
+    if(!key)return;
+    if(!merged[key])merged[key]=l;
+    else if(l.netlifyVerified)merged[key]=l;
+  });
+  return Object.values(merged).sort((a,b)=>new Date(b.ts||b.signupAt||0)-new Date(a.ts||a.signupAt||0));
+}
+function getLeads(){return getLocalLeads();}
+
+// ── NETLIFY SYNC ──
+let _netlifyBusy=false;
+async function syncNetlifyLeads(silent){
+  if(_netlifyBusy)return;
+  _netlifyBusy=true;
+  const btn=document.getElementById('leads-sync-btn');
+  if(btn){btn.disabled=true;btn.textContent='Syncing…';}
+  try{
+    const res=await fetch('/.netlify/functions/get-demo-leads',{method:'GET',headers:{'Accept':'application/json'}});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(!Array.isArray(data))throw new Error('Unexpected response');
+    // Merge with existing local leads (keep any manually added)
+    const existing=JSON.parse(localStorage.getItem('armp_demo_leads')||'[]');
+    const merged={};
+    existing.forEach(l=>{const k=(l.email||l.workEmail||'').toLowerCase();if(k)merged[k]=l;});
+    data.forEach(l=>{
+      const k=(l.email||l.workEmail||'').toLowerCase();
+      if(k)merged[k]={...merged[k]||{},...l,netlifyVerified:true};
+    });
+    localStorage.setItem('armp_demo_leads',JSON.stringify(Object.values(merged)));
+    renderLeads();refreshStats();
+    if(!silent)toast('Synced '+data.length+' lead'+(data.length!==1?'s':'')+' from Netlify ✓','success');
+  }catch(e){
+    console.warn('Netlify sync:',e.message);
+    if(!silent)toast('Netlify sync unavailable — showing local leads only','warn');
+  }finally{
+    _netlifyBusy=false;
+    if(btn){btn.disabled=false;btn.textContent='↻ Sync Netlify';}
+  }
+}
+
 function getGenKeys(){return JSON.parse(localStorage.getItem('armp_gen_keys')||'[]')}
 
-function initAdmin(){refreshStats();renderUsers('');renderLeads();renderGenKeys()}
+function initAdmin(){
+  refreshStats();renderUsers('');renderLeads();renderGenKeys();
+  // Auto-sync Netlify leads silently on load
+  syncNetlifyLeads(true);
+}
 
 function sp(id,el){
   document.querySelectorAll('.a-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.a-ni').forEach(n=>n.classList.remove('active'));
   const panel=document.getElementById('panel-'+id);if(panel)panel.classList.add('active');
   if(el)el.classList.add('active');
-  if(id==='users')renderUsers('');if(id==='leads')renderLeads();if(id==='keys')renderGenKeys();if(id==='overview')refreshStats();
+  if(id==='users')renderUsers('');if(id==='leads'){renderLeads();syncNetlifyLeads(true);}if(id==='keys')renderGenKeys();if(id==='overview')refreshStats();
 }
 
 function refreshStats(){
@@ -457,17 +509,34 @@ function clearCreateForm(){['cu-name','cu-email','cu-pass'].forEach(id=>document
 function renderLeads(){
   const leads=getLeads();const tbody=document.getElementById('leads-tbody');
   document.getElementById('leads-badge').textContent=leads.length;
-  if(!leads.length){tbody.innerHTML='<tr><td colspan="6"><div class="em"><div class="em-icon">🎯</div><div class="em-t">No leads yet</div><div style="font-size:12px;color:var(--t3);margin-top:4px">Leads appear here when someone submits the demo form on the landing page.</div></div></td></tr>';return}
-  tbody.innerHTML=[...leads].reverse().map((l,i)=>`<tr>
-    <td style="font-weight:500">${l.name}</td>
-    <td class="mono"><a href="mailto:${l.email}" style="color:var(--pd)">${l.email}</a></td>
-    <td>${l.company||'—'}</td><td class="mono">${l.phone||'—'}</td>
-    <td class="mono" style="font-size:11.5px">${new Date(l.ts).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'})}</td>
-    <td><div style="display:flex;gap:5px">
-      <button class="btn btn-p btn-sm" onclick="convertLead(${leads.length-1-i})">→ Create user</button>
+  if(!leads.length){tbody.innerHTML='<tr><td colspan="12"><div class="em"><div class="em-icon">🎯</div><div class="em-t">No leads yet</div><div style="font-size:12px;color:var(--t3);margin-top:4px">Leads appear here when someone submits the demo form on the landing page.</div></div></td></tr>';return}
+  tbody.innerHTML=[...leads].reverse().map((l,i)=>{
+    const exp=l.expiresAt||l.demoExpiration||'';
+    const expDate=exp?new Date(exp):null;
+    const isExpired=expDate&&expDate<new Date();
+    const expStr=expDate?expDate.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—';
+    const expColor=isExpired?'color:var(--r)':'color:var(--g)';
+    const planBadge=l.plan||l.demoTier||'demo';
+    const srcStr=(l.source||'landing').replace(' · Netlify ✓','');
+    const sigDate=l.ts||l.signupAt||l.signupDate||'';
+    const sigStr=sigDate?new Date(sigDate).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—';
+    return `<tr>
+    <td style="font-weight:600;white-space:nowrap">${l.name||l.fullName||'—'}</td>
+    <td class="mono" style="font-size:12px"><a href="mailto:${l.email||l.workEmail}" style="color:var(--pd)">${l.email||l.workEmail||'—'}</a></td>
+    <td style="font-size:12.5px">${l.company||'—'}</td>
+    <td style="font-size:12px;color:var(--t2)">${l.jobTitle||'—'}</td>
+    <td class="mono" style="font-size:12px">${l.phone||'—'}</td>
+    <td><span style="font-size:11.5px;padding:2px 7px;border-radius:4px;background:rgba(14,165,233,.12);color:var(--p);font-weight:600">${l.erp||'—'}</span></td>
+    <td style="font-size:12px;color:var(--t2)">${l.invoiceVolume||'—'}</td>
+    <td><span class="badge b-${planBadge}">${planBadge.toUpperCase()}</span></td>
+    <td class="mono" style="font-size:11.5px;${expColor}">${expStr}${isExpired?' ⚠':''}${expDate&&!isExpired?' ✓':''}</td>
+    <td style="font-size:11.5px;color:var(--t3)">${srcStr}</td>
+    <td class="mono" style="font-size:11.5px">${sigStr}</td>
+    <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+      <button class="btn btn-p btn-sm" onclick="convertLead(${leads.length-1-i})">→ User</button>
       <button class="btn btn-danger btn-sm" onclick="deleteLead(${leads.length-1-i})">×</button>
     </div></td>
-  </tr>`).join('');
+  </tr>`;}).join('');
 }
 
 function convertLead(idx){const l=getLeads()[idx];if(!l)return;document.getElementById('cu-name').value=l.name;document.getElementById('cu-email').value=l.email;document.getElementById('cu-pass').value='Welcome2026!';sp('create-user',document.querySelectorAll('.a-ni')[2]);toast('Lead pre-filled — review and create account')}
@@ -475,7 +544,7 @@ function deleteLead(idx){if(!confirm('Delete this lead?'))return;const l=getLead
 function clearLeads(){if(!confirm('Delete ALL leads?'))return;localStorage.setItem('armp_leads','[]');renderLeads();refreshStats();toast('All leads cleared')}
 function exportLeads(){
   const l=getLeads();if(!l.length){toast('No leads to export');return}
-  const csv=[['Name','Email','Company','Phone','Date','Source'],...l.map(x=>[x.name,x.email,x.company||'',x.phone||'',new Date(x.ts).toLocaleDateString('en-US'),x.source||'landing'])].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv=[['Name','Email','Company','Job Title','Phone','ERP','Invoice Volume','Plan','Trial Expires','Source','Signup Date'],...l.map(x=>[x.name||x.fullName||'',x.email||x.workEmail||'',x.company||'',x.jobTitle||'',x.phone||'',x.erp||'',x.invoiceVolume||'',x.plan||x.demoTier||'demo',(x.expiresAt||x.demoExpiration)?new Date(x.expiresAt||x.demoExpiration).toLocaleDateString('en-US'):'',x.source||'landing',(x.ts||x.signupAt)?new Date(x.ts||x.signupAt).toLocaleDateString('en-US'):''])].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='armp_leads_'+new Date().toISOString().split('T')[0]+'.csv';a.click();toast('Leads exported');
 }
 
