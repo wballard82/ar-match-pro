@@ -1376,7 +1376,7 @@ function toggleFaq(el){
   if(!wasOpen)item.classList.add('open');
 }
 
-// goCheckout handled by Stripe below
+// goCheckout uses Stripe Payment Links
 
 </script>
 
@@ -1455,32 +1455,17 @@ function lpChatAsk(q){
 </script>
 
 <!-- Stripe.js -->
-<script src="https://js.stripe.com/v3/"></script>
 <script>
-// ── STRIPE CHECKOUT ──
-var _STRIPE = null;
-try {
-  _STRIPE = Stripe('pk_live_51KRoPCK5o648Z7JzyGJcNQ7YFaLRCQgBysNIcRc7wiIwjKRHaB6ts4STYACp4ZxCDxnQzt501NsHhCbeEangyoyf00Y4b57dwP');
-} catch(e) { console.warn('Stripe load error:', e); }
-
-var _STRIPE_PRICES = {
-  starter: 'price_1TTbjvK5o648Z7JzPkL4QyOu',
-  pro:     'price_1TTbkdK5o648Z7JzuRmA4vVJ',
-  team:    'price_1TTblGK5o648Z7Jzg4vSZT01'
+// ── STRIPE PAYMENT LINKS ──
+var _PAYMENT_LINKS = {
+  starter: 'https://buy.stripe.com/7sY7sM5Ewfce3ie8YPcAo02',
+  pro:     'https://buy.stripe.com/eVq9AU1ogd469GC7ULcAo01',
+  team:    'https://buy.stripe.com/14AaEY2sk3tw062grhcAo00'
 };
-
 function goCheckout(plan){
-  var priceId = _STRIPE_PRICES[plan];
-  if(!priceId){ alert('Plan not found'); return; }
-  if(!_STRIPE){ window.location.href='checkout.html?plan='+plan; return; }
-  _STRIPE.redirectToCheckout({
-    lineItems:[{price:priceId, quantity:1}],
-    mode:'subscription',
-    successUrl: window.location.origin+'/app.html?checkout=success&plan='+plan,
-    cancelUrl:  window.location.origin+'/checkout.html?plan='+plan,
-  }).then(function(result){
-    if(result.error){ window.location.href='checkout.html?plan='+plan; }
-  }).catch(function(){ window.location.href='checkout.html?plan='+plan; });
+  var link=_PAYMENT_LINKS[plan];
+  if(!link){alert('Plan not found');return;}
+  window.open(link,'_blank');
 }
 
 // ── INFO MODALS (About, Terms, Privacy) ──

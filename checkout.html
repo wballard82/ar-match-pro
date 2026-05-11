@@ -23,7 +23,7 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
 .plan-feats{margin-top:10px;display:flex;flex-direction:column;gap:5px}
 .plan-feat{font-size:13px;color:#334155;display:flex;gap:7px}
 .plan-feat::before{content:'✓';color:var(--g);font-weight:700;flex-shrink:0}
-.stripe-btn{width:100%;padding:15px;background:linear-gradient(135deg,#635BFF,#4F46E5);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:10px;transition:.15s;box-shadow:0 8px 20px rgba(99,91,255,.3)}
+.stripe-btn{width:100%;padding:15px;background:linear-gradient(135deg,#635BFF,#4F46E5);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:10px;transition:.15s;box-shadow:0 8px 20px rgba(99,91,255,.3);text-decoration:none}
 .stripe-btn:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(99,91,255,.4)}
 .stripe-btn:disabled{opacity:.6;cursor:wait;transform:none}
 .divider{display:flex;align-items:center;gap:10px;margin:16px 0;font-size:12px;color:#94A3B8}
@@ -60,12 +60,12 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
       <div class="plan-feats" id="plan-feats"></div>
     </div>
 
-    <!-- Primary: Stripe -->
+    <!-- Primary: Stripe Payment Link -->
     <div id="stripe-section">
-      <button class="stripe-btn" id="stripe-btn" onclick="launchStripe()">
+      <a class="stripe-btn" id="stripe-btn" href="#" target="_blank" rel="noopener">
         <svg width="18" height="18" viewBox="0 0 32 32" fill="white"><path d="M13.5 13.3c0-.7.6-1 1.5-1 1.3 0 3 .4 4.3 1.1V10c-1.4-.6-2.9-.8-4.3-.8-3.5 0-5.8 1.8-5.8 4.9 0 4.8 6.6 4 6.6 6.1 0 .8-.7 1.1-1.7 1.1-1.5 0-3.4-.6-4.9-1.5v3.5c1.7.7 3.3 1 4.9 1 3.6 0 6-1.8 6-4.9-.1-5.2-6.6-4.3-6.6-6.1z"/></svg>
         Pay with Stripe — <span id="btn-price-label">$1,599/mo</span>
-      </button>
+      </a>
       <div class="trust" style="margin-top:12px">
         <div class="trust-item">🔒 Secure payment</div>
         <div class="trust-item">⚡ Instant access</div>
@@ -91,12 +91,21 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
       <div style="margin-top:12px;text-align:center"><a style="font-size:13px;color:var(--p);cursor:pointer" onclick="showStripe()">← Pay with Stripe instead</a></div>
     </div>
 
-    <!-- Success -->
+    <!-- Success: invoice request confirmation -->
     <div class="success" id="co-success">
-      <div style="font-size:48px;margin-bottom:16px">🎉</div>
-      <div style="font-size:20px;font-weight:800;color:#0F172A;margin-bottom:8px">Order received!</div>
-      <div style="font-size:14px;color:#64748B;line-height:1.65;margin-bottom:20px" id="co-success-msg">We will be in touch within 1 business day to activate your account.</div>
-      <a href="app.html" style="display:inline-block;padding:12px 24px;background:linear-gradient(135deg,var(--p),#0284C7);color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px">Go to app</a>
+      <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;font-size:26px;margin:0 auto 18px">✓</div>
+      <div style="font-size:22px;font-weight:800;color:#0F172A;margin-bottom:8px">Request received!</div>
+      <div style="font-size:14px;color:#64748B;line-height:1.7;margin-bottom:24px" id="co-success-msg">We will be in touch within 1 business day to activate your account.</div>
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px;margin-bottom:20px;text-align:left">
+        <div style="font-size:11.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">What happens next</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;gap:10px;font-size:13.5px;color:#334155"><span style="color:var(--g);font-weight:700;flex-shrink:0">1.</span>You'll receive a confirmation email at the address you provided.</div>
+          <div style="display:flex;gap:10px;font-size:13.5px;color:#334155"><span style="color:var(--g);font-weight:700;flex-shrink:0">2.</span>Our team will reach out within 1 business day to finalize your account setup.</div>
+          <div style="display:flex;gap:10px;font-size:13.5px;color:#334155"><span style="color:var(--g);font-weight:700;flex-shrink:0">3.</span>Once confirmed, you'll have full access — import invoices, run matching, and export your first posting file in minutes.</div>
+        </div>
+      </div>
+      <a href="app.html" style="display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--p),#0284C7);color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:15px;text-align:center;margin-bottom:10px">Open AR Match Pro →</a>
+      <div style="font-size:12.5px;color:#94A3B8;text-align:center">Questions? <a href="mailto:info@armatchpro.com" style="color:var(--p)">info@armatchpro.com</a></div>
     </div>
   </div>
 </div>
@@ -104,13 +113,12 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
 <div class="back-link" style="margin-top:10px"><a href="index.html">← Back to site</a></div>
 </div>
 
-<script src="https://js.stripe.com/v3/"></script>
 <script>
-const _SK = 'pk_live_51KRoPCK5o648Z7JzyGJcNQ7YFaLRCQgBysNIcRc7wiIwjKRHaB6ts4STYACp4ZxCDxnQzt501NsHhCbeEangyoyf00Y4b57dwP';
-const _PRICES = {
-  starter: 'price_1TVuurK5o648Z7JzihwTO0Ni',  // $799/mo
-  pro:     'price_1TVuvqK5o648Z7JzGiRA2XA7',  // $1,599/mo
-  team:    'price_1TVuwnK5o648Z7JznUmVXNQl'   // $2,999/mo
+// ── STRIPE PAYMENT LINKS ──
+const _LINKS = {
+  starter: 'https://buy.stripe.com/7sY7sM5Ewfce3ie8YPcAo02',
+  pro:     'https://buy.stripe.com/eVq9AU1ogd469GC7ULcAo01',
+  team:    'https://buy.stripe.com/14AaEY2sk3tw062grhcAo00'
 };
 const _PLANS = {
   starter:{name:'Starter Plan',price:'$799',mo:'$799/mo',feats:['1–2 users · Up to 5,000 rows/mo','Invoice & Amount matching','PO matching','Manual review queue','Basic posting exports (CSV)','Audit trail','Limited PDF exports','Standard support']},
@@ -130,18 +138,9 @@ document.getElementById('btn-price-label').textContent=plan.mo;
 document.getElementById('plan-feats').innerHTML=plan.feats.map(f=>`<div class="plan-feat">${f}</div>`).join('');
 document.title='AR Match Pro — '+plan.name;
 
-const stripe=Stripe(_SK);
-
-function launchStripe(){
-  const btn=document.getElementById('stripe-btn');
-  btn.disabled=true;btn.textContent='Redirecting to Stripe...';
-  stripe.redirectToCheckout({
-    lineItems:[{price:_PRICES[planKey],quantity:1}],
-    mode:'subscription',
-    successUrl:window.location.origin+'/app.html?checkout=success&plan='+planKey,
-    cancelUrl:window.location.origin+'/checkout.html?plan='+planKey,
-  }).then(r=>{if(r.error){btn.disabled=false;btn.innerHTML='Pay with Stripe — '+plan.mo;alert(r.error.message);}});
-}
+// Wire the payment link to the button
+document.getElementById('btn-price-label').textContent=plan.mo;
+document.getElementById('stripe-btn').href=_LINKS[planKey]||_LINKS.pro;
 
 function showManual(){document.getElementById('stripe-section').style.display='none';document.getElementById('manual-section').style.display='block';}
 function showStripe(){document.getElementById('manual-section').style.display='none';document.getElementById('stripe-section').style.display='block';}
