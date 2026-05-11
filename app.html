@@ -2206,6 +2206,27 @@ body.app-active #app {
 
 
 <!-- ── Modals ── -->
+<!-- ── POST-PAYMENT WELCOME MODAL ── -->
+<div class="mo-overlay" id="mo-welcome" style="display:none">
+  <div class="mo-box" style="max-width:480px;text-align:center">
+    <div style="padding:36px 32px 28px">
+      <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;margin:0 auto 20px;font-size:28px">✓</div>
+      <div style="font-size:22px;font-weight:800;color:var(--t1);letter-spacing:-.4px;margin-bottom:8px">Payment confirmed!</div>
+      <div style="font-size:14px;color:var(--t3);line-height:1.7;margin-bottom:24px" id="mo-welcome-msg">Your plan is ready. Create your account below to get started.</div>
+      <div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:16px;margin-bottom:24px;text-align:left">
+        <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">What happens next</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;font-size:13px;color:var(--t2)"><span style="color:var(--g);font-weight:700;flex-shrink:0">1.</span>Register with the email you used at checkout</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:var(--t2)"><span style="color:var(--g);font-weight:700;flex-shrink:0">2.</span>Your plan activates automatically on your account</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:var(--t2)"><span style="color:var(--g);font-weight:700;flex-shrink:0">3.</span>Import your invoices and remittance — you're live in minutes</div>
+        </div>
+      </div>
+      <button onclick="closeWelcome();showRegister()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(14,165,233,.3);margin-bottom:10px">Create my account →</button>
+      <div style="font-size:12px;color:var(--t3)">Questions? <a href="mailto:info@armatchpro.com" style="color:var(--p)">info@armatchpro.com</a></div>
+    </div>
+  </div>
+</div>
+
 <div class="mo-overlay" id="pricing-modal">
   <div class="mo-box wide">
     <div class="mo-header">
@@ -2238,7 +2259,7 @@ body.app-active #app {
   </div>
 </div>
 
-<div class="mo-overlay" id="upgrade-modal">
+<div class="mo-overlay" id="mo-upgrade" style="display:none">
   <div class="mo-box wide">
     <div class="mo-header">
       <div class="mo-title" id="um-title2">Upgrade to unlock</div>
@@ -4657,6 +4678,7 @@ function openImport(t){
   document.getElementById('imp-modal').classList.add('open');
 }
 function closeMo(){document.getElementById('imp-modal').classList.remove('open');}
+function closeWelcome(){const m=document.getElementById('mo-welcome');if(m)m.style.display='none';}
 function closeUpgrade(){
   document.getElementById('upgrade-modal').classList.remove('open');
   document.getElementById('pricing-modal').classList.remove('open');
@@ -6213,7 +6235,19 @@ window.addEventListener('load',()=>{
   const rem=localStorage.getItem('armp_remember_email');
   const emailEl=document.getElementById('li-email');
   if(rem&&emailEl){emailEl.value=rem;const rb=document.getElementById('li-remember');if(rb)rb.checked=true;}
-  if(params.get('checkout')==='success'){const plan=params.get('plan')||'pro';setTimeout(()=>toast('🎉 Payment successful! Sign in to activate your '+plan+' plan.'),500);}
+  if(params.get('checkout')==='success'){
+    const plan=params.get('plan')||'pro';
+    const planNames={starter:'Starter',pro:'Pro',team:'Team'};
+    const planName=planNames[plan]||'Pro';
+    setTimeout(()=>{
+      const msg=document.getElementById('mo-welcome-msg');
+      if(msg)msg.textContent='Your '+planName+' plan is confirmed. Register below with the email you used at checkout to activate your account.';
+      const modal=document.getElementById('mo-welcome');
+      if(modal)modal.style.display='flex';
+      // Clean the URL so refresh doesn't re-show the modal
+      window.history.replaceState({},'','/app.html');
+    },600);
+  }
   const sess=localStorage.getItem('armp_session');
   if(sess){
     try{
