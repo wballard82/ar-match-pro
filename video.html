@@ -154,38 +154,57 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 /* ── YOUTUBE-STYLE PLAYER CONTROLS ── */
 .yt-ctrl{
   position:absolute;bottom:0;left:0;right:0;z-index:30;
-  background:linear-gradient(transparent,rgba(0,0,0,.8) 70%);
-  padding:28px 12px 10px;
+  background:linear-gradient(transparent,rgba(0,0,0,.85) 70%);
+  padding:28px 12px 8px;
   opacity:0;transition:opacity .25s;
 }
 .player:hover .yt-ctrl,.yt-ctrl.active{opacity:1}
-/* Seek bar */
+
+/* ── SEEK BAR (native range, styled like YouTube) ── */
 .yt-seek{
-  position:relative;width:100%;height:20px;cursor:pointer;
-  display:flex;align-items:center;margin-bottom:4px;
+  position:relative;width:100%;margin-bottom:6px;
+  height:17px;display:flex;align-items:center;cursor:pointer;
 }
+/* Track fill visualization behind the range */
 .yt-seek-buf{
-  position:absolute;left:0;right:0;height:3px;border-radius:2px;
-  background:rgba(255,255,255,.25);pointer-events:none;
-  transition:height .15s;
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  height:3px;border-radius:2px;background:rgba(255,255,255,.3);
+  pointer-events:none;transition:height .12s;
 }
 .yt-seek-fill{
-  position:absolute;left:0;height:3px;border-radius:2px;
-  background:#f00;width:0%;pointer-events:none;
-  transition:height .15s;
-}
-.yt-seek-thumb{
-  position:absolute;top:50%;
-  width:13px;height:13px;border-radius:50%;background:#f00;
-  transform:translate(-50%,-50%);
-  pointer-events:none;
-  box-shadow:0 0 4px rgba(0,0,0,.5);
-  transition:width .12s,height .12s;
-  left:0%;
+  position:absolute;left:0;top:50%;transform:translateY(-50%);
+  height:3px;border-radius:2px;background:#f00;width:0%;
+  pointer-events:none;transition:height .12s;
 }
 .yt-seek:hover .yt-seek-buf,
 .yt-seek:hover .yt-seek-fill{height:5px}
-.yt-seek:hover .yt-seek-thumb{width:16px;height:16px}
+
+/* The actual draggable range input — fully transparent, sits on top */
+#seek-range{
+  position:absolute;left:0;right:0;top:0;bottom:0;width:100%;
+  -webkit-appearance:none;appearance:none;
+  background:transparent;cursor:pointer;margin:0;padding:0;
+  z-index:2;
+}
+#seek-range::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:13px;height:13px;border-radius:50%;
+  background:#f00;cursor:grab;
+  box-shadow:0 0 3px rgba(0,0,0,.5);
+  opacity:0;transition:opacity .12s, width .12s, height .12s;
+}
+.yt-seek:hover #seek-range::-webkit-slider-thumb{
+  opacity:1;width:15px;height:15px;
+}
+#seek-range:active::-webkit-slider-thumb{cursor:grabbing;opacity:1}
+#seek-range::-webkit-slider-runnable-track{background:transparent}
+#seek-range::-moz-range-thumb{
+  width:13px;height:13px;border-radius:50%;
+  background:#f00;cursor:grab;border:none;
+  box-shadow:0 0 3px rgba(0,0,0,.5);
+}
+#seek-range::-moz-range-track{background:transparent}
+
 /* Bottom row */
 .yt-row{display:flex;align-items:center;justify-content:space-between}
 .yt-left,.yt-right{display:flex;align-items:center;gap:4px}
@@ -197,9 +216,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .yt-btn:hover{background:rgba(255,255,255,.15)}
 /* Volume */
 .yt-vol-wrap{display:flex;align-items:center;gap:2px}
-.yt-vol-slider-wrap{
-  width:0;overflow:hidden;transition:width .2s;
-}
+.yt-vol-slider-wrap{width:0;overflow:hidden;transition:width .2s;}
 .yt-vol-wrap:hover .yt-vol-slider-wrap,
 .yt-vol-wrap:focus-within .yt-vol-slider-wrap{width:56px}
 .yt-vol-slider{
@@ -212,15 +229,10 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
   border-radius:50%;background:#fff;cursor:pointer;
 }
 .yt-vol-slider::-moz-range-thumb{
-  width:12px;height:12px;border-radius:50%;
-  background:#fff;cursor:pointer;border:none;
+  width:12px;height:12px;border-radius:50%;background:#fff;cursor:pointer;border:none;
 }
 /* Time */
-.yt-time{
-  font-size:12px;color:rgba(255,255,255,.9);
-  font-family:'JetBrains Mono',monospace;
-  white-space:nowrap;padding:0 6px;
-}
+.yt-time{font-size:12px;color:rgba(255,255,255,.9);white-space:nowrap;padding:0 6px;}
 </style>
 </head>
 <body>
@@ -320,15 +332,18 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 
   <!-- PROGRESS + CONTROLS -->
   <div class="pause-overlay" id="pause-overlay"><div class="pause-icon">⏸</div></div>
-  <!-- YouTube-style control bar -->
+  <!-- Controls -->
   <div class="yt-ctrl" id="yt-ctrl">
     <!-- Seek bar -->
-    <div class="yt-seek" id="yt-seek"
-         onmousedown="event.stopPropagation();seekStart(event)"
-         ontouchstart="event.stopPropagation();seekStart(event)">
+    <div class="yt-seek" id="yt-seek">
       <div class="yt-seek-buf"></div>
-      <div class="yt-seek-fill" id="prog-fill" style="width:0%"></div>
-      <div class="yt-seek-thumb" id="seek-thumb" style="left:0%"></div>
+      <div class="yt-seek-fill" id="prog-fill"></div>
+      <input type="range" id="seek-range" min="0" max="1000" step="1" value="0"
+             oninput="onSeekInput(this.value)"
+             onmousedown="event.stopPropagation();onSeekStart()"
+             onmouseup="onSeekEnd()"
+             ontouchstart="event.stopPropagation();onSeekStart()"
+             ontouchend="onSeekEnd()">
     </div>
     <!-- Bottom row -->
     <div class="yt-row">
@@ -487,12 +502,54 @@ function tick(){
   raf=requestAnimationFrame(tick);
 }
 
+// ── SEEK (native range) ──
+let isSeeking=false, wasPlayingBeforeSeek=false;
+
+function onSeekStart(){
+  isSeeking=true;
+  wasPlayingBeforeSeek=playing;
+  synth.cancel();
+}
+function onSeekInput(val){
+  const pct=parseFloat(val)/1000;
+  elapsed=Math.floor(pct*TOTAL);
+  if(playing)startTs=Date.now()-elapsed;
+  const fill=document.getElementById('prog-fill');
+  if(fill)fill.style.width=(pct*100)+'%';
+  const s=Math.floor(elapsed/1000);
+  const timeStr=Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
+  const totalSec=Math.round(TOTAL/1000);
+  const durStr=Math.floor(totalSec/60)+':'+(totalSec%60<10?'0':'')+totalSec%60;
+  const timeEl=document.getElementById('time-el');
+  if(timeEl)timeEl.innerHTML=timeStr+' / <span id="dur-el">'+durStr+'</span>';
+  let cum=0;
+  for(let i=0;i<SCENES.length;i++){
+    cum+=SCENES[i].dur;
+    if(elapsed<cum){
+      if(cur!==i){
+        const oldEl=document.getElementById('s'+cur);if(oldEl)oldEl.classList.remove('show');
+        cur=i;
+        const newEl=document.getElementById('s'+cur);if(newEl)newEl.classList.add('show');
+        document.getElementById('grid-bg').classList.toggle('show',cur>0);
+        setDots(cur);
+      }
+      break;
+    }
+  }
+}
+function onSeekEnd(){
+  isSeeking=false;
+  if(wasPlayingBeforeSeek){
+    startTs=Date.now()-elapsed;
+    speakScene(cur);
+  }
+}
 function updateProg(){
   const pct=Math.min(elapsed/TOTAL*100,100);
   const fill=document.getElementById('prog-fill');
   if(fill)fill.style.width=pct+'%';
-  const thumb=document.getElementById('seek-thumb');
-  if(thumb)thumb.style.left=pct+'%';
+  const range=document.getElementById('seek-range');
+  if(range&&!isSeeking)range.value=Math.round(pct*10);
   const s=Math.floor(elapsed/1000);
   const timeStr=Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
   const totalSec=Math.round(TOTAL/1000);
@@ -503,56 +560,60 @@ function updateProg(){
 
 function play(){
   playing=true;startTs=Date.now()-elapsed;
-  const _pb2=document.getElementById('play-btn');if(_pb2)_pb2.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';const _ctl2=document.getElementById('yt-ctrl');if(_ctl2){_ctl2.classList.remove('active');setTimeout(()=>{if(playing&&_ctl2)_ctl2.classList.remove('active');},3000);}document.getElementById('play-btn').style.background='rgba(255,255,255,.15)';
-  document.getElementById('main-btn').textContent='⏸ Pause';
+  const pb=document.getElementById('play-btn');
+  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';pb.style.background='none';}
+  const ctrl=document.getElementById('yt-ctrl');
+  if(ctrl){ctrl.classList.remove('active');setTimeout(()=>{if(playing&&ctrl)ctrl.classList.remove('active');},3000);}
+  const mainBtn=document.getElementById('main-btn');
+  if(mainBtn)mainBtn.textContent='⏸ Pause';
   document.getElementById('pause-overlay').classList.remove('show');
   speakScene(cur);
   raf=requestAnimationFrame(tick);
 }
 function pause(){
   playing=false;cancelAnimationFrame(raf);synth.pause();
-  const _pb=document.getElementById('play-btn');if(_pb)_pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';const _ctl=document.getElementById('yt-ctrl');if(_ctl)_ctl.classList.add('active');document.getElementById('play-btn').style.background='linear-gradient(135deg,#0EA5E9,#0284C7)';
-  document.getElementById('main-btn').textContent='▶ Play';
+  const pb=document.getElementById('play-btn');
+  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';pb.style.background='none';}
+  const ctrl=document.getElementById('yt-ctrl');if(ctrl)ctrl.classList.add('active');
+  const mainBtn=document.getElementById('main-btn');if(mainBtn)mainBtn.textContent='▶ Play';
   document.getElementById('pause-overlay').classList.add('show');
 }
 function end(){
   playing=false;cancelAnimationFrame(raf);synth.cancel();
-  document.getElementById('play-btn').textContent='↺';document.getElementById('play-btn').style.background='linear-gradient(135deg,#10B981,#059669)';
-  document.getElementById('main-btn').textContent='↺ Replay';
+  const pb=document.getElementById('play-btn');
+  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';pb.style.background='none';}
+  const mainBtn=document.getElementById('main-btn');if(mainBtn)mainBtn.textContent='↺ Replay';
   document.getElementById('pause-overlay').classList.remove('show');
-  document.getElementById('voice-dot').classList.remove('speaking');
+  const vd=document.getElementById('voice-dot');if(vd)vd.classList.remove('speaking');
+  // Reset to beginning so clicking play works again
+  elapsed=0;startTs=0;
+  showScene(0);updateProg();
 }
 function restartVideo(){
-  synth.cancel();
-  cancelAnimationFrame(raf);
+  synth.cancel();cancelAnimationFrame(raf);
   elapsed=0;cur=0;playing=false;
-  // Hide all scenes, show first
-  SCENES.forEach((sc,i)=>{
-    const el=document.getElementById(sc.id);
-    if(el){el.classList.toggle('show',i===0);}
-  });
-  updateProg();
-  // Reset play button to play icon
+  SCENES.forEach((sc,i)=>{const el=document.getElementById(sc.id);if(el)el.classList.toggle('show',i===0);});
+  const range=document.getElementById('seek-range');if(range)range.value=0;
+  const fill=document.getElementById('prog-fill');if(fill)fill.style.width='0%';
   const pb=document.getElementById('play-btn');
-  if(pb)pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';
-  // Auto-start after reset
+  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';pb.style.background='none';}
   setTimeout(play,100);
 }
 function togglePlay(){
-  if(!playing&&elapsed>=TOTAL){resetPlayer();setTimeout(play,100);return;}
+  if(!playing&&elapsed===0){play();return;}
+  if(!playing&&elapsed>=TOTAL){restartVideo();return;}
   playing?pause():play();
-}
-function handlePlayerClick(){
-  if(!playing&&elapsed<TOTAL)togglePlay();
-  else if(playing)pause();
 }
 function resetPlayer(){
   synth.cancel();cancelAnimationFrame(raf);playing=false;elapsed=0;
   showScene(0);updateProg();
-  const _pb=document.getElementById('play-btn');if(_pb)_pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';const _ctl=document.getElementById('yt-ctrl');if(_ctl)_ctl.classList.add('active');document.getElementById('play-btn').style.background='linear-gradient(135deg,#0EA5E9,#0284C7)';
-  document.getElementById('main-btn').textContent='▶ Play';
+  const range=document.getElementById('seek-range');if(range)range.value=0;
+  const pb=document.getElementById('play-btn');
+  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';pb.style.background='none';}
+  const ctrl=document.getElementById('yt-ctrl');if(ctrl)ctrl.classList.add('active');
+  const mainBtn=document.getElementById('main-btn');if(mainBtn)mainBtn.textContent='▶ Play';
   document.getElementById('pause-overlay').classList.remove('show');
-  document.getElementById('voice-dot').classList.remove('speaking');
+  const vd=document.getElementById('voice-dot');if(vd)vd.classList.remove('speaking');
 }
 function prevScene(){if(cur>0)jumpTo(cur-1);}
 function nextScene(){if(cur<SCENES.length-1)jumpTo(cur+1);}
@@ -575,53 +636,7 @@ function toggleMute(){
   }
 }
 
-// ── YOUTUBE-STYLE SEEK ──
-let seeking=false;
-function seekStart(e){
-  e.preventDefault();
-  e.stopPropagation();
-  seeking=true;
-  seekMove(e);
-  const up=(ev)=>{
-    seeking=false;
-    document.removeEventListener('mousemove',seekMove);
-    document.removeEventListener('mouseup',up);
-    document.removeEventListener('touchmove',seekMove);
-    document.removeEventListener('touchend',up);
-    // If dragged, resume speech from new position
-    if(playing&&!synth.speaking){setTimeout(()=>{if(playing&&!synth.speaking)speakScene(cur);},80);}
-  };
-  document.addEventListener('mousemove',seekMove);
-  document.addEventListener('mouseup',up);
-  document.addEventListener('touchmove',seekMove,{passive:false});
-  document.addEventListener('touchend',up);
-}
-function seekMove(e){
-  if(!seeking)return;
-  e.preventDefault();
-  const bar=document.getElementById('yt-seek');
-  const rect=bar.getBoundingClientRect();
-  const clientX=e.touches?e.touches[0].clientX:e.clientX;
-  const pct=Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
-  elapsed=Math.floor(pct*TOTAL);
-  if(playing){startTs=Date.now()-elapsed;}
-  updateProg();
-  // Jump to scene matching elapsed
-  let cum=0;
-  for(let i=0;i<SCENES.length;i++){
-    cum+=SCENES[i].dur;
-    if(elapsed<cum){
-      if(cur!==i){
-        const oldEl=document.getElementById('s'+cur);if(oldEl)oldEl.classList.remove('show');
-        cur=i;
-        const newEl=document.getElementById('s'+cur);if(newEl)newEl.classList.add('show');
-        // Only restart speech if playing; seeking while paused just moves position
-        if(playing){synth.cancel();setTimeout(()=>{if(playing&&!seeking)speakScene(cur);},80);}
-      }
-      break;
-    }
-  }
-}
+
 function setVolume(val){
   const vol=parseFloat(val)/100;
   muted=(vol===0);
