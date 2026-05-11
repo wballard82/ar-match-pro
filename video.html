@@ -394,23 +394,26 @@ const SCENES=[
   {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation and ERP integration, AR Match Pro is live the same day. Starter plans begin at 799 dollars per month. Pro unlocks unlimited rows, AI-assisted matching, and CFO dashboards at 1,599 per month. No installation. No IT approval needed. Start today at AR Match Pro dot com."}
 ];
 const TOTAL=SCENES.reduce((s,sc)=>s+sc.dur,0);
+// Scene start offsets for progress calculations
+const SCENE_START=SCENES.reduce((acc,sc,i)=>{acc.push(i===0?0:acc[i-1]+SCENES[i-1].dur);return acc;},[]);
 
-let cur=0,playing=false,muted=false,elapsed=0,startTs=0,raf=0;
-let synth=window.speechSynthesis,utt=null,voiceReady=false;
-let voiceObj=null;
+// State
+let cur=0, playing=false, muted=false, raf=0;
+// Scene-level timing: when current scene speech started (wall clock)
+let sceneStartTs=0, sceneElapsed=0;
+let synth=window.speechSynthesis, utt=null, voiceObj=null;
 
 // ── VOICE SETUP ──
 function pickVoice(){
   const voices=synth.getVoices();
   if(!voices.length)return null;
-  // Priority: female English voices
   const prefs=[
-    v=>v.name==='Samantha',                          // iOS/macOS
+    v=>v.name==='Samantha',
     v=>v.name.includes('Samantha'),
-    v=>v.name==='Microsoft Jenny Online (Natural)',   // Windows
+    v=>v.name==='Microsoft Jenny Online (Natural)',
     v=>v.name.includes('Jenny'),
-    v=>v.name.includes('Zira'),                       // Windows
-    v=>v.name==='Google US English',                  // Chrome Android
+    v=>v.name.includes('Zira'),
+    v=>v.name==='Google US English',
     v=>/female|woman/i.test(v.name)&&v.lang.startsWith('en'),
     v=>v.lang.startsWith('en-US'),
     v=>v.lang.startsWith('en'),
@@ -421,65 +424,88 @@ function pickVoice(){
 }
 function initVoice(){
   voiceObj=pickVoice();
-  if(voiceObj){
-    voiceReady=true;
-    document.getElementById('voice-label').textContent='';
-    // voice notice hidden
-  }else{
-    document.getElementById('voice-label').textContent='';
-    // voice notice hidden
-  }
+  const lbl=document.getElementById('voice-label');
+  if(lbl)lbl.textContent='';
 }
 if(synth.onvoiceschanged!==undefined)synth.onvoiceschanged=initVoice;
 setTimeout(initVoice,300);
 
-// ── DOTS ──
+// ── SCENE DOTS ──
 const dotsEl=document.getElementById('dots');
-SCENES.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' on':'');d.onclick=(e)=>{e.stopPropagation();jumpTo(i)};dotsEl.appendChild(d)});
-
-function setDots(n){document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===n))}
+SCENES.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=(e)=>{e.stopPropagation();jumpTo(i);};
+  dotsEl.appendChild(d);
+});
+function setDots(n){document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===n));}
 function showScene(n){
   document.querySelectorAll('.scene').forEach((s,i)=>s.classList.toggle('show',i===n));
   document.getElementById('grid-bg').classList.toggle('show',n>0);
-  setDots(n);cur=n;
-}
-function jumpTo(n){
-  const newElapsed=SCENES.slice(0,n).reduce((s,sc)=>s+sc.dur,0);
-  elapsed=newElapsed;
-  if(playing){startTs=Date.now()-elapsed;speakScene(n);}
-  showScene(n);updateProg();
+  setDots(n); cur=n;
 }
 
-// ── VOICE ──
+// ── PROGRESS: scene-based, not wall-clock ──
+// elapsed = offset within TOTAL based on scene start + time into current scene
+function getElapsed(){
+  if(!playing) return SCENE_START[cur];
+  const intoScene=Math.min(Date.now()-sceneStartTs, SCENES[cur].dur);
+  return SCENE_START[cur]+intoScene;
+}
+function updateProg(){
+  const elapsed=getElapsed();
+  const pct=Math.min(elapsed/TOTAL*100,100);
+  // Fill bar
+  const fill=document.getElementById('prog-fill');
+  if(fill)fill.style.width=pct+'%';
+  // Sync range input (don't update while user is dragging)
+  if(!isSeeking){
+    const range=document.getElementById('seek-range');
+    if(range)range.value=Math.round(pct*10);
+  }
+  // Time display
+  const s=Math.floor(elapsed/1000);
+  const totalSec=Math.round(TOTAL/1000);
+  const fmt=(sec)=>Math.floor(sec/60)+':'+(sec%60<10?'0':'')+sec%60;
+  const timeEl=document.getElementById('time-el');
+  if(timeEl)timeEl.innerHTML=fmt(s)+' / <span id="dur-el">'+fmt(totalSec)+'</span>';
+}
+
+// ── TICK ──
+function tick(){
+  if(!playing)return;
+  updateProg();
+  raf=requestAnimationFrame(tick);
+}
+
+// ── SPEECH ──
 function speakScene(n){
   synth.cancel();
+  sceneStartTs=Date.now();
   setTimeout(()=>{
     if(!playing)return;
     utt=new SpeechSynthesisUtterance(SCENES[n].vo);
-    // Select voice
     if(voiceObj)utt.voice=voiceObj;
-    // Get current volume from slider
     const volSlider=document.getElementById('vol-slider');
-    const currentVol=volSlider?parseFloat(volSlider.value)/100:1;
-    utt.rate=.78; utt.pitch=1.0; utt.volume=muted?0:currentVol;
-    utt.onstart=()=>{const d=document.getElementById('voice-dot');if(d)d.classList.add('speaking');};
+    const vol=volSlider?parseFloat(volSlider.value)/100:1;
+    utt.rate=.78; utt.pitch=1.0; utt.volume=muted?0:vol;
+    utt.onstart=()=>{
+      sceneStartTs=Date.now(); // reset once speech actually starts
+      const d=document.getElementById('voice-dot');if(d)d.classList.add('speaking');
+    };
     utt.onend=()=>{
       const d=document.getElementById('voice-dot');if(d)d.classList.remove('speaking');
       if(!playing)return;
-      // Advance to next scene ONLY after speech fully completes
       const next=n+1;
       if(next<SCENES.length){
         cur=next;
         showScene(next);
-        // Small breath between scenes
         setTimeout(()=>speakScene(next),400);
       } else {
-        // All scenes done
         end();
       }
     };
     utt.onerror=()=>{
-      // On speech error, still advance so we don't get stuck
       const next=n+1;
       if(next<SCENES.length){cur=next;showScene(next);setTimeout(()=>speakScene(next),600);}
       else end();
@@ -488,138 +514,122 @@ function speakScene(n){
   },100);
 }
 
-// ── PLAYBACK ──
-let speechDone=false;
-
-// Scene is advanced ONLY by speech onend — no time-based interruption
-// tick() only handles the progress bar and final end detection
-function tick(){
-  if(!playing)return;
-  elapsed=Date.now()-startTs;
-  updateProg();
-  // Only check for complete end after all scenes done
-  if(cur>=SCENES.length-1&&!synth.speaking&&elapsed>TOTAL){end();return;}
-  raf=requestAnimationFrame(tick);
-}
-
-// ── SEEK (native range) ──
-let isSeeking=false, wasPlayingBeforeSeek=false;
-
-function onSeekStart(){
-  isSeeking=true;
-  wasPlayingBeforeSeek=playing;
-  // Fully pause everything during scrub
-  playing=false;
-  cancelAnimationFrame(raf);
-  synth.cancel();
-}
-function onSeekInput(val){
-  const pct=parseFloat(val)/1000;
-  elapsed=Math.floor(pct*TOTAL);
-  // Don't update startTs during seek - playing is false
-  const fill=document.getElementById('prog-fill');
-  if(fill)fill.style.width=(pct*100)+'%';
-  const s=Math.floor(elapsed/1000);
-  const timeStr=Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
-  const totalSec=Math.round(TOTAL/1000);
-  const durStr=Math.floor(totalSec/60)+':'+(totalSec%60<10?'0':'')+totalSec%60;
-  const timeEl=document.getElementById('time-el');
-  if(timeEl)timeEl.innerHTML=timeStr+' / <span id="dur-el">'+durStr+'</span>';
-  let cum=0;
-  for(let i=0;i<SCENES.length;i++){
-    cum+=SCENES[i].dur;
-    if(elapsed<cum){
-      if(cur!==i){
-        const oldEl=document.getElementById('s'+cur);if(oldEl)oldEl.classList.remove('show');
-        cur=i;
-        const newEl=document.getElementById('s'+cur);if(newEl)newEl.classList.add('show');
-        document.getElementById('grid-bg').classList.toggle('show',cur>0);
-        setDots(cur);
-      }
-      break;
-    }
-  }
-}
-function onSeekEnd(){
-  isSeeking=false;
-  if(wasPlayingBeforeSeek){
-    // play() sets playing=true, resets startTs, restarts speech and RAF
-    play();
-  }
-}
-function updateProg(){
-  const pct=Math.min(elapsed/TOTAL*100,100);
-  const fill=document.getElementById('prog-fill');
-  if(fill)fill.style.width=pct+'%';
-  const range=document.getElementById('seek-range');
-  if(range&&!isSeeking)range.value=Math.round(pct*10);
-  const s=Math.floor(elapsed/1000);
-  const timeStr=Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
-  const totalSec=Math.round(TOTAL/1000);
-  const durStr=Math.floor(totalSec/60)+':'+(totalSec%60<10?'0':'')+totalSec%60;
-  const timeEl=document.getElementById('time-el');
-  if(timeEl)timeEl.innerHTML=timeStr+' / <span id="dur-el">'+durStr+'</span>';
-}
-
+// ── PLAYBACK CONTROLS ──
 function play(){
-  playing=true;startTs=Date.now()-elapsed;
-  const pb=document.getElementById('play-btn');
-  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';pb.style.background='none';}
+  playing=true;
+  sceneStartTs=Date.now();
+  setPlayBtn(true);
   const ctrl=document.getElementById('yt-ctrl');
-  if(ctrl){ctrl.classList.remove('active');setTimeout(()=>{if(playing&&ctrl)ctrl.classList.remove('active');},3000);}
-  const mainBtn=document.getElementById('main-btn');
-  if(mainBtn)mainBtn.textContent='⏸ Pause';
+  if(ctrl){ctrl.classList.remove('active');setTimeout(()=>{if(playing)ctrl.classList.remove('active');},3000);}
   document.getElementById('pause-overlay').classList.remove('show');
   speakScene(cur);
   raf=requestAnimationFrame(tick);
 }
 function pause(){
-  playing=false;cancelAnimationFrame(raf);synth.pause();
-  const pb=document.getElementById('play-btn');
-  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';pb.style.background='none';}
+  playing=false;
+  cancelAnimationFrame(raf);
+  synth.pause();
+  setPlayBtn(false);
   const ctrl=document.getElementById('yt-ctrl');if(ctrl)ctrl.classList.add('active');
-  const mainBtn=document.getElementById('main-btn');if(mainBtn)mainBtn.textContent='▶ Play';
   document.getElementById('pause-overlay').classList.add('show');
 }
 function end(){
-  playing=false;cancelAnimationFrame(raf);synth.cancel();
-  const pb=document.getElementById('play-btn');
-  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';pb.style.background='none';}
-  const mainBtn=document.getElementById('main-btn');if(mainBtn)mainBtn.textContent='↺ Replay';
+  playing=false;
+  cancelAnimationFrame(raf);
+  synth.cancel();
+  setPlayBtn(false);
   document.getElementById('pause-overlay').classList.remove('show');
   const vd=document.getElementById('voice-dot');if(vd)vd.classList.remove('speaking');
-  // Reset to beginning so clicking play works again
-  elapsed=0;startTs=0;
-  showScene(0);updateProg();
+  // Return to start so play works again
+  cur=0; sceneStartTs=0;
+  showScene(0); updateProg();
+}
+function setPlayBtn(isPlaying){
+  const pb=document.getElementById('play-btn');
+  if(!pb)return;
+  pb.style.background='none';
+  pb.innerHTML=isPlaying
+    ?'<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
+    :'<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';
 }
 function restartVideo(){
   synth.cancel();cancelAnimationFrame(raf);
-  elapsed=0;cur=0;playing=false;
-  SCENES.forEach((sc,i)=>{const el=document.getElementById(sc.id);if(el)el.classList.toggle('show',i===0);});
+  playing=false;cur=0;sceneStartTs=0;
+  SCENES.forEach((_,i)=>{const el=document.getElementById('s'+i);if(el)el.classList.toggle('show',i===0);});
+  document.getElementById('grid-bg').classList.remove('show');
+  setDots(0);
   const range=document.getElementById('seek-range');if(range)range.value=0;
   const fill=document.getElementById('prog-fill');if(fill)fill.style.width='0%';
-  const pb=document.getElementById('play-btn');
-  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';pb.style.background='none';}
+  setPlayBtn(false);
   setTimeout(play,100);
 }
 function togglePlay(){
-  if(!playing&&elapsed===0){play();return;}
-  if(!playing&&elapsed>=TOTAL){restartVideo();return;}
+  if(!playing&&cur===0&&getElapsed()<100){play();return;}
+  if(!playing&&cur>=SCENES.length-1&&getElapsed()>=TOTAL-500){restartVideo();return;}
   playing?pause():play();
 }
-function resetPlayer(){
-  synth.cancel();cancelAnimationFrame(raf);playing=false;elapsed=0;
-  showScene(0);updateProg();
-  const range=document.getElementById('seek-range');if(range)range.value=0;
-  const pb=document.getElementById('play-btn');
-  if(pb){pb.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';pb.style.background='none';}
-  const ctrl=document.getElementById('yt-ctrl');if(ctrl)ctrl.classList.add('active');
-  const mainBtn=document.getElementById('main-btn');if(mainBtn)mainBtn.textContent='▶ Play';
-  document.getElementById('pause-overlay').classList.remove('show');
-  const vd=document.getElementById('voice-dot');if(vd)vd.classList.remove('speaking');
+
+// ── JUMP TO SCENE (dot click) ──
+function jumpTo(n){
+  synth.cancel();cancelAnimationFrame(raf);
+  cur=n; sceneStartTs=Date.now();
+  showScene(n); updateProg();
+  if(playing){speakScene(n);raf=requestAnimationFrame(tick);}
 }
-function prevScene(){if(cur>0)jumpTo(cur-1);}
-function nextScene(){if(cur<SCENES.length-1)jumpTo(cur+1);}
+
+// ── SEEK (scrub to any position within the total) ──
+let isSeeking=false, wasPlayingBeforeSeek=false;
+
+function onSeekStart(){
+  isSeeking=true;
+  wasPlayingBeforeSeek=playing;
+  playing=false;
+  cancelAnimationFrame(raf);
+  synth.cancel();
+}
+function onSeekInput(val){
+  // Map range 0-1000 to a scene + update display
+  const pct=parseFloat(val)/1000;
+  const targetMs=Math.floor(pct*TOTAL);
+  // Find which scene this falls in
+  let targetScene=SCENES.length-1;
+  for(let i=0;i<SCENES.length;i++){
+    if(targetMs<SCENE_START[i]+(SCENES[i].dur)){targetScene=i;break;}
+  }
+  // Update fill
+  const fill=document.getElementById('prog-fill');
+  if(fill)fill.style.width=(pct*100)+'%';
+  // Update time
+  const s=Math.floor(targetMs/1000);
+  const totalSec=Math.round(TOTAL/1000);
+  const fmt=(sec)=>Math.floor(sec/60)+':'+(sec%60<10?'0':'')+sec%60;
+  const timeEl=document.getElementById('time-el');
+  if(timeEl)timeEl.innerHTML=fmt(s)+' / <span id="dur-el">'+fmt(totalSec)+'</span>';
+  // Switch scene visually if needed
+  if(targetScene!==cur){
+    const oldEl=document.getElementById('s'+cur);if(oldEl)oldEl.classList.remove('show');
+    cur=targetScene;
+    const newEl=document.getElementById('s'+cur);if(newEl)newEl.classList.add('show');
+    document.getElementById('grid-bg').classList.toggle('show',cur>0);
+    setDots(cur);
+  }
+}
+function onSeekEnd(){
+  isSeeking=false;
+  if(wasPlayingBeforeSeek){
+    // Start speech from beginning of the target scene and play from there
+    playing=true;
+    sceneStartTs=Date.now();
+    setPlayBtn(true);
+    document.getElementById('pause-overlay').classList.remove('show');
+    const ctrl=document.getElementById('yt-ctrl');
+    if(ctrl){ctrl.classList.remove('active');setTimeout(()=>{if(playing)ctrl.classList.remove('active');},3000);}
+    speakScene(cur);
+    raf=requestAnimationFrame(tick);
+  }
+}
+
+// ── VOLUME / MUTE ──
 function toggleMute(){
   muted=!muted;
   const volSlider=document.getElementById('vol-slider');
@@ -629,39 +639,27 @@ function toggleMute(){
   } else {
     if(utt){try{utt.volume=1;}catch(e){}}
     if(volSlider)volSlider.value=100;
-    if(playing&&!synth.speaking){setTimeout(()=>{if(playing&&!synth.speaking)speakScene(cur);},80);}
+    if(playing&&!synth.speaking)setTimeout(()=>{if(playing&&!synth.speaking)speakScene(cur);},80);
   }
-  const icon=document.getElementById('vol-icon');
-  if(icon){
-    icon.innerHTML=muted
-      ?'<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
-      :'<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM16.5 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
-  }
+  updateVolIcon();
 }
-
-
 function setVolume(val){
   const vol=parseFloat(val)/100;
   muted=(vol===0);
-  window._speechVol=vol;
-  // Apply to current utterance if possible (may not take effect mid-speech)
   if(utt){try{utt.volume=muted?0:vol;}catch(e){}}
-  // If muting: cancel speech but do NOT pause video playback
-  if(muted&&synth.speaking){
-    synth.cancel();
-    // Video continues — silence only
-  } else if(!muted&&!synth.speaking&&playing){
-    // Was muted and now unmuting while playing — restart speech for current scene
-    setTimeout(()=>{if(playing&&!synth.speaking)speakScene(cur);},80);
-  }
-  // Update icon — do NOT touch playing state
-  const icon=document.getElementById('vol-icon');
-  if(icon){
-    icon.innerHTML=muted
-      ?'<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
-      :'<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>';
-  }
+  if(muted&&synth.speaking){synth.cancel();}
+  else if(!muted&&!synth.speaking&&playing){setTimeout(()=>{if(playing&&!synth.speaking)speakScene(cur);},80);}
+  updateVolIcon();
 }
+function updateVolIcon(){
+  const icon=document.getElementById('vol-icon');
+  if(!icon)return;
+  icon.innerHTML=muted
+    ?'<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
+    :'<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM16.5 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+}
+
+// ── FULLSCREEN ──
 function toggleFullscreen(){
   const player=document.getElementById('player');
   const fsIcon=document.getElementById('fs-icon');
@@ -673,16 +671,17 @@ function toggleFullscreen(){
     if(fsIcon)fsIcon.innerHTML='<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
   }
 }
-// Show controls on load (non-playing state)
+
+// ── INIT ──
 document.addEventListener('DOMContentLoaded',()=>{
   const ctrl=document.getElementById('yt-ctrl');
   if(ctrl)ctrl.classList.add('active');
-  // Set total duration display
-  const dur=document.getElementById('dur-el');
   const totalSec=Math.round(TOTAL/1000);
-  if(dur)dur.textContent=Math.floor(totalSec/60)+':'+(totalSec%60<10?'0':'')+totalSec%60;
+  const fmt=(sec)=>Math.floor(sec/60)+':'+(sec%60<10?'0':'')+sec%60;
+  const dur=document.getElementById('dur-el');
+  if(dur)dur.textContent=fmt(totalSec);
+  updateProg();
 });
-
 </script>
 </body>
 </html>
