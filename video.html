@@ -9,7 +9,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --p:#0EA5E9;--pd:#0284C7;--g:#10B981;--gd:#059669;--am:#F59E0B;--r:#EF4444;--pu:#8B5CF6;
-  --navy:#050D1A;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --navy:#050D1A;--font:'Inter',sans-serif;--mono:'Inter',sans-serif;
 }
 html,body{height:100%;background:#000;font-family:var(--font);-webkit-font-smoothing:antialiased}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:16px;gap:14px}
@@ -454,7 +454,7 @@ function jumpTo(n){
 function speakScene(n){
   synth.cancel();
   setTimeout(()=>{
-    if(!playing&&n!==0)return;
+    if(!playing)return;
     utt=new SpeechSynthesisUtterance(SCENES[n].vo);
     // Select voice
     if(voiceObj)utt.voice=voiceObj;
@@ -508,13 +508,15 @@ let isSeeking=false, wasPlayingBeforeSeek=false;
 function onSeekStart(){
   isSeeking=true;
   wasPlayingBeforeSeek=playing;
+  // Fully pause everything during scrub
+  playing=false;
   cancelAnimationFrame(raf);
   synth.cancel();
 }
 function onSeekInput(val){
   const pct=parseFloat(val)/1000;
   elapsed=Math.floor(pct*TOTAL);
-  if(playing)startTs=Date.now()-elapsed;
+  // Don't update startTs during seek - playing is false
   const fill=document.getElementById('prog-fill');
   if(fill)fill.style.width=(pct*100)+'%';
   const s=Math.floor(elapsed/1000);
@@ -541,11 +543,8 @@ function onSeekInput(val){
 function onSeekEnd(){
   isSeeking=false;
   if(wasPlayingBeforeSeek){
-    playing=true;
-    startTs=Date.now()-elapsed;
-    document.getElementById('pause-overlay').classList.remove('show');
-    speakScene(cur);
-    raf=requestAnimationFrame(tick);
+    // play() sets playing=true, resets startTs, restarts speech and RAF
+    play();
   }
 }
 function updateProg(){
