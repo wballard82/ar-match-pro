@@ -2311,10 +2311,11 @@ body.app-active #app {
           <div class="drop-zone-icon">📂</div>
           <div class="drop-zone-t">Drop file here or click to browse</div>
           <div class="drop-zone-s">Column mapping auto-detected</div>
-          <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml" style="display:none" onchange="handleFile(this)">
+          <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf" style="display:none" onchange="handleFile(this)">
           <div class="fmt-badges">
             <span class="fmt-badge blue">CSV</span>
             <span class="fmt-badge blue">Excel</span>
+            <span class="fmt-badge green">PDF</span>
             <span class="fmt-badge purple">BAI2</span>
             <span class="fmt-badge purple">CAMT.053</span>
           </div>
@@ -6123,7 +6124,7 @@ async function handleFile(inp){
     } else if(ext==='xml'){
       const t=await f.text();const rows=parseCAMT(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('CAMT.053 parsed — '+rows.split('\n').length+' rows detected');
     } else if(ext==='pdf'){
-      hideProgress();toast('PDF import coming soon. For now: export your bank statement as CSV or BAI2, or drag in an Excel remittance file.','warn');
+      await parsePDFRemittance(f);
     } else {
       const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('File loaded — click Import data');
     }
@@ -6153,6 +6154,172 @@ function parseCAMT(txt){
     lines.push(['','',amt,'','',id,dt.slice(0,10),'Wire',info].map(v=>`"${v}"`).join(','));
   });
   return lines.join('\n');
+}
+
+async function parsePDFRemittance(file){
+  // ── PDF.js remittance extraction ──
+  if(typeof pdfjsLib==='undefined'){
+    hideProgress();
+    toast('PDF parser loading — please try again in a moment','warn');
+    return;
+  }
+  try{
+    showProgress('Reading PDF…',20);
+    const buf=await file.arrayBuffer();
+    showProgress('Extracting text…',40);
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    const numPages=pdf.numPages;
+    let allText='';
+    for(let p=1;p<=numPages;p++){
+      showProgress('Reading page '+p+' of '+numPages+'…',40+Math.round(p/numPages*40));
+      const page=await pdf.getPage(p);
+      const tc=await page.getTextContent();
+      // Join items preserving rough layout — items on same y-line joined with tab
+      let lastY=null,lineText='';
+      tc.items.forEach(item=>{
+        const y=Math.round(item.transform[5]);
+        if(lastY!==null&&Math.abs(y-lastY)>3){allText+=lineText+'
+';lineText='';}
+        lineText+=(lineText?'	':'')+item.str.trim();
+        lastY=y;
+      });
+      if(lineText)allText+=lineText+'
+';
+      allText+='
+---PAGE---
+';
+    }
+    showProgress('Parsing remittance data…',85);
+    await new Promise(r=>setTimeout(r,30));
+
+    // ── SMART REMITTANCE PARSER ──
+    // Detects: invoice numbers, PO numbers, amounts, customer names, dates
+    const rows=['Account,Customer,Amount,Invoice #,PO Number,Sales Order,Method,Date,Notes'];
+    const lines=allText.split('
+').map(l=>l.trim()).filter(l=>l&&l!=='---PAGE---');
+
+    // Regex patterns
+    const reInv=/(?:inv(?:oice)?[#\s\-:]*|INV[#\s\-:]*)([\w\-]+)/i;
+    const rePO=/(?:p\.?o\.?[#\s\-:]*|purchase\s*order[#\s\-:]*)([\w\-]+)/i;
+    const reSO=/(?:s\.?o\.?[#\s\-:]*|sales\s*order[#\s\-:]*)([\w\-]+)/i;
+    const reAmt=/\$?\s*([\d,]+\.?\d{0,2})/;
+    const reDate=/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{4}[\/\-]\d{2}[\/\-]\d{2})/;
+
+    // Try structured extraction first (tabular remittance)
+    let extracted=[];
+    let currentBlock={};
+    let inRemSection=false;
+
+    lines.forEach((line,i)=>{
+      const lc=line.toLowerCase();
+
+      // Detect remittance section headers
+      if(lc.includes('remittance')||lc.includes('payment detail')||lc.includes('invoice detail')||lc.includes('amount due')){
+        inRemSection=true;
+      }
+
+      // Extract invoice number
+      const invM=line.match(reInv);
+      if(invM){
+        if(currentBlock.inv&&currentBlock.amt){extracted.push({...currentBlock});currentBlock={};}
+        currentBlock.inv=invM[1].replace(/[^\w\-]/g,'');
+      }
+
+      // Extract PO
+      const poM=line.match(rePO);
+      if(poM)currentBlock.po=poM[1].replace(/[^\w\-]/g,'');
+
+      // Extract SO
+      const soM=line.match(reSO);
+      if(soM)currentBlock.so=soM[1].replace(/[^\w\-]/g,'');
+
+      // Extract amount — prefer amounts near "amount" or "total" keywords
+      const amtM=line.match(reAmt);
+      if(amtM){
+        const amt=parseFloat(amtM[1].replace(/,/g,''));
+        if(amt>0&&!isNaN(amt)){
+          // Only capture if it looks like a payment amount (>$0, reasonable size)
+          if(!currentBlock.amt||lc.includes('total')||lc.includes('amount')||lc.includes('payment')){
+            currentBlock.amt=amt;
+          }
+        }
+      }
+
+      // Extract date
+      const dtM=line.match(reDate);
+      if(dtM&&!currentBlock.date)currentBlock.date=dtM[1];
+
+      // Extract customer name — look for company-like text near top of document
+      if(i<20&&!currentBlock.customer&&line.length>3&&line.length<60){
+        const skip=['page','date','from','to','invoice','payment','remittance','total','amount','subject','dear','hi ','hello'];
+        if(!skip.some(s=>lc.startsWith(s))&&/[A-Z]/.test(line)&&!/^\d/.test(line)){
+          currentBlock.customer=line.replace(/[^\w\s\.,\-&]/g,'').trim();
+        }
+      }
+
+      // Note field — capture meaningful lines
+      if(lc.includes('memo')||lc.includes('note')||lc.includes('ref')||lc.includes('remark')){
+        currentBlock.notes=(currentBlock.notes?currentBlock.notes+' | ':'')+line.slice(0,80);
+      }
+    });
+
+    // Push last block
+    if(currentBlock.inv||currentBlock.amt){extracted.push(currentBlock);}
+
+    // If no structured data found, fall back to best-effort row extraction
+    if(extracted.length===0){
+      lines.forEach(line=>{
+        const invM=line.match(reInv);
+        const amtM=line.match(reAmt);
+        if(invM||amtM){
+          extracted.push({
+            inv:invM?invM[1]:'',
+            amt:amtM?parseFloat(amtM[1].replace(/,/g,'')):'',
+            notes:line.slice(0,100)
+          });
+        }
+      });
+    }
+
+    if(extracted.length===0){
+      hideProgress();
+      // Show raw text in paste tab for manual review
+      document.getElementById('mo-ta').value=allText.slice(0,8000);
+      swTab('paste',document.querySelectorAll('.imp-tab')[0]);
+      toast('PDF extracted — no structured remittance data found. Review and edit the text, then click Import data.','warn');
+      return;
+    }
+
+    // Build CSV output
+    const customer=extracted.find(e=>e.customer)?.customer||file.name.replace('.pdf','');
+    extracted.forEach(e=>{
+      if(!e.amt&&!e.inv)return;
+      rows.push([
+        '',                              // Account — filled by matching
+        e.customer||customer||'',        // Customer
+        e.amt||'',                       // Amount
+        e.inv||'',                       // Invoice #
+        e.po||'',                        // PO Number
+        e.so||'',                        // Sales Order
+        'PDF Remittance',                // Method
+        e.date||'',                      // Date
+        e.notes||file.name              // Notes
+      ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+    });
+
+    hideProgress();
+    const csv=rows.join('
+');
+    document.getElementById('mo-ta').value=csv;
+    swTab('paste',document.querySelectorAll('.imp-tab')[0]);
+    const rowCount=rows.length-1;
+    toast('✅ PDF parsed — '+rowCount+' remittance row'+(rowCount!==1?'s':'')+' extracted. Review and click Import data.');
+
+  }catch(err){
+    hideProgress();
+    toast('PDF parse error: '+err.message+'. Try saving as CSV from your accounting system.','warn');
+    console.error('PDF.js error:',err);
+  }
 }
 
 function processImport(){
@@ -8062,5 +8229,14 @@ async function sendContactMsg(){
     <div id="help-body" style="flex:1;overflow-y:auto;padding:0"></div>
   </div>
 </div>
+<!-- PDF.js for remittance PDF import -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+<script>
+if(typeof pdfjsLib!=='undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+</script>
+<!-- SheetJS for Excel import -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
