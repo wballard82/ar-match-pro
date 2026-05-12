@@ -2363,9 +2363,7 @@ body.app-active #app {
     </div>
 
     <div class="tn-actions">
-      <button class="tn-icon-btn" title="Import data" onclick="openImport('inv')">
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 2v8M5 7l3 3 3-3"/></svg>
-      </button>
+
       <button class="tn-icon-btn" title="Exceptions" onclick="sp('exceptions')">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 1a5 5 0 015 5v3l1 2H2l1-2V6a5 5 0 015-5z"/><path d="M6.5 13.5a1.5 1.5 0 003 0"/></svg>
         <div class="notif-dot" id="notif-dot"></div>
@@ -2761,6 +2759,7 @@ body.app-active #app {
             <div style="display:flex;gap:8px;align-items:center">
               <button class="btn btn-outline btn-sm" onclick="openImport('inv')">+ Invoices</button>
               <button class="btn btn-outline btn-sm" onclick="openImport('rem')">+ Remittance</button>
+              <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
               <button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Auto-match all</button>
             </div>
           </div>
@@ -4670,6 +4669,20 @@ function globalSearch(q){
 }
 
 // ── Modals ──
+function openImportBank(){
+  IMP_TYPE='rem';
+  openImport('rem');
+  setTimeout(()=>{
+    const title=document.getElementById('imp-title');
+    if(title)title.textContent='Import Bank File';
+    const lbl=document.getElementById('imp-lbl');
+    if(lbl)lbl.textContent='Upload a BAI2, CAMT.053, or bank CSV file';
+    const dzt=document.querySelector('#dz .drop-zone-t');
+    if(dzt)dzt.textContent='Drop bank file here or click to browse';
+    const dzs=document.querySelector('#dz .drop-zone-s');
+    if(dzs)dzs.textContent='BAI2 · CAMT.053 · Bank CSV · Payment export';
+  },60);
+}
 function openImport(t){
   IMP_TYPE=t;
   const title=document.getElementById('imp-title');const lbl=document.getElementById('imp-lbl');
@@ -6110,7 +6123,7 @@ async function handleFile(inp){
     } else if(ext==='xml'){
       const t=await f.text();const rows=parseCAMT(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('CAMT.053 parsed — '+rows.split('\n').length+' rows detected');
     } else if(ext==='pdf'){
-      hideProgress();toast('PDF import: export your bank statement as CSV or BAI2 for best results. PDF parsing is not yet supported.','warn');
+      hideProgress();toast('PDF import coming soon. For now: export your bank statement as CSV or BAI2, or drag in an Excel remittance file.','warn');
     } else {
       const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('File loaded — click Import data');
     }
