@@ -2311,13 +2311,10 @@ body.app-active #app {
           <div class="drop-zone-icon">📂</div>
           <div class="drop-zone-t">Drop file here or click to browse</div>
           <div class="drop-zone-s">Column mapping auto-detected</div>
-          <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.pdf,.jpg,.jpeg,.png,.ofx,.qfx,.bai,.bai2,.xml" style="display:none" onchange="handleFile(this)">
+          <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml" style="display:none" onchange="handleFile(this)">
           <div class="fmt-badges">
             <span class="fmt-badge blue">CSV</span>
             <span class="fmt-badge blue">Excel</span>
-            <span class="fmt-badge green">PDF</span>
-            <span class="fmt-badge">JPG/PNG</span>
-            <span class="fmt-badge purple">OFX/QFX</span>
             <span class="fmt-badge purple">BAI2</span>
             <span class="fmt-badge purple">CAMT.053</span>
           </div>
@@ -3287,7 +3284,6 @@ body.app-active #app {
             <button class="btn btn-ghost btn-sm" onclick="clearRemFilters()">Clear</button>
             <div style="margin-left:auto;display:flex;gap:4px;flex-wrap:wrap">
               <span class="fmt-badge blue">CSV</span><span class="fmt-badge blue">Excel</span>
-              <span class="fmt-badge green">PDF</span><span class="fmt-badge purple">OFX/QFX</span>
               <span class="fmt-badge purple">BAI2</span><span class="fmt-badge purple">CAMT.053</span>
             </div>
           </div>
@@ -6099,19 +6095,22 @@ function delRemRow(idx){if(PAY.length<=1&&!confirm('Delete the last row?'))retur
 async function handleFile(inp){
   const f=inp.files[0];if(!f)return;
   const ext=f.name.split('.').pop().toLowerCase();
-  swTab('file',document.querySelectorAll('.imp-tab')[1]);showProgress('Reading…',20);
+  // Show progress immediately to prevent perceived lag on large files
+  showProgress('Reading '+f.name+'…',10);
+  await new Promise(r=>setTimeout(r,30)); // yield to browser to render progress
+  swTab('file',document.querySelectorAll('.imp-tab')[1]);showProgress('Processing…',25);
   try{
     if(ext==='xlsx'||ext==='xls'){
       if(typeof XLSX==='undefined'){hideProgress();toast('Excel parsing: include SheetJS for .xlsx support','warn');const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);return;}
-      showProgress('Parsing Excel…',50);const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_csv(ws,{blankrows:false});document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('Excel parsed — click Import data');
-    } else if(ext==='ofx'||ext==='qfx'){
-      const t=await f.text();const rows=parseOFX(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('OFX/QFX parsed — '+rows.split('\n').length+' rows detected');
+      showProgress('Parsing Excel — large files may take a moment…',40);
+      await new Promise(r=>setTimeout(r,50));
+      const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_csv(ws,{blankrows:false});document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('Excel parsed — click Import data');
     } else if(ext==='bai'||ext==='bai2'){
       const t=await f.text();const rows=parseBAI2(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('BAI2 parsed — '+rows.split('\n').length+' rows detected');
     } else if(ext==='xml'){
       const t=await f.text();const rows=parseCAMT(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('CAMT.053 parsed — '+rows.split('\n').length+' rows detected');
     } else if(ext==='pdf'){
-      showProgress('PDF text extraction — install PDF.js for full support',50);const t=await f.text();document.getElementById('mo-ta').value=t.replace(/[^\x20-\x7E\n]/g,' ').trim();swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('File loaded — review and import');
+      hideProgress();toast('PDF import: export your bank statement as CSV or BAI2 for best results. PDF parsing is not yet supported.','warn');
     } else {
       const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('File loaded — click Import data');
     }
@@ -6119,16 +6118,6 @@ async function handleFile(inp){
   inp.value='';
 }
 
-function parseOFX(txt){
-  const lines=['Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes'];
-  const txns=[...txt.matchAll(/<STMTTRN>([\s\S]*?)<\/STMTTRN>/gi)];
-  txns.forEach(m=>{
-    const get=(tag)=>{const r=m[1].match(new RegExp('<'+tag+'>([^<\n]+)','i'));return r?r[1].trim():'';};
-    const amt=parseFloat(get('TRNAMT')||'0');const memo=get('MEMO')||get('NAME')||'';const id=get('FITID')||'';const dt=get('DTPOSTED')||'';
-    lines.push([get('BANKACCTFROM')||'',memo,Math.abs(amt),'','',id,dt.slice(0,8),'ACH',memo].map(v=>`"${v}"`).join(','));
-  });
-  return lines.join('\n');
-}
 
 function parseBAI2(txt){
   const lines=['Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes'];
