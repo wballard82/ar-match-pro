@@ -6,6 +6,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 <title>AR Match Pro v1778185567</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -6118,15 +6120,23 @@ async function handleFile(inp){
       if(typeof XLSX==='undefined'){hideProgress();toast('Excel parsing: include SheetJS for .xlsx support','warn');const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);return;}
       showProgress('Parsing Excel — large files may take a moment…',40);
       await new Promise(r=>setTimeout(r,50));
-      const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_csv(ws,{blankrows:false});document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('Excel parsed — click Import data');
+      const buf=await f.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_csv(ws,{blankrows:false});
+      document.getElementById('mo-ta').value=rows;
+      swTab('paste',document.querySelectorAll('.imp-tab')[0]);
+      showProgress('Importing '+f.name+'…',90);
+      await new Promise(r=>setTimeout(r,30));
+      processImport();
     } else if(ext==='bai'||ext==='bai2'){
-      const t=await f.text();const rows=parseBAI2(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('BAI2 parsed — '+rows.split('\n').length+' rows detected');
+      const t=await f.text();const rows=parseBAI2(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='xml'){
-      const t=await f.text();const rows=parseCAMT(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('CAMT.053 parsed — '+rows.split('\n').length+' rows detected');
+      const t=await f.text();const rows=parseCAMT(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='pdf'){
       await parsePDFRemittance(f);
     } else {
-      const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);hideProgress();toast('File loaded — click Import data');
+      const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     }
   }catch(e){hideProgress();toast('Error reading file: '+e.message,'warn');}
   inp.value='';
@@ -6519,7 +6529,9 @@ function processImport(){
     });
     rRem();setStatus('loaded');saveToStorage();addAudit('Remittance imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
   }
-  updTop();closeMo();
+  updTop();closeMo();toast('✅ Import complete — '+
+    (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
+    ' loaded. Click ⚡ Auto-match all to run matching.');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -8244,7 +8256,5 @@ if(typeof pdfjsLib!=='undefined'){
   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 </script>
-<!-- SheetJS for Excel import -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
