@@ -6329,7 +6329,15 @@ function processImport(){
   function pLine(l){if(delim==='\t')return l.split('\t').map(c=>c.trim().replace(/^"|"$/g,''));const res=[];let cur='',inQ=false;for(const c of l){if(c==='"')inQ=!inQ;else if(c===','&&!inQ){res.push(cur.trim());cur='';}else cur+=c;}res.push(cur.trim());return res;}
   const hdrs=pLine(lines[0]).map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,''));
   const rows=lines.slice(1).map(l=>pLine(l));
-  function col(...k){for(const k2 of k){const i=hdrs.findIndex(h=>h.includes(k2.toLowerCase().replace(/[^a-z0-9]/g,'')));if(i>=0)return i;}return -1;}
+  function col(...k){
+    // Pass 1: exact match
+    for(const k2 of k){const nk=k2.toLowerCase().replace(/[^a-z0-9]/g,'');const i=hdrs.findIndex(h=>h===nk);if(i>=0)return i;}
+    // Pass 2: starts-with match
+    for(const k2 of k){const nk=k2.toLowerCase().replace(/[^a-z0-9]/g,'');const i=hdrs.findIndex(h=>h.startsWith(nk)&&h.length<=nk.length+6);if(i>=0)return i;}
+    // Pass 3: includes match (longer keys only, ≥5 chars to avoid false positives like 'po' in 'responsible')
+    for(const k2 of k){const nk=k2.toLowerCase().replace(/[^a-z0-9]/g,'');if(nk.length<5)continue;const i=hdrs.findIndex(h=>h.includes(nk));if(i>=0)return i;}
+    return -1;
+  }
   if(IMP_TYPE==='inv'){
     INV=rows.filter(r=>r.some(c=>c)).map(r=>({
       c:r[col(
@@ -6364,8 +6372,8 @@ function processImport(){
         'tranid','transactionnumber','invoicenumber2','externaldocnum'
       )]||'',
       po:r[col(
-        // Standard
-        'po','purchaseorder','ponumber','poref','customerpo',
+        // Standard — specific keys first to avoid false matches
+        'customerpo','ponumber','purchaseordernumber','poref','purchaseorder','po',
         // SAP
         'purchaseordernumber','ponumber','ponum','ebeln',
         'purchaseorderno','purchaseref','assignment','zuonr',
@@ -6373,8 +6381,8 @@ function processImport(){
         'poname','purchaseordernum','orderreference','poref2'
       )]||'',
       so:r[col(
-        // Standard
-        'sales','so','salesorder','salesorderno','salesordernum',
+        // Standard — specific first
+        'salesorderno','salesordernum','salesorder','salesorderreference','sales','so',
         // SAP
         'salesorderreference','vbeln','salesdocument','salesdoc',
         'ordernum','ordernumber','soref',
