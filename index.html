@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>AR Match Pro — Automated Remittance Matching for AR Teams</title>
-<meta name="description" content="AR Match Pro helps small and mid-sized Accounting and AR teams automate invoice matching, multi-invoice allocation, exceptions, and posting exports for SAP, NetSuite, QuickBooks. CSV and Excel supported. PDF/OCR available in advanced testing."/>
+<meta name="description" content="AR Match Pro helps small and mid-sized Accounting and AR teams automate invoice matching, multi-invoice allocation, exceptions, and posting exports for SAP F-28 and NetSuite. Export posting-ready files for any ERP that accepts CSV."/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -507,7 +507,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         </div>
         <div class="pill">⚡ Automated cash application for Accounting and AR teams</div>
         <h1>Match remittance to invoices in minutes — no ERP integration required.</h1>
-        <p>AR Match Pro helps small and mid-sized finance teams automate invoice matching, multi-invoice allocation, exceptions, and posting exports for SAP, NetSuite, QuickBooks. CSV and Excel supported. PDF/OCR available in advanced testing.</p>
+        <p>AR Match Pro helps small and mid-sized finance teams automate invoice matching, multi-invoice allocation, exceptions, and posting exports for SAP F-28 and NetSuite. Export posting-ready files for any ERP that accepts CSV.</p>
         <div class="hero-actions">
           <button class="btn btn-primary" onclick="location.href='#pricing'" style="cursor:pointer">View pricing</button>
           <button class="btn btn-demo" onclick="openLeadModal()">▶ Try free demo</button>
@@ -538,7 +538,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <strong>Designed for accounting and Accounting and AR teams using:</strong>
       <div class="trust-logos">
         <span class="trust-chip">SAP</span><span class="trust-chip">NetSuite</span>
-        <span class="trust-chip">QuickBooks</span><span class="trust-chip">Bank Lockbox</span>
+        <span class="trust-chip">Bank Lockbox</span>
         <span class="trust-chip">ACH / Wire</span><span class="trust-chip">CSV / Excel</span>
       </div>
     </div>
@@ -773,11 +773,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <option value="">Select your ERP…</option>
           <option value="SAP">SAP</option>
           <option value="NetSuite">NetSuite</option>
-          <option value="QuickBooks">QuickBooks</option>
           <option value="Oracle">Oracle</option>
           <option value="Microsoft Dynamics">Microsoft Dynamics</option>
           <option value="Sage">Sage</option>
           <option value="Epicor">Epicor</option>
+          <option value="QuickBooks">QuickBooks</option>
           <option value="Excel / Manual">Excel / Manual</option>
           <option value="Other">Other</option>
         </select>
@@ -1036,7 +1036,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 <script>
 // ── AI QUALIFICATION CHAT ──
 const QF_STATES={
-  start:{msg:"Hi! Quick question before I send you to the demo — what ERP does your team use?",opts:["SAP","NetSuite","QuickBooks","Other / Excel"]},
+  start:{msg:"Hi! Quick question before I send you to the demo — what ERP does your team use?",opts:["SAP","NetSuite","Other / Excel"]},
   erp:{msg:"Got it. How many invoices does your AR team process per month?",opts:["Under 100","100–500","500–2,000","2,000+"]},
   vol:{msg:"And how is your team currently matching remittances to invoices?",opts:["Manually in Excel","Partially automated","Fully manual — it's painful","We have a tool but it struggles"]},
   route:null
@@ -1422,7 +1422,7 @@ function toggleFaq(el){
 <script>
 const LP_FAQ={
   "What does AR Match Pro do?":"AR Match Pro automates remittance matching for Accounting and AR teams. It matches payments to invoices by Invoice #, PO #, Sales Order, Delivery, and Tracking — handles multi-invoice payments, flags exceptions, and exports a posting-ready file for SAP or NetSuite. No ERP connection required.",
-  "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP, NetSuite, or QuickBooks, import it into AR Match Pro, run the match, and export a posting file back. No integration, no IT approval, no setup time.",
+  "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP or NetSuite, import it into AR Match Pro, run the match, and export a posting-ready file back. No integration, no IT approval, no setup time.",
   "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
   "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
   "Which plan?":"Starter ($799/mo) covers Invoice and PO matching for up to 5,000 rows/month — best for 1–2 user AR teams transitioning from spreadsheets. Pro ($1,599/mo) adds unlimited rows, multi-invoice allocation, AI-assisted matching, SAP/NetSuite exports, and CFO dashboards — the right choice for most accounting teams. Team ($2,999/mo) adds multi-user collaboration, role-based permissions, audit logs, and dedicated onboarding.",
@@ -1506,7 +1506,7 @@ document.addEventListener('keydown',function(e){
       <li>Flag exceptions: short pays, unapplied cash, bank fees, duplicates, missing PO</li>
       <li>Customer open items view (FBL5N-style) with aging buckets and inline apply actions</li>
       <li>Reconcile tab: write-off and bank fee fields, ties-to-zero status per payment</li>
-      <li>Export posting-ready files for SAP F-28 and NetSuite</li>
+      <li>Export posting-ready files for SAP F-28, NetSuite, or any ERP via CSV</li>
       <li>CFO Summary and Reports dashboard: cash matched, match rate, unapplied risk, short pays</li>
     </ul>
     <h3 style="font-size:16px;font-weight:700;color:#07111F;margin:24px 0 10px">Contact</h3>

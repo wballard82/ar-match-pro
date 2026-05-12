@@ -2244,7 +2244,7 @@ body.app-active #app {
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
           <div class="upgrade-price">$1,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 · NetSuite · CFO dashboards</div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 · NetSuite · CSV · CFO dashboards</div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select Pro</button>
         </div>
         <div class="upgrade-card">
@@ -2277,7 +2277,7 @@ body.app-active #app {
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
           <div class="upgrade-price">$1,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP/NetSuite<br>CFO dashboards · Reconcile</div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP F-28 · NetSuite<br>CFO dashboards · Reconcile</div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select</button>
         </div>
         <div class="upgrade-card">
@@ -3336,7 +3336,7 @@ body.app-active #app {
           <div class="panel-header-row">
             <div>
               <div class="panel-title">Posting Export</div>
-              <div class="panel-sub">Ready for ERP posting — SAP · NetSuite · Dynamics AX</div>
+              <div class="panel-sub">Ready for ERP posting — SAP F-28 · NetSuite · or any ERP via CSV</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span id="post-ct" style="font-size:12.5px;color:var(--t3)">0 rows</span>
@@ -3356,7 +3356,6 @@ body.app-active #app {
               <button class="fmt-pill" onclick="selFmt(this)">Excel</button>
               <button class="fmt-pill" onclick="if(checkFeature('sap'))selFmt(this)">SAP</button>
               <button class="fmt-pill" onclick="if(checkFeature('netsuite'))selFmt(this)">NetSuite</button>
-              <button class="fmt-pill" onclick="selFmt(this);checkFeature('dynamics')">Dynamics AX</button>
             </div>
             <input class="inp" placeholder="Search…" oninput="searchTbl('post-tb',this.value)" style="margin-left:auto;width:160px;font-size:12.5px">
           </div>
@@ -6171,7 +6170,7 @@ function processImport(){
         'name1','nameonaccount','soldtoparty','soldto','debtorname',
         // SAP S_ALR / aging
         'debtor','bp','businesspartner','bpname','accountname',
-        // NetSuite / Dynamics
+        
         'entity','entityname','vendorname','clientname'
       )]||'',
       a:r[col(
@@ -6180,7 +6179,7 @@ function processImport(){
         // SAP
         'customeraccount','debtornumber','debtoraccount','kunnr',
         'accountingdocument','customer','customernumber','partnernumber',
-        // NetSuite / Dynamics
+        
         'entityid','externalid','accountcode','debtorcode','bpnumber'
       )]||'',
       i:r[col(
@@ -6192,7 +6191,7 @@ function processImport(){
         'refdocno','refdoc','reference','invoicedocument',
         // SAP S_ALR
         'documentno','docno','invoicereference','invoiceref',
-        // NetSuite / Dynamics
+        
         'tranid','transactionnumber','invoicenumber2','externaldocnum'
       )]||'',
       po:r[col(
@@ -6201,7 +6200,7 @@ function processImport(){
         // SAP
         'purchaseordernumber','ponumber','ponum','ebeln',
         'purchaseorderno','purchaseref','assignment','zuonr',
-        // NetSuite / Dynamics
+        
         'poname','purchaseordernum','orderreference','poref2'
       )]||'',
       so:r[col(
@@ -6210,7 +6209,7 @@ function processImport(){
         // SAP
         'salesorderreference','vbeln','salesdocument','salesdoc',
         'ordernum','ordernumber','soref',
-        // NetSuite / Dynamics
+        
         'salesorderid','orderid','tranid2'
       )]||'',
       amt:parseFloat(String(r[col(
@@ -6224,7 +6223,7 @@ function processImport(){
         // SAP S_ALR aging
         'netpaymentamount','totaldue','amountdue','outstanding',
         'invoicetotal','grossamount','originalamount',
-        // NetSuite / Dynamics
+        
         'amountremaining','amountopen','unpaidamount','balance2'
       )]||'0').replace(/[$,\s]/g,''))||0,
       dt:r[col('doctype','documenttype','type','dt','blart','postingkeytype')]||'RV',
@@ -6243,7 +6242,7 @@ function processImport(){
         // SAP FBL5N
         'netduedate','cashdiscountdate1','cashdiscountdate','zfbdt',
         'dueondate','paymentduedate','duedate2','maturitydate',
-        // NetSuite / Dynamics
+        
         'duedate3','paymentdate','dueby'
       )]||'',
       d:r[col(
@@ -6600,7 +6599,7 @@ function syncMpCheckboxes(){
 // SETTINGS PLANS
 // ═══════════════════════════════════════════════════════════
 function renderSettingsPlans(){
-  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP + NetSuite','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'};
+  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP F-28 · NetSuite · CSV','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'};
   var el=document.getElementById('settings-plan-features'); if(el) el.textContent=pf[USER_PLAN]||'';
   var lvl=PLANS[USER_PLAN]?PLANS[USER_PLAN].level:0;
   var ub=document.getElementById('settings-upgrade-btn'); if(ub) ub.style.display=lvl>=3?'none':'';
@@ -7009,7 +7008,7 @@ function buildWorklist(){
     var totalAmt=exportReady.reduce(function(s,r){return s+r.pd;},0);
     var byCust2={};exportReady.forEach(function(r){ var k=r.c||r.a; if(!byCust2[k])byCust2[k]={c:r.c,a:r.a,rows:[],total:0}; byCust2[k].rows.push(r); byCust2[k].total+=r.pd; });
     var custSum=Object.values(byCust2).slice(0,3).map(function(cg){return cg.c||cg.a;}).join(', ');
-    exportList.innerHTML='<div class="wl-item ok" onclick="wlGoPosting()"><div class="wl-item-icon">📤</div><div class="wl-item-body"><div class="wl-item-title">'+exportReady.length+' record'+(exportReady.length>1?'s':'')+' ready for SAP posting</div><div class="wl-item-sub">'+custSum+(Object.keys(byCust2).length>3?' and '+(Object.keys(byCust2).length-3)+' more':'')+' · Download SAP F-28 posting file</div></div><div class="wl-item-amount">$'+$fk(totalAmt)+'</div><div class="wl-item-cta">Export →</div></div>';
+    exportList.innerHTML='<div class="wl-item ok" onclick="wlGoPosting()"><div class="wl-item-icon">📤</div><div class="wl-item-body"><div class="wl-item-title">'+exportReady.length+' record'+(exportReady.length>1?'s':'')+' ready for ERP posting</div><div class="wl-item-sub">'+custSum+(Object.keys(byCust2).length>3?' and '+(Object.keys(byCust2).length-3)+' more':'')+' · Download posting file (SAP · NetSuite · CSV)</div></div><div class="wl-item-amount">$'+$fk(totalAmt)+'</div><div class="wl-item-cta">Export →</div></div>';
   } else if(exportList){
     exportList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">📋</div><div class="wl-empty-title">Nothing ready to export</div><div class="wl-empty-sub">Approve allocations in the Cash Application workspace.</div></div>';
   }
@@ -7691,7 +7690,7 @@ var HELP_CONTENT = {
         <tr><td>Unapplied Cash</td><td>Payments received but not yet matched to an invoice.</td></tr>
         <tr><td>Short Pay</td><td>Payment less than the invoice amount — variance requires resolution.</td></tr>
         <tr><td>Exception</td><td>Payment that could not be auto-matched — needs manual review.</td></tr>
-        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP, NetSuite, Dynamics) to post cash entries.</td></tr>
+        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP F-28, NetSuite, or any ERP via CSV) to post cash entries.</td></tr>
         </tbody></table>`
     },
     {
@@ -7836,7 +7835,7 @@ var HELP_CONTENT = {
         <table><thead><tr><th>Plan</th><th>Price</th><th>Features</th></tr></thead><tbody>
         <tr><td>Demo</td><td>Free</td><td>Sample data only · Explore all features</td></tr>
         <tr><td>Starter</td><td>$799/mo</td><td>Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support</td></tr>
-        <tr><td>Pro</td><td>$1,599/mo</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CFO dashboards · Reconcile · Priority support</td></tr>
+        <tr><td>Pro</td><td>$1,599/mo</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
         <tr><td>Team</td><td>$2,999/mo</td><td>All Pro + Multi-user · Roles &amp; permissions · Audit logs · Approval workflows · Custom exports · SLA</td></tr>
         </tbody></table>`
     },
