@@ -6163,10 +6163,184 @@ function processImport(){
   const rows=lines.slice(1).map(l=>pLine(l));
   function col(...k){for(const k2 of k){const i=hdrs.findIndex(h=>h.includes(k2.toLowerCase().replace(/[^a-z0-9]/g,'')));if(i>=0)return i;}return -1;}
   if(IMP_TYPE==='inv'){
-    INV=rows.filter(r=>r.some(c=>c)).map(r=>({c:r[col('customername','customer','name')]||'',a:r[col('account','acct','customerid')]||'',i:r[col('invoice','inv','invoicenum','invoicenumber')]||'',po:r[col('po','purchaseorder','ponumber')]||'',so:r[col('sales','so','salesorder')]||'',amt:parseFloat(String(r[col('amount','amt','openamount','balance','invoiceamount')]||'0').replace(/[$,\s]/g,''))||0,dt:r[col('doctype','documenttype','type','dt')]||'RV',dt2:r[col('invoicedate','date','invdate')]||'',due:r[col('duedate','due')]||'',d:r[col('document','docnum','documentnumber')]||'',t:r[col('tracking','trk')]||'',dl:r[col('delivery','del')]||'',s:''}));
+    INV=rows.filter(r=>r.some(c=>c)).map(r=>({
+      c:r[col(
+        // Standard
+        'customername','customer','name','company','companyname',
+        // SAP FBL5N / FBL3N
+        'name1','nameonaccount','soldtoparty','soldto','debtorname',
+        // SAP S_ALR / aging
+        'debtor','bp','businesspartner','bpname','accountname',
+        // NetSuite / Dynamics
+        'entity','entityname','vendorname','clientname'
+      )]||'',
+      a:r[col(
+        // Standard
+        'account','acct','customerid','customeraccount','accountnumber',
+        // SAP
+        'customeraccount','debtornumber','debtoraccount','kunnr',
+        'accountingdocument','customer','customernumber','partnernumber',
+        // NetSuite / Dynamics
+        'entityid','externalid','accountcode','debtorcode','bpnumber'
+      )]||'',
+      i:r[col(
+        // Standard
+        'invoice','inv','invoicenum','invoicenumber','invoiceno',
+        'customerinvoice','invoiceid',
+        // SAP FBL5N
+        'documentnumber','docnumber','documentno','belnr','referencedocument',
+        'refdocno','refdoc','reference','invoicedocument',
+        // SAP S_ALR
+        'documentno','docno','invoicereference','invoiceref',
+        // NetSuite / Dynamics
+        'tranid','transactionnumber','invoicenumber2','externaldocnum'
+      )]||'',
+      po:r[col(
+        // Standard
+        'po','purchaseorder','ponumber','poref','customerpo',
+        // SAP
+        'purchaseordernumber','ponumber','ponum','ebeln',
+        'purchaseorderno','purchaseref','assignment','zuonr',
+        // NetSuite / Dynamics
+        'poname','purchaseordernum','orderreference','poref2'
+      )]||'',
+      so:r[col(
+        // Standard
+        'sales','so','salesorder','salesorderno','salesordernum',
+        // SAP
+        'salesorderreference','vbeln','salesdocument','salesdoc',
+        'ordernum','ordernumber','soref',
+        // NetSuite / Dynamics
+        'salesorderid','orderid','tranid2'
+      )]||'',
+      amt:parseFloat(String(r[col(
+        // Standard
+        'amount','amt','openamount','balance','invoiceamount',
+        'netdue','netamount','openbalance',
+        // SAP FBL5N
+        'amountinlc','amtinlc','lcamount','amountinlocalcurrency',
+        'amountindoccurrency','amtindocumentcurrency','amountindocumentcurrency',
+        'wrbtr','dmbtr','openitemamount','remainingamount','balancedue',
+        // SAP S_ALR aging
+        'netpaymentamount','totaldue','amountdue','outstanding',
+        'invoicetotal','grossamount','originalamount',
+        // NetSuite / Dynamics
+        'amountremaining','amountopen','unpaidamount','balance2'
+      )]||'0').replace(/[$,\s]/g,''))||0,
+      dt:r[col('doctype','documenttype','type','dt','blart','postingkeytype')]||'RV',
+      dt2:r[col(
+        // Standard
+        'invoicedate','date','invdate',
+        // SAP
+        'documentdate','postingdate','budat','bldat','invoicecreatdate',
+        'billingdate','billingdocumentdate','baselinedate',
+        // NetSuite
+        'trandate','createddate','invoicedate2'
+      )]||'',
+      due:r[col(
+        // Standard
+        'duedate','due','netduedate',
+        // SAP FBL5N
+        'netduedate','cashdiscountdate1','cashdiscountdate','zfbdt',
+        'dueondate','paymentduedate','duedate2','maturitydate',
+        // NetSuite / Dynamics
+        'duedate3','paymentdate','dueby'
+      )]||'',
+      d:r[col(
+        // Standard
+        'document','docnum','documentnumber',
+        // SAP
+        'clearingdocument','augbl','clearedwith','referencedocno','xblnr'
+      )]||'',
+      t:r[col('tracking','trk','trackingnumber','trackingno')]||'',
+      dl:r[col('delivery','del','deliverynumber','deliveryno','vbeln2')]||'',
+      s:''
+    }));
     rInv();setStatus('loaded');saveToStorage();addAudit('Invoices imported',INV.length+' rows');toast('Imported '+INV.length+' invoices');
   }else{
-    PAY=rows.filter(r=>r.some(c=>c)).map(r=>{const n=r[col('notes','memo','remittance','description','comment')]||'';const isCOA=n.toUpperCase().includes('COA')||n.toUpperCase().includes('CASH ON ACCOUNT')||n.toUpperCase().includes('UNAPPLIED');return{a:r[col('account','acct','customerid')]||'',c:r[col('customer','customername','name','payer')]||'',amt:parseFloat(String(r[col('amount','amt','paid','payment','paymentamount','checkamount')]||'0').replace(/[$,\s]/g,''))||0,po:r[col('po','purchaseorder','ponumber','poref')]||'',i:r[col('invoice','inv','invoicenum','invoiceref')]||'',so:r[col('so','salesorder','soref')]||'',m:r[col('method','paymentmethod','type','paytype')]||'ACH',txId:r[col('txid','transactionid','fitid','referenceid','checknum')]||'',payDate:r[col('date','paydate','postingdate','valuedate')]||'',ccy:r[col('currency','ccy','curr')]||'USD',n,coa:isCOA,dp:n.toLowerCase().includes('down')};});
+    PAY=rows.filter(r=>r.some(c=>c)).map(r=>{
+      const n=r[col(
+        'notes','memo','remittance','description','comment','detail',
+        'paymentdetail','remittanceinfo','addenda','paymentreference',
+        'narration','narrative','transactiondescription','remarks'
+      )]||'';
+      const isCOA=n.toUpperCase().includes('COA')||n.toUpperCase().includes('CASH ON ACCOUNT')||n.toUpperCase().includes('UNAPPLIED');
+      return{
+        a:r[col(
+          'account','acct','customerid',
+          // SAP
+          'kunnr','debtornumber','customeraccount','customernumber',
+          // BAI2 / bank
+          'originatorid','senderid','companyid','payerid'
+        )]||'',
+        c:r[col(
+          'customer','customername','name','payer','originator','payername',
+          // SAP
+          'name1','debtorname','vendorname','soldtoname',
+          // BAI2 / wire
+          'originatorname','sendername','remitter','remittername',
+          'payorname','payee','payeename','companyname','beneficiary'
+        )]||'',
+        amt:parseFloat(String(r[col(
+          'amount','amt','paid','payment','paymentamount','checkamount','creditamount',
+          // SAP payment advice
+          'paymentamountlc','amountpaid','amountinlc','netamount',
+          // BAI2 / bank
+          'transactionamount','creditamount2','depositamount','receiptamount',
+          // Lockbox
+          'checkamount2','remittanceamount','appliedamount'
+        )]||'0').replace(/[$,\s]/g,''))||0,
+        po:r[col(
+          'po','purchaseorder','ponumber','poref',
+          // SAP
+          'ebeln','purchaseorderreference','ponum',
+          // Payment advice
+          'purchaseordernumber','orderreference','podetail'
+        )]||'',
+        i:r[col(
+          'invoice','inv','invoicenum','invoiceref','invoicenumber',
+          // SAP payment advice / remittance
+          'invoicereference','invoiceid','documentnumber','docno',
+          'belnr','referencedocument','refdoc','reference','invoiceno',
+          // Lockbox / check stub
+          'appliedtoinvoice','invoiceapplied','invoicepaid'
+        )]||'',
+        so:r[col(
+          'so','salesorder','soref','salesorderreference',
+          'vbeln','salesdocument','salesordernumber'
+        )]||'',
+        m:r[col(
+          'method','paymentmethod','type','paytype','transactiontype',
+          // BAI2
+          'transactioncode','typecode','baitype',
+          // Standard
+          'paymenttype','tendertype','checktype','achtype'
+        )]||'ACH',
+        txId:r[col(
+          'txid','transactionid','fitid','referenceid','checknum',
+          'bankref','ref','tracenumber','bankrefno',
+          // Wire
+          'fedreference','imad','omad','wiretracenumber',
+          // ACH
+          'achtracenumber','tracenum','originatortracenumber',
+          // Lockbox
+          'lockboxbatch','batchid','lockboxreference',
+          // Check
+          'checknumber','checkno'
+        )]||'',
+        payDate:r[col(
+          'date','paydate','postingdate','valuedate','posted',
+          // SAP
+          'budat','documentdate','paymentdate','clearingdate','postdate',
+          // BAI2
+          'effectivedate','transactiondate','settlementdate',
+          // Standard
+          'receiveddate','depositdate','creditdate'
+        )]||'',
+        ccy:r[col('currency','ccy','curr','currencycode')]||'USD',
+        n,coa:isCOA,dp:n.toLowerCase().includes('down')
+      };
+    });
     rRem();setStatus('loaded');saveToStorage();addAudit('Remittance imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
   }
   updTop();closeMo();
