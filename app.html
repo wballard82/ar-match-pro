@@ -2296,41 +2296,47 @@ body.app-active #app {
 <div class="mo-overlay" id="imp-modal">
   <div class="mo-box">
     <div class="mo-header">
-      <div class="mo-title" id="imp-title">Import Data</div>
+      <div class="mo-title" id="imp-title">Import Invoices</div>
       <div class="mo-close" onclick="closeMo()">×</div>
     </div>
     <div class="mo-body">
-      <div style="font-size:12.5px;color:var(--t3);margin-bottom:14px" id="imp-lbl">Paste CSV or drag a file</div>
-      <div class="imp-tabs">
-        <button class="imp-tab active" onclick="swTab('paste',this)">Paste CSV</button>
-        <button class="imp-tab" onclick="swTab('file',this)">Upload file</button>
-      </div>
-      <div id="tab-paste">
-        <textarea class="import-ta" id="mo-ta" placeholder="Paste CSV data here — headers auto-detected…"></textarea>
-      </div>
-      <div id="tab-file" style="display:none">
-        <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()">
-          <div class="drop-zone-icon">📂</div>
-          <div class="drop-zone-t">Drop file here or click to browse</div>
-          <div class="drop-zone-s">Column mapping auto-detected</div>
-          <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf" style="display:none" onchange="handleFile(this)">
-          <div class="fmt-badges">
-            <span class="fmt-badge blue">CSV</span>
-            <span class="fmt-badge blue">Excel</span>
-            <span class="fmt-badge green">PDF</span>
-            <span class="fmt-badge purple">BAI2</span>
-            <span class="fmt-badge purple">CAMT.053</span>
-          </div>
+      <div style="font-size:13px;color:var(--t3);margin-bottom:16px" id="imp-lbl">Select your file to import. Column mapping is auto-detected.</div>
+
+      <!-- File picker button — primary action -->
+      <div id="imp-file-area">
+        <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf" style="display:none" onchange="handleFile(this)">
+        <button class="btn btn-p" style="width:100%;padding:14px;font-size:15px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="document.getElementById('fi').click()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 2v8M5 7l3 3 3-3"/></svg>
+          Select file to import
+        </button>
+        <div id="imp-file-name" style="font-size:12px;color:var(--t3);text-align:center;min-height:18px;margin-bottom:12px"></div>
+        <div class="fmt-badges" style="justify-content:center">
+          <span class="fmt-badge blue">CSV</span>
+          <span class="fmt-badge blue">Excel .xlsx</span>
+          <span class="fmt-badge green">PDF</span>
+          <span class="fmt-badge purple">BAI2</span>
+          <span class="fmt-badge purple">CAMT.053</span>
         </div>
-        <div id="parse-progress">
-          <div class="pp-row"><span id="parse-msg">Reading…</span><span id="parse-pct">0%</span></div>
-          <div class="pp-bar"><div class="pp-fill" id="parse-bar" style="width:0%"></div></div>
+      </div>
+
+      <!-- Progress area — shown while processing -->
+      <div id="imp-progress-area" style="display:none;padding:20px;text-align:center">
+        <div style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:12px" id="imp-progress-msg">Reading file…</div>
+        <div style="height:6px;background:var(--bdr);border-radius:3px;overflow:hidden;margin-bottom:8px">
+          <div id="imp-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:3px;width:5%;transition:width .4s ease"></div>
         </div>
+        <div style="font-size:11px;color:var(--t3)" id="imp-progress-pct">0%</div>
+      </div>
+
+      <!-- Paste CSV fallback -->
+      <div style="margin-top:14px">
+        <div style="font-size:11px;color:var(--t3);margin-bottom:6px;text-align:center">— or paste CSV data directly —</div>
+        <textarea class="import-ta" id="mo-ta" placeholder="Paste CSV data here — headers auto-detected…" style="height:120px"></textarea>
       </div>
     </div>
     <div class="mo-footer">
       <button class="btn btn-outline btn-sm" onclick="closeMo()">Cancel</button>
-      <button class="btn btn-p btn-sm" onclick="processImport()">
+      <button class="btn btn-p btn-sm" id="imp-submit-btn" onclick="processImport()">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
         Import data
       </button>
@@ -4727,12 +4733,19 @@ function showConfirm(msg,onYes,yesLabel,yesClass){
   );
 }
 function showProgress(msg,pct){
-  const pp=document.getElementById('parse-progress');if(pp)pp.style.display='block';
-  const pm=document.getElementById('parse-msg');if(pm)pm.textContent=msg;
-  const pb=document.getElementById('parse-bar');if(pb)pb.style.width=pct+'%';
-  const pp2=document.getElementById('parse-pct');if(pp2)pp2.textContent=pct+'%';
+  // Show new progress area, hide file picker
+  const pa=document.getElementById('imp-progress-area');
+  const fa=document.getElementById('imp-file-area');
+  if(pa)pa.style.display='block';
+  if(fa)fa.style.display='none';
+  const pm=document.getElementById('imp-progress-msg');if(pm)pm.textContent=msg;
+  const pb=document.getElementById('imp-progress-bar');if(pb)pb.style.width=Math.max(5,pct)+'%';
+  const pp=document.getElementById('imp-progress-pct');if(pp)pp.textContent=pct+'%';
 }
-function hideProgress(){const pp=document.getElementById('parse-progress');if(pp)pp.style.display='none';}
+function hideProgress(){
+  const pa=document.getElementById('imp-progress-area');if(pa)pa.style.display='none';
+  const fa=document.getElementById('imp-file-area');if(fa)fa.style.display='block';
+}
 function swTab(t,el){
   document.querySelectorAll('.imp-tab').forEach(p=>p.classList.remove('active'));
   if(el)el.classList.add('active');
@@ -6111,10 +6124,12 @@ function delRemRow(idx){if(PAY.length<=1&&!confirm('Delete the last row?'))retur
 async function handleFile(inp){
   const f=inp.files[0];if(!f)return;
   const ext=f.name.split('.').pop().toLowerCase();
-  // Show progress immediately to prevent perceived lag on large files
+  // Show filename immediately so user knows file was accepted
+  const fn=document.getElementById('imp-file-name');
+  if(fn)fn.textContent='📄 '+f.name+' ('+Math.round(f.size/1024)+'KB)';
+  // Show progress bar immediately
   showProgress('Reading '+f.name+'…',10);
-  await new Promise(r=>setTimeout(r,30)); // yield to browser to render progress
-  swTab('file',document.querySelectorAll('.imp-tab')[1]);showProgress('Processing…',25);
+  await new Promise(r=>setTimeout(r,60)); // yield to browser to render UI
   try{
     if(ext==='xlsx'||ext==='xls'){
       if(typeof XLSX==='undefined'){hideProgress();toast('Excel parsing: include SheetJS for .xlsx support','warn');const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);return;}
@@ -6140,6 +6155,7 @@ async function handleFile(inp){
     }
   }catch(e){hideProgress();toast('Error reading file: '+e.message,'warn');}
   inp.value='';
+  const fn2=document.getElementById('imp-file-name');if(fn2)fn2.textContent='';
 }
 
 
