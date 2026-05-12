@@ -6416,9 +6416,11 @@ function processImport(){
         'salesorderid','orderid','tranid2'
       )]||'',
       amt:parseFloat(String(r[col(
+        // Exact column names from this report — checked first to avoid false startsWith matches
+        'Net Due','netdue',
         // Standard
         'amount','amt','openamount','balance','invoiceamount',
-        'netdue','netamount','openbalance',
+        'netamount','openbalance',
         // SAP FBL5N
         'amountinlc','amtinlc','lcamount','amountinlocalcurrency',
         'amountindoccurrency','amtindocumentcurrency','amountindocumentcurrency',
