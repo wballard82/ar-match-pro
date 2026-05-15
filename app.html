@@ -6144,8 +6144,26 @@ async function handleFile(inp){
       showProgress('Importing '+f.name+'…',90);
       await new Promise(r=>setTimeout(r,30));
       processImport();
-    } else if(ext==='bai'||ext==='bai2'){
-      const t=await f.text();const rows=parseBAI2(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
+    } else if(ext==='bai'||ext==='bai2'||ext==='txt'){
+      const t=await f.text();
+      const isBAI2=/^01,\d/.test(t.trimStart())||ext==='bai'||ext==='bai2';
+      if(isBAI2){
+        showProgress('Parsing BAI2…',50);
+        await new Promise(r=>setTimeout(r,40));
+        try{
+          const rows=parseBAI2(t);
+          const lineCount=rows.split('\n').length-1;
+          if(lineCount===0){toast('BAI2 parsed but no transactions found — check file format','warn');hideProgress();return;}
+          document.getElementById('mo-ta').value=rows;
+          swTab('paste',document.querySelectorAll('.imp-tab')[0]);
+          showProgress('Importing '+lineCount+' transactions…',90);
+          await new Promise(r=>setTimeout(r,30));
+          processImport();
+        }catch(baiErr){hideProgress();toast('BAI2 parse error: '+baiErr.message,'warn');console.error('BAI2:',baiErr);}
+        return;
+      }
+      // Plain .txt / CSV fallthrough
+      document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='xml'){
       const t=await f.text();const rows=parseCAMT(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='pdf'){
