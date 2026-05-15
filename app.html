@@ -5945,6 +5945,39 @@ function closeCustomerDrawer(){
   const drawer=document.getElementById('customer-drawer');if(drawer)drawer.classList.remove('open');
 }
 
+// ── Rebuild bank account selector from PAY data ──
+function refreshBankSelector(autoSelect){
+  const sel=document.getElementById('ca-bank-sel');
+  if(!sel)return;
+  // Collect unique accounts from PAY rows
+  const seen={};
+  PAY.forEach(p=>{
+    const acct=p.bank||p.a||'';
+    if(!acct)return;
+    // Build a display label — use full account number if available
+    const label=p.bankLabel||(p.bank&&p.a&&p.a!==p.bank?p.bank+' — '+p.a:p.a||p.bank);
+    if(!seen[acct])seen[acct]={label,acct};
+  });
+  const accounts=Object.values(seen);
+  // Rebuild options
+  sel.innerHTML='<option value="">All bank accounts</option>';
+  accounts.forEach(({label,acct})=>{
+    const opt=document.createElement('option');
+    opt.value=acct;
+    opt.textContent=label;
+    sel.appendChild(opt);
+  });
+  // Auto-select if only one account or if autoSelect requested
+  if(autoSelect&&accounts.length===1){
+    sel.value=accounts[0].acct;
+    caFilterUpdate();
+  } else if(autoSelect&&accounts.length>1){
+    // Select the most recently imported account (last unique one found)
+    sel.value=accounts[accounts.length-1].acct;
+    caFilterUpdate();
+  }
+}
+
 // ── Cash App top filters ──
 function caFilterUpdate(){
   // Filter payment queue by selected bank, currency, and date range
@@ -6095,6 +6128,7 @@ function loadSampleRemJPM(){
   rRem();updTop();setStatus('loaded');saveToStorage();
   addAudit('Sample JPM remittance loaded','9 rows');
   toast('9 JPM remittance lines loaded');
+  refreshBankSelector(true);
 }
 function loadSampleRemBOA(){
   // BOA: MedCore Solutions, Pinnacle Systems
@@ -6108,6 +6142,7 @@ function loadSampleRemBOA(){
   rRem();updTop();setStatus('loaded');saveToStorage();
   addAudit('Sample BOA remittance loaded','4 rows');
   toast('4 BOA remittance lines loaded');
+  refreshBankSelector(true);
 }
 function loadSampleRem(){loadSampleRemJPM();loadSampleRemBOA();}
 
@@ -6287,12 +6322,13 @@ function parseBAI2(txt){
         refId,
         currentDate,
         method,
-        notes
+        notes,
+        currentAccount  // bank column — account number used as bank identifier
       ]);
     }
   }
 
-  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
+  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes,Bank';
   const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
   return [header,...dataRows].join('\n');
 }
@@ -6660,10 +6696,12 @@ function processImport(){
           'receiveddate','depositdate','creditdate'
         )]||'',
         ccy:r[col('currency','ccy','curr','currencycode')]||'USD',
+        bank:r[col('bank','bankcode','bankid','bankaccount','accountnumber','account')]||'',
         n,coa:isCOA,dp:n.toLowerCase().includes('down')
       };
     });
     rRem();setStatus('loaded');saveToStorage();addAudit('Remittance imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
+    refreshBankSelector(true);
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
