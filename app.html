@@ -6330,16 +6330,12 @@ async function parsePDFRemittance(file){
       let lastY=null,lineText='';
       tc.items.forEach(item=>{
         const y=Math.round(item.transform[5]);
-        if(lastY!==null&&Math.abs(y-lastY)>3){allText+=lineText+'
-';lineText='';}
-        lineText+=(lineText?'	':'')+item.str.trim();
+        if(lastY!==null&&Math.abs(y-lastY)>3){allText+=lineText+'\n';lineText='';}
+        lineText+=(lineText?'\t':'')+item.str.trim();
         lastY=y;
       });
-      if(lineText)allText+=lineText+'
-';
-      allText+='
----PAGE---
-';
+      if(lineText)allText+=lineText+'\n';
+      allText+='\n---PAGE---\n';
     }
     showProgress('Parsing remittance data…',85);
     await new Promise(r=>setTimeout(r,30));
@@ -6347,8 +6343,7 @@ async function parsePDFRemittance(file){
     // ── SMART REMITTANCE PARSER ──
     // Detects: invoice numbers, PO numbers, amounts, customer names, dates
     const rows=['Account,Customer,Amount,Invoice #,PO Number,Sales Order,Method,Date,Notes'];
-    const lines=allText.split('
-').map(l=>l.trim()).filter(l=>l&&l!=='---PAGE---');
+    const lines=allText.split('\n').map(l=>l.trim()).filter(l=>l&&l!=='---PAGE---');
 
     // Regex patterns
     const reInv=/(?:inv(?:oice)?[#\s\-:]*|INV[#\s\-:]*)([\w\-]+)/i;
@@ -6460,8 +6455,7 @@ async function parsePDFRemittance(file){
     });
 
     hideProgress();
-    const csv=rows.join('
-');
+    const csv=rows.join('\n');
     document.getElementById('mo-ta').value=csv;
     swTab('paste',document.querySelectorAll('.imp-tab')[0]);
     const rowCount=rows.length-1;
