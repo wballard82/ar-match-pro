@@ -2870,23 +2870,60 @@ body.app-active #app {
                     </div>
                   </div>
 
-                  <div class="eng-warn dup" id="eng-dup-warn">⚠️ <span id="eng-dup-msg">Duplicate payment detected</span></div>
-                  <div class="eng-warn sp" id="eng-short-pay-warn">⚠️ Short pay detected</div>
-                  <div class="ai-bar" id="eng-ai-bar" style="margin:8px 12px 0"><div class="ai-bar-header">🤖 AI Suggestions</div><div id="eng-ai-list"></div></div>
+                  <!-- hidden warning elements kept for JS compatibility, rendered in right panel instead -->
+                  <div id="eng-dup-warn" style="display:none"><span id="eng-dup-msg"></span></div>
+                  <div id="eng-short-pay-warn" style="display:none"></div>
+                  <div id="eng-ai-bar" style="display:none"><div id="eng-ai-list"></div></div>
 
-                  <!-- Payment header -->
+                  <!-- Payment header — full detail -->
                   <div class="payment-flow" id="eng-header" style="margin:8px 12px">
-                    <div class="pf-header" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr">
-                      <div class="pf-field"><div class="pf-label">Customer</div><div class="pf-val" id="eng-h-cust" style="font-size:14px;font-weight:900">—</div></div>
-                      <div class="pf-field"><div class="pf-label">Reference</div><div class="pf-val" id="eng-h-ref" style="color:var(--pd);font-size:12px">—</div></div>
-                      <div class="pf-field"><div class="pf-label">Date</div><div class="pf-val" id="eng-h-date" style="font-size:13px">—</div></div>
-                      <div class="pf-field"><div class="pf-label">Payment</div><div class="pf-val hero" id="eng-h-amt">$0.00</div></div>
-                      <div class="pf-field"><div class="pf-label">Applied</div><div class="pf-val green" id="eng-h-applied" style="font-size:16px;font-weight:900">$0.00</div></div>
-                      <div class="pf-field"><div class="pf-label">Remaining</div><div class="pf-val" id="eng-h-rem" style="font-size:16px;font-weight:900;color:var(--pd)">$0.00</div></div>
+                    <!-- Row 1: Customer + Invoice# always prominent -->
+                    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--bdr)">
+                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
+                        <div class="pf-label">Customer</div>
+                        <div class="pf-val" id="eng-h-cust" style="font-size:15px;font-weight:900;color:var(--t1)">—</div>
+                        <div style="font-size:11px;color:var(--t3);margin-top:2px">Account: <span id="eng-h-acct" style="font-family:var(--mono);color:var(--pd)">—</span></div>
+                      </div>
+                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
+                        <div class="pf-label">Invoice #</div>
+                        <div class="pf-val" id="eng-h-inv" style="font-size:13px;font-weight:800;color:var(--pd)">—</div>
+                      </div>
+                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
+                        <div class="pf-label">PO Number</div>
+                        <div class="pf-val" id="eng-h-po" style="font-size:13px;color:var(--t2)">—</div>
+                      </div>
+                      <div class="pf-field">
+                        <div class="pf-label">Date</div>
+                        <div class="pf-val" id="eng-h-date" style="font-size:13px">—</div>
+                      </div>
+                    </div>
+                    <!-- Row 2: Amounts + method + txid -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:0">
+                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
+                        <div class="pf-label">Payment</div>
+                        <div class="pf-val hero" id="eng-h-amt">$0.00</div>
+                      </div>
+                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
+                        <div class="pf-label">Applied</div>
+                        <div class="pf-val green" id="eng-h-applied" style="font-size:16px;font-weight:900">$0.00</div>
+                      </div>
+                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
+                        <div class="pf-label">Remaining</div>
+                        <div class="pf-val" id="eng-h-rem" style="font-size:16px;font-weight:900;color:var(--pd)">$0.00</div>
+                      </div>
+                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
+                        <div class="pf-label">Method</div>
+                        <div class="pf-val" id="eng-h-method" style="font-size:12px">—</div>
+                        <div style="font-size:10px;color:var(--t3);margin-top:1px"><span id="eng-h-ccy">USD</span></div>
+                      </div>
+                      <div class="pf-field">
+                        <div class="pf-label">TX / Ref ID</div>
+                        <div class="pf-val" id="eng-h-ref" style="font-size:11px;font-family:var(--mono);color:var(--t2);word-break:break-all">—</div>
+                      </div>
                     </div>
                     <div class="pf-progress-wrap">
                       <div class="pf-progress-track"><div class="pf-progress-fill" id="pf-progress-fill"></div></div>
-                      <div class="pf-progress-labels"><span>Applied: <span id="pf-applied-pct">0%</span></span><span id="pf-status-label" style="color:var(--t3)">Select invoices below</span><span>Method: <span id="eng-h-method">—</span> · <span id="eng-h-ccy">USD</span></span></div>
+                      <div class="pf-progress-labels"><span>Applied: <span id="pf-applied-pct">0%</span></span><span id="pf-status-label" style="color:var(--t3)">Select invoices below</span></div>
                     </div>
                     <div class="pf-status-row">
                       <div class="pay-fully-badge" id="eng-full-badge">✓ Fully Allocated</div>
@@ -2918,6 +2955,13 @@ body.app-active #app {
                 <!-- RIGHT: Intelligence panel -->
                 <div class="ca-right">
                   <div class="ca-right-scroll">
+                    <!-- Warnings at top of right panel -->
+                    <div id="ca-dup-warn-right" style="display:none;margin:10px 10px 0;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;font-weight:600;color:#ef4444">
+                      ⚠️ <span id="ca-dup-msg-right">Possible duplicate detected</span>
+                    </div>
+                    <div id="ca-sp-warn-right" style="display:none;margin:10px 10px 0;padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;font-size:12px;font-weight:600;color:#f59e0b">
+                      ⚠️ Short pay detected
+                    </div>
                     <div class="ca-right-section">
                       <div class="ca-right-section-hdr"><div class="ca-right-section-title">🤖 AI Suggestions</div></div>
                       <div class="ca-right-section-body" id="ca-ai-right"><div style="font-size:12px;color:var(--t3);line-height:1.6">Select a payment for AI suggestions.</div></div>
@@ -5278,7 +5322,11 @@ function engLoadPayment(idx){
   ENG_PAY={...p,_idx:idx};ENG_PAY_IDX=idx;
   ENG_LOCKED=false;ENG_STATE='suggested';ENG_AUDIT=[];ENG_ROWS=[];
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  set('eng-h-cust',p.c||'—');set('eng-h-ref',p.i||p.po||p.txId||'—');
+  set('eng-h-cust',p.c||'—');
+  set('eng-h-acct',p.a||'—');
+  set('eng-h-inv',p.i||'—');
+  set('eng-h-po',p.po||'—');
+  set('eng-h-ref',p.txId||p.i||p.po||'—');
   set('eng-h-date',p.payDate?fmtDate(p.payDate):'—');set('eng-h-amt','$'+$f(p.amt));
   set('eng-h-applied','$0.00');set('eng-h-rem','$'+$f(p.amt));
   set('eng-h-method',p.m||p.txType||'—');set('eng-h-ccy',p.ccy||'USD');
@@ -5290,6 +5338,8 @@ function engLoadPayment(idx){
   document.getElementById('eng-approve-btn').style.display='inline-flex';
   document.getElementById('eng-short-pay-warn').style.display='none';
   document.getElementById('eng-dup-warn').style.display='none';
+  const rDup=document.getElementById('ca-dup-warn-right');if(rDup)rDup.style.display='none';
+  const rSp=document.getElementById('ca-sp-warn-right');if(rSp)rSp.style.display='none';
   document.getElementById('eng-empty').style.display='none';
   document.getElementById('alloc-fully').style.display='none';
   const custInvs=INV.filter(v=>{
@@ -5359,9 +5409,14 @@ function engGetExcCode(inv,pay){
 
 function engCheckDuplicates(p){
   const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&((q.i&&q.i===p.i)||(q.txId&&q.txId===p.txId)));
+  // Right panel warning (visible)
+  const rWarn=document.getElementById('ca-dup-warn-right');
+  const rMsg=document.getElementById('ca-dup-msg-right');
+  if(dups.length&&rWarn){rWarn.style.display='block';if(rMsg)rMsg.textContent=`${dups.length} payment(s) with same reference & amount — verify before posting.`;}
+  else if(rWarn)rWarn.style.display='none';
+  // Legacy hidden elements kept for JS compat
   const warn=document.getElementById('eng-dup-warn');const msg=document.getElementById('eng-dup-msg');
-  if(dups.length&&warn){warn.style.display='flex';if(msg)msg.textContent=`${dups.length} payment(s) with same reference & amount. Possible duplicate — verify before posting.`;}
-  else if(warn)warn.style.display='none';
+  if(warn)warn.style.display='none';
 }
 
 function _legacyEngBuildAI(p,invs){
@@ -5450,7 +5505,9 @@ function engUpdateTotals(){
   const af=document.getElementById('alloc-fully');if(af)af.style.display=full?'flex':'none';
   const spWarn=document.getElementById('eng-short-pay-warn');
   const hasShortPay=ENG_ROWS.some(r=>r.selected&&Math.abs(r.applyAmt-r.inv.amt)>0.01&&r.applyAmt<r.inv.amt);
-  if(spWarn)spWarn.style.display=hasShortPay?'flex':'none';
+  if(spWarn)spWarn.style.display='none'; // legacy hidden
+  const rSpWarn=document.getElementById('ca-sp-warn-right');
+  if(rSpWarn)rSpWarn.style.display=hasShortPay?'block':'none';
   const totalsBar=document.getElementById('alloc-totals');if(totalsBar)totalsBar.style.display=ENG_ROWS.length?'flex':'none';
   _engUpdateRightPanel();
 }
@@ -5945,39 +6002,6 @@ function closeCustomerDrawer(){
   const drawer=document.getElementById('customer-drawer');if(drawer)drawer.classList.remove('open');
 }
 
-// ── Rebuild bank account selector from PAY data ──
-function refreshBankSelector(autoSelect){
-  const sel=document.getElementById('ca-bank-sel');
-  if(!sel)return;
-  // Collect unique accounts from PAY rows
-  const seen={};
-  PAY.forEach(p=>{
-    const acct=p.bank||p.a||'';
-    if(!acct)return;
-    // Build a display label — use full account number if available
-    const label=p.bankLabel||(p.bank&&p.a&&p.a!==p.bank?p.bank+' — '+p.a:p.a||p.bank);
-    if(!seen[acct])seen[acct]={label,acct};
-  });
-  const accounts=Object.values(seen);
-  // Rebuild options
-  sel.innerHTML='<option value="">All bank accounts</option>';
-  accounts.forEach(({label,acct})=>{
-    const opt=document.createElement('option');
-    opt.value=acct;
-    opt.textContent=label;
-    sel.appendChild(opt);
-  });
-  // Auto-select if only one account or if autoSelect requested
-  if(autoSelect&&accounts.length===1){
-    sel.value=accounts[0].acct;
-    caFilterUpdate();
-  } else if(autoSelect&&accounts.length>1){
-    // Select the most recently imported account (last unique one found)
-    sel.value=accounts[accounts.length-1].acct;
-    caFilterUpdate();
-  }
-}
-
 // ── Cash App top filters ──
 function caFilterUpdate(){
   // Filter payment queue by selected bank, currency, and date range
@@ -6128,7 +6152,6 @@ function loadSampleRemJPM(){
   rRem();updTop();setStatus('loaded');saveToStorage();
   addAudit('Sample JPM remittance loaded','9 rows');
   toast('9 JPM remittance lines loaded');
-  refreshBankSelector(true);
 }
 function loadSampleRemBOA(){
   // BOA: MedCore Solutions, Pinnacle Systems
@@ -6142,7 +6165,6 @@ function loadSampleRemBOA(){
   rRem();updTop();setStatus('loaded');saveToStorage();
   addAudit('Sample BOA remittance loaded','4 rows');
   toast('4 BOA remittance lines loaded');
-  refreshBankSelector(true);
 }
 function loadSampleRem(){loadSampleRemJPM();loadSampleRemBOA();}
 
@@ -6322,13 +6344,12 @@ function parseBAI2(txt){
         refId,
         currentDate,
         method,
-        notes,
-        currentAccount  // bank column — account number used as bank identifier
+        notes
       ]);
     }
   }
 
-  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes,Bank';
+  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
   const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
   return [header,...dataRows].join('\n');
 }
@@ -6696,12 +6717,10 @@ function processImport(){
           'receiveddate','depositdate','creditdate'
         )]||'',
         ccy:r[col('currency','ccy','curr','currencycode')]||'USD',
-        bank:r[col('bank','bankcode','bankid','bankaccount','accountnumber','account')]||'',
         n,coa:isCOA,dp:n.toLowerCase().includes('down')
       };
     });
     rRem();setStatus('loaded');saveToStorage();addAudit('Remittance imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
-    refreshBankSelector(true);
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
