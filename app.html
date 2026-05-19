@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
-<title>AR Match Pro v1778185567</title>
+<title>AR Match Pro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -2061,7 +2061,7 @@ body.app-active #app {
 <div id="toast-wrap"></div>
 
 <!-- Match progress overlay -->
-<div id="match-progress">
+<div id="match-progress" style="display:none">
   <div class="mp-card">
     <div class="mp-title">⚡ Matching in progress</div>
     <div class="mp-msg" id="mp-msg">Starting…</div>
@@ -2096,7 +2096,7 @@ body.app-active #app {
           <div class="login-split-mp">Match Pro</div>
         </div>
       </div>
-      <div class="login-tagline">Remittance Matching · Cash Application · AR Automation</div>
+      <div class="login-tagline">Remittances · Cash Application · AR Automation</div>
       <div class="login-stats" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:32px">
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
           <div style="font-size:22px;margin-bottom:6px">⚡</div>
@@ -2391,7 +2391,7 @@ body.app-active #app {
         <div>
           <div class="tn-uname" id="tn-uname">User</div>
         </div>
-        <div class="tn-plan" id="tn-plan">Demo</div>
+        <div class="tn-plan" id="tn-plan">Trial</div>
       </div>
     </div>
   </nav>
@@ -2473,7 +2473,7 @@ body.app-active #app {
         Payments
       </div>
       <div class="kpi-card-val" id="kpi-pay-ct">0</div>
-      <div class="kpi-card-sub">Remittance lines</div>
+      <div class="kpi-card-sub">Remittances</div>
     </div>
   </div>
 
@@ -2504,7 +2504,7 @@ body.app-active #app {
         </div>
         <div class="sb-item" id="sbi-remittance" onclick="sp('remittance')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h10M3 8h8M3 12h6"/><circle cx="13" cy="12" r="2.5"/><path d="M12 11l1 1 1.5-1.5"/></svg>
-          Remittance
+          Remittances
         </div>
       </div>
       <div class="sb-group">
@@ -2589,8 +2589,8 @@ body.app-active #app {
               <div class="wl-empty-state">
                 <div class="wl-empty-icon">📂</div>
                 <div class="wl-empty-title">No payments waiting</div>
-                <div class="wl-empty-sub">Import remittances data to see payments that need allocation.</div>
-                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
+                <div class="wl-empty-sub">Import remittancess data to see payments that need allocation.</div>
+                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittancess</button></div>
               </div>
             </div>
           </div>
@@ -2642,7 +2642,7 @@ body.app-active #app {
               </button>
               <button class="btn btn-outline btn-sm" onclick="openImport('rem')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import remittances
+                Import remittancess
               </button>
               
             </div>
@@ -2829,7 +2829,7 @@ body.app-active #app {
                     </div>
                   </div>
                   <div class="ca-queue-list" id="pq-list">
-                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittances data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div></div>
+                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittancess data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div></div>
                   </div>
                 </div>
 
@@ -2929,7 +2929,7 @@ body.app-active #app {
                     <div class="empty-icon">💳</div>
                     <div class="empty-t">Select a payment to allocate</div>
                     <div class="empty-s">Choose from the queue on the left.</div>
-                    <div class="empty-btn" style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
+                    <div class="empty-btn" style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittancess</button></div>
                   </div>
 
                   <div class="alloc-fully-bar" id="alloc-fully">✅ Payment fully allocated — click Approve</div>
@@ -3301,7 +3301,7 @@ body.app-active #app {
         <div class="panel-header">
           <div class="panel-header-row">
             <div>
-              <div class="panel-title">Remittance Imports</div>
+              <div class="panel-title">Remittances</div>
               <div class="panel-sub" id="rem-ct">0 rows · ACH · Wire · Check · Lockbox</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -3311,7 +3311,7 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" onclick="addRemRowAfter()">+ Add row</button>
               <button class="btn btn-p btn-sm" onclick="openImport('rem')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import remittances
+                Import remittancess
               </button>
             </div>
           </div>
@@ -3800,7 +3800,7 @@ body.app-active #app {
             <div style="padding:16px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div>
                 <div style="font-size:14px;font-weight:700;color:var(--t1)">Current plan</div>
-                <div style="font-size:12.5px;color:var(--t3);margin-top:2px" id="settings-plan-name2">Demo plan</div>
+                <div style="font-size:12.5px;color:var(--t3);margin-top:2px" id="settings-plan-name2">7-Day Free Trial</div>
                 <div style="font-size:11.5px;color:var(--t3);margin-top:3px" id="settings-plan-features"></div>
               </div>
               <div style="display:flex;gap:8px">
@@ -4166,7 +4166,7 @@ function renderWsRecon(){
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
   if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittances and run matching to reconcile.</div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittancess and run matching to reconcile.</div></div>';return;}
   list.innerHTML=`<table class="tbl" style="width:100%">
     <thead><tr>
       <th>Customer</th><th>Invoice #</th><th>PO #</th>
@@ -4261,7 +4261,7 @@ const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action
 
 // ── Plans ──
 const PLANS={
-  demo:   {name:'Demo',    level:0, rows:50,       price:'Free',    features:['invoice','po','amount']},
+  demo:   {name:'7-Day Trial',level:0,rows:50,     price:'Free',    features:['invoice','po','amount']},
   starter:{name:'Starter', level:1, rows:5000,     price:'$799/mo', features:['invoice','po','amount','manual-queue','csv-export','audit-trail','limited-pdf']},
   pro:    {name:'Pro',     level:2, rows:Infinity,  price:'$1,599/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports']},
   team:   {name:'Team',   level:3, rows:Infinity,  price:'$2,999/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports','audit-log','roles','custom-export','onboarding','sla','priority-feature']}
@@ -4389,8 +4389,8 @@ function updTop(){
   if(sbExc){sbExc.textContent=excCt;sbExc.style.display='none';}
   const notifDot=document.getElementById('notif-dot');
   if(notifDot)notifDot.style.display=excCt>0?'block':'none';
-  const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
-  const spn2=document.getElementById('settings-plan-name2');if(spn2)spn2.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
+  const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'7-Day Trial')+' plan';
+  const spn2=document.getElementById('settings-plan-name2');if(spn2)spn2.textContent=(PLANS[USER_PLAN]?.name||'7-Day Trial')+' plan';
 }
 
 // ── Dashboard ──
@@ -4685,36 +4685,43 @@ function setUserDisplay(user){
 
 function launchApp(user){
   try{
+    // 1. Show app, hide login
     var ls=document.getElementById('login-screen');
     if(ls){ls.style.display='none';}
     document.body.classList.add('app-active');
-    const appEl=document.getElementById('app');
+    var appEl=document.getElementById('app');
     if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
+    // 2. Hide ALL overlays
+    var mp=document.getElementById('match-progress');
+    if(mp){mp.classList.remove('show');mp.style.display='none';}
+    document.querySelectorAll('.modal-overlay,.mo-overlay,[id$="-overlay"]').forEach(function(el){el.style.display='none';});
+    // 3. Set user/plan
     IS_MASTER=!!(user&&user.isMaster);
     setUserDisplay(user||{name:'User',plan:'demo'});
     setPlan((user&&user.plan)||'demo');
-    // Always clear transactional workspace on login
+    // 4. Clear transactional workspace
     INV=[];PAY=[];RES=[];EXC=[];
-    // Reset bank selector
     var bankSel=document.getElementById('ca-bank-sel');
     if(bankSel){bankSel.innerHTML='<option value="">All bank accounts</option>';}
-    // Load saved data for non-demo users
-    if(!IS_DEMO){try{loadFromStorage();}catch(e){console.warn('loadFromStorage error:',e);}}
-    // Render safely
-    try{rAll();}catch(e){console.warn('rAll error:',e);}
-    try{updDash();}catch(e){console.warn('updDash error:',e);}
-    try{updTop();}catch(e){console.warn('updTop error:',e);}
-    try{initAuditTbl();}catch(e){console.warn('initAuditTbl error:',e);}
-    addAudit('Login','User: '+(user&&user.name||CURRENT_USER));
-    setTimeout(function(){try{navToWorklist();}catch(e){console.warn('navToWorklist error:',e);}},0);
+    // 5. Load saved data for real users
+    if(!IS_DEMO){try{loadFromStorage();}catch(e){console.warn('Storage:',e);}}
+    // 6. Render safely
+    try{rAll();}catch(e){console.warn('rAll:',e);}
+    try{updDash();}catch(e){console.warn('updDash:',e);}
+    try{updTop();}catch(e){console.warn('updTop:',e);}
+    try{initAuditTbl();}catch(e){console.warn('initAuditTbl:',e);}
+    addAudit('Login','User: '+(user&&user.name||CURRENT_USER||''));
+    setTimeout(function(){try{navToWorklist();}catch(e){console.warn('nav:',e);}},0);
   }catch(e){
     console.error('launchApp error:',e);
-    // Failsafe: ensure app is visible even if something crashed
+    // Failsafe — always show app
     document.body.classList.add('app-active');
     var appEl=document.getElementById('app');
     if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
     var ls=document.getElementById('login-screen');
     if(ls)ls.style.display='none';
+    var mp=document.getElementById('match-progress');
+    if(mp){mp.classList.remove('show');mp.style.display='none';}
   }
 }
 
@@ -4813,7 +4820,7 @@ function swTab(t,el){
 
 // ── Clear data ──
 function clearInvData(){showConfirm('Clear all invoice data?\n\nThis cannot be undone.',function(){INV=[];saveToStorage();rInv();updDash();updTop();addAudit('Cleared invoice data');toast('Invoice data cleared');});}
-function clearPayData(){showConfirm('Clear all remittancess data?\n\nThis cannot be undone.',function(){PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittances data');toast('Remittances data cleared');});}
+function clearPayData(){showConfirm('Clear all remittancesss data?\n\nThis cannot be undone.',function(){PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittances data');toast('Remittances data cleared');});}
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
 function clearAllData(){showConfirm('Clear all data?\n\nThis cannot be undone.',function(){INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');});}
 function resetAllData(){
@@ -5656,7 +5663,7 @@ function renderPayQueue(){
     return !p.bank||p.bank===bankCode;
   });
   if(ct)ct.textContent='('+visiblePay.length+(bankCode?' · '+bankCode:'')+')';
-  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittances data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittancess data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
   if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankCode+'</div><div class="empty-s">Load '+bankCode+' sample data or select a different bank.</div></div>';return;}
   list.innerHTML=PAY.map((p,i)=>{
     if(bankCode&&p.bank&&p.bank!==bankCode)return'';
@@ -5945,7 +5952,7 @@ function _legacy_renderWsRecon(){
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   if(summary)summary.textContent=`${$fk(totalMatched)} matched of ${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittances data and run matching to reconcile.</div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittancess data and run matching to reconcile.</div></div>';return;}
   const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
   list.innerHTML=rows.map(item=>{
     if(item.type==='matched'){const r=item.r;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
@@ -6065,7 +6072,7 @@ function caFilterUpdate(){
 // ══════════════════════════════════════════════════════════
 async function runMatch(){
   if(!INV.length){toast('Import invoices first','warn');return;}
-  if(!PAY.length){toast('Import remittances first','warn');return;}
+  if(!PAY.length){toast('Import remittancess first','warn');return;}
   // ── Row limit gate ──
   const rowLimit=PLANS[USER_PLAN]?.rows||50;
   if(INV.length>rowLimit){
@@ -7337,7 +7344,7 @@ function buildWorklist(){
     if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
     allocList.innerHTML=itms.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div>'+(item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':'')+' <div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(allocList){
-    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittances data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittances</button></div>')+'</div>';
+    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittancess data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittancess</button></div>')+'</div>';
   }
 
   // Ready to export
@@ -7409,7 +7416,7 @@ function setCfoPeriod(p,btn){
 
 function showChangePlanModal(){
   const PLANS_DEF=[
-    {key:'demo',name:'Demo',price:'Free',desc:'Try all features with sample data. No billing.',color:'var(--t3)',features:'Sample data only · 50 rows · Invoice + PO matching'},
+    {key:'demo',name:'7-Day Trial',price:'Free',desc:'Import your own data and try all features free.',color:'var(--t3)',features:'50 rows · Invoice + PO matching · No credit card required'},
     {key:'starter',name:'Starter',price:'$799/mo',desc:'For SMB AR teams transitioning from spreadsheets.',color:'var(--cy)',features:'Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support'},
     {key:'pro',name:'Pro',price:'$1,599/mo',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CFO dashboards · Reconcile · Priority support'},
     {key:'team',name:'Team',price:'$2,999/mo',desc:'Multi-user collaboration, enterprise workflows, dedicated onboarding.',color:'var(--pu)',features:'All Pro features · Multi-user · Roles & permissions · Audit logs · Approval workflows · Custom exports · SLA'},
@@ -7482,7 +7489,7 @@ function updateCfoSummary(){
   } else {
     setEl('cfo-savings-headline','Import data to see cash flow summary');
     var be2=document.getElementById('cfo-savings-body');
-    if(be2) be2.textContent='Import invoices and bank/remittance data to begin.';
+    if(be2) be2.textContent='Import invoices and bank/remittances data to begin.';
   }
 
   setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
@@ -8174,7 +8181,7 @@ var HELP_CONTENT = {
         </tbody></table>
         <h3>Change Plan</h3>
         <table><thead><tr><th>Plan</th><th>Price</th><th>Features</th></tr></thead><tbody>
-        <tr><td>Demo</td><td>Free</td><td>Sample data only · Explore all features</td></tr>
+        <tr><td>7-Day Trial</td><td>Free</td><td>Import your own data · Explore all features</td></tr>
         <tr><td>Starter</td><td>$799/mo</td><td>Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support</td></tr>
         <tr><td>Pro</td><td>$1,599/mo</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
         <tr><td>Team</td><td>$2,999/mo</td><td>All Pro + Multi-user · Roles &amp; permissions · Audit logs · Approval workflows · Custom exports · SLA</td></tr>
@@ -8217,7 +8224,7 @@ var HELP_CONTENT = {
         <h3>Common Issues</h3>
         <table><thead><tr><th>Issue</th><th>Cause</th><th>Solution</th></tr></thead><tbody>
         <tr><td>Matching finds no results</td><td>Account # mismatch</td><td>Verify account numbers match exactly between invoices and remittance. Edit cells inline in the Invoices panel.</td></tr>
-        <tr><td>Payment queue empty after bank filter</td><td>Data loaded without bank tags</td><td>Use Load JPM or Load BOA buttons. Import files should include a "bank" column (JPM or BOA).</td></tr>
+        <tr><td>Payment queue empty after bank filter</td><td>Data loaded without bank tags</td><td>Import a bank file. Import files should include a "bank" column.</td></tr>
         <tr><td>DSO shows "—"</td><td>No matched revenue yet</td><td>Run matching first. DSO requires at least one matched record as the denominator.</td></tr>
         <tr><td>Exception won't resolve</td><td>Invoice already matched or account not found</td><td>Check invoice status in Invoices panel. Ensure the target account exists in your data.</td></tr>
         <tr><td>Export produces empty file</td><td>No approved records in Review</td><td>Run matching and click ✓ Approve in the allocation workspace before exporting.</td></tr>
