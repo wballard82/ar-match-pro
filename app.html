@@ -3289,7 +3289,7 @@ body.app-active #app {
                 </tr>
               </thead>
               <tbody id="inv-tb">
-                <tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file or load sample data.</div></div></td></tr>
+                <tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file to get started.</div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -4375,7 +4375,6 @@ function updTop(){
   setEl('kpi-pay-ct',PAY.length);
   const tp=PAY.reduce((s,p)=>s+p.amt,0);
   // Cash Matched = sum of approved/posted payment amounts in RES
-  const approvedPays=new Set(RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved').map(r=>r._payIdx));
   const ma=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved').reduce((s,r)=>s+r.pd,0);
   // Unapplied Cash = total imported payments - cash matched
   const ua=Math.max(0,tp-ma);
@@ -4685,25 +4684,38 @@ function setUserDisplay(user){
 }
 
 function launchApp(user){
-  var ls=document.getElementById('login-screen');
-  if(ls){ls.style.display='none';}
-  document.body.classList.add('app-active');
-  const appEl=document.getElementById('app');
-  if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
-  IS_MASTER=!!(user.isMaster);
-  setUserDisplay(user);
-  setPlan(user.plan||'demo');
-  // Always clear transactional data on login; then load saved data for real users
-  INV=[];PAY=[];RES=[];EXC=[];
-  // Clear UI state
-  var bankSel=document.getElementById('ca-bank-sel');
-  if(bankSel){bankSel.innerHTML='<option value="">All bank accounts</option>';}
-  if(!IS_DEMO){loadFromStorage();}
-  rAll();updDash();updTop();initAuditTbl();
-
-  addAudit('Login','User: '+(user.name||CURRENT_USER));
-
-  setTimeout(navToWorklist, 0);
+  try{
+    var ls=document.getElementById('login-screen');
+    if(ls){ls.style.display='none';}
+    document.body.classList.add('app-active');
+    const appEl=document.getElementById('app');
+    if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
+    IS_MASTER=!!(user&&user.isMaster);
+    setUserDisplay(user||{name:'User',plan:'demo'});
+    setPlan((user&&user.plan)||'demo');
+    // Always clear transactional workspace on login
+    INV=[];PAY=[];RES=[];EXC=[];
+    // Reset bank selector
+    var bankSel=document.getElementById('ca-bank-sel');
+    if(bankSel){bankSel.innerHTML='<option value="">All bank accounts</option>';}
+    // Load saved data for non-demo users
+    if(!IS_DEMO){try{loadFromStorage();}catch(e){console.warn('loadFromStorage error:',e);}}
+    // Render safely
+    try{rAll();}catch(e){console.warn('rAll error:',e);}
+    try{updDash();}catch(e){console.warn('updDash error:',e);}
+    try{updTop();}catch(e){console.warn('updTop error:',e);}
+    try{initAuditTbl();}catch(e){console.warn('initAuditTbl error:',e);}
+    addAudit('Login','User: '+(user&&user.name||CURRENT_USER));
+    setTimeout(function(){try{navToWorklist();}catch(e){console.warn('navToWorklist error:',e);}},0);
+  }catch(e){
+    console.error('launchApp error:',e);
+    // Failsafe: ensure app is visible even if something crashed
+    document.body.classList.add('app-active');
+    var appEl=document.getElementById('app');
+    if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
+    var ls=document.getElementById('login-screen');
+    if(ls)ls.style.display='none';
+  }
 }
 
 function gsLive(q){
@@ -4872,7 +4884,7 @@ function clearInvFilters(){
 function rInv(){
   const tb=document.getElementById('inv-tb');
   if(!tb)return;
-  if(!INV.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file or load sample data.</div></div></td></tr>';document.getElementById('inv-ct').textContent='0 rows';return;}
+  if(!INV.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file to get started.</div></div></td></tr>';document.getElementById('inv-ct').textContent='0 rows';return;}
   const accts=[...new Set(INV.map(v=>v.a))];
   const sel=document.getElementById('inv-af'),cur=sel?sel.value:'';
   if(sel)sel.innerHTML='<option value="">All accounts</option>'+accts.map(a=>`<option ${a===cur?'selected':''}>${a}</option>`).join('');
@@ -6014,7 +6026,7 @@ function caFilterUpdate(){
   // Filter payment queue by selected bank, currency, and date range
   var bankSel=document.getElementById('ca-bank-sel');
   var bankVal=bankSel?bankSel.value:'';
-  // Extract bank code: "JPM-1234567890" → "JPM", "BOA-9876543210" → "BOA"
+  // Extract bank code from value
   var bankCode=bankVal?bankVal.split('-')[0]:'';
   var ccySel=document.getElementById('ca-ccy-sel');
   var ccyVal=ccySel?ccySel.value:'';
@@ -6296,7 +6308,7 @@ function parseBAI2(txt){
   const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
   // Show summary toast
   if(typeof toast==='function'){
-    const msg=`BAI2 imported: ${imported} transactions · $${(totalCredit).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} credits`+(skipped?` · ${skipped} lines skipped`:'');
+    const msg=`BAI2 imported: ${imported} transactions · ${(totalCredit).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} credits`+(skipped?` · ${skipped} lines skipped`:'');
     setTimeout(()=>toast(msg),500);
   }
   return [header,...dataRows].join('\n');
@@ -6954,7 +6966,7 @@ function buildAcctDropdown(selId, withAll){
 }
 
 function populateAllAcctDropdowns(){
-  // ca-bank-sel is STATIC (JP Morgan, BofA) — never rebuild it from customer data
+  // ca-bank-sel is rebuilt by refreshBankSelector after import
   buildAcctDropdown('ca-acct-dropdown',true);
   buildAcctDropdown('exc-acct-dropdown',true);
 }
@@ -7470,7 +7482,7 @@ function updateCfoSummary(){
   } else {
     setEl('cfo-savings-headline','Import data to see cash flow summary');
     var be2=document.getElementById('cfo-savings-body');
-    if(be2) be2.textContent='Load sample data or import invoices and remittance to begin.';
+    if(be2) be2.textContent='Import invoices and bank/remittance data to begin.';
   }
 
   setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
@@ -7999,7 +8011,7 @@ var HELP_CONTENT = {
         <h3>Demo Mode</h3>
         <p>Click <strong>Try Demo</strong> on the login screen to explore all features with pre-loaded sample data. In demo mode, data is not saved between sessions and export features require Starter plan or above.</p>
         <h3>Loading Sample Data</h3>
-        <p>Go to <strong>Invoices</strong> and click <strong>Load sample</strong> to populate 17 sample invoices including Pinnacle Systems. Go to <strong>Remittances</strong> and click <strong>Load JPM</strong> or <strong>Load BOA</strong> to load payments for each bank account.</p>
+        <p>Go to <strong>Invoices</strong> and click <strong>Import</strong> to upload your invoice CSV. Go to <strong>Remittances</strong> and click <strong>+ Bank File</strong> to import your bank/BAI2 file.</p>
         <div class="hm-tip">💡 Load both JPM and BOA sample data, then run Auto-Match to see a full matching cycle — exact matches, short pays, and multi-invoice PO group matches.</div>
         <h3>Navigation</h3>
         <table><thead><tr><th>Section</th><th>Purpose</th></tr></thead><tbody>
