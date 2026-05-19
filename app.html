@@ -2043,11 +2043,9 @@ body.app-active #app {
 }
 .fbl5n-filter-inp:focus { border-color:var(--p); }
 
-/* ── ZERO FIX: disable slashed zeros everywhere, all fonts ── */
-* {
-  font-feature-settings: "zero" 0 !important;
-  -webkit-font-feature-settings: "zero" 0 !important;
-}
+/* ── ZERO FIX: disable slashed zeros everywhere ── */
+*{font-feature-settings:"zero" 0,"ss01" 0 !important;-webkit-font-feature-settings:"zero" 0,"ss01" 0 !important;}
+.td-amt,.td-mono,.mono,.pf-val,.dk-val,.rpt-kpi-val,.at-val,.pq-item-amt,.kpi-val,.upgrade-price,.price,.pay-viz-val{font-feature-settings:"zero" 0,"tnum" 1,"liga" 0 !important;-webkit-font-feature-settings:"zero" 0,"tnum" 1,"liga" 0 !important;font-variant-numeric:tabular-nums;}
 .td-mono, .td-amt, .td-num, .td-key, .kpi-card-val,
 .rpt-kpi-val, .cfo-metric-value, .at-val, .dk-val,
 .pay-viz-val, .eng-h-amt, .pq-item-amt, [class*="mono"] {
@@ -2102,23 +2100,23 @@ body.app-active #app {
       <div class="login-stats" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:32px">
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
           <div style="font-size:22px;margin-bottom:6px">⚡</div>
-          <div style="font-size:13px;font-weight:700;color:var(--t1)">Auto-matching</div>
-          <div style="font-size:11.5px;color:var(--t3);margin-top:2px">Invoice · PO · SO · Amount</div>
+          <div style="font-size:13px;font-weight:700;color:#e2e8f0">Auto-matching</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px">Invoice · PO · SO · Amount</div>
         </div>
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
           <div style="font-size:22px;margin-bottom:6px">🏢</div>
-          <div style="font-size:13px;font-weight:700;color:var(--t1)">SAP · NetSuite</div>
-          <div style="font-size:11.5px;color:var(--t3);margin-top:2px">ERP posting export</div>
+          <div style="font-size:13px;font-weight:700;color:#e2e8f0">SAP · NetSuite</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px">ERP posting export</div>
         </div>
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15)">
           <div style="font-size:22px;margin-bottom:6px">⚠️</div>
-          <div style="font-size:13px;font-weight:700;color:var(--t1)">Exception detection</div>
-          <div style="font-size:11.5px;color:var(--t3);margin-top:2px">Short pays · Duplicates</div>
+          <div style="font-size:13px;font-weight:700;color:#e2e8f0">Exception detection</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px">Short pays · Duplicates</div>
         </div>
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
           <div style="font-size:22px;margin-bottom:6px">📋</div>
-          <div style="font-size:13px;font-weight:700;color:var(--t1)">Full audit trail</div>
-          <div style="font-size:11.5px;color:var(--t3);margin-top:2px">Every decision logged</div>
+          <div style="font-size:13px;font-weight:700;color:#e2e8f0">Full audit trail</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px">Every decision logged</div>
         </div>
       </div>
     </div>
@@ -2157,10 +2155,7 @@ body.app-active #app {
         <div class="lf-bottom" style="text-align:center;margin-top:14px">
           No account? <a class="lf-link" href="https://armatchpro.com/#pricing" target="_blank" style="font-weight:700;color:var(--pd)">Sign up →</a>
         </div>
-        <div class="privacy-badge">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1L2 4v4c0 3.5 2.5 6 6 7 3.5-1 6-3.5 6-7V4L8 1z"/></svg>
-          Runs locally · No data uploaded · Private by design · v1778185567
-        </div>
+        
       </div>
 
       <!-- REGISTER -->
@@ -2246,7 +2241,7 @@ body.app-active #app {
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
           <div class="upgrade-price">$1,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 · NetSuite · CSV · CFO dashboards</div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CSV · CFO dashboards</div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select Pro</button>
         </div>
         <div class="upgrade-card">
@@ -2279,7 +2274,7 @@ body.app-active #app {
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
           <div class="upgrade-price">$1,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP F-28 · NetSuite<br>CFO dashboards · Reconcile</div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite<br>CFO dashboards · Reconcile</div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select</button>
         </div>
         <div class="upgrade-card">
@@ -2361,8 +2356,13 @@ body.app-active #app {
 
   <!-- TOP NAV -->
   <nav class="topnav">
-    <div class="tn-logo" style="padding:0">
-      <img src="data:image/png;base64,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" alt="AR Match Pro" style="height:32px;width:auto;display:block;object-fit:contain">
+    <div class="tn-logo" style="padding:0;display:flex;align-items:center;gap:8px;padding-left:4px">
+      <div style="position:relative;width:28px;height:28px;flex-shrink:0">
+        <div style="position:absolute;inset:0;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);opacity:.15"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;letter-spacing:-.5px;color:#60a5fa">AR</div>
+      </div>
+      <div style="font-size:13px;font-weight:800;color:var(--t1);letter-spacing:-.3px;line-height:1.1">AR<span style="color:#60a5fa">Match</span><br><span style="font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.02em">Pro</span></div>
+    </div>
     </div>
 
     <div class="tn-search">
@@ -2551,7 +2551,7 @@ body.app-active #app {
           <div style="display:flex;align-items:center;gap:12px">
             <div class="wl-summary-pills" id="wl-summary-pills"></div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-outline btn-sm" onclick="loadDemoData()">✨ Load sample data</button>
+              
               <button class="btn btn-p btn-sm" onclick="runMatch();sp('worklist')">⚡ Run matching</button>
             </div>
           </div>
@@ -2589,8 +2589,8 @@ body.app-active #app {
               <div class="wl-empty-state">
                 <div class="wl-empty-icon">📂</div>
                 <div class="wl-empty-title">No payments waiting</div>
-                <div class="wl-empty-sub">Import remittance data to see payments that need allocation.</div>
-                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittance</button></div>
+                <div class="wl-empty-sub">Import remittances data to see payments that need allocation.</div>
+                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
               </div>
             </div>
           </div>
@@ -2642,9 +2642,9 @@ body.app-active #app {
               </button>
               <button class="btn btn-outline btn-sm" onclick="openImport('rem')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import remittance
+                Import remittances
               </button>
-              <button class="btn btn-p btn-sm" onclick="loadDemoData()">✨ Load sample data</button>
+              
             </div>
           </div>
         </div>
@@ -2731,11 +2731,7 @@ body.app-active #app {
               <div class="card-title">Quick Actions</div>
             </div>
             <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:20px">
-              <button class="btn btn-outline hover-lift" onclick="loadSampleInv();loadSampleRem()" style="justify-content:center;padding:20px 12px;flex-direction:column;height:auto;gap:6px">
-                <span style="font-size:24px">📋</span>
-                <span style="font-size:12.5px;font-weight:700">Load sample data</span>
-                <span style="font-size:11px;color:var(--t3)">15 invoices + 12 payments</span>
-              </button>
+              
               <button class="btn btn-outline hover-lift" onclick="runMatch()" style="justify-content:center;padding:20px 12px;flex-direction:column;height:auto;gap:6px">
                 <span style="font-size:24px">⚡</span>
                 <span style="font-size:12.5px;font-weight:700">Run matching</span>
@@ -2833,7 +2829,7 @@ body.app-active #app {
                     </div>
                   </div>
                   <div class="ca-queue-list" id="pq-list">
-                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div></div>
+                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittances data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div></div>
                   </div>
                 </div>
 
@@ -2933,7 +2929,7 @@ body.app-active #app {
                     <div class="empty-icon">💳</div>
                     <div class="empty-t">Select a payment to allocate</div>
                     <div class="empty-s">Choose from the queue on the left.</div>
-                    <div class="empty-btn" style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittance</button><button class="btn btn-p btn-sm" onclick="loadDemoData()">Load demo data</button></div>
+                    <div class="empty-btn" style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
                   </div>
 
                   <div class="alloc-fully-bar" id="alloc-fully">✅ Payment fully allocated — click Approve</div>
@@ -3236,7 +3232,7 @@ body.app-active #app {
               <div class="panel-sub" id="inv-ct">0 rows · click any cell to edit</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="loadSampleInv()">Load sample</button>
+              
               <button class="btn btn-r btn-sm" onclick="clearInvData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="openImport('inv')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
@@ -3309,13 +3305,13 @@ body.app-active #app {
               <div class="panel-sub" id="rem-ct">0 rows · ACH · Wire · Check · Lockbox</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="loadSampleRemJPM()" title="Load JP Morgan sample payments">Load JPM</button>
-              <button class="btn btn-outline btn-sm" onclick="loadSampleRemBOA()" title="Load Bank of America sample payments">Load BOA</button>
+              
+              
               <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
               <button class="btn btn-outline btn-sm" onclick="addRemRowAfter()">+ Add row</button>
               <button class="btn btn-p btn-sm" onclick="openImport('rem')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import remittance
+                Import remittances
               </button>
             </div>
           </div>
@@ -3369,7 +3365,7 @@ body.app-active #app {
                 </tr>
               </thead>
               <tbody id="rem-tb">
-                <tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import a bank file to begin.</div></div></td></tr>
+                <tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittances data</div><div class="empty-s">Import a bank file to begin.</div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -3382,7 +3378,7 @@ body.app-active #app {
           <div class="panel-header-row">
             <div>
               <div class="panel-title">Posting Export</div>
-              <div class="panel-sub">Ready for ERP posting — SAP F-28 · NetSuite · or any ERP via CSV</div>
+              <div class="panel-sub">Ready for ERP posting — SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · or any ERP via CSV</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span id="post-ct" style="font-size:12.5px;color:var(--t3)">0 rows</span>
@@ -3949,7 +3945,7 @@ function _engUpdateRightPanel(){
     if(sharedPO.length>1)cards.push({priority:'med',icon:'🔗',title:`${sharedPO.length} Invoices Share PO ${p.po}`,body:'Likely a consolidated remittance. Consider applying to all invoices under this PO.',action:'Mark all matching PO',conf:87,confColor:'var(--am)'});
     // Exact subset match
     const exactSum=rows.reduce((s,r)=>s+r.inv.amt,0);
-    if(Math.abs(exactSum-p.amt)<0.01&&rows.length>1)cards.push({priority:'ok',icon:'✓',title:`${rows.length} Invoices Sum to Exact Payment`,body:`$${$f(p.amt)} matches total of all open invoices. Auto-apply all recommended.`,action:'Auto-apply all',conf:99,confColor:'var(--g)',actionFn:'engMarkAll()'});
+    if(Math.abs(exactSum-p.amt)<0.01&&rows.length>1)cards.push({priority:'ok',icon:'✓',title:`${rows.length} Invoices Sum to Exact Payment`,body:`${$f(p.amt)} matches total of all open invoices. Auto-apply all recommended.`,action:'Auto-apply all',conf:99,confColor:'var(--g)',actionFn:'engMarkAll()'});
     // Short pay likelihood
     const spRows=rows.filter(r=>p.amt<r.inv.amt&&p.amt>r.inv.amt*0.8);
     if(spRows.length)cards.push({priority:'med',icon:'⚠️',title:'Likely Short Pay Detected',body:`Payment is ${((1-p.amt/spRows[0].inv.amt)*100).toFixed(1)}% short of invoice ${spRows[0].inv.i}. Partial allocation or write-off may be needed.`,action:'Apply partial',conf:74,confColor:'var(--am)'});
@@ -3958,7 +3954,7 @@ function _engUpdateRightPanel(){
     if(dpRows.length)cards.push({priority:'low',icon:'💡',title:`${dpRows.length} Possible Down Payment Invoice(s)`,body:'These invoices may represent deposits or advance payments. Confirm with customer before applying.',conf:68,confColor:'var(--p)'});
     // Unapplied cash for this customer
     const custExc=EXC.filter(e=>(e.c||'').toLowerCase()===(p.c||'').toLowerCase()&&e.type==='Unapplied payment');
-    if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: $${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
+    if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: ${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
     // No invoices
     if(!rows.length)cards.push({priority:'high',icon:'🔍',title:'No Open Invoices Found',body:'No matching invoices for this customer. Payment may need to be posted as unapplied cash.',action:'Post as unapplied',conf:null,confColor:'var(--r)'});
     // Missing PO
@@ -3995,7 +3991,7 @@ function _engUpdateRightPanel(){
         <div style="padding:10px;background:var(--r-bg);border:1px solid rgba(239,68,68,.15);border-radius:9px;margin-bottom:7px">
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
             <span class="badge badge-r" style="font-size:10px">${e.type}</span>
-            <span style="font-size:11.5px;font-weight:700;color:var(--r-t)">$${$f(e.amt)}</span>
+            <span style="font-size:11.5px;font-weight:700;color:var(--r-t)">${$f(e.amt)}</span>
           </div>
           <div style="font-size:12px;color:var(--t2);line-height:1.4">${e.detail||'Exception detected'}</div>
           <div style="font-size:11.5px;color:var(--t3);margin-top:4px">${e.action||''}</div>
@@ -4051,9 +4047,9 @@ function engBuildAI(p,invs){
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));
   if(sharedPO.length>1)tips.push(`🔗 <strong>${sharedPO.length} invoices share PO ${p.po}</strong> — consolidated remittance likely`);
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
-  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to $${$f(p.amt)} · auto-apply recommended`);
+  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to ${$f(p.amt)} · auto-apply recommended`);
   const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);
-  if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by $${$f(sp[0].amt-p.amt)}`);
+  if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by ${$f(sp[0].amt-p.amt)}`);
   if(!invs.length)tips.push(`🔍 <strong>No open invoices</strong> for ${p.c||'this customer'} — consider posting as unapplied cash`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:5px 0;border-bottom:1px solid rgba(139,92,246,.08);line-height:1.5;font-size:12.5px;color:var(--t2)">${t}</div>`).join('');}
   else bar.style.display='none';
@@ -4088,7 +4084,7 @@ function renderWsExcPremium(){
     const sev=typeSev[ex.type]||'med';
     const icon=typeIcon[ex.type]||'⚠️';
     return`<div class="exc-card sev-${sev}">
-      <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">$${$f(ex.amt)}</div>
+      <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">${$f(ex.amt)}</div>
       <div class="exc-card-header">
         <span class="exc-card-type-icon">${icon}</span>
         <div style="flex:1;min-width:0;padding-right:80px">
@@ -4146,12 +4142,12 @@ function renderWsReview(){
           <span>Acct: <strong style="color:var(--t1)">${r.a||'—'}</strong></span>
           <span>Inv: <strong style="color:var(--pd);font-family:var(--mono)">${r.i||'—'}</strong></span>
           ${r.po?`<span>PO: ${r.po}</span>`:''}
-          ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: $${$f(Math.abs(r.vr))}</span>`:''}
+          ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: ${$f(Math.abs(r.vr))}</span>`:''}
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">$${$f(r.pd)}</div>
-        <div style="font-size:11px;color:var(--t3)">of $${$f(r.oa)}</div>
+        <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">${$f(r.pd)}</div>
+        <div style="font-size:11px;color:var(--t3)">of ${$f(r.oa)}</div>
         <div style="font-size:11.5px;font-weight:700;color:${conf==='100%'?'var(--g-t)':'var(--am-t)'}">Conf: ${conf}</div>
       </div>
       <div style="flex-shrink:0;margin-left:12px" onclick="event.stopPropagation()">
@@ -4170,7 +4166,7 @@ function renderWsRecon(){
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
   if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance and run matching to reconcile.</div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittances and run matching to reconcile.</div></div>';return;}
   list.innerHTML=`<table class="tbl" style="width:100%">
     <thead><tr>
       <th>Customer</th><th>Invoice #</th><th>PO #</th>
@@ -4378,8 +4374,11 @@ function updTop(){
   setEl('kpi-inv-ct',INV.length);
   setEl('kpi-pay-ct',PAY.length);
   const tp=PAY.reduce((s,p)=>s+p.amt,0);
-  const ma=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact').reduce((s,r)=>s+r.pd,0);
-  const ua=EXC.reduce((s,e)=>s+e.amt,0);
+  // Cash Matched = sum of approved/posted payment amounts in RES
+  const approvedPays=new Set(RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved').map(r=>r._payIdx));
+  const ma=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved').reduce((s,r)=>s+r.pd,0);
+  // Unapplied Cash = total imported payments - cash matched
+  const ua=Math.max(0,tp-ma);
   const spc=EXC.filter(e=>e.type==='Short pay').length;
   setEl('kpi-matched',tp>0?$fk(ma):'$0');
   setEl('kpi-rate',tp>0?(ma/tp*100).toFixed(1)+'%':'—');
@@ -4388,20 +4387,20 @@ function updTop(){
   setEl('kpi-shortpay',spc);
   const excCt=EXC.filter(e=>!e.s||e.s==='Open').length;
   const sbExc=document.getElementById('sb-exc-ct');
-  if(sbExc){sbExc.textContent=excCt;sbExc.style.display='none';} // exc count via notif-dot only
+  if(sbExc){sbExc.textContent=excCt;sbExc.style.display='none';}
   const notifDot=document.getElementById('notif-dot');
   if(notifDot)notifDot.style.display=excCt>0?'block':'none';
   const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
   const spn2=document.getElementById('settings-plan-name2');if(spn2)spn2.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
-
 }
 
 // ── Dashboard ──
 function updDash(){
   const tp=PAY.reduce((s,p)=>s+p.amt,0);
-  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
+  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved');
   const ma=matched.reduce((s,r)=>s+r.pd,0);
-  const ua=EXC.reduce((s,e)=>s+e.amt,0);
+  // Unapplied = total payments - matched (not from EXC which double-counts)
+  const ua=Math.max(0,tp-ma);
   const rt=tp>0?ma/tp*100:0;
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   setEl('dk-matched',$fk(ma));
@@ -4431,14 +4430,14 @@ function updDash(){
     </div>`
   ).join('')||'<div class="empty" style="padding:16px"><div class="empty-t">No data</div></div>';
   const sp_tot=EXC.filter(e=>e.type==='Short pay').reduce((s,e)=>s+e.amt,0);
-  const ua_tot=EXC.filter(e=>e.type==='Unapplied payment').reduce((s,e)=>s+e.amt,0);
+  const ua_tot=ua; // use the payment-based unapplied total
   const top=Object.entries(cn).filter(([s])=>!['Exact','Subset exact','Amount match'].includes(s)).sort((a,b)=>b[1]-a[1])[0];
   const ins=document.getElementById('dk-insights');
   if(ins&&(RES.length||EXC.length))ins.innerHTML=`
     <div style="display:flex;flex-direction:column;gap:6px">
       <div class="ai-suggestion"><span class="ai-suggestion-icon">💚</span>Match rate: <strong>${rt.toFixed(1)}%</strong>${rt>=90?' — excellent!':rt>=70?' — good':' — needs attention'}</div>
-      ${sp_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">⚠️</span>Short pay total: <strong>$${$f(sp_tot)}</strong> — ${EXC.filter(e=>e.type==='Short pay').length} invoices</div>`:''}
-      ${ua_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">💙</span>Unapplied cash: <strong>$${$f(ua_tot)}</strong> pending decision</div>`:''}
+      ${sp_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">⚠️</span>Short pay total: <strong>${$f(sp_tot)}</strong> — ${EXC.filter(e=>e.type==='Short pay').length} invoices</div>`:''}
+      ${ua_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">💙</span>Unapplied cash: <strong>${$f(ua_tot)}</strong> pending decision</div>`:''}
       ${top?`<div class="ai-suggestion"><span class="ai-suggestion-icon">🔴</span>Top exception: <strong>${top[0]}</strong> — ${top[1]} case${top[1]!==1?'s':''}</div>`:''}
     </div>`;
 }
@@ -4447,9 +4446,9 @@ function updDash(){
 function updReporting(){
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   const tp=PAY.reduce((s,p)=>s+p.amt,0);
-  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact');
+  const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved');
   const ma=matched.reduce((s,r)=>s+r.pd,0);
-  const ua=EXC.reduce((s,e)=>s+e.amt,0);
+  const ua=Math.max(0,tp-ma);
   const rt=tp>0?ma/tp*100:0;
   const spc=EXC.filter(e=>e.type==='Short pay');
   setEl('rpt-matched',$fk(ma));setEl('rpt-matched-s',matched.length+' transactions');
@@ -4694,9 +4693,14 @@ function launchApp(user){
   IS_MASTER=!!(user.isMaster);
   setUserDisplay(user);
   setPlan(user.plan||'demo');
-  if(!IS_DEMO){INV=[];PAY=[];RES=[];EXC=[];loadFromStorage();}
+  // Always clear transactional data on login; then load saved data for real users
+  INV=[];PAY=[];RES=[];EXC=[];
+  // Clear UI state
+  var bankSel=document.getElementById('ca-bank-sel');
+  if(bankSel){bankSel.innerHTML='<option value="">All bank accounts</option>';}
+  if(!IS_DEMO){loadFromStorage();}
   rAll();updDash();updTop();initAuditTbl();
-  if(IS_DEMO)toast('Demo mode — click "Load sample data" to get started.');
+
   addAudit('Login','User: '+(user.name||CURRENT_USER));
 
   setTimeout(navToWorklist, 0);
@@ -4797,7 +4801,7 @@ function swTab(t,el){
 
 // ── Clear data ──
 function clearInvData(){showConfirm('Clear all invoice data?\n\nThis cannot be undone.',function(){INV=[];saveToStorage();rInv();updDash();updTop();addAudit('Cleared invoice data');toast('Invoice data cleared');});}
-function clearPayData(){showConfirm('Clear all remittance data?\n\nThis cannot be undone.',function(){PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittance data');toast('Remittance data cleared');});}
+function clearPayData(){showConfirm('Clear all remittancess data?\n\nThis cannot be undone.',function(){PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittances data');toast('Remittances data cleared');});}
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
 function clearAllData(){showConfirm('Clear all data?\n\nThis cannot be undone.',function(){INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');});}
 function resetAllData(){
@@ -4886,7 +4890,7 @@ function rInv(){
       <td class="td-key" onclick="editCell(this,INV[${idx}],'i')">${v.i||'—'}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'po')">${v.po||'—'}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'so')">${v.so||'—'}</td>
-      <td class="td-amt ${v.amt<0?'neg':''}" onclick="editCell(this,INV[${idx}],'amt','number')">$${$f(v.amt)}</td>
+      <td class="td-amt ${v.amt<0?'neg':''}" onclick="editCell(this,INV[${idx}],'amt','number')">${$f(v.amt)}</td>
       <td onclick="editCell(this,INV[${idx}],'dt','select')"><span class="badge ${dtCls}">${dtLabel}</span></td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'dt2','date')">${fmtDate(v.dt2)}</td>
       <td class="td-mono" onclick="editCell(this,INV[${idx}],'due','date')">${fmtDate(v.due)}</td>
@@ -4900,7 +4904,7 @@ function rInv(){
 function rRem(){
   const tb=document.getElementById('rem-tb');if(!tb)return;
   const ct=document.getElementById('rem-ct');
-  if(!PAY.length){tb.innerHTML='<tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import bank file or paste CSV.</div></div></td></tr>';if(ct)ct.textContent='0 rows';renderPayQueue();return;}
+  if(!PAY.length){tb.innerHTML='<tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittances data</div><div class="empty-s">Import bank file or paste CSV.</div></div></td></tr>';if(ct)ct.textContent='0 rows';renderPayQueue();return;}
   if(ct)ct.textContent=PAY.length+' rows · ACH · Wire · Check · Lockbox';
   tb.innerHTML=PAY.map((p,idx)=>{
     const {badge:statusBadge}=getRemStatus(p,idx);
@@ -4908,7 +4912,7 @@ function rRem(){
     return`<tr>
       <td class="td-mono">${p.a||'—'}</td>
       <td>${p.c||'—'}</td>
-      <td class="td-amt pos">$${$f(p.amt)}</td>
+      <td class="td-amt pos">${$f(p.amt)}</td>
       <td class="td-mono">${p.po||'—'}</td>
       <td class="td-key">${p.i||'—'}</td>
       <td class="td-mono" style="font-size:11px">${p.txId||'—'}</td>
@@ -4947,7 +4951,7 @@ function rExc(){
     if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div></td></tr>';return;}
     tb.innerHTML=shown.map(ex=>{const realIdx=EXC.indexOf(ex);return`<tr style="opacity:.75;background:var(--surface2)">
       <td class="td-mono">${ex.id}</td><td class="td-mono">${ex.a}</td><td>${ex.c}</td>
-      <td class="td-amt">$${$f(ex.amt)}</td><td class="td-mono">${ex.ref||'—'}</td>
+      <td class="td-amt">${$f(ex.amt)}</td><td class="td-mono">${ex.ref||'—'}</td>
       <td>${badge(ex.type)}</td>
       <td style="color:var(--t2);font-size:12px;max-width:180px;white-space:normal;line-height:1.4">${ex.detail||'—'}</td>
       <td style="color:var(--t3);font-size:12px">${ex.notes||'—'}</td>
@@ -4967,7 +4971,7 @@ function rExc(){
     return`<tr id="exc-row-${idx}">
       <td class="td-mono" style="font-weight:600;color:var(--t3)">${ex.id}</td>
       <td class="td-mono">${ex.a}</td><td>${ex.c}</td>
-      <td class="td-amt">$${$f(ex.amt)}</td>
+      <td class="td-amt">${$f(ex.amt)}</td>
       <td class="td-mono">${ex.ref||'—'}</td>
       <td>${badge(ex.type)}</td>
       <td style="color:var(--t2);max-width:180px;white-space:normal;font-size:12px;line-height:1.4">${ex.detail||'—'}</td>
@@ -5012,7 +5016,7 @@ function rPost(){
       <td class="td-mono">${inv.so||r.so||'—'}</td>
       <td><span class="badge ${badgeCls}" style="font-size:10px">${typeLbl}</span></td>
       <td class="td-key">${r.d||r.id||'—'}</td>
-      <td class="td-amt pos">$${$f(r.pd)}</td>
+      <td class="td-amt pos">${$f(r.pd)}</td>
       <!-- short pay col removed -->
       <td class="td-amt" style="color:var(--am-t)">${r.writeOff>0?$f(r.writeOff):'—'}</td>
       <td class="td-amt" style="color:var(--pu-t)">${r.bankFee>0?$f(r.bankFee):'—'}</td>
@@ -5049,8 +5053,8 @@ function buildAllocWaterfall(p,idx){
     <tr style="background:rgba(59,130,246,.04)">
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-p" style="font-size:10px">Payment</span></td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);font-family:var(--mono);color:var(--pd);font-weight:700">${p.txId||p.po||p.i||'—'}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">($${$f(p.amt)})</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">($${$f(p.amt)})</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">(${$f(p.amt)})</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--r-t);font-weight:700">(${$f(p.amt)})</td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-cy" style="font-size:10px">${p.m||'ACH'}</span></td>
     </tr>`;
   let running=p.amt;
@@ -5060,7 +5064,7 @@ function buildAllocWaterfall(p,idx){
     rows+=`<tr>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr)"><span class="badge badge-gray" style="font-size:10px">Invoice</span></td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);font-family:var(--mono);color:var(--pd)">${r.i||r.po||'—'}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--g-t)">$${$f(r.pd)}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:var(--g-t)">${$f(r.pd)}</td>
       <td style="padding:7px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);font-weight:700;color:${Math.abs(runAmt)<.01?'var(--g-t)':'var(--am-t)'}">
         ${Math.abs(runAmt)<.01?'$0.00':runAmt>0?'($'+$f(runAmt)+')':'$'+$f(Math.abs(runAmt))}
       </td>
@@ -5306,7 +5310,7 @@ function engRefreshSel(){
     PAY.map((p,i)=>{
       const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
       const status=matched?'✓ ':p.dp?'↓ ':'';
-      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · $${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}`;
+      const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · ${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}`;
       return`<option value="${i}" ${i===prev?'selected':''}>${label}</option>`;
     }).join('');
   const empty=document.getElementById('eng-empty');
@@ -5425,14 +5429,14 @@ function _legacyEngBuildAI(p,invs){
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));if(sharedPO.length>1)tips.push(`💡 ${sharedPO.length} invoices share PO ${p.po} — consolidated remittance`);
   if(!invs.length)tips.push('⚠️ No open invoices — post as unapplied cash?');
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
-  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✓ ${invs.length} invoices sum exactly to $${$f(p.amt)} — auto-apply all recommended`);
+  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✓ ${invs.length} invoices sum exactly to ${$f(p.amt)} — auto-apply all recommended`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:4px 0;border-bottom:1px solid rgba(139,92,246,.1);line-height:1.5;font-size:12.5px">${t}</div>`).join('');}
   else bar.style.display='none';
 }
 
 function engRenderRows(){
   const tbody=document.getElementById('eng-inv-body');if(!tbody)return;
-  if(!ENG_ROWS.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:28px;color:var(--t3)">No open invoices found for this customer.<br><small>Check customer name consistency between invoice and remittance data.</small></td></tr>`;return;}
+  if(!ENG_ROWS.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:28px;color:var(--t3)">No open invoices found for this customer.<br><small>Check customer name consistency between invoice and remittances data.</small></td></tr>`;return;}
   tbody.innerHTML=ENG_ROWS.map((r,i)=>{
     const inv=r.inv;const disabled=r.alreadyPaid||ENG_LOCKED;
     const balance=inv.amt-(r.alreadyPaid?inv.amt:0);
@@ -5449,8 +5453,8 @@ function engRenderRows(){
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.po||'—'}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.so||'—'}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--t3)">${inv.d||'—'}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono)">$${$f(inv.amt)}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:${r.alreadyPaid?'var(--r-t)':r.selected&&balance<inv.amt?'var(--am-t)':'var(--t1)'}">$${$f(Math.max(0,balance))}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono)">${$f(inv.amt)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--mono);color:${r.alreadyPaid?'var(--r-t)':r.selected&&balance<inv.amt?'var(--am-t)':'var(--t1)'}">${$f(Math.max(0,balance))}</td>
       <td style="padding:6px 8px;border-bottom:1px solid var(--bdr);text-align:right">
         <input type="number" min="0" step="0.01" value="${r.applyAmt>0?r.applyAmt:''}" placeholder="0.00"
           ${disabled||!r.selected?'disabled':''}
@@ -5640,7 +5644,7 @@ function renderPayQueue(){
     return !p.bank||p.bank===bankCode;
   });
   if(ct)ct.textContent='('+visiblePay.length+(bankCode?' · '+bankCode:'')+')';
-  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittances data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
   if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankCode+'</div><div class="empty-s">Load '+bankCode+' sample data or select a different bank.</div></div>';return;}
   list.innerHTML=PAY.map((p,i)=>{
     if(bankCode&&p.bank&&p.bank!==bankCode)return'';
@@ -5652,7 +5656,7 @@ function renderPayQueue(){
     const bankTag=p.bank?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--pg);color:var(--pd);font-weight:700;margin-left:4px">${p.bank}</span>`:'';
     return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
-      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">$${$f(p.amt)}</div></div>
+      <div class="pq-item-top"><div class="pq-item-cust">${p.c||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
       <div class="pq-item-bot">
         <div class="pq-item-ref">${p.i||p.po||p.txId||'—'}</div>
         <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
@@ -5668,8 +5672,13 @@ function engLoadPaymentFromQueue(idx){
 }
 
 function filterPayQueue(q){
-  const v=q.toLowerCase();
-  document.querySelectorAll('.pq-item').forEach(item=>{item.style.display=(!v||item.textContent.toLowerCase().includes(v))?'':'none';});
+  const v=(q||'').toLowerCase().trim();
+  document.querySelectorAll('.pq-item').forEach((item,i)=>{
+    if(!v){item.style.display='';return;}
+    const p=PAY[i];if(!p){item.style.display='none';return;}
+    const searchable=[p.c,p.a,p.i,p.po,p.txId,String(p.amt),p.m,p.n,p.payDate,p.bank].map(x=>(x||'').toLowerCase()).join(' ');
+    item.style.display=searchable.includes(v)?'':'none';
+  });
 }
 
 let _payFilter='all';
@@ -5710,7 +5719,7 @@ function _legacy_renderWsReview(){
     const isLocked=r.fromAlloc||r.fromExc;
     const confClass=r.st==='Exact'||r.st==='Subset exact'?'conf-high':r.st==='Short pay'||r.st==='Overpay'?'conf-med':'conf-low';
     const conf=r.st==='Exact'?'100%':r.st==='Subset exact'?'98%':r.st==='Amount match'?'72%':r.st==='Short pay'?'61%':'—';
-    const vr=r.vr&&Math.abs(r.vr)>0.01?`<span class="badge badge-am" style="font-size:10px">Var $${$f(Math.abs(r.vr))}</span>`:'';
+    const vr=r.vr&&Math.abs(r.vr)>0.01?`<span class="badge badge-am" style="font-size:10px">Var ${$f(Math.abs(r.vr))}</span>`:'';
     return`<div class="review-item" onclick="reviewItemClick(${i})">
       <div style="width:3px;height:36px;border-radius:2px;background:${r.st==='Exact'||r.st==='Resolved'?'var(--g)':r.st==='Short pay'||r.st==='Overpay'?'var(--am)':'var(--p)'};flex-shrink:0"></div>
       <div>
@@ -5722,8 +5731,8 @@ function _legacy_renderWsReview(){
         <div style="font-size:11px;color:var(--t3)">${r.po?'PO '+r.po:''}</div>
       </div>
       <div>
-        <div class="review-item-amt">$${$f(r.pd)}</div>
-        <div style="font-size:11px;color:var(--t3);text-align:right">of $${$f(r.oa)}</div>
+        <div class="review-item-amt">${$f(r.pd)}</div>
+        <div style="font-size:11px;color:var(--t3);text-align:right">of ${$f(r.oa)}</div>
       </div>
       <div class="review-item-status"><span class="badge ${stBadge[r.st]||'badge-gray'}">${r.st||'—'}</span>${vr?'&nbsp;'+vr:''}</div>
       <div class="review-item-conf"><span class="${confClass}">${conf}</span></div>
@@ -5782,7 +5791,7 @@ function renderWsExc(){
         <div style="font-size:12px;color:var(--t2);max-width:220px">${ex.detail||'—'}</div>
         <div style="font-size:11px;color:var(--t3)">${ex.ref||''}</div>
       </div>
-      <div style="font-size:15px;font-weight:800;font-family:var(--mono);color:var(--am-t)">$${$f(ex.amt)}</div>
+      <div style="font-size:15px;font-weight:800;font-family:var(--mono);color:var(--am-t)">${$f(ex.amt)}</div>
       <div><span class="badge ${isResV?'badge-g':'badge-am'}">${ex.s||'Open'}</span></div>
       ${isResV?`<span class="badge badge-gray" style="font-size:10px">${ex.dec||'—'}</span><button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});renderWsExc()">↩ Revert</button>`
         :`<input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
@@ -5821,7 +5830,7 @@ function renderAcctCustomers(){
     <div class="acct-customer-item${ACCT_SELECTED_CUSTOMER===cu.c?' active':''}" onclick="selectAcctCustomer('${(cu.c||'').replace(/'/g,"\'")}','${cu.a||''}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div class="acct-customer-name">${cu.c||cu.a||'Unknown'}</div>
-        <div class="acct-customer-balance">$${$fk(cu.balance)}</div>
+        <div class="acct-customer-balance">${$fk(cu.balance)}</div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:3px">
         <div class="acct-customer-meta">${cu.a||''}</div>
@@ -5867,10 +5876,10 @@ function selectAcctCustomer(custName,acctId){
   });
   const agingGrid=document.getElementById('acct-aging-grid');
   if(agingGrid)agingGrid.innerHTML=`
-    <div class="aging-bucket"><div class="aging-bucket-val">$${$fk(ageCur)}</div><div class="aging-bucket-lbl">Current</div></div>
-    <div class="aging-bucket${age30>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age30)}</div><div class="aging-bucket-lbl">1–30 days</div></div>
-    <div class="aging-bucket${age60>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age60)}</div><div class="aging-bucket-lbl">31–60 days</div></div>
-    <div class="aging-bucket${age90>0?' overdue':''}"><div class="aging-bucket-val">$${$fk(age90)}</div><div class="aging-bucket-lbl">61+ days</div></div>`;
+    <div class="aging-bucket"><div class="aging-bucket-val">${$fk(ageCur)}</div><div class="aging-bucket-lbl">Current</div></div>
+    <div class="aging-bucket${age30>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age30)}</div><div class="aging-bucket-lbl">1–30 days</div></div>
+    <div class="aging-bucket${age60>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age60)}</div><div class="aging-bucket-lbl">31–60 days</div></div>
+    <div class="aging-bucket${age90>0?' overdue':''}"><div class="aging-bucket-val">${$fk(age90)}</div><div class="aging-bucket-lbl">61+ days</div></div>`;
   // Invoice table
   const invBody=document.getElementById('acct-inv-body');
   if(invBody)invBody.innerHTML=custInvs.length?custInvs.map((v,i)=>{
@@ -5884,8 +5893,8 @@ function selectAcctCustomer(custName,acctId){
       <td class="td-mono">${fmtDate(v.due)}</td>
       <td class="td-mono">${v.po||'—'}</td>
       <td class="td-mono">${v.so||'—'}</td>
-      <td class="td-amt">$${$f(v.amt)}</td>
-      <td class="td-amt ${bal>0?'':'pos'}">$${$f(bal)}</td>
+      <td class="td-amt">${$f(v.amt)}</td>
+      <td class="td-amt ${bal>0?'':'pos'}">${$f(bal)}</td>
       <td>${aging}</td>
       <td>${v.s?`<span class="badge ${v.s==='Exact'||v.s==='Applied'?'badge-g':v.s==='Short pay'||v.s==='Overpay'?'badge-am':'badge-gray'}">${v.s}</span>`:'<span style="color:var(--t3)">Open</span>'}</td>
       <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();engLoadPaymentForInv('${v.i||''}')">Apply</button></td>
@@ -5898,7 +5907,7 @@ function selectAcctCustomer(custName,acctId){
     return`<tr>
       <td class="td-key">${p.txId||'—'}</td>
       <td class="td-mono">${p.payDate?fmtDate(p.payDate):'—'}</td>
-      <td class="td-amt pos">$${$f(p.amt)}</td>
+      <td class="td-amt pos">${$f(p.amt)}</td>
       <td><span class="badge badge-gray" style="font-size:10px">${p.m||'—'}</span></td>
       <td class="td-mono">${p.po||'—'}</td>
       <td class="td-key">${p.i||'—'}</td>
@@ -5923,20 +5932,20 @@ function _legacy_renderWsRecon(){
   const unmatched=PAY.filter(p=>!RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
-  if(summary)summary.textContent=`$${$fk(totalMatched)} matched of $${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance data and run matching to reconcile.</div></div>';return;}
+  if(summary)summary.textContent=`${$fk(totalMatched)} matched of ${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittances data and run matching to reconcile.</div></div>';return;}
   const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
   list.innerHTML=rows.map(item=>{
     if(item.type==='matched'){const r=item.r;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
       <div class="recon-match-indicator" style="background:var(--g)"></div>
       <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--t1)">${r.c||'—'}</div><div style="font-size:11px;color:var(--t3)">Invoice ${r.i||'—'} · PO ${r.po||'—'}</div></div>
-      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">+$${$f(r.pd)}</div>
+      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">+${$f(r.pd)}</div>
       <span class="badge badge-g">Reconciled</span>
     </div>`;}
     else{const p=item.p;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
       <div class="recon-match-indicator" style="background:var(--am)"></div>
       <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--t1)">${p.c||p.a||'Unknown'}</div><div style="font-size:11px;color:var(--t3)">${p.txId||p.po||'—'} · ${p.payDate?fmtDate(p.payDate):'—'}</div></div>
-      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--am-t)">$${$f(p.amt)}</div>
+      <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--am-t)">${$f(p.amt)}</div>
       <span class="badge badge-am">Unreconciled</span>
       <button class="btn btn-outline btn-xs" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">Apply</button>
     </div>`;}
@@ -5986,7 +5995,7 @@ function openCustomerDrawerForCustomer(custName,acctId){
   // Activity
   const actEl=document.getElementById('drawer-activity');
   if(actEl){
-    const acts=[...custPays.slice(-5).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">${p.m||'Payment'} — ${p.payDate?fmtDate(p.payDate):'—'}</span><span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">+$${$f(p.amt)}</span></div>`),...custInvs.slice(-3).reverse().map(v=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">Invoice ${v.i||'—'} issued</span><span style="font-family:var(--mono);font-weight:700;color:var(--am-t)">$${$f(v.amt)}</span></div>`)];
+    const acts=[...custPays.slice(-5).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">${p.m||'Payment'} — ${p.payDate?fmtDate(p.payDate):'—'}</span><span style="font-family:var(--mono);font-weight:700;color:var(--g-t)">+${$f(p.amt)}</span></div>`),...custInvs.slice(-3).reverse().map(v=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--t2)">Invoice ${v.i||'—'} issued</span><span style="font-family:var(--mono);font-weight:700;color:var(--am-t)">${$f(v.amt)}</span></div>`)];
     actEl.innerHTML=acts.length?acts.join(''):'<div style="color:var(--t3);font-size:12px">No recent activity</div>';
   }
   // Exceptions
@@ -6044,7 +6053,7 @@ function caFilterUpdate(){
 // ══════════════════════════════════════════════════════════
 async function runMatch(){
   if(!INV.length){toast('Import invoices first','warn');return;}
-  if(!PAY.length){toast('Import remittance first','warn');return;}
+  if(!PAY.length){toast('Import remittances first','warn');return;}
   // ── Row limit gate ──
   const rowLimit=PLANS[USER_PLAN]?.rows||50;
   if(INV.length>rowLimit){
@@ -6072,7 +6081,7 @@ async function runMatch(){
     const useSO=document.getElementById('s-so')?.checked!==false;
     if(ni&&useInv){
       const h=INV.find(v=>norm(v.i)===ni&&(v.a===p.a||(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim()));
-      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance $${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment $${$f(p.amt)} vs invoice $${$f(h.amt)} — variance $${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
+      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
     }
     if(np&&usePO&&hasFeat('multi')){const g=INV.filter(v=>norm(v.po)===np&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'PO',ec)){ec+=procGrp.ea;continue};}}
     if(ns&&useSO&&hasFeat('so')){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
@@ -6100,7 +6109,7 @@ function procGrp(g,p,tol,ref,ec){
   if(sub){sub.forEach(v=>{v.s='Subset exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Subset exact',m:ref+' subset',n:''});});return true;}
   const sorted=[...g].sort((a,b)=>new Date(a.dt2||'9999')-new Date(b.dt2||'9999'));let rem=p.amt;
   sorted.forEach(v=>{if(rem<=0)return;const al=Math.min(v.amt,rem);rem-=al;const st=Math.abs(al-v.amt)<=tol?'Exact':'Short pay';v.s=st;RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:al,vr:al-v.amt,st,m:ref+' oldest first',n:al<v.amt?'Partial':''});});
-  if(p.amt<gt){EXC.push({id:'EXC-'+String(ec).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.so||'—',type:'Short pay',detail:`Payment $${$f(p.amt)} short of ${ref} group $${$f(gt)} by $${$f(gt-p.amt)}`,action:'Chase balance or write off',dec:'',s:'Open'});procGrp.ea=1;}
+  if(p.amt<gt){EXC.push({id:'EXC-'+String(ec).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.so||'—',type:'Short pay',detail:`Payment ${$f(p.amt)} short of ${ref} group ${$f(gt)} by ${$f(gt-p.amt)}`,action:'Chase balance or write off',dec:'',s:'Open'});procGrp.ea=1;}
   return true;
 }
 function findSub(g,t,tol){const n=Math.min(g.length,16),gr=g.slice(0,n);function bt(i,c,s){if(Math.abs(s-t)<=tol)return c;if(s>t+tol||i>=gr.length)return null;return bt(i+1,[...c,gr[i]],s+gr[i].amt)||bt(i+1,c,s);}return bt(0,[],0);}
@@ -6233,125 +6242,65 @@ async function handleFile(inp){
 
 
 function parseBAI2(txt){
-  // BAI2 type-code → payment method label
-  const TYPE_METHOD={
-    '115':'Lockbox','116':'Lockbox','117':'Lockbox',
-    '165':'ACH','166':'ACH','167':'ACH','169':'ACH',
-    '195':'Wire','196':'Wire','197':'Wire',
-    '275':'ZBA Transfer','276':'ZBA Transfer',
-    '175':'Check','176':'Check',
-    '214':'Wire'
-  };
-
-  // Step 1 — strip trailing whitespace/\r and join continuation (88,) lines
-  // BAI2 wraps long fields across multiple 88, records; reassemble them first.
+  // BAI2 type-code → payment method
+  const TYPE_METHOD={'115':'Lockbox','116':'Lockbox','117':'Lockbox','165':'ACH','166':'ACH','167':'ACH','169':'ACH','195':'Wire','196':'Wire','197':'Wire','214':'Wire','275':'ZBA Transfer','276':'ZBA Transfer','175':'Check','176':'Check','195':'Wire'};
+  // Step 1: join 88 continuation lines onto parent records
   const rawLines=txt.split('\n').map(l=>l.replace(/\r/g,'').trimEnd());
   const joined=[];
   for(const l of rawLines){
+    if(!l.trim())continue;
     if(l.startsWith('88,')){
-      // Append to previous line, stripping the leading "88," and trailing "/"
-      if(joined.length){
-        const prev=joined[joined.length-1];
-        const cont=l.slice(3).replace(/\/\s*$/,'').trim();
-        // Only append non-empty continuation
-        if(cont) joined[joined.length-1]=prev.replace(/\/\s*$/,'')+' '+cont;
-      }
-    } else {
-      joined.push(l);
-    }
+      if(joined.length){const cont=l.slice(3).replace(/\/\s*$/,'').trim();if(cont)joined[joined.length-1]=joined[joined.length-1].replace(/\/\s*$/,'')+' '+cont;}
+    } else {joined.push(l);}
   }
-
-  // Step 2 — parse joined records
-  // Helper: strip trailing "/" and whitespace from a BAI2 field value
-  function bField(s){ return (s||'').replace(/\/\s*$/,'').trim(); }
-
-  // Helper: parse a BAI2 date YYMMDD → MM/DD/YYYY
-  function bDate(s){
-    s=s?s.trim():'';
-    if(s.length===6){
-      const yy=s.slice(0,2),mm=s.slice(2,4),dd=s.slice(4,6);
-      return mm+'/'+dd+'/'+(parseInt(yy,10)<50?'20':'19')+yy;
-    }
-    return s;
-  }
-
-  let currentDate='';
-  let currentAccount='';
-  const txRows=[];
-
+  // Step 2: parse records
+  function bField(s){return(s||'').replace(/\/\s*$/,'').trim();}
+  function bDate(s){s=(s||'').trim();if(s.length===6){const yy=s.slice(0,2),mm=s.slice(2,4),dd=s.slice(4,6);return mm+'/'+dd+'/'+(parseInt(yy,10)<50?'20':'19')+yy;}return s;}
+  let currentDate='',currentAccount='';
+  const txRows=[];let imported=0,skipped=0,totalCredit=0,totalDebit=0;
   for(const line of joined){
-    if(!line) continue;
-    const parts=line.split(',');
-    const recType=parts[0];
-
-    if(recType==='02'){
-      // Group header — contains the value date at parts[4] (YYMMDD)
-      const d=bField(parts[4]||'');
-      if(d) currentDate=bDate(d);
-
-    } else if(recType==='03'){
-      // Account identifier — account number at parts[1]
-      currentAccount=bField(parts[1]||'');
-
-    } else if(recType==='16'){
-      // Transaction detail
-      // 16,TypeCode,Amount,FundsType,BankRef,CustomerRef,Text/[88 continuation already merged]
-      const typeCode=bField(parts[1]);
-      const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
-
-      // Amount: lockbox (115,116,117) is in cents; ACH/Wire/others already in dollars
-      const rawAmt=parseFloat(bField(parts[2])||'0');
-      const amt=['115','116','117'].includes(typeCode) ? rawAmt/100 : rawAmt/100;
-      // MUFG always stores in implied cents (divide by 100 for all types)
-
-      const bankRef=bField(parts[4]||'');
-      const custRef=bField(parts[5]||'');
-
-      // The merged text (from parts[6] onward + all 88 lines) is in parts[6]
-      const fullText=parts.slice(6).join(',').replace(/\/\s*$/,'').trim();
-
-      // Extract customer/originator name — look for "NAME:ORIG:" or "ORIGINATOR:" pattern
-      let customer='';
-      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
-      if(nameM) customer=nameM[1].trim();
-      // Fallback: for wire (195), grab the line after "INWARD REMITTANCE" which is usually the sender
-      if(!customer){
-        const wireM=fullText.match(/INWARD REMITTANCE\s+([A-Z][^/]{3,60})/i);
-        if(wireM) customer=wireM[1].trim();
+    if(!line)continue;
+    try{
+      const parts=line.split(',');
+      const rec=parts[0];
+      if(rec==='02'){const d=bField(parts[4]||'');if(d)currentDate=bDate(d);}
+      else if(rec==='03'){currentAccount=bField(parts[1]||'');}
+      else if(rec==='16'){
+        const typeCode=bField(parts[1]);
+        const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
+        const rawAmt=parseFloat(bField(parts[2])||'0');
+        const amt=rawAmt/100;
+        const bankRef=bField(parts[4]||'');
+        const custRef=bField(parts[5]||'');
+        const fullText=parts.slice(6).join(',').replace(/\/\s*$/,'').trim();
+        // Extract customer name
+        let customer='';
+        const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^\/\r\n]{3,60}?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
+        if(nameM)customer=nameM[1].trim();
+        if(!customer){const wireM=fullText.match(/INWARD REMITTANCE\s+([A-Z][^\/]{3,60})/i);if(wireM)customer=wireM[1].trim();}
+        // Invoice/PO refs
+        const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
+        const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
+        const refId=bankRef||custRef||'';
+        const notes=fullText.replace(/\s+/g,' ').slice(0,120);
+        // Track totals (credits positive, debits negative in BAI2)
+        if(amt>=0)totalCredit+=amt; else totalDebit+=Math.abs(amt);
+        txRows.push([currentAccount,customer,amt.toFixed(2),invM?invM[1]:'',poM?poM[1]:'',refId,currentDate,method,notes,currentAccount]);
+        imported++;
+      } else if(['01','49','98','99','02','03','88'].includes(rec)){
+        // Known structural records — skip silently
       }
-      // Fallback: for ZBA/pooling, grab company name after POOLING lines
-      if(!customer){
-        const zbaM=fullText.match(/POOLING[^/]*\s+([A-Z][A-Z\s]{4,50}(?:INC|LLC|CORP|LTD|CO|HOLDING)[A-Z\s]*)/i);
-        if(zbaM) customer=zbaM[1].trim();
-      }
-
-      // Extract invoice/PO references from the full memo text
-      const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
-      const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
-      const refId=bankRef||custRef||'';
-
-      // Build a clean notes field from the most useful parts of the memo
-      const notes=fullText.replace(/\s+/g,' ').slice(0,120);
-
-      txRows.push([
-        currentAccount,
-        customer,
-        amt.toFixed(2),
-        invM?invM[1]:'',
-        poM?poM[1]:'',
-        refId,
-        currentDate,
-        method,
-        notes
-      ]);
-    }
+    }catch(e){skipped++;console.warn('BAI2 skip line:',line.slice(0,80),e.message);}
   }
-
-  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
+  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes,Bank';
   const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+  // Show summary toast
+  if(typeof toast==='function'){
+    const msg=`BAI2 imported: ${imported} transactions · $${(totalCredit).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} credits`+(skipped?` · ${skipped} lines skipped`:'');
+    setTimeout(()=>toast(msg),500);
+  }
   return [header,...dataRows].join('\n');
 }
-
 function parseCAMT(txt){
   const lines=['Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes'];
   const ntries=[...txt.matchAll(/<Ntry>([\s\S]*?)<\/Ntry>/gi)];
@@ -6392,7 +6341,7 @@ async function parsePDFRemittance(file){
       if(lineText)allText+=lineText+'\n';
       allText+='\n---PAGE---\n';
     }
-    showProgress('Parsing remittance data…',85);
+    showProgress('Parsing remittances data…',85);
     await new Promise(r=>setTimeout(r,30));
 
     // ── SMART REMITTANCE PARSER ──
@@ -6488,7 +6437,7 @@ async function parsePDFRemittance(file){
       // Show raw text in paste tab for manual review
       document.getElementById('mo-ta').value=allText.slice(0,8000);
       swTab('paste',document.querySelectorAll('.imp-tab')[0]);
-      toast('PDF extracted — no structured remittance data found. Review and edit the text, then click Import data.','warn');
+      toast('PDF extracted — no structured remittances data found. Review and edit the text, then click Import data.','warn');
       return;
     }
 
@@ -6718,7 +6667,7 @@ function processImport(){
         n,coa:isCOA,dp:n.toLowerCase().includes('down')
       };
     });
-    rRem();setStatus('loaded');saveToStorage();addAudit('Remittance imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
+    rRem();setStatus('loaded');saveToStorage();addAudit('Remittances imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
@@ -6979,7 +6928,7 @@ function syncMpCheckboxes(){
 // SETTINGS PLANS
 // ═══════════════════════════════════════════════════════════
 function renderSettingsPlans(){
-  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP F-28 · NetSuite · CSV','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'};
+  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CSV','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'};
   var el=document.getElementById('settings-plan-features'); if(el) el.textContent=pf[USER_PLAN]||'';
   var lvl=PLANS[USER_PLAN]?PLANS[USER_PLAN].level:0;
   var ub=document.getElementById('settings-upgrade-btn'); if(ub) ub.style.display=lvl>=3?'none':'';
@@ -7376,7 +7325,7 @@ function buildWorklist(){
     if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
     allocList.innerHTML=itms.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div>'+(item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':'')+' <div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(allocList){
-    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittance data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittance</button></div>')+'</div>';
+    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittances data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittances</button></div>')+'</div>';
   }
 
   // Ready to export
@@ -7450,7 +7399,7 @@ function showChangePlanModal(){
   const PLANS_DEF=[
     {key:'demo',name:'Demo',price:'Free',desc:'Try all features with sample data. No billing.',color:'var(--t3)',features:'Sample data only · 50 rows · Invoice + PO matching'},
     {key:'starter',name:'Starter',price:'$799/mo',desc:'For SMB AR teams transitioning from spreadsheets.',color:'var(--cy)',features:'Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support'},
-    {key:'pro',name:'Pro',price:'$1,599/mo',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CFO dashboards · Reconcile · Priority support'},
+    {key:'pro',name:'Pro',price:'$1,599/mo',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CFO dashboards · Reconcile · Priority support'},
     {key:'team',name:'Team',price:'$2,999/mo',desc:'Multi-user collaboration, enterprise workflows, dedicated onboarding.',color:'var(--pu)',features:'All Pro features · Multi-user · Roles & permissions · Audit logs · Approval workflows · Custom exports · SLA'},
   ];
   const levels={demo:0,starter:1,pro:2,team:3};
@@ -8050,14 +7999,14 @@ var HELP_CONTENT = {
         <h3>Demo Mode</h3>
         <p>Click <strong>Try Demo</strong> on the login screen to explore all features with pre-loaded sample data. In demo mode, data is not saved between sessions and export features require Starter plan or above.</p>
         <h3>Loading Sample Data</h3>
-        <p>Go to <strong>Invoices</strong> and click <strong>Load sample</strong> to populate 17 sample invoices including Pinnacle Systems. Go to <strong>Remittance</strong> and click <strong>Load JPM</strong> or <strong>Load BOA</strong> to load payments for each bank account.</p>
+        <p>Go to <strong>Invoices</strong> and click <strong>Load sample</strong> to populate 17 sample invoices including Pinnacle Systems. Go to <strong>Remittances</strong> and click <strong>Load JPM</strong> or <strong>Load BOA</strong> to load payments for each bank account.</p>
         <div class="hm-tip">💡 Load both JPM and BOA sample data, then run Auto-Match to see a full matching cycle — exact matches, short pays, and multi-invoice PO group matches.</div>
         <h3>Navigation</h3>
         <table><thead><tr><th>Section</th><th>Purpose</th></tr></thead><tbody>
         <tr><td>Today's Work</td><td>Dashboard showing urgent exceptions and pending tasks</td></tr>
         <tr><td>Cash Application</td><td>Main workspace: match, review, reconcile, export</td></tr>
         <tr><td>Invoices</td><td>View, edit, import, and manage all open invoices</td></tr>
-        <tr><td>Remittance</td><td>View, edit, import, and manage all incoming payments</td></tr>
+        <tr><td>Remittances</td><td>View, edit, import, and manage all incoming payments</td></tr>
         <tr><td>CFO Summary</td><td>Executive dashboard: period metrics, DSO, ROI</td></tr>
         <tr><td>Posting Export</td><td>Final review and ERP posting file download</td></tr>
         <tr><td>Reports</td><td>Match rate, DSO, exception breakdown, export</td></tr>
@@ -8070,7 +8019,7 @@ var HELP_CONTENT = {
         <tr><td>Unapplied Cash</td><td>Payments received but not yet matched to an invoice.</td></tr>
         <tr><td>Short Pay</td><td>Payment less than the invoice amount — variance requires resolution.</td></tr>
         <tr><td>Exception</td><td>Payment that could not be auto-matched — needs manual review.</td></tr>
-        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP F-28, NetSuite, or any ERP via CSV) to post cash entries.</td></tr>
+        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span>, NetSuite, or any ERP via CSV) to post cash entries.</td></tr>
         </tbody></table>`
     },
     {
@@ -8215,7 +8164,7 @@ var HELP_CONTENT = {
         <table><thead><tr><th>Plan</th><th>Price</th><th>Features</th></tr></thead><tbody>
         <tr><td>Demo</td><td>Free</td><td>Sample data only · Explore all features</td></tr>
         <tr><td>Starter</td><td>$799/mo</td><td>Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support</td></tr>
-        <tr><td>Pro</td><td>$1,599/mo</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
+        <tr><td>Pro</td><td>$1,599/mo</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
         <tr><td>Team</td><td>$2,999/mo</td><td>All Pro + Multi-user · Roles &amp; permissions · Audit logs · Approval workflows · Custom exports · SLA</td></tr>
         </tbody></table>`
     },
