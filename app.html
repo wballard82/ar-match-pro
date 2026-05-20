@@ -2043,9 +2043,11 @@ body.app-active #app {
 }
 .fbl5n-filter-inp:focus { border-color:var(--p); }
 
-/* ── ZERO FIX: disable slashed zeros everywhere ── */
-*{font-feature-settings:"zero" 0,"ss01" 0 !important;-webkit-font-feature-settings:"zero" 0,"ss01" 0 !important;}
-.td-amt,.td-mono,.mono,.pf-val,.dk-val,.rpt-kpi-val,.at-val,.pq-item-amt,.kpi-val,.upgrade-price,.price,.pay-viz-val{font-feature-settings:"zero" 0,"tnum" 1,"liga" 0 !important;-webkit-font-feature-settings:"zero" 0,"tnum" 1,"liga" 0 !important;font-variant-numeric:tabular-nums;}
+/* ── ZERO FIX: disable slashed zeros everywhere, all fonts ── */
+* {
+  font-feature-settings: "zero" 0 !important;
+  -webkit-font-feature-settings: "zero" 0 !important;
+}
 .td-mono, .td-amt, .td-num, .td-key, .kpi-card-val,
 .rpt-kpi-val, .cfo-metric-value, .at-val, .dk-val,
 .pay-viz-val, .eng-h-amt, .pq-item-amt, [class*="mono"] {
@@ -2061,7 +2063,7 @@ body.app-active #app {
 <div id="toast-wrap"></div>
 
 <!-- Match progress overlay -->
-<div id="match-progress" style="display:none">
+<div id="match-progress">
   <div class="mp-card">
     <div class="mp-title">⚡ Matching in progress</div>
     <div class="mp-msg" id="mp-msg">Starting…</div>
@@ -2101,22 +2103,22 @@ body.app-active #app {
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
           <div style="font-size:22px;margin-bottom:6px">⚡</div>
           <div style="font-size:13px;font-weight:700;color:#e2e8f0">Auto-matching</div>
-          <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px">Invoice · PO · SO · Amount</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px">Invoice · PO · SO · Amount</div>
         </div>
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
           <div style="font-size:22px;margin-bottom:6px">🏢</div>
           <div style="font-size:13px;font-weight:700;color:#e2e8f0">SAP · NetSuite</div>
-          <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px">ERP posting export</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px">ERP posting export</div>
         </div>
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15)">
           <div style="font-size:22px;margin-bottom:6px">⚠️</div>
           <div style="font-size:13px;font-weight:700;color:#e2e8f0">Exception detection</div>
-          <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px">Short pays · Duplicates</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px">Short pays · Duplicates</div>
         </div>
         <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
           <div style="font-size:22px;margin-bottom:6px">📋</div>
           <div style="font-size:13px;font-weight:700;color:#e2e8f0">Full audit trail</div>
-          <div style="font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px">Every decision logged</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px">Every decision logged</div>
         </div>
       </div>
     </div>
@@ -2155,7 +2157,6 @@ body.app-active #app {
         <div class="lf-bottom" style="text-align:center;margin-top:14px">
           No account? <a class="lf-link" href="https://armatchpro.com/#pricing" target="_blank" style="font-weight:700;color:var(--pd)">Sign up →</a>
         </div>
-        
       </div>
 
       <!-- REGISTER -->
@@ -2241,7 +2242,7 @@ body.app-active #app {
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
           <div class="upgrade-price">$1,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CSV · CFO dashboards</div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 <span style="font-size:10px;color:var(--t3)">(SAP 750)</span> · NetSuite · CSV · CFO dashboards</div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select Pro</button>
         </div>
         <div class="upgrade-card">
@@ -2274,7 +2275,7 @@ body.app-active #app {
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
           <div class="upgrade-price">$1,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite<br>CFO dashboards · Reconcile</div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP F-28 · NetSuite<br>CFO dashboards · Reconcile</div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select</button>
         </div>
         <div class="upgrade-card">
@@ -2356,13 +2357,14 @@ body.app-active #app {
 
   <!-- TOP NAV -->
   <nav class="topnav">
-    <div class="tn-logo" style="padding:0;display:flex;align-items:center;gap:8px;padding-left:4px">
-      <div style="position:relative;width:28px;height:28px;flex-shrink:0">
-        <div style="position:absolute;inset:0;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);opacity:.15"></div>
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;letter-spacing:-.5px;color:#60a5fa">AR</div>
+    <div class="tn-logo" style="padding:0;display:flex;align-items:center;gap:9px;padding-left:2px">
+      <div style="position:relative;width:30px;height:30px;flex-shrink:0;border-radius:8px;background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.15));display:flex;align-items:center;justify-content:center">
+        <span style="font-size:13px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AR</span>
       </div>
-      <div style="font-size:13px;font-weight:800;color:var(--t1);letter-spacing:-.3px;line-height:1.1">AR<span style="color:#60a5fa">Match</span><br><span style="font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.02em">Pro</span></div>
-    </div>
+      <div style="line-height:1.15">
+        <div style="font-size:13.5px;font-weight:800;color:var(--t1);letter-spacing:-.3px">AR<span style="color:#60a5fa">Match</span></div>
+        <div style="font-size:9px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase">Pro</div>
+      </div>
     </div>
 
     <div class="tn-search">
@@ -2391,7 +2393,7 @@ body.app-active #app {
         <div>
           <div class="tn-uname" id="tn-uname">User</div>
         </div>
-        <div class="tn-plan" id="tn-plan">Trial</div>
+        <div class="tn-plan" id="tn-plan">Demo</div>
       </div>
     </div>
   </nav>
@@ -2504,7 +2506,7 @@ body.app-active #app {
         </div>
         <div class="sb-item" id="sbi-remittance" onclick="sp('remittance')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h10M3 8h8M3 12h6"/><circle cx="13" cy="12" r="2.5"/><path d="M12 11l1 1 1.5-1.5"/></svg>
-          Remittances
+          Remittance
         </div>
       </div>
       <div class="sb-group">
@@ -2589,8 +2591,8 @@ body.app-active #app {
               <div class="wl-empty-state">
                 <div class="wl-empty-icon">📂</div>
                 <div class="wl-empty-title">No payments waiting</div>
-                <div class="wl-empty-sub">Import remittancess data to see payments that need allocation.</div>
-                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittancess</button></div>
+                <div class="wl-empty-sub">Import remittance data to see payments that need allocation.</div>
+                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
               </div>
             </div>
           </div>
@@ -2642,7 +2644,7 @@ body.app-active #app {
               </button>
               <button class="btn btn-outline btn-sm" onclick="openImport('rem')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import remittancess
+                Import remittance
               </button>
               
             </div>
@@ -2786,6 +2788,7 @@ body.app-active #app {
               <span class="ca-filter-label">Bank Account</span>
               <select id="ca-bank-sel" class="ca-filter-sel" onchange="caFilterUpdate()">
                 <option value="">All bank accounts</option>
+
               </select>
             </div>
             <div class="ca-filter-item">
@@ -2829,7 +2832,7 @@ body.app-active #app {
                     </div>
                   </div>
                   <div class="ca-queue-list" id="pq-list">
-                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittancess data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div></div>
+                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div></div>
                   </div>
                 </div>
 
@@ -2929,7 +2932,7 @@ body.app-active #app {
                     <div class="empty-icon">💳</div>
                     <div class="empty-t">Select a payment to allocate</div>
                     <div class="empty-s">Choose from the queue on the left.</div>
-                    <div class="empty-btn" style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittancess</button></div>
+                    <div class="empty-btn" style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
                   </div>
 
                   <div class="alloc-fully-bar" id="alloc-fully">✅ Payment fully allocated — click Approve</div>
@@ -3289,7 +3292,7 @@ body.app-active #app {
                 </tr>
               </thead>
               <tbody id="inv-tb">
-                <tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file to get started.</div></div></td></tr>
+                <tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file or load sample data.</div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -3311,7 +3314,7 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" onclick="addRemRowAfter()">+ Add row</button>
               <button class="btn btn-p btn-sm" onclick="openImport('rem')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import remittancess
+                Import remittance
               </button>
             </div>
           </div>
@@ -3365,7 +3368,7 @@ body.app-active #app {
                 </tr>
               </thead>
               <tbody id="rem-tb">
-                <tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittances data</div><div class="empty-s">Import a bank file to begin.</div></div></td></tr>
+                <tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import a bank file to begin.</div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -3378,7 +3381,7 @@ body.app-active #app {
           <div class="panel-header-row">
             <div>
               <div class="panel-title">Posting Export</div>
-              <div class="panel-sub">Ready for ERP posting — SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · or any ERP via CSV</div>
+              <div class="panel-sub">Ready for ERP posting — SAP F-28 · NetSuite · or any ERP via CSV <span style="font-size:11px;color:var(--t3)">(SAP 750 compatible)</span></div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span id="post-ct" style="font-size:12.5px;color:var(--t3)">0 rows</span>
@@ -3800,7 +3803,7 @@ body.app-active #app {
             <div style="padding:16px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div>
                 <div style="font-size:14px;font-weight:700;color:var(--t1)">Current plan</div>
-                <div style="font-size:12.5px;color:var(--t3);margin-top:2px" id="settings-plan-name2">7-Day Free Trial</div>
+                <div style="font-size:12.5px;color:var(--t3);margin-top:2px" id="settings-plan-name2">Demo plan</div>
                 <div style="font-size:11.5px;color:var(--t3);margin-top:3px" id="settings-plan-features"></div>
               </div>
               <div style="display:flex;gap:8px">
@@ -4166,7 +4169,7 @@ function renderWsRecon(){
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
   if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittancess and run matching to reconcile.</div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance and run matching to reconcile.</div></div>';return;}
   list.innerHTML=`<table class="tbl" style="width:100%">
     <thead><tr>
       <th>Customer</th><th>Invoice #</th><th>PO #</th>
@@ -4261,7 +4264,7 @@ const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action
 
 // ── Plans ──
 const PLANS={
-  demo:   {name:'7-Day Trial',level:0,rows:50,     price:'Free',    features:['invoice','po','amount']},
+  demo:   {name:'Demo',    level:0, rows:50,       price:'Free',    features:['invoice','po','amount']},
   starter:{name:'Starter', level:1, rows:5000,     price:'$799/mo', features:['invoice','po','amount','manual-queue','csv-export','audit-trail','limited-pdf']},
   pro:    {name:'Pro',     level:2, rows:Infinity,  price:'$1,599/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports']},
   team:   {name:'Team',   level:3, rows:Infinity,  price:'$2,999/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports','audit-log','roles','custom-export','onboarding','sla','priority-feature']}
@@ -4374,9 +4377,7 @@ function updTop(){
   setEl('kpi-inv-ct',INV.length);
   setEl('kpi-pay-ct',PAY.length);
   const tp=PAY.reduce((s,p)=>s+p.amt,0);
-  // Cash Matched = sum of approved/posted payment amounts in RES
   const ma=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved').reduce((s,r)=>s+r.pd,0);
-  // Unapplied Cash = total imported payments - cash matched
   const ua=Math.max(0,tp-ma);
   const spc=EXC.filter(e=>e.type==='Short pay').length;
   setEl('kpi-matched',tp>0?$fk(ma):'$0');
@@ -4386,11 +4387,12 @@ function updTop(){
   setEl('kpi-shortpay',spc);
   const excCt=EXC.filter(e=>!e.s||e.s==='Open').length;
   const sbExc=document.getElementById('sb-exc-ct');
-  if(sbExc){sbExc.textContent=excCt;sbExc.style.display='none';}
+  if(sbExc){sbExc.textContent=excCt;sbExc.style.display='none';} // exc count via notif-dot only
   const notifDot=document.getElementById('notif-dot');
   if(notifDot)notifDot.style.display=excCt>0?'block':'none';
-  const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'7-Day Trial')+' plan';
-  const spn2=document.getElementById('settings-plan-name2');if(spn2)spn2.textContent=(PLANS[USER_PLAN]?.name||'7-Day Trial')+' plan';
+  const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
+  const spn2=document.getElementById('settings-plan-name2');if(spn2)spn2.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
+
 }
 
 // ── Dashboard ──
@@ -4398,7 +4400,6 @@ function updDash(){
   const tp=PAY.reduce((s,p)=>s+p.amt,0);
   const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved');
   const ma=matched.reduce((s,r)=>s+r.pd,0);
-  // Unapplied = total payments - matched (not from EXC which double-counts)
   const ua=Math.max(0,tp-ma);
   const rt=tp>0?ma/tp*100:0;
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
@@ -4429,7 +4430,7 @@ function updDash(){
     </div>`
   ).join('')||'<div class="empty" style="padding:16px"><div class="empty-t">No data</div></div>';
   const sp_tot=EXC.filter(e=>e.type==='Short pay').reduce((s,e)=>s+e.amt,0);
-  const ua_tot=ua; // use the payment-based unapplied total
+  const ua_tot=EXC.filter(e=>e.type==='Unapplied payment').reduce((s,e)=>s+e.amt,0);
   const top=Object.entries(cn).filter(([s])=>!['Exact','Subset exact','Amount match'].includes(s)).sort((a,b)=>b[1]-a[1])[0];
   const ins=document.getElementById('dk-insights');
   if(ins&&(RES.length||EXC.length))ins.innerHTML=`
@@ -4684,45 +4685,26 @@ function setUserDisplay(user){
 }
 
 function launchApp(user){
-  try{
-    // 1. Show app, hide login
-    var ls=document.getElementById('login-screen');
-    if(ls){ls.style.display='none';}
-    document.body.classList.add('app-active');
-    var appEl=document.getElementById('app');
-    if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
-    // 2. Hide ALL overlays
-    var mp=document.getElementById('match-progress');
-    if(mp){mp.classList.remove('show');mp.style.display='none';}
-    document.querySelectorAll('.modal-overlay,.mo-overlay,[id$="-overlay"]').forEach(function(el){el.style.display='none';});
-    // 3. Set user/plan
-    IS_MASTER=!!(user&&user.isMaster);
-    setUserDisplay(user||{name:'User',plan:'demo'});
-    setPlan((user&&user.plan)||'demo');
-    // 4. Clear transactional workspace
-    INV=[];PAY=[];RES=[];EXC=[];
-    var bankSel=document.getElementById('ca-bank-sel');
-    if(bankSel){bankSel.innerHTML='<option value="">All bank accounts</option>';}
-    // 5. Load saved data for real users
-    if(!IS_DEMO){try{loadFromStorage();}catch(e){console.warn('Storage:',e);}}
-    // 6. Render safely
-    try{rAll();}catch(e){console.warn('rAll:',e);}
-    try{updDash();}catch(e){console.warn('updDash:',e);}
-    try{updTop();}catch(e){console.warn('updTop:',e);}
-    try{initAuditTbl();}catch(e){console.warn('initAuditTbl:',e);}
-    addAudit('Login','User: '+(user&&user.name||CURRENT_USER||''));
-    setTimeout(function(){try{navToWorklist();}catch(e){console.warn('nav:',e);}},0);
-  }catch(e){
-    console.error('launchApp error:',e);
-    // Failsafe — always show app
-    document.body.classList.add('app-active');
-    var appEl=document.getElementById('app');
-    if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
-    var ls=document.getElementById('login-screen');
-    if(ls)ls.style.display='none';
-    var mp=document.getElementById('match-progress');
-    if(mp){mp.classList.remove('show');mp.style.display='none';}
-  }
+  var ls=document.getElementById('login-screen');
+  if(ls){ls.style.display='none';}
+  document.body.classList.add('app-active');
+  const appEl=document.getElementById('app');
+  if(appEl){appEl.style.display='flex';appEl.classList.add('visible');}
+  IS_MASTER=!!(user.isMaster);
+  setUserDisplay(user);
+  setPlan(user.plan||'demo');
+  // Always clear transactional data on login; reload saved data for real users
+  INV=[];PAY=[];RES=[];EXC=[];
+  var _bsel=document.getElementById('ca-bank-sel');
+  if(_bsel){_bsel.innerHTML='<option value="">All bank accounts</option>';}
+  if(!IS_DEMO){try{loadFromStorage();}catch(e){console.warn('loadFromStorage:',e);}}
+  try{rAll();}catch(e){console.warn('rAll:',e);}
+  try{updDash();}catch(e){console.warn('updDash:',e);}
+  try{updTop();}catch(e){console.warn('updTop:',e);}
+  try{initAuditTbl();}catch(e){console.warn('initAuditTbl:',e);}
+  addAudit('Login','User: '+(user.name||CURRENT_USER));
+
+  setTimeout(navToWorklist, 0);
 }
 
 function gsLive(q){
@@ -4750,11 +4732,11 @@ function openImportBank(){
     const title=document.getElementById('imp-title');
     if(title)title.textContent='Import Bank File';
     const lbl=document.getElementById('imp-lbl');
-    if(lbl)lbl.textContent='Upload a BAI2, CAMT.053, or bank CSV file';
+    if(lbl)lbl.textContent='Upload a BAI2, CAMT.053, bank CSV, or Bank Summary Report';
     const dzt=document.querySelector('#dz .drop-zone-t');
     if(dzt)dzt.textContent='Drop bank file here or click to browse';
     const dzs=document.querySelector('#dz .drop-zone-s');
-    if(dzs)dzs.textContent='BAI2 · CAMT.053 · Bank CSV · Payment export';
+    if(dzs)dzs.textContent='BAI2 · CAMT.053 · Bank CSV · Bank Summary Report';
   },60);
 }
 function openImport(t){
@@ -4820,7 +4802,7 @@ function swTab(t,el){
 
 // ── Clear data ──
 function clearInvData(){showConfirm('Clear all invoice data?\n\nThis cannot be undone.',function(){INV=[];saveToStorage();rInv();updDash();updTop();addAudit('Cleared invoice data');toast('Invoice data cleared');});}
-function clearPayData(){showConfirm('Clear all remittancesss data?\n\nThis cannot be undone.',function(){PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittances data');toast('Remittances data cleared');});}
+function clearPayData(){showConfirm('Clear all remittances data?\n\nThis cannot be undone.',function(){PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittance data');toast('Remittance data cleared');});}
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
 function clearAllData(){showConfirm('Clear all data?\n\nThis cannot be undone.',function(){INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');});}
 function resetAllData(){
@@ -4891,7 +4873,7 @@ function clearInvFilters(){
 function rInv(){
   const tb=document.getElementById('inv-tb');
   if(!tb)return;
-  if(!INV.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file to get started.</div></div></td></tr>';document.getElementById('inv-ct').textContent='0 rows';return;}
+  if(!INV.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file or load sample data.</div></div></td></tr>';document.getElementById('inv-ct').textContent='0 rows';return;}
   const accts=[...new Set(INV.map(v=>v.a))];
   const sel=document.getElementById('inv-af'),cur=sel?sel.value:'';
   if(sel)sel.innerHTML='<option value="">All accounts</option>'+accts.map(a=>`<option ${a===cur?'selected':''}>${a}</option>`).join('');
@@ -4923,7 +4905,7 @@ function rInv(){
 function rRem(){
   const tb=document.getElementById('rem-tb');if(!tb)return;
   const ct=document.getElementById('rem-ct');
-  if(!PAY.length){tb.innerHTML='<tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittances data</div><div class="empty-s">Import bank file or paste CSV.</div></div></td></tr>';if(ct)ct.textContent='0 rows';renderPayQueue();return;}
+  if(!PAY.length){tb.innerHTML='<tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import bank file or paste CSV.</div></div></td></tr>';if(ct)ct.textContent='0 rows';renderPayQueue();return;}
   if(ct)ct.textContent=PAY.length+' rows · ACH · Wire · Check · Lockbox';
   tb.innerHTML=PAY.map((p,idx)=>{
     const {badge:statusBadge}=getRemStatus(p,idx);
@@ -5455,7 +5437,7 @@ function _legacyEngBuildAI(p,invs){
 
 function engRenderRows(){
   const tbody=document.getElementById('eng-inv-body');if(!tbody)return;
-  if(!ENG_ROWS.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:28px;color:var(--t3)">No open invoices found for this customer.<br><small>Check customer name consistency between invoice and remittances data.</small></td></tr>`;return;}
+  if(!ENG_ROWS.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:28px;color:var(--t3)">No open invoices found for this customer.<br><small>Check customer name consistency between invoice and remittance data.</small></td></tr>`;return;}
   tbody.innerHTML=ENG_ROWS.map((r,i)=>{
     const inv=r.inv;const disabled=r.alreadyPaid||ENG_LOCKED;
     const balance=inv.amt-(r.alreadyPaid?inv.amt:0);
@@ -5663,7 +5645,7 @@ function renderPayQueue(){
     return !p.bank||p.bank===bankCode;
   });
   if(ct)ct.textContent='('+visiblePay.length+(bankCode?' · '+bankCode:'')+')';
-  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittancess data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
   if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankCode+'</div><div class="empty-s">Load '+bankCode+' sample data or select a different bank.</div></div>';return;}
   list.innerHTML=PAY.map((p,i)=>{
     if(bankCode&&p.bank&&p.bank!==bankCode)return'';
@@ -5692,10 +5674,10 @@ function engLoadPaymentFromQueue(idx){
 
 function filterPayQueue(q){
   const v=(q||'').toLowerCase().trim();
-  document.querySelectorAll('.pq-item').forEach((item,i)=>{
+  document.querySelectorAll('.pq-item').forEach(function(item,idx){
     if(!v){item.style.display='';return;}
-    const p=PAY[i];if(!p){item.style.display='none';return;}
-    const searchable=[p.c,p.a,p.i,p.po,p.txId,String(p.amt),p.m,p.n,p.payDate,p.bank].map(x=>(x||'').toLowerCase()).join(' ');
+    const p=PAY[idx];
+    const searchable=p?[p.c,p.a,p.i,p.po,p.txId,String(p.amt),p.m,p.n,p.bank,p.payDate].map(function(x){return(x||'').toLowerCase();}).join(' '):item.textContent.toLowerCase();
     item.style.display=searchable.includes(v)?'':'none';
   });
 }
@@ -5952,7 +5934,7 @@ function _legacy_renderWsRecon(){
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   if(summary)summary.textContent=`${$fk(totalMatched)} matched of ${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittancess data and run matching to reconcile.</div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance data and run matching to reconcile.</div></div>';return;}
   const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
   list.innerHTML=rows.map(item=>{
     if(item.type==='matched'){const r=item.r;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
@@ -6033,7 +6015,7 @@ function caFilterUpdate(){
   // Filter payment queue by selected bank, currency, and date range
   var bankSel=document.getElementById('ca-bank-sel');
   var bankVal=bankSel?bankSel.value:'';
-  // Extract bank code from value
+  // Extract bank code: "JPM-1234567890" → "JPM", "BOA-9876543210" → "BOA"
   var bankCode=bankVal?bankVal.split('-')[0]:'';
   var ccySel=document.getElementById('ca-ccy-sel');
   var ccyVal=ccySel?ccySel.value:'';
@@ -6072,7 +6054,7 @@ function caFilterUpdate(){
 // ══════════════════════════════════════════════════════════
 async function runMatch(){
   if(!INV.length){toast('Import invoices first','warn');return;}
-  if(!PAY.length){toast('Import remittancess first','warn');return;}
+  if(!PAY.length){toast('Import remittance first','warn');return;}
   // ── Row limit gate ──
   const rowLimit=PLANS[USER_PLAN]?.rows||50;
   if(INV.length>rowLimit){
@@ -6261,65 +6243,125 @@ async function handleFile(inp){
 
 
 function parseBAI2(txt){
-  // BAI2 type-code → payment method
-  const TYPE_METHOD={'115':'Lockbox','116':'Lockbox','117':'Lockbox','165':'ACH','166':'ACH','167':'ACH','169':'ACH','195':'Wire','196':'Wire','197':'Wire','214':'Wire','275':'ZBA Transfer','276':'ZBA Transfer','175':'Check','176':'Check','195':'Wire'};
-  // Step 1: join 88 continuation lines onto parent records
+  // BAI2 type-code → payment method label
+  const TYPE_METHOD={
+    '115':'Lockbox','116':'Lockbox','117':'Lockbox',
+    '165':'ACH','166':'ACH','167':'ACH','169':'ACH',
+    '195':'Wire','196':'Wire','197':'Wire',
+    '275':'ZBA Transfer','276':'ZBA Transfer',
+    '175':'Check','176':'Check',
+    '214':'Wire'
+  };
+
+  // Step 1 — strip trailing whitespace/\r and join continuation (88,) lines
+  // BAI2 wraps long fields across multiple 88, records; reassemble them first.
   const rawLines=txt.split('\n').map(l=>l.replace(/\r/g,'').trimEnd());
   const joined=[];
   for(const l of rawLines){
-    if(!l.trim())continue;
     if(l.startsWith('88,')){
-      if(joined.length){const cont=l.slice(3).replace(/\/\s*$/,'').trim();if(cont)joined[joined.length-1]=joined[joined.length-1].replace(/\/\s*$/,'')+' '+cont;}
-    } else {joined.push(l);}
-  }
-  // Step 2: parse records
-  function bField(s){return(s||'').replace(/\/\s*$/,'').trim();}
-  function bDate(s){s=(s||'').trim();if(s.length===6){const yy=s.slice(0,2),mm=s.slice(2,4),dd=s.slice(4,6);return mm+'/'+dd+'/'+(parseInt(yy,10)<50?'20':'19')+yy;}return s;}
-  let currentDate='',currentAccount='';
-  const txRows=[];let imported=0,skipped=0,totalCredit=0,totalDebit=0;
-  for(const line of joined){
-    if(!line)continue;
-    try{
-      const parts=line.split(',');
-      const rec=parts[0];
-      if(rec==='02'){const d=bField(parts[4]||'');if(d)currentDate=bDate(d);}
-      else if(rec==='03'){currentAccount=bField(parts[1]||'');}
-      else if(rec==='16'){
-        const typeCode=bField(parts[1]);
-        const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
-        const rawAmt=parseFloat(bField(parts[2])||'0');
-        const amt=rawAmt/100;
-        const bankRef=bField(parts[4]||'');
-        const custRef=bField(parts[5]||'');
-        const fullText=parts.slice(6).join(',').replace(/\/\s*$/,'').trim();
-        // Extract customer name
-        let customer='';
-        const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^\/\r\n]{3,60}?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
-        if(nameM)customer=nameM[1].trim();
-        if(!customer){const wireM=fullText.match(/INWARD REMITTANCE\s+([A-Z][^\/]{3,60})/i);if(wireM)customer=wireM[1].trim();}
-        // Invoice/PO refs
-        const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
-        const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
-        const refId=bankRef||custRef||'';
-        const notes=fullText.replace(/\s+/g,' ').slice(0,120);
-        // Track totals (credits positive, debits negative in BAI2)
-        if(amt>=0)totalCredit+=amt; else totalDebit+=Math.abs(amt);
-        txRows.push([currentAccount,customer,amt.toFixed(2),invM?invM[1]:'',poM?poM[1]:'',refId,currentDate,method,notes,currentAccount]);
-        imported++;
-      } else if(['01','49','98','99','02','03','88'].includes(rec)){
-        // Known structural records — skip silently
+      // Append to previous line, stripping the leading "88," and trailing "/"
+      if(joined.length){
+        const prev=joined[joined.length-1];
+        const cont=l.slice(3).replace(/\/\s*$/,'').trim();
+        // Only append non-empty continuation
+        if(cont) joined[joined.length-1]=prev.replace(/\/\s*$/,'')+' '+cont;
       }
-    }catch(e){skipped++;console.warn('BAI2 skip line:',line.slice(0,80),e.message);}
+    } else {
+      joined.push(l);
+    }
   }
-  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes,Bank';
+
+  // Step 2 — parse joined records
+  // Helper: strip trailing "/" and whitespace from a BAI2 field value
+  function bField(s){ return (s||'').replace(/\/\s*$/,'').trim(); }
+
+  // Helper: parse a BAI2 date YYMMDD → MM/DD/YYYY
+  function bDate(s){
+    s=s?s.trim():'';
+    if(s.length===6){
+      const yy=s.slice(0,2),mm=s.slice(2,4),dd=s.slice(4,6);
+      return mm+'/'+dd+'/'+(parseInt(yy,10)<50?'20':'19')+yy;
+    }
+    return s;
+  }
+
+  let currentDate='';
+  let currentAccount='';
+  const txRows=[];
+
+  for(const line of joined){
+    if(!line) continue;
+    const parts=line.split(',');
+    const recType=parts[0];
+
+    if(recType==='02'){
+      // Group header — contains the value date at parts[4] (YYMMDD)
+      const d=bField(parts[4]||'');
+      if(d) currentDate=bDate(d);
+
+    } else if(recType==='03'){
+      // Account identifier — account number at parts[1]
+      currentAccount=bField(parts[1]||'');
+
+    } else if(recType==='16'){
+      // Transaction detail
+      // 16,TypeCode,Amount,FundsType,BankRef,CustomerRef,Text/[88 continuation already merged]
+      const typeCode=bField(parts[1]);
+      const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
+
+      // Amount: lockbox (115,116,117) is in cents; ACH/Wire/others already in dollars
+      const rawAmt=parseFloat(bField(parts[2])||'0');
+      const amt=['115','116','117'].includes(typeCode) ? rawAmt/100 : rawAmt/100;
+      // MUFG always stores in implied cents (divide by 100 for all types)
+
+      const bankRef=bField(parts[4]||'');
+      const custRef=bField(parts[5]||'');
+
+      // The merged text (from parts[6] onward + all 88 lines) is in parts[6]
+      const fullText=parts.slice(6).join(',').replace(/\/\s*$/,'').trim();
+
+      // Extract customer/originator name — look for "NAME:ORIG:" or "ORIGINATOR:" pattern
+      let customer='';
+      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
+      if(nameM) customer=nameM[1].trim();
+      // Fallback: for wire (195), grab the line after "INWARD REMITTANCE" which is usually the sender
+      if(!customer){
+        const wireM=fullText.match(/INWARD REMITTANCE\s+([A-Z][^/]{3,60})/i);
+        if(wireM) customer=wireM[1].trim();
+      }
+      // Fallback: for ZBA/pooling, grab company name after POOLING lines
+      if(!customer){
+        const zbaM=fullText.match(/POOLING[^/]*\s+([A-Z][A-Z\s]{4,50}(?:INC|LLC|CORP|LTD|CO|HOLDING)[A-Z\s]*)/i);
+        if(zbaM) customer=zbaM[1].trim();
+      }
+
+      // Extract invoice/PO references from the full memo text
+      const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
+      const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
+      const refId=bankRef||custRef||'';
+
+      // Build a clean notes field from the most useful parts of the memo
+      const notes=fullText.replace(/\s+/g,' ').slice(0,120);
+
+      txRows.push([
+        currentAccount,
+        customer,
+        amt.toFixed(2),
+        invM?invM[1]:'',
+        poM?poM[1]:'',
+        refId,
+        currentDate,
+        method,
+        notes
+      ]);
+    }
+  }
+
+  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
   const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
-  // Show summary toast
-  if(typeof toast==='function'){
-    const msg=`BAI2 imported: ${imported} transactions · ${(totalCredit).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} credits`+(skipped?` · ${skipped} lines skipped`:'');
-    setTimeout(()=>toast(msg),500);
-  }
   return [header,...dataRows].join('\n');
 }
+
 function parseCAMT(txt){
   const lines=['Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes'];
   const ntries=[...txt.matchAll(/<Ntry>([\s\S]*?)<\/Ntry>/gi)];
@@ -6360,7 +6402,7 @@ async function parsePDFRemittance(file){
       if(lineText)allText+=lineText+'\n';
       allText+='\n---PAGE---\n';
     }
-    showProgress('Parsing remittances data…',85);
+    showProgress('Parsing remittance data…',85);
     await new Promise(r=>setTimeout(r,30));
 
     // ── SMART REMITTANCE PARSER ──
@@ -6456,7 +6498,7 @@ async function parsePDFRemittance(file){
       // Show raw text in paste tab for manual review
       document.getElementById('mo-ta').value=allText.slice(0,8000);
       swTab('paste',document.querySelectorAll('.imp-tab')[0]);
-      toast('PDF extracted — no structured remittances data found. Review and edit the text, then click Import data.','warn');
+      toast('PDF extracted — no structured remittance data found. Review and edit the text, then click Import data.','warn');
       return;
     }
 
@@ -6947,7 +6989,7 @@ function syncMpCheckboxes(){
 // SETTINGS PLANS
 // ═══════════════════════════════════════════════════════════
 function renderSettingsPlans(){
-  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CSV','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'};
+  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP F-28 · NetSuite · CSV','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding'};
   var el=document.getElementById('settings-plan-features'); if(el) el.textContent=pf[USER_PLAN]||'';
   var lvl=PLANS[USER_PLAN]?PLANS[USER_PLAN].level:0;
   var ub=document.getElementById('settings-upgrade-btn'); if(ub) ub.style.display=lvl>=3?'none':'';
@@ -6973,7 +7015,7 @@ function buildAcctDropdown(selId, withAll){
 }
 
 function populateAllAcctDropdowns(){
-  // ca-bank-sel is rebuilt by refreshBankSelector after import
+  // ca-bank-sel is STATIC (JP Morgan, BofA) — never rebuild it from customer data
   buildAcctDropdown('ca-acct-dropdown',true);
   buildAcctDropdown('exc-acct-dropdown',true);
 }
@@ -7344,7 +7386,7 @@ function buildWorklist(){
     if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
     allocList.innerHTML=itms.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div>'+(item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':'')+' <div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(allocList){
-    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittancess data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittancess</button></div>')+'</div>';
+    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittance data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittances</button></div>')+'</div>';
   }
 
   // Ready to export
@@ -7416,9 +7458,9 @@ function setCfoPeriod(p,btn){
 
 function showChangePlanModal(){
   const PLANS_DEF=[
-    {key:'demo',name:'7-Day Trial',price:'Free',desc:'Import your own data and try all features free.',color:'var(--t3)',features:'50 rows · Invoice + PO matching · No credit card required'},
+    {key:'demo',name:'Demo',price:'Free',desc:'Try all features with sample data. No billing.',color:'var(--t3)',features:'Sample data only · 50 rows · Invoice + PO matching'},
     {key:'starter',name:'Starter',price:'$799/mo',desc:'For SMB AR teams transitioning from spreadsheets.',color:'var(--cy)',features:'Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support'},
-    {key:'pro',name:'Pro',price:'$1,599/mo',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CFO dashboards · Reconcile · Priority support'},
+    {key:'pro',name:'Pro',price:'$1,599/mo',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CFO dashboards · Reconcile · Priority support'},
     {key:'team',name:'Team',price:'$2,999/mo',desc:'Multi-user collaboration, enterprise workflows, dedicated onboarding.',color:'var(--pu)',features:'All Pro features · Multi-user · Roles & permissions · Audit logs · Approval workflows · Custom exports · SLA'},
   ];
   const levels={demo:0,starter:1,pro:2,team:3};
@@ -7489,7 +7531,7 @@ function updateCfoSummary(){
   } else {
     setEl('cfo-savings-headline','Import data to see cash flow summary');
     var be2=document.getElementById('cfo-savings-body');
-    if(be2) be2.textContent='Import invoices and bank/remittances data to begin.';
+    if(be2) be2.textContent='Load sample data or import invoices and remittance to begin.';
   }
 
   setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
@@ -8018,7 +8060,7 @@ var HELP_CONTENT = {
         <h3>Demo Mode</h3>
         <p>Click <strong>Try Demo</strong> on the login screen to explore all features with pre-loaded sample data. In demo mode, data is not saved between sessions and export features require Starter plan or above.</p>
         <h3>Loading Sample Data</h3>
-        <p>Go to <strong>Invoices</strong> and click <strong>Import</strong> to upload your invoice CSV. Go to <strong>Remittances</strong> and click <strong>+ Bank File</strong> to import your bank/BAI2 file.</p>
+        <p>Go to <strong>Invoices</strong> and click <strong>Import</strong> to upload your invoice file. Go to <strong>Remittances</strong> and click <strong>+ Bank File</strong> to import your bank or BAI2 file.</p>
         <div class="hm-tip">💡 Load both JPM and BOA sample data, then run Auto-Match to see a full matching cycle — exact matches, short pays, and multi-invoice PO group matches.</div>
         <h3>Navigation</h3>
         <table><thead><tr><th>Section</th><th>Purpose</th></tr></thead><tbody>
@@ -8038,7 +8080,7 @@ var HELP_CONTENT = {
         <tr><td>Unapplied Cash</td><td>Payments received but not yet matched to an invoice.</td></tr>
         <tr><td>Short Pay</td><td>Payment less than the invoice amount — variance requires resolution.</td></tr>
         <tr><td>Exception</td><td>Payment that could not be auto-matched — needs manual review.</td></tr>
-        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span>, NetSuite, or any ERP via CSV) to post cash entries.</td></tr>
+        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP F-28, NetSuite, or any ERP via CSV) to post cash entries.</td></tr>
         </tbody></table>`
     },
     {
@@ -8181,9 +8223,9 @@ var HELP_CONTENT = {
         </tbody></table>
         <h3>Change Plan</h3>
         <table><thead><tr><th>Plan</th><th>Price</th><th>Features</th></tr></thead><tbody>
-        <tr><td>7-Day Trial</td><td>Free</td><td>Import your own data · Explore all features</td></tr>
+        <tr><td>Demo</td><td>Free</td><td>Sample data only · Explore all features</td></tr>
         <tr><td>Starter</td><td>$799/mo</td><td>Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support</td></tr>
-        <tr><td>Pro</td><td>$1,599/mo</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3);font-weight:500">(SAP 750 compatible)</span> · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
+        <tr><td>Pro</td><td>$1,599/mo</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3)">(SAP 750)</span> · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
         <tr><td>Team</td><td>$2,999/mo</td><td>All Pro + Multi-user · Roles &amp; permissions · Audit logs · Approval workflows · Custom exports · SLA</td></tr>
         </tbody></table>`
     },
@@ -8224,7 +8266,7 @@ var HELP_CONTENT = {
         <h3>Common Issues</h3>
         <table><thead><tr><th>Issue</th><th>Cause</th><th>Solution</th></tr></thead><tbody>
         <tr><td>Matching finds no results</td><td>Account # mismatch</td><td>Verify account numbers match exactly between invoices and remittance. Edit cells inline in the Invoices panel.</td></tr>
-        <tr><td>Payment queue empty after bank filter</td><td>Data loaded without bank tags</td><td>Import a bank file. Import files should include a "bank" column.</td></tr>
+        <tr><td>Payment queue empty after bank filter</td><td>Data loaded without bank tags</td><td>Import a bank file. Imported files should include a "bank" column to tag transactions by account.</td></tr>
         <tr><td>DSO shows "—"</td><td>No matched revenue yet</td><td>Run matching first. DSO requires at least one matched record as the denominator.</td></tr>
         <tr><td>Exception won't resolve</td><td>Invoice already matched or account not found</td><td>Check invoice status in Invoices panel. Ensure the target account exists in your data.</td></tr>
         <tr><td>Export produces empty file</td><td>No approved records in Review</td><td>Run matching and click ✓ Approve in the allocation workspace before exporting.</td></tr>
