@@ -2917,8 +2917,8 @@ body.app-active #app {
                       <button class="btn btn-g btn-sm" id="eng-approve-btn" onclick="engApprove()" style="display:none">✓ Approve</button>
                       <button class="btn btn-p btn-sm" id="eng-export-btn" onclick="engExport()" style="display:none">↓ Export &amp; lock</button>
                       <button class="btn btn-outline btn-sm" id="eng-unapplied-btn" onclick="engPostUnapplied()" style="display:none" title="Post payment to a customer account without invoice allocation">💰 Post as Unapplied</button>
-                      <button class="btn btn-outline btn-sm" id="eng-writeoff-btn" onclick="engWriteOff()" style="display:none" title="Write off variance between payment and invoice">✏️ Write Off</button>
-                      <button class="btn btn-outline btn-sm" id="eng-bankfee-btn" onclick="engBankFee()" style="display:none" title="Record bank fee deducted from payment">🏦 Bank Fee</button>
+                      <button class="btn btn-outline btn-sm" id="eng-writeoff-btn" onclick="engWriteOff()" style="display:none">Write Off</button>
+                      <button class="btn btn-outline btn-sm" id="eng-bankfee-btn" onclick="engBankFee()" style="display:none">Bank Fee</button>
                       <button class="btn btn-outline btn-sm" onclick="engReopen()">↩ Reopen</button>
                     </div>
                   </div>
@@ -5467,11 +5467,11 @@ function engLoadPayment(idx){
   const aw=document.getElementById('alloc-totals');if(aw)aw.style.display='none';
   document.getElementById('eng-export-btn').style.display='none';
   document.getElementById('eng-approve-btn').style.display='inline-flex';
-  // Show Post as Unapplied when no invoices selected; show WO/BF when invoices selected
-  var _hasSelected=ENG_ROWS&&ENG_ROWS.some(function(r){return r.selected;});
-  var _ub=document.getElementById('eng-unapplied-btn');if(_ub)_ub.style.display=_hasSelected?'none':'inline-flex';
-  var _wo=document.getElementById('eng-writeoff-btn');if(_wo)_wo.style.display=_hasSelected?'inline-flex':'none';
-  var _bf=document.getElementById('eng-bankfee-btn');if(_bf)_bf.style.display=_hasSelected?'inline-flex':'none';
+  // Show Post as Unapplied whenever a payment is loaded and not yet locked/approved
+  var _hasSel=ENG_ROWS&&ENG_ROWS.some(function(r){return r.selected;});
+  var _ub=document.getElementById('eng-unapplied-btn');if(_ub)_ub.style.display=_hasSel?'none':'inline-flex';
+  var _wo=document.getElementById('eng-writeoff-btn');if(_wo)_wo.style.display=_hasSel?'inline-flex':'none';
+  var _bf=document.getElementById('eng-bankfee-btn');if(_bf)_bf.style.display=_hasSel?'inline-flex':'none';
   document.getElementById('eng-short-pay-warn').style.display='none';
   document.getElementById('eng-dup-warn').style.display='none';
   const rDup=document.getElementById('ca-dup-warn-right');if(rDup)rDup.style.display='none';
@@ -5608,17 +5608,16 @@ function engRenderRows(){
 }
 
 function engToggleRow(idx,checked){
-  if(ENG_LOCKED){toast('Locked — click Reopen to edit','warn');return;}
+  if(ENG_LOCKED){toast('Locked — click Reopen to edit','warn');return;  var _hasSel=ENG_ROWS.some(function(r){return r.selected;});
+  var _ub=document.getElementById('eng-unapplied-btn');if(_ub)_ub.style.display=_hasSel?'none':'inline-flex';
+  var _wo=document.getElementById('eng-writeoff-btn');if(_wo)_wo.style.display=_hasSel?'inline-flex':'none';
+  var _bf=document.getElementById('eng-bankfee-btn');if(_bf)_bf.style.display=_hasSel?'inline-flex':'none';
+}
   ENG_ROWS[idx].selected=checked;
   if(checked&&ENG_ROWS[idx].applyAmt===0){const rem=engGetRemaining();ENG_ROWS[idx].applyAmt=Math.min(ENG_ROWS[idx].inv.amt,rem);}
   if(!checked)ENG_ROWS[idx].applyAmt=0;
   engUpdateTotals();engRenderRows();
   engAudit((checked?'Selected':'Deselected')+': '+ENG_ROWS[idx].inv.i+' · $'+$f(ENG_ROWS[idx].applyAmt));
-  // Update WO/BF vs Unapplied button visibility
-  var _hasSel=ENG_ROWS.some(function(r){return r.selected;});
-  var _ub=document.getElementById('eng-unapplied-btn');if(_ub)_ub.style.display=_hasSel?'none':'inline-flex';
-  var _wo=document.getElementById('eng-writeoff-btn');if(_wo)_wo.style.display=_hasSel?'inline-flex':'none';
-  var _bf=document.getElementById('eng-bankfee-btn');if(_bf)_bf.style.display=_hasSel?'inline-flex':'none';
 }
 
 function engSetAmt(idx,amt){
@@ -5897,140 +5896,85 @@ function _uappConfirm(payIdx){
 
 function engWriteOff(){
   if(!ENG_PAY){toast('No payment selected','warn');return;}
-  var sel=ENG_ROWS?ENG_ROWS.filter(function(r){return r.selected;}):[];
+  var sel=ENG_ROWS?ENG_ROWS.filter(function(r){return r.selected;}):[]; 
   if(!sel.length){toast('Select an invoice before applying a write-off.','warn');return;}
-  var totalInv=sel.reduce(function(s,r){return s+r.inv.amt;},0);
-  var totalPay=ENG_PAY.amt;
-  var variance=totalInv-totalPay;
-  showModal('✏️ Write Off Variance',
-    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
-      'Payment <strong>$'+$f(totalPay)+'</strong> · Invoice(s) total <strong>$'+$f(totalInv)+'</strong> · Variance <strong style="color:var(--am-t)">$'+$f(Math.abs(variance))+'</strong></div>'+
+  var ti=sel.reduce(function(s,r){return s+r.inv.amt;},0),tp=ENG_PAY.amt,vr=ti-tp;
+  showModal('Write Off Variance',
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">Payment <strong>$'+$f(tp)+'</strong> | Invoice(s) <strong>$'+$f(ti)+'</strong> | Variance <strong style="color:var(--am-t)">$'+$f(Math.abs(vr))+'</strong></div>'+
     '<div style="display:grid;gap:10px">'+
-      '<div>'+
-        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Write-Off Amount</div>'+
-        '<input type="number" id="_wo-amt-inp" value="'+Math.max(0,variance).toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 13px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-        '<div style="font-size:11px;color:var(--t3);margin-top:3px">Payment $'+$f(totalPay)+' + write-off amount should equal invoice $'+$f(totalInv)+'</div>'+
-      '</div>'+
-      '<div>'+
-        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Reason</div>'+
-        '<select id="_wo-reason-sel" style="width:100%;padding:9px 13px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-          '<option value="Short pay">Short pay</option>'+
-          '<option value="Customer deduction">Customer deduction</option>'+
-          '<option value="Approved write-off">Approved write-off</option>'+
-          '<option value="Rounding">Rounding</option>'+
-          '<option value="Bank fee">Bank fee / wire fee</option>'+
-          '<option value="Other">Other</option>'+
-        '</select>'+
-      '</div>'+
-      '<div>'+
-        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Notes (optional)</div>'+
-        '<input type="text" id="_wo-notes-inp" placeholder="Additional detail…" style="width:100%;padding:9px 13px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-      '</div>'+
-    '</div>'+
-    '<div style="display:flex;gap:8px;margin-top:14px">'+
-      '<button class="btn btn-p btn-sm" onclick="_woConfirm()">✓ Confirm Write-Off</button>'+
-      '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-    '</div>'
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Write-Off Amount</div>'+
+    '<input type="number" id="_wo-amt" value="'+Math.max(0,vr).toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<div style="font-size:11px;color:var(--t3);margin-top:3px">Payment $'+$f(tp)+' + write-off = invoice $'+$f(ti)+'</div></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Reason</div>'+
+    '<select id="_wo-rsn" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option>Short pay</option><option>Customer deduction</option><option>Approved write-off</option>'+
+    '<option>Rounding</option><option>Bank fee / wire fee</option><option>Other</option></select></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Notes</div>'+
+    '<input type="text" id="_wo-nts" placeholder="Additional detail..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '</div><div style="display:flex;gap:8px;margin-top:14px">'+
+    '<button class="btn btn-p btn-sm" onclick="_woOk()">Confirm Write-Off</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
   );
-  setTimeout(function(){var el=document.getElementById('_wo-amt-inp');if(el){el.focus();el.select();}},80);
+  setTimeout(function(){var el=document.getElementById('_wo-amt');if(el){el.focus();el.select();}},80);
 }
-
-function _woConfirm(){
+function _woOk(){
   if(!ENG_PAY){closeModal();return;}
-  var amtEl=document.getElementById('_wo-amt-inp');
-  var reasonEl=document.getElementById('_wo-reason-sel');
-  var notesEl=document.getElementById('_wo-notes-inp');
-  var woAmt=amtEl?parseFloat(amtEl.value)||0:0;
-  var reason=reasonEl?reasonEl.value:'Other';
-  var notes=notesEl?notesEl.value.trim():'';
+  var woAmt=parseFloat((document.getElementById('_wo-amt')||{}).value)||0;
+  var reason=(document.getElementById('_wo-rsn')||{}).value||'Other';
+  var notes=((document.getElementById('_wo-nts')||{}).value||'').trim();
   if(woAmt<0){toast('Write-off amount cannot be negative','warn');return;}
-  var sel=ENG_ROWS.filter(function(r){return r.selected;});
-  var p=ENG_PAY;
-  // Apply payment to invoices + record write-off
+  var sel=ENG_ROWS.filter(function(r){return r.selected;}),p=ENG_PAY;
   sel.forEach(function(r){
-    if(!RES.find(function(res){return res.i===r.inv.i&&res.fromAlloc;})){
-      RES.push({
-        a:p.a||p.c,c:p.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,
-        d:p.txId||'',id:p.txId||'',
-        oa:r.inv.amt,pd:r.applyAmt,vr:0,
-        st:'Exact',m:'Cash Application',
-        writeOff:woAmt/sel.length,writeOffReason:reason,
-        n:(notes||reason),fromAlloc:true,approved:true,
-        reason:'Invoice Match + Write-Off',conf:99
-      });
+    if(!RES.find(function(x){return x.i===r.inv.i&&x.fromAlloc;})){
+      RES.push({a:p.a||p.c,c:p.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:p.txId||'',id:p.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr:0,st:'Exact',m:'Cash Application',writeOff:woAmt/sel.length,writeOffReason:reason,n:notes||reason,fromAlloc:true,approved:true});
     }
   });
-  addAudit('Write-off applied','$'+$f(woAmt)+' · '+reason+' · Ref: '+(p.txId||p.i||'—')+' · Inv: '+sel.map(function(r){return r.inv.i;}).join(','));
-  closeModal();
-  ENG_STATE='approved';engUpdateWS('approved');
+  addAudit('Write-off: '+reason,'$'+$f(woAmt)+' Ref:'+(p.txId||p.i||''));
+  closeModal();ENG_STATE='approved';engUpdateWS('approved');
   document.getElementById('eng-export-btn').style.display='inline-flex';
   ['eng-unapplied-btn','eng-writeoff-btn','eng-bankfee-btn'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
   saveToStorage();rAll();updDash();updTop();
   setCaTab('review',document.getElementById('ca-tab-review'));
-  toast('✓ Write-off $'+$f(woAmt)+' recorded — payment + write-off applied to '+sel.length+' invoice(s)');
+  toast('Write-off $'+$f(woAmt)+' - '+sel.length+' invoice(s) resolved');
 }
-
 function engBankFee(){
   if(!ENG_PAY){toast('No payment selected','warn');return;}
-  var sel=ENG_ROWS?ENG_ROWS.filter(function(r){return r.selected;}):[];
+  var sel=ENG_ROWS?ENG_ROWS.filter(function(r){return r.selected;}):[]; 
   if(!sel.length){toast('Select an invoice before applying a bank fee.','warn');return;}
-  var totalInv=sel.reduce(function(s,r){return s+r.inv.amt;},0);
-  var totalPay=ENG_PAY.amt;
-  var variance=totalInv-totalPay;
-  showModal('🏦 Bank Fee',
-    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
-      'Payment <strong>$'+$f(totalPay)+'</strong> · Invoice(s) total <strong>$'+$f(totalInv)+'</strong> · Variance <strong style="color:var(--am-t)">$'+$f(Math.abs(variance))+'</strong></div>'+
+  var ti=sel.reduce(function(s,r){return s+r.inv.amt;},0),tp=ENG_PAY.amt,vr=ti-tp;
+  showModal('Bank Fee',
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">Payment <strong>$'+$f(tp)+'</strong> | Invoice(s) <strong>$'+$f(ti)+'</strong> | Variance <strong style="color:var(--am-t)">$'+$f(Math.abs(vr))+'</strong></div>'+
     '<div style="display:grid;gap:10px">'+
-      '<div>'+
-        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Bank Fee Amount</div>'+
-        '<input type="number" id="_bf-amt-inp" value="'+Math.max(0,variance).toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 13px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-        '<div style="font-size:11px;color:var(--t3);margin-top:3px">Payment $'+$f(totalPay)+' + bank fee should equal invoice $'+$f(totalInv)+'</div>'+
-      '</div>'+
-      '<div>'+
-        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">Notes (optional)</div>'+
-        '<input type="text" id="_bf-notes-inp" placeholder="Bank name, fee type, reference…" style="width:100%;padding:9px 13px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-      '</div>'+
-    '</div>'+
-    '<div style="display:flex;gap:8px;margin-top:14px">'+
-      '<button class="btn btn-p btn-sm" onclick="_bfConfirm()">✓ Confirm Bank Fee</button>'+
-      '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-    '</div>'
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Bank Fee Amount</div>'+
+    '<input type="number" id="_bf-amt" value="'+Math.max(0,vr).toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<div style="font-size:11px;color:var(--t3);margin-top:3px">Payment $'+$f(tp)+' + bank fee = invoice $'+$f(ti)+'</div></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Notes</div>'+
+    '<input type="text" id="_bf-nts" placeholder="Bank name, fee type..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '</div><div style="display:flex;gap:8px;margin-top:14px">'+
+    '<button class="btn btn-p btn-sm" onclick="_bfOk()">Confirm Bank Fee</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
   );
-  setTimeout(function(){var el=document.getElementById('_bf-amt-inp');if(el){el.focus();el.select();}},80);
+  setTimeout(function(){var el=document.getElementById('_bf-amt');if(el){el.focus();el.select();}},80);
 }
-
-function _bfConfirm(){
+function _bfOk(){
   if(!ENG_PAY){closeModal();return;}
-  var amtEl=document.getElementById('_bf-amt-inp');
-  var notesEl=document.getElementById('_bf-notes-inp');
-  var bfAmt=amtEl?parseFloat(amtEl.value)||0:0;
-  var notes=notesEl?notesEl.value.trim():'';
+  var bfAmt=parseFloat((document.getElementById('_bf-amt')||{}).value)||0;
+  var notes=((document.getElementById('_bf-nts')||{}).value||'').trim();
   if(bfAmt<0){toast('Bank fee cannot be negative','warn');return;}
-  var sel=ENG_ROWS.filter(function(r){return r.selected;});
-  var p=ENG_PAY;
+  var sel=ENG_ROWS.filter(function(r){return r.selected;}),p=ENG_PAY;
   sel.forEach(function(r){
-    if(!RES.find(function(res){return res.i===r.inv.i&&res.fromAlloc;})){
-      RES.push({
-        a:p.a||p.c,c:p.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,
-        d:p.txId||'',id:p.txId||'',
-        oa:r.inv.amt,pd:r.applyAmt,vr:0,
-        st:'Exact',m:'Cash Application',
-        bankFee:bfAmt/sel.length,
-        n:(notes||'Bank fee'),fromAlloc:true,approved:true,
-        reason:'Invoice Match + Bank Fee',conf:99
-      });
+    if(!RES.find(function(x){return x.i===r.inv.i&&x.fromAlloc;})){
+      RES.push({a:p.a||p.c,c:p.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:p.txId||'',id:p.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr:0,st:'Exact',m:'Cash Application',bankFee:bfAmt/sel.length,n:notes||'Bank fee',fromAlloc:true,approved:true});
     }
   });
-  addAudit('Bank fee applied','$'+$f(bfAmt)+' · Ref: '+(p.txId||p.i||'—')+' · Inv: '+sel.map(function(r){return r.inv.i;}).join(',')+(notes?' · '+notes:''));
-  closeModal();
-  ENG_STATE='approved';engUpdateWS('approved');
+  addAudit('Bank fee: $'+$f(bfAmt),'Ref:'+(p.txId||p.i||''));
+  closeModal();ENG_STATE='approved';engUpdateWS('approved');
   document.getElementById('eng-export-btn').style.display='inline-flex';
   ['eng-unapplied-btn','eng-writeoff-btn','eng-bankfee-btn'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
   saveToStorage();rAll();updDash();updTop();
   setCaTab('review',document.getElementById('ca-tab-review'));
-  toast('✓ Bank fee $'+$f(bfAmt)+' recorded — payment + fee applied to '+sel.length+' invoice(s)');
+  toast('Bank fee $'+$f(bfAmt)+' - '+sel.length+' invoice(s) resolved');
 }
-
 function engAudit(action){
   ENG_AUDIT.unshift({user:CURRENT_USER||'user',action,ts:new Date().toLocaleTimeString()});
   const el=document.getElementById('eng-audit-list');
