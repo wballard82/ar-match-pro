@@ -3600,14 +3600,6 @@ body.app-active #app {
               <div class="cfo-metric-trend" style="color:var(--t3)">Cash received, not yet posted</div>
               <div class="cfo-metric-sub">Aging risk if unresolved</div>
             </div>
-            <div class="cfo-metric-card" style="cursor:pointer" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(function(){var f=document.getElementById('ws-exc-type-filter');if(f){f.value='Unapplied payment';renderWsExcPremium();}},80)">
-              <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,#0EA5E9,#38BDF8)"></div>
-              <div class="cfo-metric-icon" style="background:rgba(14,165,233,.1)">🏦</div>
-              <div class="cfo-metric-label">Posted to Account</div>
-              <div class="cfo-metric-value" id="cfo-posted-unapplied" style="color:#0EA5E9">$0</div>
-              <div class="cfo-metric-trend" style="color:var(--t3)" id="cfo-posted-unapplied-trend">Unapplied payments on account</div>
-              <div class="cfo-metric-sub" id="cfo-posted-unapplied-sub">0 payments posted</div>
-            </div>
             <div class="cfo-metric-card">
               <div class="cfo-metric-card-accent" style="background:linear-gradient(90deg,var(--g),#059669)"></div>
               <div class="cfo-metric-icon" style="background:var(--g-bg)">📊</div>
@@ -4499,12 +4491,6 @@ function updDash(){
   ).join('')||'<div class="empty" style="padding:16px"><div class="empty-t">No data</div></div>';
   const sp_tot=EXC.filter(e=>e.type==='Short pay').reduce((s,e)=>s+e.amt,0);
   const ua_tot=EXC.filter(e=>e.type==='Unapplied payment').reduce((s,e)=>s+e.amt,0);
-  // Update CFO Posted to Account card
-  const _posted=EXC.filter(e=>e.dec==='Post as Unapplied Cash'&&(e.s==='Resolved'||e.s==='Posted')).reduce((s,e)=>s+e.amt,0);
-  const _postedCt=EXC.filter(e=>e.dec==='Post as Unapplied Cash'&&(e.s==='Resolved'||e.s==='Posted')).length;
-  setEl('cfo-posted-unapplied',$fk(_posted));
-  setEl('cfo-posted-unapplied-sub',_postedCt+' payment'+(_postedCt!==1?'s':'')+' posted to account');
-  setEl('cfo-unapplied',$fk(Math.max(0,ua-_posted)));
   const top=Object.entries(cn).filter(([s])=>!['Exact','Subset exact','Amount match'].includes(s)).sort((a,b)=>b[1]-a[1])[0];
   const ins=document.getElementById('dk-insights');
   if(ins&&(RES.length||EXC.length))ins.innerHTML=`
@@ -4767,11 +4753,11 @@ function launchApp(user){
   IS_MASTER=!!(user.isMaster);
   setUserDisplay(user);
   setPlan(user.plan||'demo');
-  // Always clear transactional data on login; reload saved data for real users
+  // Always start with a clean workspace — clear transactional data and localStorage
   INV=[];PAY=[];RES=[];EXC=[];
+  ['inv','pay','res','exc'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}});
   var _bsel=document.getElementById('ca-bank-sel');
   if(_bsel){_bsel.innerHTML='<option value="">All bank accounts</option>';}
-  if(!IS_DEMO){try{loadFromStorage();}catch(e){console.warn('loadFromStorage:',e);}}
   try{rAll();}catch(e){console.warn('rAll:',e);}
   try{updDash();}catch(e){console.warn('updDash:',e);}
   try{updTop();}catch(e){console.warn('updTop:',e);}
@@ -5318,124 +5304,30 @@ function resolveException(idx,dec){
     return;
   }
   if(dec==='Post as Unapplied Cash'){
-    const acctMap={};
-    INV.forEach(v=>{if(v.a){acctMap[v.a]=v.c||v.a;}});
-    PAY.forEach(p=>{if(p.a&&!acctMap[p.a]){acctMap[p.a]=p.c||p.a;}});
-    const acctKeys=Object.keys(acctMap).sort();
-    const acctListHtml=acctKeys.length
-      ?'<div style="padding:6px 14px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bdr)">Select account</div>'+
-        acctKeys.map(function(a){
-          var lbl=a+(acctMap[a]&&acctMap[a]!==a?' — '+acctMap[a]:'');
-          return'<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bdr)"'+
-            ' onmouseover="this.style.background=\'var(--glass2)\'"'+
-            ' onmouseout="this.style.background=\'\'"'+
-            ' onmousedown="event.preventDefault();excUnappliedConfirm('+idx+',this.dataset.acct,this.dataset.label)"'+
-            ' data-acct="'+a+'" data-label="'+lbl.replace(/"/g,'&quot;')+'">'+
-            '<div style="font-size:13px;font-weight:700;color:var(--t1)">'+a+'</div>'+
-            '<div style="font-size:11px;color:var(--t3)">'+acctMap[a]+'</div></div>';
-        }).join('')
-      :'<div style="padding:12px 14px;font-size:12px;color:var(--t3)">No accounts in imported data — enter manually below.</div>';
-    showModal('💰 Post as Unapplied Payment',
-      '<div style="font-size:13px;color:var(--t2);margin-bottom:14px">Payment <strong style="color:var(--t1)">'+(ex.id||'')+'</strong> · <strong>$'+$f(ex.amt)+'</strong> will be posted to the selected account as unapplied cash.</div>'+
-      '<div style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Customer Account</div>'+
-      '<input type="text" id="exc-acct-search" placeholder="Filter by account # or name…" autocomplete="off"'+
-        ' style="width:100%;padding:9px 13px;border:1.5px solid var(--pd);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;margin-bottom:6px"'+
+    const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
+    const accts=Object.keys(acctMap).sort();
+    showModal('Post as Unapplied Cash',
+      '<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px">Select customer account:</div>'+
+      '<div style="font-size:11.5px;color:var(--t3);margin-bottom:12px">Type to search — modal closes automatically on selection</div>'+
+      '<div style="position:relative;margin-bottom:6px">'+
+        '<input type="text" id="exc-acct-search" placeholder="Account # or customer name…" autocomplete="off"'+
+        ' style="width:100%;padding:10px 14px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"'+
         ' oninput="excUnappliedSearch(this.value,'+idx+')"'+
+        ' onfocus="excUnappliedSearch(this.value,'+idx+')"'+
         ' onkeydown="if(event.key===\'Escape\')closeModal()">'+
-      '<div id="exc-unapp-drop" style="background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;max-height:240px;overflow-y:auto;margin-bottom:10px">'+acctListHtml+'</div>'+
-      '<div style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Or enter manually</div>'+
-      '<div style="display:flex;gap:8px">'+
-        '<input type="text" id="exc-acct-manual-entry" placeholder="Account number…" style="flex:1;padding:9px 13px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-        '<button class="btn btn-p btn-sm" onclick="excUnappliedManualConfirm('+idx+')">Post</button>'+
-        '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-      '</div>'
-    );
-    const _excIdx=idx;
-    setTimeout(function(){var inp=document.getElementById('exc-acct-search');if(inp)inp.focus();},80);
-    return;
-  }
-  if(dec==='Write off'){
-    // Show write-off detail modal
-    showModal('✏️ Write Off',
-      '<div style="font-size:13px;color:var(--t2);margin-bottom:14px">Exception: <strong style="color:var(--t1)">'+(ex.id||'—')+'</strong> · Amount: <strong>$'+$f(ex.amt)+'</strong></div>'+
-      '<div style="display:grid;gap:12px">'+
-        '<div>'+
-          '<div style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Write-Off Amount</div>'+
-          '<input type="number" id="wo-amount" value="'+ex.amt.toFixed(2)+'" step="0.01" min="0" max="'+ex.amt+'"'+
-            ' style="width:100%;padding:10px 13px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-          '<div style="font-size:11px;color:var(--t3);margin-top:4px">Max: $'+$f(ex.amt)+'</div>'+
-        '</div>'+
-        '<div>'+
-          '<div style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Reason</div>'+
-          '<select id="wo-reason" style="width:100%;padding:10px 13px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-            '<option value="">— Select reason —</option>'+
-            '<option value="Bank fee">Bank fee</option>'+
-            '<option value="Wire transfer fee">Wire transfer fee</option>'+
-            '<option value="ACH fee">ACH fee</option>'+
-            '<option value="Currency variance">Currency variance</option>'+
-            '<option value="Short pay approved">Short pay — approved by management</option>'+
-            '<option value="Credit memo">Credit memo applied</option>'+
-            '<option value="Tolerance write-off">Within tolerance — auto write-off</option>'+
-            '<option value="Customer dispute resolved">Customer dispute resolved</option>'+
-            '<option value="Other">Other</option>'+
-          '</select>'+
-        '</div>'+
-        '<div id="wo-other-wrap" style="display:none">'+
-          '<div style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Specify Reason</div>'+
-          '<input type="text" id="wo-other" placeholder="Enter reason…" style="width:100%;padding:10px 13px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-        '</div>'+
-        '<div>'+
-          '<div style="font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">What to do next</div>'+
-          '<select id="wo-next" style="width:100%;padding:10px 13px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-            '<option value="close">Mark resolved — close exception</option>'+
-            '<option value="post">Post write-off to GL and close</option>'+
-            '<option value="chase">Write off partial — chase remainder from customer</option>'+
-          '</select>'+
-        '</div>'+
+        '<div id="exc-unapp-drop" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;box-shadow:var(--shadow-md);z-index:30;max-height:220px;overflow-y:auto;margin-top:3px;display:none"></div>'+
       '</div>'+
-      '<div style="display:flex;gap:8px;margin-top:16px">'+
-        '<button class="btn btn-p btn-sm" onclick="confirmWriteOff('+idx+')">✓ Confirm Write-Off</button>'+
+      '<div style="display:flex;gap:8px;margin-top:10px">'+
         '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
       '</div>'
     );
-    // Show/hide "Other" field
-    setTimeout(function(){
-      var rs=document.getElementById('wo-reason');
-      var ow=document.getElementById('wo-other-wrap');
-      if(rs&&ow)rs.onchange=function(){ow.style.display=rs.value==='Other'?'block':'none';};
-    },80);
+    // Focus the input after modal renders
+    const _excIdx=idx;
+    setTimeout(function(){var inp=document.getElementById('exc-acct-search');if(inp){inp.focus();excUnappliedSearch('',_excIdx);}},80);
     return;
   }
   ex.dec=dec;
   finalizeExcResolution(idx,dec);
-}
-
-function confirmWriteOff(idx){
-  var ex=EXC[idx];if(!ex)return;
-  var amtEl=document.getElementById('wo-amount');
-  var rsEl=document.getElementById('wo-reason');
-  var otEl=document.getElementById('wo-other');
-  var nxEl=document.getElementById('wo-next');
-  var amt=amtEl?parseFloat(amtEl.value)||ex.amt:ex.amt;
-  var reason=rsEl?rsEl.value:'';
-  var otherReason=otEl?otEl.value.trim():'';
-  var next=nxEl?nxEl.value:'close';
-  if(!reason){toast('Please select a write-off reason','warn');return;}
-  var finalReason=reason==='Other'?(otherReason||'Other'):reason;
-  ex.dec='Write off';
-  ex.writeOffAmt=amt;
-  ex.writeOffReason=finalReason;
-  ex.writeOffNext=next;
-  ex.notes=(ex.notes?ex.notes+' | ':'')+'Write-off: $'+$f(amt)+' — '+finalReason;
-  closeModal();
-  addAudit('Write-off: '+finalReason,'$'+$f(amt)+' · '+ex.id);
-  if(next==='chase'){
-    ex.s='Pending follow-up';
-    toast('Partial write-off recorded — exception marked for follow-up');
-    saveToStorage();rExc();updDash();updTop();
-  } else {
-    finalizeExcResolution(idx,'Write off');
-  }
 }
 
 function confirmExcInv(idx){
@@ -5449,33 +5341,24 @@ function confirmExcInv(idx){
 }
 
 function excUnappliedSearch(q,idx){
-  var drop=document.getElementById('exc-unapp-drop');if(!drop)return;
-  var acctMap={};
-  INV.forEach(function(v){if(v.a){acctMap[v.a]=v.c||v.a;}});
-  PAY.forEach(function(p){if(p.a&&!acctMap[p.a]){acctMap[p.a]=p.c||p.a;}});
-  var ql=(q||'').toLowerCase();
-  var keys=Object.keys(acctMap).sort().filter(function(a){return !ql||a.toLowerCase().includes(ql)||(acctMap[a]||'').toLowerCase().includes(ql);});
-  if(!keys.length){
-    drop.innerHTML='<div style="padding:12px 14px;font-size:12px;color:var(--t3)">No matching accounts found.</div>';
-    return;
-  }
-  var rows=keys.map(function(a){
-    var lbl=a+(acctMap[a]&&acctMap[a]!==a?' — '+acctMap[a]:'');
-    return'<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bdr)"'+
+  const drop=document.getElementById('exc-unapp-drop');if(!drop)return;
+  const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
+  const ql=(q||'').toLowerCase();
+  const keys=Object.keys(acctMap).sort().filter(a=>!ql||a.toLowerCase().includes(ql)||(acctMap[a]||'').toLowerCase().includes(ql));
+  if(!keys.length){drop.style.display='none';return;}
+  const rows=keys.map(function(a){
+    const label=a+(acctMap[a]?' — '+acctMap[a]:'');
+    return '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bdr)"'+
       ' onmouseover="this.style.background=\'var(--glass2)\'"'+
       ' onmouseout="this.style.background=\'\'"'+
       ' onmousedown="event.preventDefault();excUnappliedConfirm('+idx+',this.dataset.acct,this.dataset.label)"'+
-      ' data-acct="'+a+'" data-label="'+lbl.replace(/"/g,'&quot;')+'">'+
-      '<div style="font-size:13px;font-weight:700;color:var(--t1)">'+a+'</div>'+
-      '<div style="font-size:11px;color:var(--t3)">'+(acctMap[a]||'')+'</div></div>';
+      ' data-acct="'+a+'" data-label="'+label.replace(/"/g,'&quot;')+'">'+
+      '<div style="font-size:12.5px;font-weight:700;color:var(--t1);font-family:var(--mono)">'+a+'</div>'+
+      '<div style="font-size:11px;color:var(--t3)">'+(acctMap[a]||'')+'</div>'+
+      '</div>';
   });
-  drop.innerHTML='<div style="padding:6px 14px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bdr)">Select account</div>'+rows.join('');
-}
-function excUnappliedManualConfirm(idx){
-  var inp=document.getElementById('exc-acct-manual-entry');
-  var acct=inp?inp.value.trim():'';
-  if(!acct){toast('Please enter an account number','warn');return;}
-  excUnappliedConfirm(idx,acct,acct);
+  drop.innerHTML='<div style="padding:8px 14px;font-size:11px;color:var(--t3);border-bottom:1px solid var(--bdr)">Select account:</div>'+rows.join('');
+  drop.style.display='block';
 }
 function excUnappliedConfirm(idx,acctId,acctLabel){
   closeModal();
