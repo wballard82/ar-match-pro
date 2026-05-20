@@ -4860,8 +4860,8 @@ function hideProgress(){
 function swTab(t,el){
   document.querySelectorAll('.imp-tab').forEach(p=>p.classList.remove('active'));
   if(el)el.classList.add('active');
-  document.getElementById('tab-paste').style.display=t==='paste'?'block':'none';
-  document.getElementById('tab-file').style.display=t==='file'?'block':'none';
+  var tabPaste=document.getElementById('tab-paste');if(tabPaste)tabPaste.style.display=t==='paste'?'block':'none';
+  var tabFile=document.getElementById('tab-file');if(tabFile)tabFile.style.display=t==='file'?'block':'none';
 }
 
 // ── Clear data ──
@@ -5463,17 +5463,16 @@ function engLoadPayment(idx){
   ['eng-full-badge','eng-locked-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['eng-grid-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});const ph=document.getElementById('eng-header');if(ph)ph.style.display='flex';
   const aw=document.getElementById('alloc-totals');if(aw)aw.style.display='none';
-  document.getElementById('eng-export-btn').style.display='none';
-  document.getElementById('eng-approve-btn').style.display='inline-flex';
+  var _eeb=document.getElementById('eng-export-btn');if(_eeb)_eeb.style.display='none';
+  var _eab=document.getElementById('eng-approve-btn');if(_eab)_eab.style.display='inline-flex';
   // Show Post as Unapplied whenever a payment is loaded and not yet locked/approved
-  var _ub=document.getElementById('eng-unapplied-btn');
-  if(_ub)_ub.style.display='inline-flex';
-  document.getElementById('eng-short-pay-warn').style.display='none';
-  document.getElementById('eng-dup-warn').style.display='none';
+  var _ub=document.getElementById('eng-unapplied-btn');if(_ub)_ub.style.display='inline-flex';
+  var _spw=document.getElementById('eng-short-pay-warn');if(_spw)_spw.style.display='none';
+  var _dw=document.getElementById('eng-dup-warn');if(_dw)_dw.style.display='none';
   const rDup=document.getElementById('ca-dup-warn-right');if(rDup)rDup.style.display='none';
   const rSp=document.getElementById('ca-sp-warn-right');if(rSp)rSp.style.display='none';
-  document.getElementById('eng-empty').style.display='none';
-  document.getElementById('alloc-fully').style.display='none';
+  var _ee=document.getElementById('eng-empty');if(_ee)_ee.style.display='none';
+  var _af=document.getElementById('alloc-fully');if(_af)_af.style.display='none';
   const custInvs=INV.filter(v=>{
     const cMatch=p.c&&(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim();
     const aMatch=p.a&&v.a===p.a;
@@ -5741,20 +5740,16 @@ function engUpdateWS(step){
 }
 
 function engPostUnapplied(){
+  try{
   var p=ENG_PAY;if(!p){toast('No payment selected','warn');return;}
   var idx=ENG_PAY_IDX;
   if(typeof idx!=='number'||idx<0){toast('No payment selected','warn');return;}
 
   // Build account list from invoice + payment data
-    var acctMap={};
-  // Build from invoices first (most reliable customer names)
-  INV.forEach(function(v){if(v.a&&String(v.a).trim()){acctMap[String(v.a).trim()]=v.c||v.a;}});
-  // Fill in from payment data
-  PAY.forEach(function(p){
-    if(p.a&&String(p.a).trim()&&!acctMap[String(p.a).trim()]){acctMap[String(p.a).trim()]=p.c||getDisplayCustomerName(p)||p.a;}
-    if(p.customerAccount&&!acctMap[p.customerAccount]){acctMap[p.customerAccount]=p.c||getDisplayCustomerName(p)||'';}
-  });
-  var acctKeys=Object.keys(acctMap).filter(function(k){return k&&k!=='undefined';}).sort();
+  var acctMap={};
+  INV.forEach(function(v){if(v.a){acctMap[v.a]=v.c||v.a;}});
+  PAY.forEach(function(q){if(q.a&&!acctMap[q.a]){acctMap[q.a]=q.c||q.a;}});
+  var acctKeys=Object.keys(acctMap).sort();
 
   // Build the account list HTML
   var listHtml=acctKeys.length
@@ -5769,7 +5764,7 @@ function engPostUnapplied(){
           '<div style="font-size:13px;font-weight:700;color:var(--t1)">'+a+'</div>'+
           '<div style="font-size:11px;color:var(--t3)">'+nm+'</div></div>';
       }).join('')
-    :'<div style="padding:12px;font-size:12px;color:var(--t3)">No customer accounts found in invoice data.<br>Import invoices to see accounts, or enter an account number manually below.</div>';
+    :'<div style="padding:12px;font-size:12px;color:var(--t3)">No accounts in imported data — enter manually.</div>';
 
   showModal('💰 Post as Unapplied Payment',
     '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
@@ -5791,13 +5786,14 @@ function engPostUnapplied(){
     '</div>'
   );
   setTimeout(function(){var inp=document.getElementById('_uapp-acct-inp');if(inp)inp.focus();},80);
+  }catch(engUappErr){console.error('engPostUnapplied error:',engUappErr);toast('Error opening post dialog: '+engUappErr.message,'warn');}
 }
 
 function _uappFilterAccts(q){
   var list=document.getElementById('_uapp-acct-list');if(!list)return;
   var acctMap={};
-  INV.forEach(function(v){if(v.a&&String(v.a).trim()){acctMap[String(v.a).trim()]=v.c||v.a;}});
-  PAY.forEach(function(q2){if(q2.a&&!acctMap[String(q2.a||'').trim()]){acctMap[String(q2.a).trim()]=q2.c||getDisplayCustomerName(q2)||q2.a;}});
+  INV.forEach(function(v){if(v.a){acctMap[v.a]=v.c||v.a;}});
+  PAY.forEach(function(q2){if(q2.a&&!acctMap[q2.a]){acctMap[q2.a]=q2.c||q2.a;}});
   var ql=(q||'').toLowerCase();
   var keys=Object.keys(acctMap).sort().filter(function(a){
     return !ql||a.toLowerCase().includes(ql)||(acctMap[a]||'').toLowerCase().includes(ql);
@@ -6500,7 +6496,7 @@ async function handleFile(inp){
           const rows=parseBAI2(t);
           const lineCount=rows.split('\n').length-1;
           if(lineCount===0){toast('BAI2 parsed but no transactions found — check file format','warn');hideProgress();return;}
-          document.getElementById('mo-ta').value=rows;
+          var _mota=document.getElementById('mo-ta');if(_mota)_mota.value=rows;
           swTab('paste',document.querySelectorAll('.imp-tab')[0]);
           showProgress('Importing '+lineCount+' transactions…',90);
           await new Promise(r=>setTimeout(r,30));
@@ -6604,7 +6600,7 @@ function parseBAI2(txt){
 
       // Extract customer/originator name — look for "NAME:ORIG:" or "ORIGINATOR:" pattern
       let customer='';
-      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60})(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
+      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
       if(nameM) customer=nameM[1].trim();
       // Fallback: for wire (195), grab the line after "INWARD REMITTANCE" which is usually the sender
       if(!customer){
@@ -6636,7 +6632,7 @@ function parseBAI2(txt){
         method,
         notes
       ]);
-      }catch(_rowErr){console.warn('BAI2 row skip:',_rowErr.message);}
+      }catch(_bai2RowErr){console.warn('BAI2 row skip:',line.slice(0,80),_bai2RowErr.message);}
     }
   }
 
