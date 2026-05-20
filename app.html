@@ -5132,6 +5132,8 @@ function rPost(){
     const inv=INV.find(v=>v.i===r.i)||{};
     const typeLbl=typeMap[r.m]||'Invoice';
     const badgeCls=isExc?(excBadge[r.excDec||r.m]||'badge-gray'):'badge-g';
+      const confLabel=r.conf?`<span style="font-size:10px;padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:700;background:${r.conf>=95?'var(--g-bg)':r.conf>=70?'var(--am-bg)':'var(--r-bg)'};color:${r.conf>=95?'var(--g-t)':r.conf>=70?'var(--am-t)':'var(--r-t)'}">${r.conf}%</span>`:'';
+      const reasonLabel=r.reason?`<div style="font-size:10px;color:var(--t3);margin-top:1px">${r.reason}</div>`:'';
     return`<tr style="${isExc?'background:rgba(14,165,233,.03)':''}">
       <td class="td-mono">${r.a||'—'}</td>
       <td>${r.c||'—'}</td>
@@ -5139,7 +5141,7 @@ function rPost(){
       <td class="td-key">${r.i||'—'}</td>
       <td class="td-mono">${inv.po||r.po||'—'}</td>
       <td class="td-mono">${inv.so||r.so||'—'}</td>
-      <td><span class="badge ${badgeCls}" style="font-size:10px">${typeLbl}</span></td>
+      <td><span class="badge ${badgeCls}" style="font-size:10px">${typeLbl}</span>${confLabel}${reasonLabel}</td>
       <td class="td-key">${r.d||r.id||'—'}</td>
       <td class="td-amt pos">${$f(r.pd)}</td>
       <!-- short pay col removed -->
@@ -5824,7 +5826,7 @@ function filterPayQueue(q){
   document.querySelectorAll('.pq-item').forEach(function(item,idx){
     if(!v){item.style.display='';return;}
     const p=PAY[idx];
-    const searchable=p?[p.c,p.a,p.i,p.po,p.txId,String(p.amt),p.m,p.n,p.bank,p.payDate].map(function(x){return(x||'').toLowerCase();}).join(' '):item.textContent.toLowerCase();
+    const searchable=p?[p.c,p.a,p.bankAcct,p.bankAccount,p.i,p.po,p.txId,String(p.amt),p.m,p.n,p.bank,p.payDate,getDisplayCustomerName(p)].map(function(x){return(x||'').toLowerCase();}).join(' '):item.textContent.toLowerCase();
     item.style.display=searchable.includes(v)?'':'none';
   });
 }
@@ -6229,12 +6231,12 @@ async function runMatch(){
     const useSO=document.getElementById('s-so')?.checked!==false;
     if(ni&&useInv){
       const h=INV.find(v=>norm(v.i)===ni&&(v.a===p.a||(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim()));
-      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
+      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;const conf=Math.abs(vr)<=tol?99:Math.abs(vr)<=tol*5?90:80;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',reason:'Exact Invoice Match',conf,n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
     }
     if(np&&usePO&&hasFeat('multi')){const g=INV.filter(v=>norm(v.po)===np&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'PO',ec)){ec+=procGrp.ea;continue};}}
     if(ns&&useSO&&hasFeat('so')){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
     const am=INV.filter(v=>v.a===p.a&&Math.abs(v.amt-p.amt)<=tol&&!v.s);
-    if(am.length===1){am[0].s='Amount match';RES.push({c:am[0].c,a:am[0].a,i:am[0].i,po:am[0].po,so:am[0].so,d:am[0].d,oa:am[0].amt,pd:p.amt,vr:p.amt-am[0].amt,st:'Amount match',m:'Amount match',n:'Customer + amount'});continue;}
+    if(am.length===1){am[0].s='Amount match';RES.push({c:am[0].c,a:am[0].a,i:am[0].i,po:am[0].po,so:am[0].so,d:am[0].d,oa:am[0].amt,pd:p.amt,vr:p.amt-am[0].amt,st:'Amount match',m:'Amount match',reason:'Customer Account + Amount',conf:85,n:'Customer + amount'});continue;}
     // Duplicate check
     const dupChk=PAY.filter((q,qi)=>qi!==pi&&Math.abs(q.amt-p.amt)<0.01&&(q.txId===p.txId||q.i===p.i)&&q.payDate===p.payDate);
     const excType=dupChk.length?'Duplicate':'Unmatched';
@@ -6252,9 +6254,9 @@ async function runMatch(){
 procGrp.ea=0;
 function procGrp(g,p,tol,ref,ec){
   procGrp.ea=0;const gt=g.reduce((s,v)=>s+v.amt,0),m=ref==='PO'?'PO group':'SO match';
-  if(Math.abs(p.amt-gt)<=tol){g.forEach(v=>{v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m,n:''});});return true;}
+  if(Math.abs(p.amt-gt)<=tol){g.forEach(v=>{v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m,reason:ref==='PO'?'PO + Amount Match':'Sales Order + Amount Match',conf:94,n:''});});return true;}
   const sub=findSub(g,p.amt,tol);
-  if(sub){sub.forEach(v=>{v.s='Subset exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Subset exact',m:ref+' subset',n:''});});return true;}
+  if(sub){sub.forEach(v=>{v.s='Subset exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Subset exact',m:ref+' subset',reason:'PO Subset Match',conf:88,n:''});});return true;}
   const sorted=[...g].sort((a,b)=>new Date(a.dt2||'9999')-new Date(b.dt2||'9999'));let rem=p.amt;
   sorted.forEach(v=>{if(rem<=0)return;const al=Math.min(v.amt,rem);rem-=al;const st=Math.abs(al-v.amt)<=tol?'Exact':'Short pay';v.s=st;RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:al,vr:al-v.amt,st,m:ref+' oldest first',n:al<v.amt?'Partial':''});});
   if(p.amt<gt){EXC.push({id:'EXC-'+String(ec).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.so||'—',type:'Short pay',detail:`Payment ${$f(p.amt)} short of ${ref} group ${$f(gt)} by ${$f(gt-p.amt)}`,action:'Chase balance or write off',dec:'',s:'Open'});procGrp.ea=1;}
@@ -6452,60 +6454,62 @@ function parseBAI2(txt){
       currentAccount=bField(parts[1]||'');
 
     } else if(recType==='16'){
-      // Transaction detail
-      // 16,TypeCode,Amount,FundsType,BankRef,CustomerRef,Text/[88 continuation already merged]
-      const typeCode=bField(parts[1]);
-      const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
+      try{
+        const typeCode=bField(parts[1]);
+        const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
+        const rawAmt=parseFloat(bField(parts[2])||'0');
+        const amt=rawAmt/100; // MUFG always implied cents
 
-      // Amount: lockbox (115,116,117) is in cents; ACH/Wire/others already in dollars
-      const rawAmt=parseFloat(bField(parts[2])||'0');
-      const amt=['115','116','117'].includes(typeCode) ? rawAmt/100 : rawAmt/100;
-      // MUFG always stores in implied cents (divide by 100 for all types)
+        // Defensive field parsing — FundsType field (parts[3]) may or may not be present
+        // Detect: if parts[3] looks like a bank ref (alphanumeric, not single char), skip fundsType
+        let dataOffset=3;
+        const p3=bField(parts[3]||'');
+        if(p3.length<=2||p3==='0'||p3==='S'||p3==='V'||p3==='Z'||p3==='D'||p3==='F'||p3==='G'||p3==='J'){
+          dataOffset=4; // fundsType present at parts[3]
+        }
+        const bankRef=bField(parts[dataOffset]||'');
+        const custRef=bField(parts[dataOffset+1]||'');
+        // Full transaction text from remaining parts + merged 88 lines
+        const fullText=parts.slice(dataOffset+2).join(',').replace(/\/\s*$/,'').trim();
 
-      const bankRef=bField(parts[4]||'');
-      const custRef=bField(parts[5]||'');
+        // Extract clean customer/remitter name
+        let customer='';
+        const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60})(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
+        if(nameM) customer=nameM[1].trim();
+        if(!customer){const wireM=fullText.match(/INWARD REMITTANCE\s+([A-Z][^/]{3,60})/i);if(wireM)customer=wireM[1].trim();}
+        if(!customer){const achM=fullText.match(/NAME:ORIG:\s*([^\s/]{3,50}(?:\s+[^\s/]{1,30})?)/i);if(achM)customer=achM[1].trim();}
 
-      // The merged text (from parts[6] onward + all 88 lines) is in parts[6]
-      const fullText=parts.slice(6).join(',').replace(/\/\s*$/,'').trim();
+        // Extract invoice/PO references
+        const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
+        const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
+        // Extract ACH/wire specific refs
+        const achTrace=fullText.match(/R\.?REF\s+([A-Z0-9]+)/i);
+        const wireRef=fullText.match(/T\.?REF\s+([A-Z0-9]+)/i);
 
-      // Extract customer/originator name — look for "NAME:ORIG:" or "ORIGINATOR:" pattern
-      let customer='';
-      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
-      if(nameM) customer=nameM[1].trim();
-      // Fallback: for wire (195), grab the line after "INWARD REMITTANCE" which is usually the sender
-      if(!customer){
-        const wireM=fullText.match(/INWARD REMITTANCE\s+([A-Z][^/]{3,60})/i);
-        if(wireM) customer=wireM[1].trim();
-      }
-      // Fallback: for ZBA/pooling, grab company name after POOLING lines
-      if(!customer){
-        const zbaM=fullText.match(/POOLING[^/]*\s+([A-Z][A-Z\s]{4,50}(?:INC|LLC|CORP|LTD|CO|HOLDING)[A-Z\s]*)/i);
-        if(zbaM) customer=zbaM[1].trim();
-      }
+        const refId=bankRef||custRef||'';
+        // Store FULL raw text in notes (not truncated — preserve all refs)
+        const rawNotes=fullText;
+        // Customer account: try to extract from RCVR ID or custRef
+        const rcvrM=fullText.match(/RCVR\s*ID[:\s]*([A-Z0-9\/\-]+)/i);
+        const custAcct=rcvrM?rcvrM[1].trim():(custRef&&custRef!==bankRef?custRef:'');
 
-      // Extract invoice/PO references from the full memo text
-      const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
-      const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
-      const refId=bankRef||custRef||'';
-
-      // Build a clean notes field from the most useful parts of the memo
-      const notes=fullText.replace(/\s+/g,' ').slice(0,120);
-
-      txRows.push([
-        currentAccount,
-        customer,
-        amt.toFixed(2),
-        invM?invM[1]:'',
-        poM?poM[1]:'',
-        refId,
-        currentDate,
-        method,
-        notes
-      ]);
+        txRows.push([
+          currentAccount,  // Bank Account (from 03 record)
+          custAcct,        // Customer Account (from RCVR ID or custRef)
+          customer,        // Clean customer/remitter name
+          amt.toFixed(2),
+          invM?invM[1]:'',
+          poM?poM[1]:'',
+          refId,
+          currentDate,
+          method,
+          rawNotes         // Full raw bank detail preserved
+        ]);
+      }catch(_baiRowErr){console.warn('BAI2 row skip:',_baiRowErr.message);}
     }
   }
 
-  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
+  const header='Bank Account,Customer Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
   const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
   return [header,...dataRows].join('\n');
 }
@@ -6801,12 +6805,19 @@ function processImport(){
       )]||'';
       const isCOA=n.toUpperCase().includes('COA')||n.toUpperCase().includes('CASH ON ACCOUNT')||n.toUpperCase().includes('UNAPPLIED');
       return{
+        bankAcct:r[col(
+          // BAI2 specific
+          'bankaccount','bankacct','bankaccountnumber','bankaccountnum',
+          'statementaccount','accountnumber'
+        )]||'',
         a:r[col(
-          'account','acct','customerid',
+          'customeraccount','customeracct','customerid','acct',
           // SAP
-          'kunnr','debtornumber','customeraccount','customernumber',
-          // BAI2 / bank
-          'originatorid','senderid','companyid','payerid'
+          'kunnr','debtornumber','customernumber',
+          // BAI2 customer account field
+          'originatorid','senderid','companyid','payerid',
+          // fallback — plain 'account' only if no bank account header matched
+          'account'
         )]||'',
         c:r[col(
           'customer','customername','name','payer','originator','payername',
@@ -6873,10 +6884,11 @@ function processImport(){
           'receiveddate','depositdate','creditdate'
         )]||'',
         ccy:r[col('currency','ccy','curr','currencycode')]||'USD',
+        bank:r[col('bank','bankcode','bankid','bankname','bankshortname')]||'',
         n,coa:isCOA,dp:n.toLowerCase().includes('down')
       };
     });
-    rRem();setStatus('loaded');saveToStorage();addAudit('Remittances imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
+    rRem();setStatus('loaded');saveToStorage();addAudit('Remittances imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');setTimeout(function(){if(typeof refreshBankAccountOptions==='function')refreshBankAccountOptions();},150);
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
@@ -7187,21 +7199,21 @@ function refreshBankAccountOptions(preferredAcct){
   var cur=preferredAcct||sel.value||'';
   var seen={};
   PAY.forEach(function(p){
-    var acct=cleanBankAccountNumber(p.bankAcct||p.bankAccount||p.statementAccount||'');
-    var code=inferBankCode(p.bank||p.bankName||acct||'BANK');
+    // Prefer dedicated bankAcct field, then fall back to p.a for non-BAI2 imports
+    var raw=p.bankAcct||p.bankAccount||p.statementAccount||'';
+    var acct=cleanBankAccountNumber(raw);
     if(acct){
-      var value=code+'-'+acct;
-      seen[value]={value:value,label:code+' - '+acct};
-    }else if(p.bank){
-      seen[code]={value:code,label:code};
+      seen[acct]={value:acct,label:acct};
     }
   });
-  var opts=Object.keys(seen).sort().map(function(k){
-    var o=seen[k];
-    return '<option value="'+o.value+'"'+(o.value===cur?' selected':'')+'>'+o.label+'</option>';
-  }).join('');
-  sel.innerHTML='<option value="">All bank accounts</option>'+opts;
-  if(cur&&seen[cur])sel.value=cur;
+  var keys=Object.keys(seen).sort();
+  sel.innerHTML='<option value="">All bank accounts</option>'+
+    keys.map(function(k){
+      return '<option value="'+seen[k].value+'"'+(seen[k].value===cur?' selected':'')+'>'+seen[k].label+'</option>';
+    }).join('');
+  // Auto-select if single account
+  if(keys.length===1){sel.value=keys[0];caFilterUpdate();}
+  else if(cur&&seen[cur]){sel.value=cur;caFilterUpdate();}
 }
 
 // ═══════════════════════════════════════════════════════════
