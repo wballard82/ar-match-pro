@@ -4810,18 +4810,18 @@ function openImport(t){
   if(lbl)lbl.textContent=t==='inv'?'Invoice CSV — Customer, Account, Invoice, PO, SO, Amount, Doc Type, Date, Due, Document #':'Remittance CSV — Account, Customer, Amount, PO Ref, Invoice Ref, Method, Notes';
   const ta=document.getElementById('mo-ta');if(ta)ta.value='';
   hideProgress();
-  document.getElementById('imp-modal').classList.add('open');
+  var _im2=document.getElementById('imp-modal');if(_im2)_im2.classList.add('open');
 }
-function closeMo(){document.getElementById('imp-modal').classList.remove('open');}
+function closeMo(){var _im=document.getElementById('imp-modal');if(_im)_im.classList.remove('open');}
 function closeWelcome(){const m=document.getElementById('mo-welcome');if(m)m.style.display='none';}
 function closeUpgrade(){
-  document.getElementById('upgrade-modal').classList.remove('open');
-  document.getElementById('pricing-modal').classList.remove('open');
+  var _um=document.getElementById('upgrade-modal');if(_um)_um.classList.remove('open');
+  var _pm=document.getElementById('pricing-modal');if(_pm)_pm.classList.remove('open');
 }
 function showUpgrade(title,sub){
   const t=document.getElementById('um-title2');if(t)t.textContent=title;
   const s=document.getElementById('um-sub2');if(s)s.textContent=sub||'';
-  document.getElementById('upgrade-modal').classList.add('open');
+  var _um2=document.getElementById('upgrade-modal');if(_um2)_um2.classList.add('open');
 }
 function showModal(title,bodyHtml){
   const overlay=document.getElementById('exc-modal-overlay');
@@ -4860,8 +4860,8 @@ function hideProgress(){
 function swTab(t,el){
   document.querySelectorAll('.imp-tab').forEach(p=>p.classList.remove('active'));
   if(el)el.classList.add('active');
-  var tabPaste=document.getElementById('tab-paste');if(tabPaste)tabPaste.style.display=t==='paste'?'block':'none';
-  var tabFile=document.getElementById('tab-file');if(tabFile)tabFile.style.display=t==='file'?'block':'none';
+  var _tp=document.getElementById('tab-paste');if(_tp)_tp.style.display=t==='paste'?'block':'none';
+  var _tf=document.getElementById('tab-file');if(_tf)_tf.style.display=t==='file'?'block':'none';
 }
 
 // ── Clear data ──
@@ -4963,7 +4963,7 @@ function rInv(){
       <td>${v.s?badge(v.s):'<span style="color:var(--t3)">—</span>'}</td>
     </tr>`;
   }).join('');
-  document.getElementById('inv-ct').textContent=INV.length+' rows · click any cell to edit';
+  var _ict=document.getElementById('inv-ct');if(_ict)_ict.textContent=INV.length+' rows · click any cell to edit';
 }
 
 
@@ -5463,16 +5463,17 @@ function engLoadPayment(idx){
   ['eng-full-badge','eng-locked-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['eng-grid-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});const ph=document.getElementById('eng-header');if(ph)ph.style.display='flex';
   const aw=document.getElementById('alloc-totals');if(aw)aw.style.display='none';
-  var _eeb=document.getElementById('eng-export-btn');if(_eeb)_eeb.style.display='none';
-  var _eab=document.getElementById('eng-approve-btn');if(_eab)_eab.style.display='inline-flex';
+  var _eeb7=document.getElementById('eng-export-btn');if(_eeb7)_eeb7.style.display='none';
+  var _eab7=document.getElementById('eng-approve-btn');if(_eab7)_eab7.style.display='inline-flex';
   // Show Post as Unapplied whenever a payment is loaded and not yet locked/approved
-  var _ub=document.getElementById('eng-unapplied-btn');if(_ub)_ub.style.display='inline-flex';
-  var _spw=document.getElementById('eng-short-pay-warn');if(_spw)_spw.style.display='none';
-  var _dw=document.getElementById('eng-dup-warn');if(_dw)_dw.style.display='none';
+  var _ub=document.getElementById('eng-unapplied-btn');
+  if(_ub)_ub.style.display='inline-flex';
+  var _spw2=document.getElementById('eng-short-pay-warn');if(_spw2)_spw2.style.display='none';
+  var _dw2=document.getElementById('eng-dup-warn');if(_dw2)_dw2.style.display='none';
   const rDup=document.getElementById('ca-dup-warn-right');if(rDup)rDup.style.display='none';
   const rSp=document.getElementById('ca-sp-warn-right');if(rSp)rSp.style.display='none';
-  var _ee=document.getElementById('eng-empty');if(_ee)_ee.style.display='none';
-  var _af=document.getElementById('alloc-fully');if(_af)_af.style.display='none';
+  var _ee2=document.getElementById('eng-empty');if(_ee2)_ee2.style.display='none';
+  var _af2=document.getElementById('alloc-fully');if(_af2)_af2.style.display='none';
   const custInvs=INV.filter(v=>{
     const cMatch=p.c&&(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim();
     const aMatch=p.a&&v.a===p.a;
@@ -5686,7 +5687,7 @@ function engApprove(){
   const sel=ENG_ROWS.filter(r=>r.selected);
   if(!sel.length){toast('Select at least one invoice to apply','warn');return;}
   ENG_STATE='approved';engUpdateWS('approved');
-  document.getElementById('eng-export-btn').style.display='inline-flex';
+  var _eeb5=document.getElementById('eng-export-btn');if(_eeb5)_eeb5.style.display='inline-flex';
   var _ub2=document.getElementById('eng-unapplied-btn');if(_ub2)_ub2.style.display='none';
   const totalApplied=sel.reduce((s,r)=>s+r.applyAmt,0);
   sel.forEach(r=>{if(!RES.find(res=>res.i===r.inv.i&&res.fromAlloc)){const vr=r.applyAmt-r.inv.amt;RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.txId||'',id:ENG_PAY.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});}});
@@ -5711,9 +5712,9 @@ function engExport(){
   });
   saveToStorage();ENG_STATE='exported';ENG_LOCKED=true;
   engUpdateWS('exported');
-  document.getElementById('eng-locked-badge').style.display='flex';
-  document.getElementById('eng-export-btn').style.display='none';
-  document.getElementById('eng-approve-btn').style.display='none';
+  var _elb=document.getElementById('eng-locked-badge');if(_elb)_elb.style.display='flex';
+  var _eeb3=document.getElementById('eng-export-btn');if(_eeb3)_eeb3.style.display='none';
+  var _eab3=document.getElementById('eng-approve-btn');if(_eab3)_eab3.style.display='none';
   engAudit('Exported to posting — locked');
   addAudit('Exported & locked','$'+$f(sel.reduce((s,r)=>s+r.applyAmt,0)));
   rAll();updDash();updTop();
@@ -5722,9 +5723,9 @@ function engExport(){
 
 function engReopen(){
   ENG_LOCKED=false;ENG_STATE='suggested';
-  document.getElementById('eng-locked-badge').style.display='none';
-  document.getElementById('eng-approve-btn').style.display='inline-flex';
-  document.getElementById('eng-export-btn').style.display='none';
+  var _elb2=document.getElementById('eng-locked-badge');if(_elb2)_elb2.style.display='none';
+  var _eab4=document.getElementById('eng-approve-btn');if(_eab4)_eab4.style.display='inline-flex';
+  var _eeb4=document.getElementById('eng-export-btn');if(_eeb4)_eeb4.style.display='none';
   engUpdateWS('suggested');engRenderRows();
   engAudit('Reopened for editing');
   addAudit('Allocation reopened','');
@@ -5740,7 +5741,6 @@ function engUpdateWS(step){
 }
 
 function engPostUnapplied(){
-  try{
   var p=ENG_PAY;if(!p){toast('No payment selected','warn');return;}
   var idx=ENG_PAY_IDX;
   if(typeof idx!=='number'||idx<0){toast('No payment selected','warn');return;}
@@ -5786,7 +5786,6 @@ function engPostUnapplied(){
     '</div>'
   );
   setTimeout(function(){var inp=document.getElementById('_uapp-acct-inp');if(inp)inp.focus();},80);
-  }catch(engUappErr){console.error('engPostUnapplied error:',engUappErr);toast('Error opening post dialog: '+engUappErr.message,'warn');}
 }
 
 function _uappFilterAccts(q){
@@ -6342,7 +6341,7 @@ async function runMatch(){
   const overlay=document.getElementById('match-progress');overlay.classList.add('show');setStatus('running');
   const msgs=['Normalizing references…','Running invoice # pass…','Running PO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
   let mi=0;
-  const upd=(pct,mc,ec)=>{document.getElementById('mp-bar').style.width=pct+'%';document.getElementById('mp-matched').textContent=mc;document.getElementById('mp-exc').textContent=ec;document.getElementById('mp-msg').textContent=msgs[Math.min(mi++,msgs.length-1)];};
+  const upd=(pct,mc,ec)=>{var _mpb=document.getElementById('mp-bar');if(_mpb)_mpb.style.width=pct+'%';var _mpm=document.getElementById('mp-matched');if(_mpm)_mpm.textContent=mc;var _mpe=document.getElementById('mp-exc');if(_mpe)_mpe.textContent=ec;var _mpmsg=document.getElementById('mp-msg');if(_mpmsg)_mpmsg.textContent=msgs[Math.min(mi++,msgs.length-1)];};
   await new Promise(r=>setTimeout(r,200));upd(15,0,0);
   await new Promise(r=>setTimeout(r,200));
   RES=[];EXC=[];INV.forEach(v=>v.s='');
@@ -6474,7 +6473,7 @@ async function handleFile(inp){
   await new Promise(r=>setTimeout(r,60)); // yield to browser to render UI
   try{
     if(ext==='xlsx'||ext==='xls'){
-      if(typeof XLSX==='undefined'){hideProgress();toast('Excel parsing: include SheetJS for .xlsx support','warn');const t=await f.text();document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);return;}
+      if(typeof XLSX==='undefined'){hideProgress();toast('Excel parsing: include SheetJS for .xlsx support','warn');const t=await f.text();var _mt6=document.getElementById('mo-ta');if(_mt6)_mt6.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);return;}
       showProgress('Parsing Excel — large files may take a moment…',40);
       await new Promise(r=>setTimeout(r,50));
       const buf=await f.arrayBuffer();
@@ -6496,7 +6495,7 @@ async function handleFile(inp){
           const rows=parseBAI2(t);
           const lineCount=rows.split('\n').length-1;
           if(lineCount===0){toast('BAI2 parsed but no transactions found — check file format','warn');hideProgress();return;}
-          var _mota=document.getElementById('mo-ta');if(_mota)_mota.value=rows;
+          var _mt=document.getElementById('mo-ta');if(_mt)_mt.value=rows;
           swTab('paste',document.querySelectorAll('.imp-tab')[0]);
           showProgress('Importing '+lineCount+' transactions…',90);
           await new Promise(r=>setTimeout(r,30));
@@ -6507,7 +6506,7 @@ async function handleFile(inp){
       // Plain .txt / CSV fallthrough
       document.getElementById('mo-ta').value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='xml'){
-      const t=await f.text();const rows=parseCAMT(t);document.getElementById('mo-ta').value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
+      const t=await f.text();const rows=parseCAMT(t);var _mt5=document.getElementById('mo-ta');if(_mt5)_mt5.value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='pdf'){
       await parsePDFRemittance(f);
     } else {
@@ -6581,7 +6580,6 @@ function parseBAI2(txt){
       currentAccount=bField(parts[1]||'');
 
     } else if(recType==='16'){
-      try{
       // Transaction detail
       // 16,TypeCode,Amount,FundsType,BankRef,CustomerRef,Text/[88 continuation already merged]
       const typeCode=bField(parts[1]);
@@ -6632,7 +6630,6 @@ function parseBAI2(txt){
         method,
         notes
       ]);
-      }catch(_bai2RowErr){console.warn('BAI2 row skip:',line.slice(0,80),_bai2RowErr.message);}
     }
   }
 
@@ -6775,7 +6772,7 @@ async function parsePDFRemittance(file){
     if(extracted.length===0){
       hideProgress();
       // Show raw text in paste tab for manual review
-      document.getElementById('mo-ta').value=allText.slice(0,8000);
+      var _mt2=document.getElementById('mo-ta');if(_mt2)_mt2.value=allText.slice(0,8000);
       swTab('paste',document.querySelectorAll('.imp-tab')[0]);
       toast('PDF extracted — no structured remittance data found. Review and edit the text, then click Import data.','warn');
       return;
@@ -6800,7 +6797,7 @@ async function parsePDFRemittance(file){
 
     hideProgress();
     const csv=rows.join('\n');
-    document.getElementById('mo-ta').value=csv;
+    var _mt3=document.getElementById('mo-ta');if(_mt3)_mt3.value=csv;
     swTab('paste',document.querySelectorAll('.imp-tab')[0]);
     const rowCount=rows.length-1;
     toast('✅ PDF parsed — '+rowCount+' remittance row'+(rowCount!==1?'s':'')+' extracted. Review and click Import data.');
@@ -6813,7 +6810,7 @@ async function parsePDFRemittance(file){
 }
 
 function processImport(){
-  const raw=document.getElementById('mo-ta').value.trim();if(!raw){toast('No data to import','warn');return;}
+  var _mota2=document.getElementById('mo-ta');const raw=_mota2?_mota2.value.trim():'';if(!raw){toast('No data to import','warn');return;}
   const fl=raw.split('\n')[0],delim=fl.split('\t').length>fl.split(',').length?'\t':',';
   const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);if(lines.length<2){toast('Need header row + at least one data row','warn');return;}
   function pLine(l){if(delim==='\t')return l.split('\t').map(c=>c.trim().replace(/^"|"$/g,''));const res=[];let cur='',inQ=false;for(const c of l){if(c==='"')inQ=!inQ;else if(c===','&&!inQ){res.push(cur.trim());cur='';}else cur+=c;}res.push(cur.trim());return res;}
