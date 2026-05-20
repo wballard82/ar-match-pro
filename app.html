@@ -9,10 +9,8 @@
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 <title>AR Match Pro</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
-<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════
    AR MATCH PRO v5.2 — ENTERPRISE FINTECH POLISH
@@ -63,7 +61,7 @@
   --sidebar-w: 224px;
   --topnav-h:  56px;
   --font: 'Roboto', system-ui, sans-serif;
-  --mono: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'Roboto Mono', monospace;
 
   /* ── Radii ── */
   --r4: 4px; --r6: 6px; --r8: 8px; --r10: 10px;
@@ -2057,49 +2055,6 @@ body.app-active #app {
   -webkit-font-feature-settings: "zero" 0, "tnum" 1, "liga" 0 !important;
   font-variant-numeric: tabular-nums;
   font-variant-ligatures: none;
-}
-
-/* ── Inter: tabular numbers, no slashed zeros ── */
-* { font-feature-settings: "zero" 0 !important; -webkit-font-feature-settings: "zero" 0 !important; }
-.td-amt, .td-mono, .mono, .pf-val, .dk-val, .rpt-kpi-val, .at-val,
-.pq-item-amt, .kpi-val, .upgrade-price, .pay-viz-val, .pq-item-ref,
-[class*="mono"], [style*="font-family:var(--mono)"] {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1, "zero" 0 !important;
-  -webkit-font-feature-settings: "tnum" 1, "zero" 0 !important;
-}
-
-/* ── Mobile Responsive ── */
-@media(max-width:768px){
-  .topnav { padding:0 10px; gap:6px; }
-  .tn-search { display:none; }
-  .kpi-strip { flex-wrap:wrap; padding:8px; gap:6px; }
-  .kpi-card { min-width:calc(50% - 4px); flex:1 1 calc(50% - 4px); }
-  .sidebar { width:100%; height:auto; flex-direction:row; overflow-x:auto;
-             padding:4px 8px; border-right:none; border-bottom:1px solid var(--bdr); }
-  .sb-group-label { display:none; }
-  .sb-item { flex-direction:column; align-items:center; gap:2px; padding:6px 10px;
-             font-size:10px; min-width:56px; border-radius:8px; }
-  .sb-icon { width:16px; height:16px; }
-  #app { flex-direction:column; }
-  .main-wrap { flex-direction:column; overflow:auto; }
-  .ca-split, .ca-top-half { flex-direction:column; }
-  .ca-left, .ca-right { width:100% !important; max-width:100% !important;
-                         border-right:none; border-bottom:1px solid var(--bdr); }
-  .eng-wrap { flex-direction:column; }
-  .login-wrap { flex-direction:column; height:auto; min-height:100vh; }
-  .login-left { display:none; }
-  .login-right { width:100%; padding:24px 18px; }
-  .login-feature-grid { grid-template-columns:1fr 1fr; gap:8px; }
-  .mo-body { padding:16px 14px; }
-  .tbl { font-size:11px; }
-  .tbl th, .tbl td { padding:6px 8px; }
-}
-@media(max-width:480px){
-  .kpi-card { min-width:100%; }
-  .login-feature-grid { grid-template-columns:1fr; }
-  .ca-tab-bar { flex-wrap:wrap; }
-  .ca-tab { font-size:12px; padding:8px 10px; }
 }
 </style>
 </head>
@@ -6367,7 +6322,7 @@ function parseBAI2(txt){
 
       // Extract customer/originator name — look for "NAME:ORIG:" or "ORIGINATOR:" pattern
       let customer='';
-      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
+      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60})(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
       if(nameM) customer=nameM[1].trim();
       // Fallback: for wire (195), grab the line after "INWARD REMITTANCE" which is usually the sender
       if(!customer){
