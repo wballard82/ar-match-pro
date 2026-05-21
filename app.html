@@ -4146,6 +4146,25 @@ function engBuildAI(p,invs){
 // _updatePaymentFlowProgress is called from right panel update hook
 
 // ── Premium exception cards renderer (for ws-exc tab) ──
+
+function excSelectCard(idx,el){
+  // Highlight selected card
+  document.querySelectorAll('.exc-card').forEach(function(c){c.style.outline='';c.style.outlineOffset='';});
+  if(el){el.style.outline='2px solid var(--pd)';el.style.outlineOffset='2px';}
+  // Store selected exception index
+  window._selectedExcIdx=idx;
+  var ex=EXC[idx];if(!ex)return;
+  // Load corresponding payment in the queue
+  var payIdx=PAY.findIndex(function(p){return p.a===ex.a&&Math.abs(p.amt-ex.amt)<0.01;});
+  if(payIdx>=0){
+    engLoadPaymentFromQueue(payIdx);
+    // Pre-filter Customer Open Items
+    renderFbl5n('ca-open-items-body',ex.a||'','');
+    var lbl=document.getElementById('ca-bottom-cust-label');
+    if(lbl)lbl.textContent=(ex.c||ex.a||'Unknown')+' — '+ex.id;
+  }
+  toast('Exception '+ex.id+' selected — choose action from dropdown');
+}
 function renderWsExcPremium(){
   const list=document.getElementById('ws-exc-list');const ct=document.getElementById('ws-exc-ct');if(!list)return;
   const tf=document.getElementById('ws-exc-type-filter');const tval=tf?tf.value:'';
@@ -4171,7 +4190,7 @@ function renderWsExcPremium(){
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
     const sev=typeSev[ex.type]||'med';
     const icon=typeIcon[ex.type]||'⚠️';
-    return`<div class="exc-card sev-${sev}">
+    return`<div class="exc-card sev-${sev}" onclick="excSelectCard(${realIdx},this)" style="cursor:pointer">
       <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">${$f(ex.amt)}</div>
       <div class="exc-card-header">
         <span class="exc-card-type-icon">${icon}</span>
@@ -5365,6 +5384,44 @@ function resolveException(idx,dec){
     // Focus the input after modal renders
     const _excIdx=idx;
     setTimeout(function(){var inp=document.getElementById('exc-acct-search');if(inp){inp.focus();excUnappliedSearch('',_excIdx);}},80);
+    return;
+  }
+  if(dec==='Write off'||dec==='Bank fee'){
+    // Navigate to To Be Matched, load the payment, pre-filter Customer Open Items
+    const ex3=EXC[idx];
+    closeModal();
+    window._pendingExcAction={idx:idx,ex:ex3,action:dec};
+    setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app');
+    // Find the payment in PAY and load it
+    var payIdx=PAY.findIndex(function(p){return p.a===ex3.a&&Math.abs(p.amt-ex3.amt)<0.01;});
+    if(payIdx>=0){
+      setTimeout(function(){
+        engLoadPaymentFromQueue(payIdx);
+        renderFbl5n('ca-open-items-body',ex3.a||'','');
+        var lbl=document.getElementById('ca-bottom-cust-label');
+        if(lbl)lbl.innerHTML='<span style="color:var(--am-t);font-weight:700">Select invoice(s) for '+dec+' — '+ex3.id+' ($'+$f(ex3.amt)+')</span>';
+        var el=document.getElementById('ca-open-items-tbl');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+        toast('Select invoice(s) in Customer Open Items, then click '+dec+' button above');
+      },200);
+    } else {
+      toast('Payment not found in queue — resolve manually','warn');
+    }
+    return;
+  }
+  if(dec==='Chase customer'){
+    ex.dec=dec;ex.s='Pending follow-up';
+    saveToStorage();rExc();if(typeof renderWsExcPremium==='function')renderWsExcPremium();
+    updDash();updTop();
+    addAudit('Chase customer',ex.id+' — '+ex.c+' $'+$f(ex.amt));
+    toast('Marked for customer follow-up — '+ex.c);
+    return;
+  }
+  if(dec==='Duplicate — reject'){
+    ex.dec=dec;ex.s='Resolved — rejected';
+    saveToStorage();
+    setTimeout(function(){rAll();updDash();updTop();if(typeof renderWsExcPremium==='function')renderWsExcPremium();},400);
+    addAudit('Duplicate rejected',ex.id+' — $'+$f(ex.amt));
+    toast('Duplicate rejected and discarded');
     return;
   }
   ex.dec=dec;
@@ -7566,6 +7623,13 @@ function fbl5nRowClick(invI){
     return;
   }
   var row=ENG_ROWS.find(function(r){ return r.inv.i===invI; });
+  if(!row&&ENG_PAY){
+    var inv=INV.find(function(v){ return v.i===invI; });
+    if(inv){
+      row={inv:inv,selected:false,applyAmt:0,conf:50,excCode:''};
+      ENG_ROWS.push(row);
+    }
+  }
   if(row) engToggleRow(ENG_ROWS.indexOf(row),!row.selected);
   refreshFbl5n();
 }
@@ -7581,7 +7645,17 @@ function _confirmExcApplyToInv(idx,invRef){
 }
 function fbl5nCheckRow(invI,checked){
   var row=ENG_ROWS.find(function(r){ return r.inv.i===invI; });
-  if(row) engToggleRow(ENG_ROWS.indexOf(row),checked);
+  if(!row&&checked&&ENG_PAY){
+    var inv=INV.find(function(v){ return v.i===invI; });
+    if(inv){
+      row={inv:inv,selected:false,applyAmt:0,conf:50,excCode:''};
+      ENG_ROWS.push(row);
+    }
+  }
+  if(row){
+    var idx=ENG_ROWS.indexOf(row);
+    engToggleRow(idx,checked);
+  }
   refreshFbl5n();
 }
 function fbl5nApplyRow(invI){
