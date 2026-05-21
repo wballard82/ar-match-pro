@@ -2820,7 +2820,7 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" onclick="openImport('inv')">+ Invoices</button>
               <button class="btn btn-outline btn-sm" onclick="openImport('rem')">+ Remittance</button>
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
-              <button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Auto-match all</button>
+              <button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Auto match</button>
             </div>
           </div>
         </div>
@@ -2859,7 +2859,7 @@ body.app-active #app {
               <input type="date" id="ca-date-to" class="ca-filter-sel" onchange="caFilterUpdate()">
             </div>
             <div class="ca-filter-item" style="margin-left:auto">
-              <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
+              
             </div>
           </div>
 
@@ -2916,7 +2916,7 @@ body.app-active #app {
                     <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
                       <button class="btn btn-g btn-sm" id="eng-approve-btn" onclick="engApprove()" style="display:none">✓ Approve</button>
                       <button class="btn btn-p btn-sm" id="eng-export-btn" onclick="engExport()" style="display:none">↓ Export &amp; lock</button>
-                      <button class="btn btn-outline btn-sm" id="eng-unapplied-btn" onclick="engPostUnapplied()" style="display:none" title="Post payment to a customer account without invoice allocation">💰 Post as Unapplied</button>
+                      <button class="btn btn-outline btn-sm" id="eng-unapplied-btn" onclick="engPostUnapplied()" style="display:none" title="Post payment to a customer account without invoice allocation">💰 Cash on Account</button>
                       <button class="btn btn-outline btn-sm" onclick="engReopen()">↩ Reopen</button>
                     </div>
                   </div>
@@ -3032,7 +3032,7 @@ body.app-active #app {
               <div class="ca-bottom-header">
                 <div class="ca-bottom-title">
                   📋 Customer Open Items
-                  <span style="font-weight:500;color:var(--t3);text-transform:none;letter-spacing:0;font-size:11px" id="ca-bottom-cust-label">— select account or payment</span>
+                  <span style="font-weight:500;color:var(--t3);text-transform:none;letter-spacing:0;font-size:11px" id="ca-bottom-cust-label">select account or payment</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
                   <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account</span>
@@ -3101,7 +3101,7 @@ body.app-active #app {
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
             <div style="font-size:12px;color:var(--t3)" id="review-ct">0 matched records</div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
+              
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting file</button>
             </div>
           </div>
@@ -3125,7 +3125,7 @@ body.app-active #app {
                 <div style="display:flex;gap:8px">
                   <button class="btn btn-outline btn-sm" id="ws-exc-tab-open" onclick="setWsExcView('open',this)">Open</button>
                   <button class="btn btn-outline btn-sm" id="ws-exc-tab-resolved" onclick="setWsExcView('resolved',this)">Resolved</button>
-                  <button class="btn btn-r btn-sm" onclick="clearAllExceptions()">Clear all</button>
+                  
                   <button class="btn btn-outline btn-sm" onclick="exportExc()">Export CSV</button>
                 </div>
               </div>
@@ -3220,7 +3220,7 @@ body.app-active #app {
             <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" onclick="runMatch()">⚡ Auto-match</button>
-              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
+              
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
           </div>
@@ -3246,7 +3246,7 @@ body.app-active #app {
               </select>
               <button class="btn btn-outline btn-sm" id="exc-tab-open" onclick="setExcView('open')">Open</button>
               <button class="btn btn-outline btn-sm" id="exc-tab-resolved" onclick="setExcView('resolved')">Resolved <span id="exc-resolved-ct" style="font-size:10px;margin-left:2px">0</span></button>
-              <button class="btn btn-r btn-sm" onclick="clearAllExceptions()" style="font-size:11.5px">Clear all</button>
+              
               <button class="btn btn-outline btn-sm" onclick="exportExc()">Export CSV</button>
             </div>
           </div>
@@ -3290,7 +3290,7 @@ body.app-active #app {
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               
-              <button class="btn btn-r btn-sm" onclick="clearInvData()">Clear all</button>
+              
               <button class="btn btn-p btn-sm" onclick="openImport('inv')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
                 Import invoices
@@ -3364,7 +3364,7 @@ body.app-active #app {
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               
               
-              <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
+              
               <button class="btn btn-outline btn-sm" onclick="addRemRowAfter()">+ Add row</button>
               <button class="btn btn-p btn-sm" onclick="openImport('rem')">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
@@ -3439,7 +3439,7 @@ body.app-active #app {
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span id="post-ct" style="font-size:12.5px;color:var(--t3)">0 rows</span>
-              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
+              
               <button class="btn btn-p btn-sm" onclick="exportPost()">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
                 Download
@@ -3810,15 +3810,7 @@ body.app-active #app {
             <div class="settings-row">
               <div><div class="settings-label">Email</div><div class="settings-desc" id="sec-email-disp"></div></div>
             </div>
-            <div class="settings-row">
-              <div><div class="settings-label">Role</div><div class="settings-desc">Controls access to CFO Summary and admin features</div></div>
-              <select class="sel" id="s-role" onchange="saveUserRole()" style="font-size:12.5px;min-width:180px">
-                <option value="specialist">AR Specialist</option>
-                <option value="manager">AR Manager</option>
-                <option value="controller">Controller / CFO</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
+            
 
           </div>
 
@@ -4006,7 +3998,7 @@ function _engUpdateRightPanel(){
     const custExc=EXC.filter(e=>(e.c||'').toLowerCase()===(p.c||'').toLowerCase()&&e.type==='Unapplied payment');
     if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: ${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
     // No invoices
-    if(!rows.length)cards.push({priority:'high',icon:'🔍',title:'No Open Invoices Found',body:'No matching invoices for this customer. Payment may need to be posted as unapplied cash.',action:'Post as unapplied',conf:null,confColor:'var(--r)'});
+    if(!rows.length)cards.push({priority:'high',icon:'🔍',title:'No Open Invoices Found',body:'No matching invoices for this customer. Payment may need to be posted as unapplied cash.',action:'Cash on Account',conf:null,confColor:'var(--r)'});
     // Missing PO
     if(!p.po&&!p.i)cards.push({priority:'med',icon:'📎',title:'No PO or Invoice Reference',body:'Payment has no reference. Auto-matching by amount only — lower confidence.',conf:45,confColor:'var(--am)'});
     // Good match rate
@@ -4116,7 +4108,10 @@ function renderWsExcPremium(){
   if(tval)items=items.filter(ex=>ex.type===tval);
   if(ct)ct.textContent=items.length+(isResolved?' resolved':' exception'+(items.length!==1?'s':''));
   if(!items.length){
-    const msg=isResolved?'No resolved exceptions yet.':'No open exceptions — all payments matched cleanly.';
+    const _ft=document.getElementById('ws-exc-type-filter');
+    const _fv=_ft?_ft.value:'';
+    const _typeMsg={'Short pay':'No Short Pays — all payments matched cleanly','Unapplied payment':'No Unapplied Payments — all payments matched cleanly','Unmatched':'All payments matched cleanly','Duplicate':'No Duplicates — all payments matched cleanly','Missing PO':'All payments matched cleanly','Bank fee':'All payments matched cleanly'};
+    const msg=isResolved?'No resolved exceptions yet':(_typeMsg[_fv]||'No exceptions — all payments matched cleanly');
     const icon=isResolved?'📋':'✅';
     list.innerHTML=`<div class="empty" style="padding:56px 24px">
       <div class="empty-icon">${icon}</div>
@@ -4127,7 +4122,7 @@ function renderWsExcPremium(){
   }
   const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
   const typeSev={'Short pay':'med','Unapplied payment':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
-  const POST_D=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
+  const POST_D=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
@@ -4149,7 +4144,7 @@ function renderWsExcPremium(){
            <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
           :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExcPremium,700)">
             <option value="">— Resolve —</option>
-            <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
+            <option>Apply to invoice</option><option>Cash on Account</option>
             <option>Write off</option><option>Bank fee</option>
             <option>Chase customer</option><option>Duplicate — reject</option>
           </select>
@@ -4429,14 +4424,14 @@ function updTop(){
   const spc=EXC.filter(e=>e.type==='Short pay').length;
   setEl('kpi-matched',tp>0?$fk(ma):'$0');
   setEl('kpi-rate',tp>0?(ma/tp*100).toFixed(1)+'%':'—');
-  // Posted to Account = sum of resolved "Post as Unapplied Cash" exceptions
+  // Posted to Account = sum of resolved "Cash on Account" exceptions
   const postedUnapplied=
-    EXC.filter(e=>e.dec==='Post as Unapplied Cash'&&(e.s==='Resolved'||e.s==='Posted')).reduce((s,e)=>s+e.amt,0)+
+    EXC.filter(e=>e.dec==='Cash on Account'&&(e.s==='Resolved'||e.s==='Posted')).reduce((s,e)=>s+e.amt,0)+
     RES.filter(r=>r.isUnapplied===true).reduce((s,r)=>s+r.pd,0);
   const uaAdjusted=Math.max(0,ua-postedUnapplied);
   setEl('kpi-unapplied',$fk(uaAdjusted));
   setEl('kpi-posted-unapplied',$fk(postedUnapplied));
-  const postedCt=EXC.filter(e=>e.dec==='Post as Unapplied Cash'&&(e.s==='Resolved'||e.s==='Posted')).length;
+  const postedCt=EXC.filter(e=>e.dec==='Cash on Account'&&(e.s==='Resolved'||e.s==='Posted')).length;
   setEl('kpi-posted-unapplied-ct',postedCt+' unapplied payment'+(postedCt!==1?'s':''));
   setEl('kpi-exc',EXC.filter(e=>!e.s||e.s==='Open').length);
   setEl('kpi-shortpay',spc);
@@ -4522,7 +4517,7 @@ function updReporting(){
   const top=Object.entries(cn).sort((a,b)=>b[1]-a[1])[0];
   const topEl=document.getElementById('rpt-top-issue');if(topEl)topEl.textContent=top?top[0].split(' ')[0]:'—';
   const topDesc=document.getElementById('rpt-top-issue-desc');if(topDesc)topDesc.textContent=top?`${top[0]} — ${top[1]} case${top[1]!==1?'s':''}` : 'No exceptions';
-  const todayEl=document.getElementById('rpt-matched-today');if(todayEl)todayEl.textContent='$'+$fk(ma);
+  const todayEl=document.getElementById('rpt-matched-today');if(todayEl)todayEl.textContent=$fk(ma);
   // Breakdown charts (text)
   const rcn={};RES.forEach(r=>{rcn[r.st]=(rcn[r.st]||0)+1;});
   const rbd=document.getElementById('rpt-breakdown');
@@ -4805,7 +4800,7 @@ function openImport(t){
   hideProgress();
   document.getElementById('imp-modal').classList.add('open');
 }
-function closeMo(){var _im=document.getElementById('imp-modal');if(_im)_im.classList.remove('open');}
+function closeMo(){document.getElementById('imp-modal').classList.remove('open');}
 function closeWelcome(){const m=document.getElementById('mo-welcome');if(m)m.style.display='none';}
 function closeUpgrade(){
   document.getElementById('upgrade-modal').classList.remove('open');
@@ -4854,8 +4849,8 @@ function hideProgress(){
 function swTab(t,el){
   document.querySelectorAll('.imp-tab').forEach(p=>p.classList.remove('active'));
   if(el)el.classList.add('active');
-  var _tp=document.getElementById('tab-paste');if(_tp)_tp.style.display=t==='paste'?'block':'none';
-  var _tf=document.getElementById('tab-file');if(_tf)_tf.style.display=t==='file'?'block':'none';
+  document.getElementById('tab-paste').style.display=t==='paste'?'block':'none';
+  document.getElementById('tab-file').style.display=t==='file'?'block':'none';
 }
 
 // ── Clear data ──
@@ -4957,7 +4952,7 @@ function rInv(){
       <td>${v.s?badge(v.s):'<span style="color:var(--t3)">—</span>'}</td>
     </tr>`;
   }).join('');
-  var _ic=document.getElementById('inv-ct');if(_ic)_ic.textContent=INV.length+' rows · click any cell to edit';
+  document.getElementById('inv-ct').textContent=INV.length+' rows · click any cell to edit';
 }
 
 
@@ -5101,7 +5096,7 @@ function rExc(){
         <select class="ed" style="font-size:11.5px;width:120px" data-idx="${idx}" onchange="resolveException(parseInt(this.dataset.idx),this.value)">
           <option value="">— Select —</option>
           <option ${ex.dec==='Apply to invoice'?'selected':''}>Apply to invoice</option>
-          <option ${ex.dec==='Post as Unapplied Cash'?'selected':''}>Post as Unapplied Cash</option>
+          <option ${ex.dec==='Cash on Account'?'selected':''}>Cash on Account</option>
           <option ${ex.dec==='Write off'?'selected':''}>Write off</option>
           <option ${ex.dec==='Bank fee'?'selected':''}>Bank fee</option>
           
@@ -5121,8 +5116,8 @@ function rPost(){
   const tb=document.getElementById('post-tb');if(!tb)return;
   if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations.</div></div></td></tr>';return;}
   const d=new Date().toISOString().split('T')[0];const dDisp=fmtDate(d);
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
-  const excBadge={'Apply to invoice':'badge-g','Post as Unapplied Cash':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Cash on Account':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
+  const excBadge={'Apply to invoice':'badge-g','Cash on Account':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
   tb.innerHTML=ap.map(r=>{
     const isExc=!!r.fromExc;
     const inv=INV.find(v=>v.i===r.i)||{};
@@ -5236,7 +5231,7 @@ function exportPost(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Cash on Account':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
   const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Write-off','Bank Fee'];
   const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(r.writeOff||0).toFixed(2),(r.bankFee||0).toFixed(2)];});
   csvDL([PH,...rows],'posting_'+d+'.csv');
@@ -5249,7 +5244,7 @@ function selFmt(el){document.querySelectorAll('.fmt-pill').forEach(p=>p.classLis
 // ══════════════════════════════════════════════════════════
 // EXCEPTION RESOLUTION ENGINE
 // ══════════════════════════════════════════════════════════
-const POST_DECISIONS=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
+const POST_DECISIONS=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
 const HOLD_DECISIONS=['Chase customer'];
 const DROP_DECISIONS=['Duplicate — reject'];
 let EXC_VIEW='open';
@@ -5299,10 +5294,10 @@ function resolveException(idx,dec){
     },150);
     return;
   }
-  if(dec==='Post as Unapplied Cash'){
+  if(dec==='Cash on Account'){
     const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
     const accts=Object.keys(acctMap).sort();
-    showModal('Post as Unapplied Cash',
+    showModal('Cash on Account',
       '<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px">Select customer account:</div>'+
       '<div style="font-size:11.5px;color:var(--t3);margin-bottom:12px">Type to search — modal closes automatically on selection</div>'+
       '<div style="position:relative;margin-bottom:6px">'+
@@ -5359,8 +5354,8 @@ function excUnappliedSearch(q,idx){
 function excUnappliedConfirm(idx,acctId,acctLabel){
   closeModal();
   const ex=EXC[idx];if(!ex)return;
-  ex.dec='Post as Unapplied Cash';ex.appliedToAcct=acctId;ex.appliedToAcctLabel=acctLabel;
-  finalizeExcResolution(idx,'Post as Unapplied Cash');
+  ex.dec='Cash on Account';ex.appliedToAcct=acctId;ex.appliedToAcctLabel=acctLabel;
+  finalizeExcResolution(idx,'Cash on Account');
   toast('✓ Posted as unapplied cash → '+acctLabel);
 }
 function confirmExcAcct(idx){
@@ -5369,8 +5364,8 @@ function confirmExcAcct(idx){
   const acctRef=(manual&&manual.value.trim())||(sel&&sel.value)||'';
   if(!acctRef){toast('Please select or enter an account number','warn');return;}
   const ex=EXC[idx];if(!ex)return;
-  ex.dec='Post as Unapplied Cash';ex.appliedToAcct=acctRef;
-  closeModal();finalizeExcResolution(idx,'Post as Unapplied Cash');
+  ex.dec='Cash on Account';ex.appliedToAcct=acctRef;
+  closeModal();finalizeExcResolution(idx,'Cash on Account');
 }
 
 function finalizeExcResolution(idx,dec){
@@ -5397,7 +5392,7 @@ function finalizeExcResolution(idx,dec){
       const acctRef=ex.appliedToAcct||ex.a||'—';
       RES.push({a:acctRef,c:ex.c,i:invRef,d:ex.id,id:ex.id,oa:ex.amt,pd:ex.amt,vr:0,st:'Resolved',m:dec,n:ex.notes||'',fromExc:true,excDec:dec});
       saveToStorage();rAll();updDash();updTop();
-      const msgs={'Apply to invoice':'Applied to '+invRef,'Post as Unapplied Cash':'Posted to account '+acctRef,'Write off':'Written off','Bank fee':'Bank fee recorded','Wire transfer':'Wire transfer recorded'};
+      const msgs={'Apply to invoice':'Applied to '+invRef,'Cash on Account':'Posted to account '+acctRef,'Write off':'Written off','Bank fee':'Bank fee recorded','Wire transfer':'Wire transfer recorded'};
       addAudit('Exception resolved: '+dec,ex.id);
       toast('✓ '+(msgs[dec]||'Resolved — added to posting export'));
     },550);
@@ -5457,17 +5452,17 @@ function engLoadPayment(idx){
   ['eng-full-badge','eng-locked-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['eng-grid-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});const ph=document.getElementById('eng-header');if(ph)ph.style.display='flex';
   const aw=document.getElementById('alloc-totals');if(aw)aw.style.display='none';
-  var _eeb=document.getElementById('eng-export-btn');if(_eeb)_eeb.style.display='none';
-  var _eab=document.getElementById('eng-approve-btn');if(_eab)_eab.style.display='inline-flex';
-  // Show Post as Unapplied whenever a payment is loaded and not yet locked/approved
+  document.getElementById('eng-export-btn').style.display='none';
+  document.getElementById('eng-approve-btn').style.display='inline-flex';
+  // Show Cash on Account whenever a payment is loaded and not yet locked/approved
   var _ub=document.getElementById('eng-unapplied-btn');
   if(_ub)_ub.style.display='inline-flex';
-  var _spw=document.getElementById('eng-short-pay-warn');if(_spw)_spw.style.display='none';
-  var _dw=document.getElementById('eng-dup-warn');if(_dw)_dw.style.display='none';
+  document.getElementById('eng-short-pay-warn').style.display='none';
+  document.getElementById('eng-dup-warn').style.display='none';
   const rDup=document.getElementById('ca-dup-warn-right');if(rDup)rDup.style.display='none';
   const rSp=document.getElementById('ca-sp-warn-right');if(rSp)rSp.style.display='none';
-  var _ee=document.getElementById('eng-empty');if(_ee)_ee.style.display='none';
-  var _af=document.getElementById('alloc-fully');if(_af)_af.style.display='none';
+  document.getElementById('eng-empty').style.display='none';
+  document.getElementById('alloc-fully').style.display='none';
   const custInvs=INV.filter(v=>{
     const cMatch=p.c&&(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim();
     const aMatch=p.a&&v.a===p.a;
@@ -5551,7 +5546,7 @@ function _legacyEngBuildAI(p,invs){
   const dp=invs.filter(v=>v.n&&v.n.toLowerCase().includes('down'));if(dp.length)tips.push(`💡 ${dp.length} invoice(s) may be down payments`);
   const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);if(sp.length)tips.push(`⚠️ ${sp.length} invoice(s) likely short paid — consider partial`);
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));if(sharedPO.length>1)tips.push(`💡 ${sharedPO.length} invoices share PO ${p.po} — consolidated remittance`);
-  if(!invs.length)tips.push('⚠️ No open invoices — post as unapplied cash?');
+  if(!invs.length)tips.push('⚠️ No open invoices — post as cash on account?');
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
   if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✓ ${invs.length} invoices sum exactly to ${$f(p.amt)} — auto-apply all recommended`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:4px 0;border-bottom:1px solid rgba(139,92,246,.1);line-height:1.5;font-size:12.5px">${t}</div>`).join('');}
@@ -5681,7 +5676,7 @@ function engApprove(){
   const sel=ENG_ROWS.filter(r=>r.selected);
   if(!sel.length){toast('Select at least one invoice to apply','warn');return;}
   ENG_STATE='approved';engUpdateWS('approved');
-  var _eeb2=document.getElementById('eng-export-btn');if(_eeb2)_eeb2.style.display='inline-flex';
+  document.getElementById('eng-export-btn').style.display='inline-flex';
   var _ub2=document.getElementById('eng-unapplied-btn');if(_ub2)_ub2.style.display='none';
   const totalApplied=sel.reduce((s,r)=>s+r.applyAmt,0);
   sel.forEach(r=>{if(!RES.find(res=>res.i===r.inv.i&&res.fromAlloc)){const vr=r.applyAmt-r.inv.amt;RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.txId||'',id:ENG_PAY.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});}});
@@ -5706,9 +5701,9 @@ function engExport(){
   });
   saveToStorage();ENG_STATE='exported';ENG_LOCKED=true;
   engUpdateWS('exported');
-  var _elb=document.getElementById('eng-locked-badge');if(_elb)_elb.style.display='flex';
-  var _eeb3=document.getElementById('eng-export-btn');if(_eeb3)_eeb3.style.display='none';
-  var _eab3=document.getElementById('eng-approve-btn');if(_eab3)_eab3.style.display='none';
+  document.getElementById('eng-locked-badge').style.display='flex';
+  document.getElementById('eng-export-btn').style.display='none';
+  document.getElementById('eng-approve-btn').style.display='none';
   engAudit('Exported to posting — locked');
   addAudit('Exported & locked','$'+$f(sel.reduce((s,r)=>s+r.applyAmt,0)));
   rAll();updDash();updTop();
@@ -5717,9 +5712,9 @@ function engExport(){
 
 function engReopen(){
   ENG_LOCKED=false;ENG_STATE='suggested';
-  var _elb2=document.getElementById('eng-locked-badge');if(_elb2)_elb2.style.display='none';
-  var _eab4=document.getElementById('eng-approve-btn');if(_eab4)_eab4.style.display='inline-flex';
-  var _eeb4=document.getElementById('eng-export-btn');if(_eeb4)_eeb4.style.display='none';
+  document.getElementById('eng-locked-badge').style.display='none';
+  document.getElementById('eng-approve-btn').style.display='inline-flex';
+  document.getElementById('eng-export-btn').style.display='none';
   engUpdateWS('suggested');engRenderRows();
   engAudit('Reopened for editing');
   addAudit('Allocation reopened','');
@@ -5758,7 +5753,7 @@ function engPostUnapplied(){
           '</div>';
       }).join('')
     :'<div style="padding:12px;font-size:12px;color:var(--t3)">No accounts in imported data.<br>Enter account number below.</div>';
-  showModal('Post as Unapplied Payment',
+  showModal('Cash on Account',
     '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">Payment <strong style="color:var(--t1)">'+(p.txId||p.i||'—')+'</strong> &middot; <strong style="color:var(--t1)">$'+$f(p.amt)+'</strong></div>'+
     '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:5px">Customer Account</div>'+
     '<input type="text" id="_uapp-acct-inp" placeholder="Type to filter or enter account #…" autocomplete="off" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;margin-bottom:5px" oninput="_uappFilterAccts(this.value)">'+
@@ -5767,7 +5762,7 @@ function engPostUnapplied(){
     '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:5px">Notes (optional)</div>'+
     '<input type="text" id="_uapp-notes-inp" placeholder="Reason or detail…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;margin-bottom:12px">'+
     '<div style="display:flex;gap:8px">'+
-    '<button class="btn btn-p btn-sm" onclick="_uappConfirm('+idx+')">Post as Unapplied</button>'+
+    '<button class="btn btn-p btn-sm" onclick="_uappConfirm('+idx+')">Cash on Account</button>'+
     '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
   );
   setTimeout(function(){var inp=document.getElementById('_uapp-acct-inp');if(inp)inp.focus();},80);
@@ -5871,7 +5866,7 @@ function _uappConfirm(payIdx){
   rAll();
   updDash();
   updTop();
-  // Hide the Post as Unapplied button — payment is now posted
+  // Hide the Cash on Account button — payment is now posted
   var ub=document.getElementById('eng-unapplied-btn');if(ub)ub.style.display='none';
   // Reset engine state for this payment
   ENG_PAY=null;ENG_PAY_IDX=-1;ENG_ROWS=[];
@@ -6049,7 +6044,7 @@ function renderWsExc(){
     list.innerHTML=isResolved?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div>':'<div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect issues.</div></div>';
     return;
   }
-  const POST_D=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
+  const POST_D=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
@@ -6069,7 +6064,7 @@ function renderWsExc(){
         :`<input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
          <select class="ed" style="font-size:11.5px;width:120px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExc,600)">
            <option value="">— Resolve —</option>
-           <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
+           <option>Apply to invoice</option><option>Cash on Account</option>
            <option>Write off</option><option>Bank fee</option>
            <option>Chase customer</option><option>Duplicate — reject</option>
          </select>`}
@@ -6260,10 +6255,10 @@ function openCustomerDrawerForCustomer(custName,acctId){
     else if(days<=60)age60+=bal;
     else age90+=bal;
   });
-  const agEl=document.getElementById('aging-cur');if(agEl)agEl.textContent='$'+$fk(ageCur);
-  const ag30El=document.getElementById('aging-30');if(ag30El)ag30El.textContent='$'+$fk(age30);
-  const ag60El=document.getElementById('aging-60');if(ag60El)ag60El.textContent='$'+$fk(age60);
-  const ag90El=document.getElementById('aging-90');if(ag90El)ag90El.textContent='$'+$fk(age90);
+  const agEl=document.getElementById('aging-cur');if(agEl)agEl.textContent=$fk(ageCur);
+  const ag30El=document.getElementById('aging-30');if(ag30El)ag30El.textContent=$fk(age30);
+  const ag60El=document.getElementById('aging-60');if(ag60El)ag60El.textContent=$fk(age60);
+  const ag90El=document.getElementById('aging-90');if(ag90El)ag90El.textContent=$fk(age90);
   // Activity
   const actEl=document.getElementById('drawer-activity');
   if(actEl){
@@ -6337,7 +6332,7 @@ async function runMatch(){
   const overlay=document.getElementById('match-progress');overlay.classList.add('show');setStatus('running');
   const msgs=['Normalizing references…','Running invoice # pass…','Running PO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
   let mi=0;
-  const upd=(pct,mc,ec)=>{var _mb=document.getElementById('mp-bar');if(_mb)_mb.style.width=pct+'%';var _mm=document.getElementById('mp-matched');if(_mm)_mm.textContent=mc;var _me=document.getElementById('mp-exc');if(_me)_me.textContent=ec;var _ms=document.getElementById('mp-msg');if(_ms)_ms.textContent=msgs[Math.min(mi++,msgs.length-1)];};
+  const upd=(pct,mc,ec)=>{document.getElementById('mp-bar').style.width=pct+'%';document.getElementById('mp-matched').textContent=mc;document.getElementById('mp-exc').textContent=ec;document.getElementById('mp-msg').textContent=msgs[Math.min(mi++,msgs.length-1)];};
   await new Promise(r=>setTimeout(r,200));upd(15,0,0);
   await new Promise(r=>setTimeout(r,200));
   RES=[];EXC=[];INV.forEach(v=>v.s='');
@@ -6345,7 +6340,7 @@ async function runMatch(){
   for(let pi=0;pi<PAY.length;pi++){
     const p=PAY[pi];upd(20+Math.round(pi/PAY.length*65),RES.length,EXC.length);
     if(pi%2===0)await new Promise(r=>setTimeout(r,60));
-    if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Post as Unapplied Cash or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
+    if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Cash on Account or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
     if(!p.a||p.a==='40999999'){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c,amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account or reference found — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
     const ni=norm(p.i),np=norm(p.po),ns=norm(p.so);
     const useInv=document.getElementById('s-inv')?.checked!==false;
@@ -7009,6 +7004,7 @@ function processImport(){
           'receiveddate','depositdate','creditdate'
         )]||'',
         ccy:r[col('currency','ccy','curr','currencycode')]||'USD',
+        st:'Unapplied Cash',
         n,coa:isCOA,dp:n.toLowerCase().includes('down')
       };
     });
@@ -7016,7 +7012,7 @@ function processImport(){
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
-    ' loaded. Click ⚡ Auto-match all to run matching.');
+    ' loaded. Click ⚡ Auto match to run matching.');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -7427,7 +7423,7 @@ function fbl5nRowClick(invI){
       (Math.abs(pea.ex.amt-inv.amt)>0.01?'<span style="color:var(--am-t)">⚠️ Variance: $'+$f(Math.abs(pea.ex.amt-inv.amt))+'</span>':'<span style="color:var(--g-t)">✓ Ties to zero</span>')+
       '</div>'+
       '<div style="display:flex;gap:8px">'+
-      '<button class="btn btn-outline btn-sm" onclick="closeModal();window._pendingExcApply=null;var lbl=document.getElementById(\'ca-bottom-cust-label\');if(lbl)lbl.textContent=\'— select account or payment\';">Cancel</button>'+
+      '<button class="btn btn-outline btn-sm" onclick="closeModal();window._pendingExcApply=null;var lbl=document.getElementById(\'ca-bottom-cust-label\');if(lbl)lbl.textContent=\'select account or payment\';">Cancel</button>'+
       '<button class="btn btn-p btn-sm" onclick="closeModal();_confirmExcApplyToInv('+pea.idx+',\''+inv.i+'\')">Apply to invoice</button>'+
       '</div>'
     );
@@ -7439,7 +7435,7 @@ function fbl5nRowClick(invI){
 }
 function _confirmExcApplyToInv(idx,invRef){
   window._pendingExcApply=null;
-  var lbl=document.getElementById('ca-bottom-cust-label');if(lbl)lbl.textContent='— select account or payment';
+  var lbl=document.getElementById('ca-bottom-cust-label');if(lbl)lbl.textContent='select account or payment';
   var ex=EXC[idx];if(!ex)return;
   ex.dec='Apply to invoice';ex.appliedToInv=invRef;
   finalizeExcResolution(idx,'Apply to invoice');
@@ -7673,10 +7669,10 @@ function buildWorklist(){
   if(urgentCt){ urgentCt.textContent=urgent.length; urgentCt.style.display=urgent.length?'inline-flex':'none'; }
   if(urgent.length&&urgentList){
     var items=[];
-    if(shortPays.length) items.push({cls:'warn',icon:'💸',title:shortPays.length+' short pay'+(shortPays.length>1?'s':'')+' need resolution',sub:'Total exposure: $'+$f(shortPays.reduce(function(s,e){return s+e.amt;},0))+' · Contact customers or write off',amt:'$'+$fk(shortPays.reduce(function(s,e){return s+e.amt;},0)),action:'Resolve',fn:"wlGoExc()"});
-    if(dups.length) items.push({cls:'urgent',icon:'⚠️',title:dups.length+' possible duplicate payment'+(dups.length>1?'s':'')+' detected',sub:'Same reference and amount — verify before posting',amt:'$'+$fk(dups.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
-    if(unmatched.length) items.push({cls:'urgent',icon:'❓',title:unmatched.length+' payment'+(unmatched.length>1?'s':'')+' with no invoice match',sub:'No matching invoice, PO, or SO found',amt:'$'+$fk(unmatched.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
-    if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference',amt:'$'+$fk(unapplied.reduce(function(s,e){return s+e.amt;},0)),action:'Apply',fn:"wlGoExc()"});
+    if(shortPays.length) items.push({cls:'warn',icon:'💸',title:shortPays.length+' short pay'+(shortPays.length>1?'s':'')+' need resolution',sub:'Total exposure: $'+$f(shortPays.reduce(function(s,e){return s+e.amt;},0))+' · Contact customers or write off',amt:$fk(shortPays.reduce(function(s,e){return s+e.amt;},0)),action:'Resolve',fn:"wlGoExc()"});
+    if(dups.length) items.push({cls:'urgent',icon:'⚠️',title:dups.length+' possible duplicate payment'+(dups.length>1?'s':'')+' detected',sub:'Same reference and amount — verify before posting',amt:$fk(dups.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
+    if(unmatched.length) items.push({cls:'urgent',icon:'❓',title:unmatched.length+' payment'+(unmatched.length>1?'s':'')+' with no invoice match',sub:'No matching invoice, PO, or SO found',amt:$fk(unmatched.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
+    if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference',amt:$fk(unapplied.reduce(function(s,e){return s+e.amt;},0)),action:'Apply',fn:"wlGoExc()"});
     urgentList.innerHTML=items.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div><div class="wl-item-amount">'+item.amt+'</div><div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(urgentList){
     urgentList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'No urgent items')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments processed without issues.':'Import data and run matching to detect exceptions.')+'</div></div>';
@@ -7699,11 +7695,11 @@ function buildWorklist(){
       unalloc.forEach(function(p){ var k=p.c||p.a; if(!byCust[k])byCust[k]={c:p.c,a:p.a,payments:[],total:0}; byCust[k].payments.push(p); byCust[k].total+=p.amt; });
       Object.values(byCust).slice(0,5).forEach(function(cg){
         var acctSafe=(cg.a||'').replace(/'/g,"\\'");
-        itms.push({cls:'info',icon:'💳',title:cg.c||cg.a,sub:cg.payments.length+' payment'+(cg.payments.length>1?'s':'')+' waiting · '+(cg.payments[0].m||'ACH'),amt:'$'+$fk(cg.total),action:'Allocate',fn:"wlGoAlloc('"+acctSafe+"')"});
+        itms.push({cls:'info',icon:'💳',title:cg.c||cg.a,sub:cg.payments.length+' payment'+(cg.payments.length>1?'s':'')+' waiting · '+(cg.payments[0].m||'ACH'),amt:$fk(cg.total),action:'Allocate',fn:"wlGoAlloc('"+acctSafe+"')"});
       });
       if(Object.keys(byCust).length>5) itms.push({cls:'info',icon:'💳',title:(Object.keys(byCust).length-5)+' more customers',sub:'Click to open the allocation workspace',amt:'',action:'Open all',fn:"wlGoMatch()"});
     }
-    if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
+    if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
     allocList.innerHTML=itms.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div>'+(item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':'')+' <div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(allocList){
     allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittance data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittances</button></div>')+'</div>';
@@ -7832,20 +7828,20 @@ function updateCfoSummary(){
 
   // Hero: Cash Application Performance
   if(autoCount>0){
-    setEl('cfo-hours-saved','$'+$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
+    setEl('cfo-hours-saved',$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
     setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received ('+periodLabel+')');
   } else {
     setEl('cfo-hours-saved','No matches yet');
     setEl('cfo-hero-sub','Import data and run matching to see performance');
   }
   setEl('cfo-hero-matched',$fk(tp));       // Cash Received
-  setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'—');
+  setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'0%');
   setEl('cfo-hero-payments',PAY.length);
   setEl('cfo-hero-invoices',matched.length);
 
   // Savings callout: Cash Received vs Cash Matched
   if(tp>0){
-    setEl('cfo-savings-headline','$'+$fk(ma)+' in cash matched of $'+$fk(tp)+' received');
+    setEl('cfo-savings-headline',$fk(ma)+' in cash matched of $'+$fk(tp)+' received');
     var bodyEl=document.getElementById('cfo-savings-body');
     if(bodyEl) bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched · <strong>'+(tp>0?((ma/tp)*100).toFixed(1)+'%':'—')+'</strong> straight-through rate · <strong>$'+$fk(ua)+'</strong> unapplied';
   } else {
@@ -7854,7 +7850,7 @@ function updateCfoSummary(){
     if(be2) be2.textContent='Load sample data or import invoices and remittance to begin.';
   }
 
-  setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
+  setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'0%');
   var stpEl=document.getElementById('cfo-stp-trend'); if(stpEl) stpEl.style.color=rt>=80?'var(--g-t)':rt>=50?'var(--am-t)':'var(--r-t)';
   var openExcCt=EXC.filter(function(e){return !e.s||e.s==='Open';}).length;
   setEl('cfo-exc-rate',PAY.length>0?(openExcCt/PAY.length*100).toFixed(1)+'%':'—');
@@ -8307,7 +8303,7 @@ loadSampleInv = function(){
   }, 150);
 };
 
-// ── excAcctManualSearch: live account lookup for Post as Unapplied Cash ──
+// ── excAcctManualSearch: live account lookup for Cash on Account ──
 function excAcctManualSearch(q){
   var preview = document.getElementById('exc-acct-preview');
   var sugg = document.getElementById('exc-acct-suggestions');
@@ -8415,7 +8411,7 @@ var HELP_CONTENT = {
         <h3>Customer Open Items</h3>
         <p>The bottom panel shows open invoices for the selected payment's account. Invoices are automatically sorted by relevance — best matches appear first. All columns support sorting (click header) and per-column filtering (type in the filter row). Drag the divider handle to resize the split.</p>
         <h3>Auto-Matching Engine</h3>
-        <p>Click <strong>⚡ Auto-match all</strong> to run matching across all payments. The engine tries these methods in order:</p>
+        <p>Click <strong>⚡ Auto match</strong> to run matching across all payments. The engine tries these methods in order:</p>
         <table><thead><tr><th>Priority</th><th>Method</th><th>Description</th></tr></thead><tbody>
         <tr><td>1</td><td>Invoice #</td><td>Payment references an exact invoice number</td></tr>
         <tr><td>2</td><td>PO Group</td><td>Sum of all open invoices on the same PO = payment amount</td></tr>
@@ -8449,7 +8445,7 @@ var HELP_CONTENT = {
         </tbody></table>
         <h3>Resolution Options</h3>
         <p><strong>Apply to Invoice</strong> — Closes the modal and navigates to Customer Open Items, pre-filtered to the exception's account. Click any invoice row to see a confirmation (amount, variance). Confirm to resolve and move to Review.</p>
-        <p><strong>Post as Unapplied Cash</strong> — Opens an account search popup. Type an account number or customer name. Click any result to post immediately — the popup closes automatically.</p>
+        <p><strong>Cash on Account</strong> — Opens an account search popup. Type an account number or customer name. Click any result to post immediately — the popup closes automatically.</p>
         <p><strong>Write Off</strong> — Marks the variance as a write-off. Appears in the Write-off column in Reconcile.</p>
         <p><strong>Bank Fee</strong> — Marks the variance as a bank fee. Appears in the Bank Fee column in Reconcile.</p>
         <p><strong>Chase Customer</strong> — Holds the exception for follow-up. Stays Open on Today's Work.</p>
