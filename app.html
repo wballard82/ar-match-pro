@@ -2674,7 +2674,9 @@ body.app-active #app {
                 <div class="wl-empty-icon">📂</div>
                 <div class="wl-empty-title">No payments waiting</div>
                 <div class="wl-empty-sub">Import remittance data to see payments that need allocation.</div>
-                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
+                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button>
+              <button class="btn btn-outline btn-sm" onclick="openImport('advice')" title="Line-level customer remittance advice (PDF/Excel/CSV)">📄 Import remittance advice</button>
+              <button class="btn btn-outline btn-sm" onclick="openRemAdviceManualEntry()" title="Manually enter remittance from check stub">✍ Manual remittance entry</button></div>
               </div>
             </div>
           </div>
@@ -4362,7 +4364,7 @@ function _legacyClearAllExceptions(){
 'use strict';
 
 // ── Data ──
-let INV=[],PAY=[],RES=[],EXC=[],IMP_TYPE='inv',IMP_BANK_MODE=false;
+let INV=[],PAY=[],RES=[],EXC=[],REM_ADVICE=[],IMP_TYPE='inv',IMP_BANK_MODE=false;
 const IH=['Customer','Account','Invoice #','PO #','Sales Order','Amount','Type','Invoice Date','Due Date','Document #','Status'];
 const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action','Decision','Status'];
 
@@ -4393,6 +4395,7 @@ function saveToStorage(){
     localStorage.setItem(sk('pay'),JSON.stringify(PAY));
     localStorage.setItem(sk('res'),JSON.stringify(RES));
     localStorage.setItem(sk('exc'),JSON.stringify(EXC));
+    localStorage.setItem(sk('remadvice'),JSON.stringify(REM_ADVICE));
   }catch(e){}
 }
 function loadFromStorage(){
@@ -4402,6 +4405,7 @@ function loadFromStorage(){
     const p=localStorage.getItem(sk('pay'));if(p)PAY=JSON.parse(p);
     const r=localStorage.getItem(sk('res'));if(r)RES=JSON.parse(r);
     const e=localStorage.getItem(sk('exc'));if(e)EXC=JSON.parse(e);
+    const ra=localStorage.getItem(sk('remadvice'));if(ra)REM_ADVICE=JSON.parse(ra);
   }catch(e){}
 }
 function getUsers(){try{return JSON.parse(localStorage.getItem('armp_users')||'{}')}catch(e){return {}}}
@@ -4862,8 +4866,14 @@ function openImport(t){
   IMP_TYPE=t;
   IMP_BANK_MODE=false;
   const title=document.getElementById('imp-title');const lbl=document.getElementById('imp-lbl');
-  if(title)title.textContent=t==='inv'?'Import Invoice Data':'Import Remittance Data';
-  if(lbl)lbl.textContent=t==='inv'?'Invoice CSV — Customer, Account, Invoice, PO, SO, Amount, Doc Type, Date, Due, Document #':'Remittance CSV — Account, Customer, Amount, PO Ref, Invoice Ref, Method, Notes';
+  const titleMap={inv:'Import Invoice Data',rem:'Import Bank Remittance',advice:'Import Customer Remittance Advice'};
+  const lblMap={
+    inv:'Invoice CSV — Customer, Account, Invoice, PO, SO, Amount, Doc Type, Date, Due, Document #',
+    rem:'Remittance CSV — Account, Customer, Amount, PO Ref, Invoice Ref, Method, Notes',
+    advice:'Remittance Advice — Invoice #, Amount Paid, optional PO #, Customer, Payment Ref, Payment Date'
+  };
+  if(title)title.textContent=titleMap[t]||'Import Data';
+  if(lbl)lbl.textContent=lblMap[t]||'';
   const ta=document.getElementById('mo-ta');if(ta)ta.value='';
   hideProgress();
   document.getElementById('imp-modal').classList.add('open');
@@ -6147,7 +6157,7 @@ function renderPayQueue(){
     const bankTag=p.bank?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--pg);color:var(--pd);font-weight:700;margin-left:4px">${p.bank}</span>`:'';
     return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
-      <div class="pq-item-top"><div class="pq-item-cust">${getDisplayCustomerName(p)||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
+      <div class="pq-item-top"><div class="pq-item-cust">${(typeof getRemittanceForPayment==='function'&&getRemittanceForPayment(i))?'<span title="Remittance advice attached" style="margin-right:3px">📄</span>':''}${getDisplayCustomerName(p)||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
       <div class="pq-item-bot">
         <div class="pq-item-ref">${p.i||p.po||p.txId||'—'}</div>
         <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
@@ -6539,6 +6549,33 @@ async function runMatch(){
   for(let pi=0;pi<PAY.length;pi++){
     const p=PAY[pi];upd(20+Math.round(pi/PAY.length*65),RES.length,EXC.length);
     if(pi%2===0)await new Promise(r=>setTimeout(r,60));
+    // ── PHASE 4: Remittance advice priority ──
+    // If a remittance batch is paired to this payment, use its line-level invoice→amount data
+    const remBatch=(typeof getRemittanceForPayment==='function')?getRemittanceForPayment(pi):null;
+    if(remBatch&&remBatch.lines&&remBatch.lines.length){
+      let remApplied=0,remMatched=0,remMissed=0;
+      remBatch.lines.forEach(function(L){
+        if(!L.invoice)return;
+        const invMatch=INV.find(function(v){return String(v.i)===String(L.invoice)&&!v.s;});
+        if(invMatch){
+          const lineAmt=parseFloat(L.amount)||0;
+          const vr=lineAmt-invMatch.amt;
+          const st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';
+          invMatch.s=st;
+          RES.push({c:invMatch.c,a:invMatch.a,i:invMatch.i,po:invMatch.po,so:invMatch.so,d:invMatch.d,oa:invMatch.amt,pd:lineAmt,vr:vr,st:st,m:'Remittance Advice',n:'From remittance batch '+remBatch.batchId,fromRem:true,batchId:remBatch.batchId});
+          remApplied+=lineAmt;remMatched++;
+          if(st!=='Exact'){
+            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:Math.abs(vr),ref:invMatch.i,type:st,detail:'Remittance line '+lineAmt.toFixed(2)+' vs invoice '+invMatch.amt.toFixed(2),action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});
+          }
+        } else {
+          remMissed++;
+          // Invoice in remittance but not in INV — track as exception
+          EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:parseFloat(L.amount)||0,ref:L.invoice,type:'Missing invoice',detail:'Remittance lists invoice '+L.invoice+' but not in open AR',action:'Verify invoice number with customer',dec:'',s:'Open'});
+        }
+      });
+      addAudit('Remittance applied','Payment '+(p.txId||p.i)+' · '+remMatched+' invoices matched · $'+$f(remApplied));
+      continue; // skip standard matching, remittance overrode it
+    }
     if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Cash on Account or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
     if(!p.a||p.a==='40999999'){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c,amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account or reference found — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
     const ni=norm(p.i),np=norm(p.po),ns=norm(p.so);
@@ -6662,6 +6699,63 @@ async function handleFile(inp){
   showProgress('Reading '+f.name+'…',10);
   await new Promise(r=>setTimeout(r,60)); // yield to browser to render UI
   try{
+    // ── REMITTANCE ADVICE BRANCH (line-level invoice→amount data from customer) ──
+    if(IMP_TYPE==='advice'){
+      if(ext==='xlsx'||ext==='xls'){
+        if(typeof XLSX==='undefined'){hideProgress();toast('SheetJS required for Excel — try CSV instead','warn');return;}
+        showProgress('Parsing remittance Excel…',40);
+        const buf=await f.arrayBuffer();
+        const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true});
+        // Try sheets named like 'Remittance' first, else first sheet
+        let sheetName=wb.SheetNames.find(n=>/remit/i.test(n))||wb.SheetNames[0];
+        const ws=wb.Sheets[sheetName];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',blankrows:false});
+        showProgress('Pairing remittance to payments…',80);
+        await new Promise(r=>setTimeout(r,30));
+        importRemittanceAdvice(rows,'excel:'+sheetName);
+        return;
+      } else if(ext==='csv'||ext==='txt'){
+        const t=await f.text();
+        const rows=parseCsv(t);
+        showProgress('Pairing remittance to payments…',80);
+        await new Promise(r=>setTimeout(r,30));
+        importRemittanceAdvice(rows,'csv');
+        return;
+      } else if(ext==='pdf'){
+        if(typeof pdfjsLib==='undefined'){hideProgress();toast('PDF parser loading — try again','warn');return;}
+        showProgress('Extracting PDF text…',30);
+        const buf=await f.arrayBuffer();
+        const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+        let allText='';
+        for(let p=1;p<=pdf.numPages;p++){
+          const page=await pdf.getPage(p);
+          const tc=await page.getTextContent();
+          let lastY=null,lineText='';
+          tc.items.forEach(item=>{
+            const y=Math.round(item.transform[5]);
+            if(lastY!==null&&Math.abs(y-lastY)>3){allText+=lineText+'\n';lineText='';}
+            lineText+=(lineText?' ':'')+item.str.trim();
+            lastY=y;
+          });
+          if(lineText)allText+=lineText+'\n';
+        }
+        showProgress('Parsing remittance advice…',70);
+        await new Promise(r=>setTimeout(r,30));
+        const batches=parseRemittancePDF(allText);
+        if(!batches.length){hideProgress();toast('No invoice/amount pairs found in PDF — try Excel/CSV or manual entry','warn');return;}
+        pairRemittanceToPayments(batches);
+        REM_ADVICE=REM_ADVICE.concat(batches);
+        saveToStorage();
+        const paired=batches.filter(b=>b.paymentIdx!==null).length;
+        hideProgress();
+        toast('Imported '+batches.length+' remittance batch(es) · '+paired+' auto-paired');
+        addAudit('Remittance advice imported',batches.length+' batches · '+paired+' paired');
+        document.getElementById('imp-modal').classList.remove('open');
+        if(typeof renderPayQueue==='function')renderPayQueue();
+        if(typeof updDash==='function')updDash();
+        return;
+      }
+    }
     if(ext==='xlsx'||ext==='xls'){
       if(typeof XLSX==='undefined'){hideProgress();toast('Excel parsing: include SheetJS for .xlsx support','warn');const t=await f.text();const _mt8=document.getElementById('mo-ta');if(_mt8)_mt8.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);return;}
       showProgress('Parsing Excel — large files may take a moment…',40);
@@ -6708,124 +6802,383 @@ async function handleFile(inp){
 }
 
 
+
+// ════════════════════════════════════════════════════════════
+// REMITTANCE ADVICE — Phase 4: third file type
+// REM_ADVICE structure: { batchId, paymentRef, customerName, customerAcct,
+//   paymentDate, totalAmount, lines:[{invoice, amount, po, customerRef}],
+//   paired:'auto-ref|auto-amt|manual|unmatched', paymentIdx:number|null }
+// ════════════════════════════════════════════════════════════
+
+function _remNormName(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().split(' ').slice(0,3).join(' ');}
+function _remColIdx(headers, ...names){
+  const norm = headers.map(h => String(h||'').toLowerCase().replace(/[^a-z0-9]/g,''));
+  for(const n of names){
+    const target = n.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const idx = norm.indexOf(target);
+    if(idx >= 0) return idx;
+  }
+  return -1;
+}
+
+function parseRemittanceTable(rows){
+  // rows: array of arrays (first row = headers)
+  if(!rows || rows.length < 2) return [];
+  const headers = rows[0];
+  // Invoice column: prefer 'Invoice # (if present)' when both 'Invoice #' and that exist
+  let iInv = _remColIdx(headers, 'invoiceifpresent','invoicepaid','paidinvoice','remittanceinvoice');
+  if(iInv < 0) iInv = _remColIdx(headers, 'invoice','invoicenumber','invoice#','invoicenum','invno');
+  // If two columns match invoice-like, pick the one with more non-empty values in data rows
+  if(iInv >= 0){
+    const norm = headers.map(h => String(h||'').toLowerCase().replace(/[^a-z0-9]/g,''));
+    const otherInv = norm.findIndex((h,i)=>i!==iInv && (h.includes('invoice')||h.startsWith('inv')));
+    if(otherInv >= 0){
+      let nA=0, nB=0;
+      for(let r=1; r<rows.length; r++){
+        if(rows[r][iInv]) nA++;
+        if(rows[r][otherInv]) nB++;
+      }
+      if(nB > nA) iInv = otherInv;
+    }
+  }
+  // Amount paid column: prefer specific over generic
+  let iAmt = _remColIdx(headers, 'amountpaid','paidamount','appliedamount');
+  if(iAmt < 0) iAmt = _remColIdx(headers, 'amount','paid','payment');
+  // If two amount columns exist, pick the one with more non-empty values
+  if(iAmt >= 0){
+    const norm = headers.map(h => String(h||'').toLowerCase().replace(/[^a-z0-9]/g,''));
+    const otherAmt = norm.findIndex((h,i)=>i!==iAmt && (h.includes('amount')||h.includes('paid')));
+    if(otherAmt >= 0){
+      let nA=0, nB=0;
+      for(let r=1; r<rows.length; r++){
+        if(parseFloat(String(rows[r][iAmt]||'').replace(/[$,]/g,''))>0) nA++;
+        if(parseFloat(String(rows[r][otherAmt]||'').replace(/[$,]/g,''))>0) nB++;
+      }
+      if(nB > nA) iAmt = otherAmt;
+    }
+  }
+  const iPO = _remColIdx(headers, 'po','ponumber','po#','purchaseorder');
+  const iRef = _remColIdx(headers, 'remittanceref','paymentref','referencenumber','reference','transactionref','txnref','batchid','batchref');
+  const iDate = _remColIdx(headers, 'paymentdate','paiddate','postingdate','date','remittancedate');
+  const iCust = _remColIdx(headers, 'customername','customer','payer','remitter','vendor');
+  const iAcct = _remColIdx(headers, 'account','accountnumber','customerid','custid','customercode');
+  
+  if(iInv < 0 && iAmt < 0) return []; // no usable data
+  
+  const batches = new Map(); // key = ref|date
+  for(let r=1; r<rows.length; r++){
+    const row = rows[r];
+    if(!row || row.every(c => c===null || c===undefined || c==='')) continue;
+    
+    const invNum = iInv >= 0 ? row[iInv] : '';
+    const amtPaid = iAmt >= 0 ? parseFloat(String(row[iAmt]||'').replace(/[$,]/g,''))||0 : 0;
+    const po = iPO >= 0 ? row[iPO] : '';
+    const ref = iRef >= 0 ? String(row[iRef]||'').trim() : '';
+    const date = iDate >= 0 ? String(row[iDate]||'').trim() : '';
+    const cust = iCust >= 0 ? String(row[iCust]||'').trim() : '';
+    const acct = iAcct >= 0 ? String(row[iAcct]||'').trim() : '';
+    
+    // Skip rows that have no invoice AND no amount (truly empty)
+    if(!invNum && !amtPaid) continue;
+    
+    const batchKey = ref || ('__noref__' + (date || cust || acct || 'unknown'));
+    
+    if(!batches.has(batchKey)){
+      batches.set(batchKey, {
+        batchId: ref || ('BATCH-' + (batches.size + 1)),
+        paymentRef: ref,
+        customerName: cust,
+        customerAcct: acct,
+        paymentDate: date,
+        totalAmount: 0,
+        lines: [],
+        paired: 'unmatched',
+        paymentIdx: null,
+        sourceFormat: 'excel-csv'
+      });
+    }
+    const b = batches.get(batchKey);
+    if(invNum || amtPaid){
+      b.lines.push({
+        invoice: String(invNum||'').trim(),
+        amount: amtPaid,
+        po: String(po||'').trim(),
+        customerRef: cust || acct
+      });
+      b.totalAmount += amtPaid;
+    }
+    if(cust && !b.customerName) b.customerName = cust;
+    if(acct && !b.customerAcct) b.customerAcct = acct;
+    if(date && !b.paymentDate) b.paymentDate = date;
+  }
+  return Array.from(batches.values()).filter(b => b.lines.length > 0);
+}
+
+function parseRemittanceCSV(text){
+  const rows = parseCsv(text);
+  return parseRemittanceTable(rows);
+}
+
+function parseRemittancePDF(text){
+  // Heuristic: extract invoice/amount pairs from PDF text
+  // Most remittance PDFs have a table where each line has: <invoice#> ... <$amount>
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  
+  // Try to find a payment ref and date in the header
+  let paymentRef = '';
+  let paymentDate = '';
+  let customerName = '';
+  
+  const refMatch = text.match(/(?:payment|check|remit|transaction|reference)[\s#:]*(?:no\.?|number|#)?[\s:]*([A-Z0-9\-]{4,30})/i);
+  if(refMatch) paymentRef = refMatch[1];
+  const dateMatch = text.match(/(?:date|payment date|paid)[\s:]*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i);
+  if(dateMatch) paymentDate = dateMatch[1];
+  // Customer name: first ALL CAPS line of length 5-50 that's not "REMITTANCE ADVICE" etc.
+  for(const ln of lines.slice(0, 20)){
+    if(/^[A-Z][A-Z0-9 ,.\-&]{4,50}$/.test(ln) && !/^(REMITTANCE|PAYMENT|ADVICE|INVOICE|AMOUNT|TOTAL|DATE|CHECK)/.test(ln)){
+      customerName = ln.trim(); break;
+    }
+  }
+  
+  // Look for invoice/amount line pairs
+  // Pattern: 8-15 digit/alphanumeric invoice ref followed by amount with optional $ and decimal
+  const invAmtPairs = [];
+  const lineRegex = /\b(\d{6,15}|[A-Z]{1,4}\-?\d{4,15})\b[^\n]*?\$?\s*((?:\d{1,3}(?:,\d{3})*|\d+)\.\d{2})\b/g;
+  let m;
+  const seen = new Set();
+  while((m = lineRegex.exec(text)) !== null){
+    const inv = m[1];
+    const amt = parseFloat(m[2].replace(/,/g,''));
+    if(amt < 0.01 || amt > 100000000) continue;
+    const key = inv + '|' + amt.toFixed(2);
+    if(seen.has(key)) continue;
+    seen.add(key);
+    invAmtPairs.push({invoice: inv, amount: amt, po: '', customerRef: customerName});
+  }
+  
+  if(invAmtPairs.length === 0) return [];
+  
+  return [{
+    batchId: paymentRef || ('PDF-' + Date.now()),
+    paymentRef: paymentRef,
+    customerName: customerName,
+    customerAcct: '',
+    paymentDate: paymentDate,
+    totalAmount: invAmtPairs.reduce((s,l)=>s+l.amount, 0),
+    lines: invAmtPairs,
+    paired: 'unmatched',
+    paymentIdx: null,
+    sourceFormat: 'pdf'
+  }];
+}
+
+function pairRemittanceToPayments(batches){
+  // Match each remittance batch to a bank payment in PAY[]
+  // Pass 1: exact ref match (paymentRef === p.txId or p.bankRef)
+  // Pass 2: amount + customer name fuzzy match
+  // Pass 3: amount only, same date
+  
+  for(const b of batches){
+    if(b.paymentIdx !== null && b.paymentIdx !== undefined) continue;
+    
+    // Pass 1: bank ref / payment ref exact match
+    if(b.paymentRef){
+      const refN = String(b.paymentRef).toUpperCase().trim();
+      const idx = PAY.findIndex(p => {
+        if(!p) return false;
+        const txN = String(p.txId||'').toUpperCase().trim();
+        const cRef = String(p.bankRef||p.custRef||p.i||'').toUpperCase().trim();
+        return refN && (txN === refN || cRef === refN || (txN && refN.includes(txN)) || (cRef && refN.includes(cRef)));
+      });
+      if(idx >= 0){ b.paymentIdx = idx; b.paired = 'auto-ref'; continue; }
+    }
+    
+    // Pass 2: amount + customer name fuzzy match
+    if(b.totalAmount > 0){
+      const tgtAmt = b.totalAmount;
+      const custN = _remNormName(b.customerName);
+      const candidates = [];
+      PAY.forEach((p,i) => {
+        if(!p) return;
+        const pAmt = parseFloat(p.amt) || 0;
+        if(Math.abs(pAmt - tgtAmt) / Math.max(pAmt, tgtAmt, 1) > 0.01) return; // within 1%
+        const pCustN = _remNormName(p.c);
+        if(custN && pCustN && (custN === pCustN || pCustN.includes(custN) || custN.includes(pCustN))){
+          candidates.push({i, score: 2});
+        } else if(!custN){
+          candidates.push({i, score: 1});
+        }
+      });
+      if(candidates.length > 0){
+        candidates.sort((a,b)=>b.score - a.score);
+        b.paymentIdx = candidates[0].i;
+        b.paired = 'auto-amt';
+        continue;
+      }
+    }
+    
+    b.paired = 'unmatched';
+  }
+  return batches;
+}
+
+function getRemittanceForPayment(payIdx){
+  return REM_ADVICE.find(b => b.paymentIdx === payIdx);
+}
+
+
+
+function openRemAdviceManualEntry(){
+  showModal('Manual Remittance Advice Entry',
+    '<div style="display:grid;gap:10px;margin-bottom:14px">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Payment Reference</div>'+
+    '<input id="_rem-payref" type="text" placeholder="ACH ID, check #, wire ref…" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Payment Date</div>'+
+    '<input id="_rem-paydate" type="date" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Name</div>'+
+    '<input id="_rem-custname" type="text" placeholder="e.g., FCA US LLC" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Account #</div>'+
+    '<input id="_rem-custacct" type="text" placeholder="Optional" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div></div>'+
+    '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-top:4px">Invoice Lines</div>'+
+    '<div id="_rem-lines" style="display:grid;gap:6px"></div>'+
+    '<button class="btn btn-outline btn-xs" onclick="_remAddLine()" style="justify-self:start">+ Add invoice line</button>'+
+    '<div id="_rem-total" style="font-weight:700;color:var(--t1);font-size:13px;border-top:1px solid var(--bdr);padding-top:8px">Total: $0.00</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px">'+
+    '<button class="btn btn-p btn-sm" onclick="_remSaveManual()">Save Remittance Advice</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+    '</div>'
+  );
+  setTimeout(function(){_remAddLine();_remAddLine();_remAddLine();},80);
+}
+function _remAddLine(){
+  const c=document.getElementById('_rem-lines');if(!c)return;
+  const idx=c.children.length;
+  const div=document.createElement('div');
+  div.style.cssText='display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;align-items:center';
+  div.innerHTML='<input type="text" placeholder="Invoice #" data-rem-inv style="padding:6px 9px;border:1px solid var(--bdr);border-radius:5px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none">'+
+    '<input type="text" placeholder="PO #" data-rem-po style="padding:6px 9px;border:1px solid var(--bdr);border-radius:5px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none">'+
+    '<input type="number" step="0.01" placeholder="Amount" data-rem-amt oninput="_remUpdTotal()" style="padding:6px 9px;border:1px solid var(--bdr);border-radius:5px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none;text-align:right">'+
+    '<button class="btn btn-ghost btn-xs" onclick="this.parentElement.remove();_remUpdTotal()" style="color:var(--r-t)">−</button>';
+  c.appendChild(div);
+}
+function _remUpdTotal(){
+  const inputs=document.querySelectorAll('[data-rem-amt]');
+  let t=0;inputs.forEach(i=>t+=parseFloat(i.value)||0);
+  const el=document.getElementById('_rem-total');
+  if(el)el.textContent='Total: $'+$f(t);
+}
+function _remSaveManual(){
+  const payRef=(document.getElementById('_rem-payref')||{}).value||'';
+  const payDate=(document.getElementById('_rem-paydate')||{}).value||'';
+  const custName=(document.getElementById('_rem-custname')||{}).value||'';
+  const custAcct=(document.getElementById('_rem-custacct')||{}).value||'';
+  const lineDivs=document.querySelectorAll('#_rem-lines > div');
+  const lines=[];
+  lineDivs.forEach(d=>{
+    const inv=(d.querySelector('[data-rem-inv]')||{}).value||'';
+    const po=(d.querySelector('[data-rem-po]')||{}).value||'';
+    const amt=parseFloat((d.querySelector('[data-rem-amt]')||{}).value)||0;
+    if(inv||amt>0)lines.push({invoice:String(inv).trim(),amount:amt,po:String(po).trim(),customerRef:custName});
+  });
+  if(!lines.length){toast('Add at least one invoice line','warn');return;}
+  const totalAmount=lines.reduce((s,l)=>s+l.amount,0);
+  const batch={
+    batchId:payRef||('MANUAL-'+Date.now()),
+    paymentRef:payRef,customerName:custName,customerAcct:custAcct,
+    paymentDate:payDate,totalAmount:totalAmount,lines:lines,
+    paired:'unmatched',paymentIdx:null,sourceFormat:'manual'
+  };
+  pairRemittanceToPayments([batch]);
+  REM_ADVICE.push(batch);
+  saveToStorage();
+  closeModal();
+  toast('Remittance saved · '+lines.length+' lines · $'+$f(totalAmount)+(batch.paymentIdx!==null?' · auto-paired':''));
+  addAudit('Manual remittance entry',lines.length+' lines · $'+$f(totalAmount));
+  if(typeof renderPayQueue==='function')renderPayQueue();
+  if(typeof updDash==='function')updDash();
+}
+
+function importRemittanceAdvice(rows, sourceFormat){
+  const batches=parseRemittanceTable(rows);
+  if(!batches.length){
+    hideProgress();
+    toast('No invoice/amount data found — check column headers','warn');
+    return;
+  }
+  batches.forEach(b=>b.sourceFormat=sourceFormat||'unknown');
+  pairRemittanceToPayments(batches);
+  REM_ADVICE=REM_ADVICE.concat(batches);
+  saveToStorage();
+  const paired=batches.filter(b=>b.paymentIdx!==null).length;
+  const totalLines=batches.reduce((s,b)=>s+b.lines.length,0);
+  hideProgress();
+  toast('Imported '+batches.length+' batch(es) · '+totalLines+' lines · '+paired+' auto-paired');
+  addAudit('Remittance advice imported',batches.length+' batches · '+totalLines+' lines · '+paired+' paired');
+  const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
+  if(typeof renderPayQueue==='function')renderPayQueue();
+  if(typeof updDash==='function')updDash();
+}
+
 function parseBAI2(txt){
-  // BAI2 type-code → payment method label
   const TYPE_METHOD={
     '115':'Lockbox','116':'Lockbox','117':'Lockbox',
     '165':'ACH','166':'ACH','167':'ACH','169':'ACH',
     '195':'Wire','196':'Wire','197':'Wire',
-    '275':'ZBA Transfer','276':'ZBA Transfer',
-    '175':'Check','176':'Check',
-    '214':'Wire'
+    '175':'Check','176':'Check','214':'Wire'
   };
-
-  // Step 1 — strip trailing whitespace/\r and join continuation (88,) lines
-  // BAI2 wraps long fields across multiple 88, records; reassemble them first.
-  const rawLines=txt.split('\n').map(l=>l.replace(/\r/g,'').trimEnd());
+  const rawLines=txt.split('\n');
   const joined=[];
-  for(const l of rawLines){
+  for(let i=0;i<rawLines.length;i++){
+    const l=rawLines[i].replace(/\r/g,'').trimEnd();
     if(l.startsWith('88,')){
-      // Append to previous line, stripping the leading "88," and trailing "/"
-      if(joined.length){
-        const prev=joined[joined.length-1];
-        const cont=l.slice(3).replace(/\/\s*$/,'').trim();
-        // Only append non-empty continuation
-        if(cont) joined[joined.length-1]=prev.replace(/\/\s*$/,'')+' '+cont;
-      }
-    } else {
-      joined.push(l);
-    }
+      if(joined.length){const cont=l.slice(3).replace(/\/\s*$/,'').trim();if(cont)joined[joined.length-1]=joined[joined.length-1].replace(/\/\s*$/,'')+' '+cont;}
+    }else{joined.push(l);}
   }
-
-  // Step 2 — parse joined records
-  // Helper: strip trailing "/" and whitespace from a BAI2 field value
-  function bField(s){ return (s||'').replace(/\/\s*$/,'').trim(); }
-
-  // Helper: parse a BAI2 date YYMMDD → MM/DD/YYYY
-  function bDate(s){
-    s=s?s.trim():'';
-    if(s.length===6){
-      const yy=s.slice(0,2),mm=s.slice(2,4),dd=s.slice(4,6);
-      return mm+'/'+dd+'/'+(parseInt(yy,10)<50?'20':'19')+yy;
-    }
-    return s;
-  }
-
-  let currentDate='';
-  let currentAccount='';
+  function bField(s){return(s||'').replace(/\/\s*$/,'').trim();}
+  function bDate(s){s=(s||'').trim();if(s.length===6){const yy=s.slice(0,2),mm=s.slice(2,4),dd=s.slice(4,6);return mm+'/'+dd+'/'+(parseInt(yy)<50?'20':'19')+yy;}return s;}
+  let currentDate='',currentAccount='';
   const txRows=[];
-
-  for(const line of joined){
-    if(!line) continue;
-    const parts=line.split(',');
-    const recType=parts[0];
-
-    if(recType==='02'){
-      // Group header — contains the value date at parts[4] (YYMMDD)
-      const d=bField(parts[4]||'');
-      if(d) currentDate=bDate(d);
-
-    } else if(recType==='03'){
-      // Account identifier — account number at parts[1]
-      currentAccount=bField(parts[1]||'');
-
-    } else if(recType==='16'){
-      // Transaction detail
-      // 16,TypeCode,Amount,FundsType,BankRef,CustomerRef,Text/[88 continuation already merged]
-      const typeCode=bField(parts[1]);
-      const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
-
-      // Amount: lockbox (115,116,117) is in cents; ACH/Wire/others already in dollars
-      const rawAmt=parseFloat(bField(parts[2])||'0');
-      const amt=['115','116','117'].includes(typeCode) ? rawAmt/100 : rawAmt/100;
-      // MUFG always stores in implied cents (divide by 100 for all types)
-
-      const bankRef=bField(parts[4]||'');
-      const custRef=bField(parts[5]||'');
-
-      // The merged text (from parts[6] onward + all 88 lines) is in parts[6]
-      const fullText=parts.slice(6).join(',').replace(/\/\s*$/,'').trim();
-
-      // Extract customer/originator name — look for "NAME:ORIG:" or "ORIGINATOR:" pattern
-      let customer='';
-      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
-      if(nameM) customer=nameM[1].trim();
-      // Fallback: for wire (195), grab the line after "INWARD REMITTANCE" which is usually the sender
-      if(!customer){
-        const wireM=fullText.match(/INWARD REMITTANCE\s+([A-Z][^/]{3,60})/i);
-        if(wireM) customer=wireM[1].trim();
-      }
-      // Fallback: for ZBA/pooling, grab company name after POOLING lines
-      if(!customer){
-        const zbaM=fullText.match(/POOLING[^/]*\s+([A-Z][A-Z\s]{4,50}(?:INC|LLC|CORP|LTD|CO|HOLDING)[A-Z\s]*)/i);
-        if(zbaM) customer=zbaM[1].trim();
-      }
-
-      // Extract invoice/PO references from the full memo text
-      const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
-      const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
-      const refId=bankRef||custRef||'';
-
-      // Build a clean notes field from the most useful parts of the memo
-      const notes=fullText.replace(/\s+/g,' ').slice(0,120);
-
-      txRows.push([
-        currentAccount,
-        customer,
-        amt.toFixed(2),
-        invM?invM[1]:'',
-        poM?poM[1]:'',
-        refId,
-        currentDate,
-        method,
-        notes
-      ]);
+  for(let li=0;li<joined.length;li++){
+    const line=joined[li];if(!line)continue;
+    const parts=line.split(',');const recType=parts[0];
+    if(recType==='02'){const d=bField(parts[4]||'');if(d)currentDate=bDate(d);}
+    else if(recType==='03'){currentAccount=bField(parts[1]||'');}
+    else if(recType==='16'){
+      try{
+        const typeCode=bField(parts[1]);
+        const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
+        const rawAmt=parseFloat(bField(parts[2])||'0');
+        const amt=rawAmt/100;
+        if(typeCode==='275'||typeCode==='276')continue;
+        const p3=bField(parts[3]||'');
+        const hasFundsType=p3.length===1&&/[A-Z0-9]/.test(p3);
+        const off=hasFundsType?4:0;
+        const bankRef=bField(parts[4+off]||'');
+        const custRef=bField(parts[5+off]||'');
+        const fullText=parts.slice(6+off).join(',').replace(/\/\s*$/,'').trim();
+        let customer='';
+        if(typeCode==='195'||typeCode==='196'||typeCode==='214'){
+          const wm=fullText.match(/AMT\s+USD[\s\d,]+\.\d{2}\s+(.{3,60}?)(?:\s{3,}|\s+RS:|\s+ADV\s|\s+ORIGINATOR:|$)/i);
+          if(wm)customer=wm[1].replace(/\s+/g,' ').trim();
+          if(!customer){const om=fullText.match(/ORIGINATOR:\s*([A-Z][^\r\n]{2,60}?)(?:\s{2,}|\s+[A-Z]{2,4}\s*:|$)/i);if(om)customer=om[1].replace(/\s+/g,' ').trim();}
+        }else if(typeCode==='165'||typeCode==='166'||typeCode==='167'||typeCode==='169'){
+          const am=fullText.match(/NAME:ORIG:\s*([A-Z0-9][^\r\n]{2,50}?)(?:\s+INF:|\s{2,}|$)/i);
+          if(am)customer=am[1].replace(/\s+/g,' ').trim();
+        }else if(typeCode==='115'||typeCode==='116'||typeCode==='117'){customer='Lockbox Batch';}
+        else if(typeCode==='175'||typeCode==='176'){customer='Check Deposit';}
+        else{const nm=fullText.match(/NAME:ORIG:\s*([A-Z][^\r\n]{2,60})(?:\s+INF:|\s+RCVR|$)/i);if(nm)customer=nm[1].replace(/\s+/g,' ').trim();}
+        if(customer)customer=customer.replace(/\s+D\s+\d{3}-\d{2}.*$/,'').trim();
+        const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
+        const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
+        txRows.push([currentAccount,customer,amt.toFixed(2),invM?invM[1]:'',poM?poM[1]:'',bankRef||custRef||'',currentDate,method,fullText.replace(/\s+/g,' ').trim()]);
+      }catch(e){console.warn('BAI2 row skip:',e.message);}
     }
   }
-
   const header='Bank Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
-  const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
-  return [header,...dataRows].join('\n');
+  return[header,...txRows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','))].join('\n');
 }
 
 function parseCAMT(txt){
