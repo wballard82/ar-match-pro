@@ -2905,7 +2905,7 @@ body.app-active #app {
                       <span id="pq-count" style="font-size:11px;color:var(--t3)">(0)</span>
                     </div>
                     <div class="ca-queue-search" style="margin-top:6px">
-                      <input type="text" placeholder="Search payments…" oninput="filterPayQueue(this.value)">
+                      <input type="text" placeholder="Search payments…" oninput="clearTimeout(window._pqTimer);var _pv=this.value;window._pqTimer=setTimeout(function(){filterPayQueue(_pv);},200)">
                     </div>
                     <div class="pq-filters" style="margin-top:6px">
                       <button class="pq-filter-btn active" onclick="setPayFilter('all',this)">All</button>
@@ -3069,7 +3069,7 @@ body.app-active #app {
                   <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account</span>
                   <div style="position:relative">
                     <input type="text" id="ca-acct-input" class="ca-acct-sel" placeholder="Search account…" autocomplete="off"
-                      style="min-width:220px;cursor:text" oninput="caAcctInputSearch(this.value)"
+                      style="min-width:220px;cursor:text" oninput="clearTimeout(_fbl5nTimer);var _v=this.value;_fbl5nTimer=setTimeout(function(){caAcctInputSearch(_v);},250)"
                       onblur="setTimeout(function(){var d=document.getElementById('ca-acct-drop');if(d)d.style.display='none';},200)"
                       onfocus="caAcctInputSearch(this.value)">
                     <div id="ca-acct-drop" style="display:none;position:absolute;top:100%;left:0;right:0;min-width:280px;background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;box-shadow:var(--shadow-md);z-index:50;max-height:220px;overflow-y:auto;margin-top:3px"></div>
@@ -3331,7 +3331,7 @@ body.app-active #app {
         </div>
         <div class="panel-body" style="padding:0">
           <div style="padding:6px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);display:flex;align-items:center;gap:8px;flex-shrink:0">
-            <input class="inp" id="inv-search" placeholder="🔍 Search all columns…" oninput="invColFilter()" style="width:220px;font-size:12.5px">
+            <input class="inp" id="inv-search" placeholder="🔍 Search all columns…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" style="width:220px;font-size:12.5px">
             <button class="btn btn-ghost btn-sm" onclick="clearInvColFilters()">✕ Clear filters</button>
             <span style="font-size:12px;color:var(--t3);margin-left:auto" id="inv-ct">0 rows</span>
           </div>
@@ -3352,23 +3352,23 @@ body.app-active #app {
                   <th onclick="invSortCol(10,this)">Status<span class="si2"></span></th>
                 </tr>
                 <tr class="col-filter-row" id="inv-filter-row">
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="0"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="1"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="2"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="3"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="4"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="5"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="0"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="1"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="2"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="3"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="4"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="5"></td>
                   <td class="col-filter-row">
-                    <select class="col-filter-sel" oninput="invColFilter()" data-col="6">
+                    <select class="col-filter-sel" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="6">
                       <option value="">All types</option>
                       <option>RV</option><option>DZ</option><option>Credit</option><option>Down Payment</option>
                     </select>
                   </td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="From…" oninput="invColFilter()" data-col="7" type="text"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="8"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="invColFilter()" data-col="9"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="From…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="7" type="text"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="8"></td>
+                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="9"></td>
                   <td class="col-filter-row">
-                    <select class="col-filter-sel" oninput="invColFilter()" data-col="10">
+                    <select class="col-filter-sel" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="10">
                       <option value="">All</option>
                       <option value="open">Open</option><option value="Exact">Matched</option>
                       <option value="Short pay">Short pay</option><option value="Overpay">Overpay</option>
@@ -5345,6 +5345,7 @@ function swTab(t,el){
 
 // ── Clear data ──
 function clearInvData(){
+  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
   var msg='Clear all invoice data?\n\n'+INV.length+' invoices will be removed.\nThis cannot be undone.';
   showConfirm(msg,function(){
     INV=[];
@@ -5383,6 +5384,7 @@ function clearPayData(){
 }
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
 function clearAllData(){
+  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
   showConfirm('Clear ALL data?\n\nInvoices, payments, matches, and exceptions will be permanently removed.\nThis cannot be undone.',function(){
     INV=[];PAY=[];RES=[];EXC=[];
     rAll();
@@ -7722,6 +7724,7 @@ function processImport(){
       dl:r[col('delivery','del','deliverynumber','deliveryno','vbeln2')]||'',
       s:''
     }));
+    try{_buildSearchText();}catch(e){}
     rInv();setStatus('loaded');saveToStorage();addAudit('Invoices imported',INV.length+' rows');toast('Imported '+INV.length+' invoices');
     // Populate Customer Open Items immediately after invoice import
     try{renderFbl5n('ca-open-items-body','','');}catch(e){}
@@ -8151,8 +8154,23 @@ function agingChip(due){
   return '<span class="aging-chip aging-90">'+days+' days</span>';
 }
 
+
+// ══ PERFORMANCE: debounce timers + row cap for large datasets ═══════════
+var _fbl5nTimer=null;
+var _fbl5nPageSize=250;
+var _fbl5nOffset=0;
+var _fbl5nFiltered=[];
+var _invSearchTimer=null;
+
+function _buildSearchText(){
+  INV.forEach(function(v){
+    v._st=[v.c||'',v.a||'',v.i||'',v.po||'',v.so||'',v.d||'',String(v.amt||'')].join(' ').toLowerCase();
+  });
+}
+
 function renderFbl5n(tbodyId, filterAcct, filterCust){
   var tbody=document.getElementById(tbodyId); if(!tbody) return;
+  _fbl5nOffset=0;
   var invs=INV.filter(function(v){
     if(filterAcct && v.a!==filterAcct) return false;
     if(filterCust && (v.c||'').toLowerCase()!==filterCust.toLowerCase()) return false;
@@ -8169,43 +8187,75 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
         return s;}
       return score(b)-score(a);});
   }
+  _fbl5nFiltered=invs;
   if(!invs.length){
     tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
     return;
   }
-  tbody.innerHTML=invs.map(function(v,i){
-    var matched=RES.find(function(r){ return r.i===v.i; });
-    var applied=matched?matched.pd:0;
-    var balance=v.amt-applied;
-    var ENG_ROW=ENG_ROWS.find(function(r){ return r.inv.i===v.i; });
-    var conf=ENG_ROW?ENG_ROW.conf:(ENG_PAY?engGetConfidence(v,ENG_PAY):0);
-    var status=v.s||'Open';
-    var sb=v.s==='Exact'||v.s==='Applied'?'<span class="badge badge-g">'+status+'</span>':
-            v.s==='Short pay'?'<span class="badge badge-am">'+status+'</span>':
-            v.s==='Overpay'?'<span class="badge badge-r">'+status+'</span>':
-            '<span style="color:var(--t3);font-size:12px">Open</span>';
-    var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>':'—';
-    var sel=ENG_ROW&&ENG_ROW.selected;
-    return '<tr class="'+(sel?'selected-inv':'')+'" onclick="fbl5nRowClick(\''+v.i+'\')" style="cursor:pointer">'+
-      '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+v.i+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
-      '<td class="td-mono" style="font-size:11.5px">'+v.a+'</td>'+
-      '<td style="font-weight:600">'+v.c+'</td>'+
-      '<td class="td-mono" style="color:var(--pd)">'+v.i+'</td>'+
-      '<td class="td-mono">'+fmtDate(v.dt2)+'</td>'+
-      '<td class="td-mono" style="color:'+(v.due&&new Date(v.due+'T00:00:00')<new Date()?'var(--r-t)':'')+'">'+fmtDate(v.due)+'</td>'+
-      '<td>'+agingChip(v.due)+'</td>'+
-      '<td class="td-mono" style="font-size:11.5px">'+(v.po||'—')+'</td>'+
-      '<td class="td-mono" style="font-size:11.5px">'+(v.so||'—')+'</td>'+
-      '<td class="td-mono" style="font-size:11.5px">'+(v.d||'—')+'</td>'+
-      '<td class="td-num">$'+$f(v.amt)+'</td>'+
-      '<td class="td-num" style="color:'+(balance<v.amt*0.5?'var(--am-t)':'')+'">$'+$f(Math.max(0,balance))+'</td>'+
-      '<td class="td-num" style="color:var(--g-t)">'+(applied>0?'$'+$f(applied):'—')+'</td>'+
-      '<td>'+sb+'</td>'+
-      '<td style="text-align:center">'+cd+'</td>'+
-      '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(\''+v.i+'\')">Apply</button></td>'+
-    '</tr>';
-  }).join('');
+  _fbl5nRenderPage(tbodyId,0);
 }
+
+function _fbl5nBuildRow(v){
+  var matched=RES.find(function(r){ return r.i===v.i; });
+  var applied=matched?matched.pd:0;
+  var balance=v.amt-applied;
+  var ENG_ROW=(typeof ENG_ROWS!=='undefined')?ENG_ROWS.find(function(r){ return r.inv&&r.inv.i===v.i; }):null;
+  var conf=ENG_ROW?ENG_ROW.conf:(ENG_PAY&&typeof engGetConfidence==='function'?engGetConfidence(v,ENG_PAY):0);
+  var status=v.s||'Open';
+  var sb=v.s==='Exact'||v.s==='Applied'?'<span class="badge badge-g">'+status+'</span>':
+          v.s==='Short pay'?'<span class="badge badge-am">'+status+'</span>':
+          v.s==='Overpay'?'<span class="badge badge-r">'+status+'</span>':
+          '<span style="color:var(--t3);font-size:12px">Open</span>';
+  var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>':'\u2014';
+  var sel=ENG_ROW&&ENG_ROW.selected;
+  var vi=v.i||'';
+  return '<tr class="'+(sel?'selected-inv':'')+'" onclick="fbl5nRowClick(\''+vi+'\')" style="cursor:pointer">'+
+    '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+vi+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.a||'')+'</td>'+
+    '<td style="font-weight:600">'+(v.c||'')+'</td>'+
+    '<td class="td-mono" style="color:var(--pd)">'+vi+'</td>'+
+    '<td class="td-mono">'+(typeof fmtDate==='function'?fmtDate(v.dt2):(v.dt2||''))+'</td>'+
+    '<td class="td-mono" style="color:'+(v.due&&new Date(v.due+'T00:00:00')<new Date()?'var(--r-t)':'')+'">'+(typeof fmtDate==='function'?fmtDate(v.due):(v.due||''))+'</td>'+
+    '<td>'+(typeof agingChip==='function'?agingChip(v.due):'')+'</td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.po||'\u2014')+'</td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.so||'\u2014')+'</td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.d||'\u2014')+'</td>'+
+    '<td class="td-num">'+(typeof $f==='function'?'$'+$f(v.amt):'$'+v.amt)+'</td>'+
+    '<td class="td-num" style="color:'+(balance<v.amt*0.5?'var(--am-t)':'')+'">'+(typeof $f==='function'?'$'+$f(Math.max(0,balance)):'')+'</td>'+
+    '<td class="td-num" style="color:var(--g-t)">'+(applied>0?(typeof $f==='function'?'$'+$f(applied):'$'+applied):'\u2014')+'</td>'+
+    '<td>'+sb+'</td>'+
+    '<td style="text-align:center">'+cd+'</td>'+
+    '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(\''+vi+'\')">Apply</button></td>'+
+  '</tr>';
+}
+
+function _fbl5nRenderPage(tbodyId,startIdx){
+  var tbody=document.getElementById(tbodyId);if(!tbody)return;
+  var invs=_fbl5nFiltered;
+  var end=Math.min(startIdx+_fbl5nPageSize,invs.length);
+  var rows=[];
+  for(var ri=startIdx;ri<end;ri++){rows.push(_fbl5nBuildRow(invs[ri]));}
+  var footer='';
+  if(end<invs.length){
+    footer='<tr id="fbl5n-load-more"><td colspan="16" style="text-align:center;padding:12px">'+
+      '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' open items</span> '+
+      '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
+    '</td></tr>';
+  } else if(invs.length>_fbl5nPageSize){
+    footer='<tr><td colspan="16" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
+  }
+  if(startIdx===0){
+    tbody.innerHTML=rows.join('')+footer;
+  } else {
+    var old=document.getElementById('fbl5n-load-more');if(old)old.remove();
+    tbody.insertAdjacentHTML('beforeend',rows.join('')+footer);
+  }
+  _fbl5nOffset=end;
+}
+
+function _fbl5nLoadMore(tbodyId){_fbl5nRenderPage(tbodyId,_fbl5nOffset);}
+
+
 
 function fbl5nRowClick(invI){
   // Check if we're in exception-apply mode
