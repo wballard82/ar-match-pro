@@ -5916,16 +5916,35 @@ function renderPayQueue(){
     var acct=String(p.bankAcct||p.bankAccount||p.statementAccount||'').replace(/[^0-9A-Za-z\-]/g,'').trim();
     return acct===bankVal;
   });
-  if(ct)ct.textContent='('+visiblePay.length+(bankVal?' · '+bankVal:'')+')';
+  if(ct)ct.textContent='('+PAY.length+')';
   if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
   if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankVal+'</div><div class="empty-s">Select a different bank account.</div></div>';return;}
+  // Read all active filters
+  const ccySel2=document.getElementById('ca-ccy-sel');
+  const ccyVal2=ccySel2?ccySel2.value:'';
+  const dfEl=document.getElementById('ca-date-from');
+  const dtEl=document.getElementById('ca-date-to');
+  const fromD=dfEl&&dfEl.value?new Date(dfEl.value):null;
+  const toD=dtEl&&dtEl.value?new Date(dtEl.value):null;
   list.innerHTML=PAY.map((p,i)=>{
+    // Bank account filter
     const _pa=String(p.bankAcct||p.bankAccount||p.statementAccount||'').replace(/[^0-9A-Za-z\-]/g,'').trim();
     if(bankVal&&_pa!==bankVal)return'';
+    // Currency filter
+    if(ccyVal2&&p.ccy&&p.ccy!==ccyVal2)return'';
+    // Date range filter
+    if(fromD&&p.payDate&&new Date(p.payDate)<fromD)return'';
+    if(toD&&p.payDate&&new Date(p.payDate)>toD)return'';
     const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
     const exc=EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
+    // Matched/Unmatched tab filter
     if(_payFilter==='matched'&&!matched)return'';
     if(_payFilter==='unmatched'&&matched)return'';
+    // Search filter
+    if(_pqSearch){
+      const searchable=[p.c,p.a,p.i,p.po,p.txId,String(p.amt),p.m,p.n,p.payDate].map(x=>(x||'').toLowerCase()).join(' ');
+      if(!searchable.includes(_pqSearch))return'';
+    }
     const isActive=ENG_PAY_IDX===i;
     const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':p.coa||p.unapplied?'var(--cy)':'var(--t3)';
     const stateLabel=matched?'Matched':exc?(p.st==='Unapplied Cash'||p.unapplied?'Unapplied':'Exception'):p.dp?'Down Pay':p.coa||p.unapplied?'Unapplied':'Unmatched';
@@ -5948,16 +5967,12 @@ function engLoadPaymentFromQueue(idx){
 }
 
 function filterPayQueue(q){
-  const v=(q||'').toLowerCase().trim();
-  document.querySelectorAll('.pq-item').forEach(function(item,idx){
-    if(!v){item.style.display='';return;}
-    const p=PAY[idx];
-    const searchable=p?[p.c,p.a,p.i,p.po,p.txId,String(p.amt),p.m,p.n,p.bank,p.payDate].map(function(x){return(x||'').toLowerCase();}).join(' '):item.textContent.toLowerCase();
-    item.style.display=searchable.includes(v)?'':'none';
-  });
+  _pqSearch=(q||'').toLowerCase().trim();
+  renderPayQueue();
 }
 
 let _payFilter='all';
+let _pqSearch='';
 function setPayFilter(f,btn){
   _payFilter=f;
   document.querySelectorAll('.pq-filter-btn').forEach(b=>b.classList.remove('active'));
@@ -6290,35 +6305,14 @@ function caFilterUpdate(){
   // Filter payment queue by selected bank, currency, and date range
   var bankSel=document.getElementById('ca-bank-sel');
   var bankVal=bankSel?bankSel.value:'';
-  // Extract bank code: "JPM-1234567890" → "JPM", "BOA-9876543210" → "BOA"
-  var bankCode=bankVal?bankVal.split('-')[0]:'';
+  // bankVal is the raw account number e.g. "0810020874"
   var ccySel=document.getElementById('ca-ccy-sel');
   var ccyVal=ccySel?ccySel.value:'';
   var dateFrom=document.getElementById('ca-date-from');
   var dateTo=document.getElementById('ca-date-to');
   var fromD=dateFrom&&dateFrom.value?new Date(dateFrom.value):null;
   var toD=dateTo&&dateTo.value?new Date(dateTo.value):null;
-  // Filter PAY queue rows
-  var items=document.querySelectorAll('#pq-list .pq-item');
-  items.forEach(function(item,i){
-    var p=PAY[i];if(!p)return;
-    var show=true;
-    if(bankCode&&p.bank&&p.bank!==bankCode)show=false;
-    if(ccyVal&&p.ccy&&p.ccy!==ccyVal)show=false;
-    if(fromD&&p.payDate&&new Date(p.payDate)<fromD)show=false;
-    if(toD&&p.payDate&&new Date(p.payDate)>toD)show=false;
-    item.style.display=show?'':'none';
-  });
-  // Also filter the remittance table
-  if(bankCode){
-    document.querySelectorAll('#rem-tb tr').forEach(function(tr,i){
-      if(i===0)return;// header
-      var p=PAY[i-1];if(!p)return;
-      tr.style.display=(!p.bank||p.bank===bankCode)?'':'none';
-    });
-  } else {
-    document.querySelectorAll('#rem-tb tr').forEach(function(tr){tr.style.display='';});
-  }
+  // All queue filtering happens inside renderPayQueue
   if(typeof engRefreshSel==='function')engRefreshSel();
   renderPayQueue();
 }
