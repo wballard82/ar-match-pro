@@ -4805,7 +4805,7 @@ function openImport(t){
   hideProgress();
   document.getElementById('imp-modal').classList.add('open');
 }
-function closeMo(){document.getElementById('imp-modal').classList.remove('open');}
+function closeMo(){var _im=document.getElementById('imp-modal');if(_im)_im.classList.remove('open');}
 function closeWelcome(){const m=document.getElementById('mo-welcome');if(m)m.style.display='none';}
 function closeUpgrade(){
   document.getElementById('upgrade-modal').classList.remove('open');
@@ -4854,8 +4854,8 @@ function hideProgress(){
 function swTab(t,el){
   document.querySelectorAll('.imp-tab').forEach(p=>p.classList.remove('active'));
   if(el)el.classList.add('active');
-  document.getElementById('tab-paste').style.display=t==='paste'?'block':'none';
-  document.getElementById('tab-file').style.display=t==='file'?'block':'none';
+  var _tp=document.getElementById('tab-paste');if(_tp)_tp.style.display=t==='paste'?'block':'none';
+  var _tf=document.getElementById('tab-file');if(_tf)_tf.style.display=t==='file'?'block':'none';
 }
 
 // ── Clear data ──
@@ -4957,7 +4957,7 @@ function rInv(){
       <td>${v.s?badge(v.s):'<span style="color:var(--t3)">—</span>'}</td>
     </tr>`;
   }).join('');
-  document.getElementById('inv-ct').textContent=INV.length+' rows · click any cell to edit';
+  var _ic=document.getElementById('inv-ct');if(_ic)_ic.textContent=INV.length+' rows · click any cell to edit';
 }
 
 
@@ -5457,17 +5457,17 @@ function engLoadPayment(idx){
   ['eng-full-badge','eng-locked-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['eng-grid-wrap'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});const ph=document.getElementById('eng-header');if(ph)ph.style.display='flex';
   const aw=document.getElementById('alloc-totals');if(aw)aw.style.display='none';
-  document.getElementById('eng-export-btn').style.display='none';
-  document.getElementById('eng-approve-btn').style.display='inline-flex';
+  var _eeb=document.getElementById('eng-export-btn');if(_eeb)_eeb.style.display='none';
+  var _eab=document.getElementById('eng-approve-btn');if(_eab)_eab.style.display='inline-flex';
   // Show Post as Unapplied whenever a payment is loaded and not yet locked/approved
   var _ub=document.getElementById('eng-unapplied-btn');
   if(_ub)_ub.style.display='inline-flex';
-  document.getElementById('eng-short-pay-warn').style.display='none';
-  document.getElementById('eng-dup-warn').style.display='none';
+  var _spw=document.getElementById('eng-short-pay-warn');if(_spw)_spw.style.display='none';
+  var _dw=document.getElementById('eng-dup-warn');if(_dw)_dw.style.display='none';
   const rDup=document.getElementById('ca-dup-warn-right');if(rDup)rDup.style.display='none';
   const rSp=document.getElementById('ca-sp-warn-right');if(rSp)rSp.style.display='none';
-  document.getElementById('eng-empty').style.display='none';
-  document.getElementById('alloc-fully').style.display='none';
+  var _ee=document.getElementById('eng-empty');if(_ee)_ee.style.display='none';
+  var _af=document.getElementById('alloc-fully');if(_af)_af.style.display='none';
   const custInvs=INV.filter(v=>{
     const cMatch=p.c&&(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim();
     const aMatch=p.a&&v.a===p.a;
@@ -5681,7 +5681,7 @@ function engApprove(){
   const sel=ENG_ROWS.filter(r=>r.selected);
   if(!sel.length){toast('Select at least one invoice to apply','warn');return;}
   ENG_STATE='approved';engUpdateWS('approved');
-  document.getElementById('eng-export-btn').style.display='inline-flex';
+  var _eeb2=document.getElementById('eng-export-btn');if(_eeb2)_eeb2.style.display='inline-flex';
   var _ub2=document.getElementById('eng-unapplied-btn');if(_ub2)_ub2.style.display='none';
   const totalApplied=sel.reduce((s,r)=>s+r.applyAmt,0);
   sel.forEach(r=>{if(!RES.find(res=>res.i===r.inv.i&&res.fromAlloc)){const vr=r.applyAmt-r.inv.amt;RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.txId||'',id:ENG_PAY.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});}});
@@ -5706,9 +5706,9 @@ function engExport(){
   });
   saveToStorage();ENG_STATE='exported';ENG_LOCKED=true;
   engUpdateWS('exported');
-  document.getElementById('eng-locked-badge').style.display='flex';
-  document.getElementById('eng-export-btn').style.display='none';
-  document.getElementById('eng-approve-btn').style.display='none';
+  var _elb=document.getElementById('eng-locked-badge');if(_elb)_elb.style.display='flex';
+  var _eeb3=document.getElementById('eng-export-btn');if(_eeb3)_eeb3.style.display='none';
+  var _eab3=document.getElementById('eng-approve-btn');if(_eab3)_eab3.style.display='none';
   engAudit('Exported to posting — locked');
   addAudit('Exported & locked','$'+$f(sel.reduce((s,r)=>s+r.applyAmt,0)));
   rAll();updDash();updTop();
@@ -5717,9 +5717,9 @@ function engExport(){
 
 function engReopen(){
   ENG_LOCKED=false;ENG_STATE='suggested';
-  document.getElementById('eng-locked-badge').style.display='none';
-  document.getElementById('eng-approve-btn').style.display='inline-flex';
-  document.getElementById('eng-export-btn').style.display='none';
+  var _elb2=document.getElementById('eng-locked-badge');if(_elb2)_elb2.style.display='none';
+  var _eab4=document.getElementById('eng-approve-btn');if(_eab4)_eab4.style.display='inline-flex';
+  var _eeb4=document.getElementById('eng-export-btn');if(_eeb4)_eeb4.style.display='none';
   engUpdateWS('suggested');engRenderRows();
   engAudit('Reopened for editing');
   addAudit('Allocation reopened','');
@@ -6337,7 +6337,7 @@ async function runMatch(){
   const overlay=document.getElementById('match-progress');overlay.classList.add('show');setStatus('running');
   const msgs=['Normalizing references…','Running invoice # pass…','Running PO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
   let mi=0;
-  const upd=(pct,mc,ec)=>{document.getElementById('mp-bar').style.width=pct+'%';document.getElementById('mp-matched').textContent=mc;document.getElementById('mp-exc').textContent=ec;document.getElementById('mp-msg').textContent=msgs[Math.min(mi++,msgs.length-1)];};
+  const upd=(pct,mc,ec)=>{var _mb=document.getElementById('mp-bar');if(_mb)_mb.style.width=pct+'%';var _mm=document.getElementById('mp-matched');if(_mm)_mm.textContent=mc;var _me=document.getElementById('mp-exc');if(_me)_me.textContent=ec;var _ms=document.getElementById('mp-msg');if(_ms)_ms.textContent=msgs[Math.min(mi++,msgs.length-1)];};
   await new Promise(r=>setTimeout(r,200));upd(15,0,0);
   await new Promise(r=>setTimeout(r,200));
   RES=[];EXC=[];INV.forEach(v=>v.s='');
