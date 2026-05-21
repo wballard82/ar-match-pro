@@ -2849,7 +2849,7 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" onclick="openImport('inv')">+ Invoices</button>
               <button class="btn btn-outline btn-sm" onclick="openImport('rem')">+ Remittance</button>
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
-              <button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Auto-match all</button>
+              <button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Auto match</button>
             </div>
           </div>
         </div>
@@ -6528,10 +6528,10 @@ async function runMatch(){
     showUpgrade('Row limit reached',`Your ${planName} plan supports up to ${rowLimit.toLocaleString()} invoice rows. You have ${INV.length.toLocaleString()} rows imported. Upgrade to Pro for unlimited rows.`);
     return;
   }
-  const overlay=document.getElementById('match-progress');overlay.classList.add('show');setStatus('running');
+  const overlay=document.getElementById('match-progress');if(overlay)overlay.classList.add('show');setStatus('running');
   const msgs=['Normalizing references…','Running invoice # pass…','Running PO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
   let mi=0;
-  const upd=(pct,mc,ec)=>{document.getElementById('mp-bar').style.width=pct+'%';document.getElementById('mp-matched').textContent=mc;document.getElementById('mp-exc').textContent=ec;document.getElementById('mp-msg').textContent=msgs[Math.min(mi++,msgs.length-1)];};
+  const upd=(pct,mc,ec)=>{var _mb=document.getElementById('mp-bar');if(_mb)_mb.style.width=pct+'%';var _mm=document.getElementById('mp-matched');if(_mm)_mm.textContent=mc;var _me=document.getElementById('mp-exc');if(_me)_me.textContent=ec;var _ms=document.getElementById('mp-msg');if(_ms)_ms.textContent=msgs[Math.min(mi++,msgs.length-1)];};
   await new Promise(r=>setTimeout(r,200));upd(15,0,0);
   await new Promise(r=>setTimeout(r,200));
   RES=[];EXC=[];INV.forEach(v=>v.s='');
@@ -6559,7 +6559,7 @@ async function runMatch(){
     EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:excType,detail:dupChk.length?`Possible duplicate — ${dupChk.length} matching payment(s) found`:'No matching invoice, PO, or SO found',action:dupChk.length?'Review for duplicate posting':'Contact customer for invoice reference',dec:'',s:'Open'});
   }
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
-  overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
+  if(overlay)overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
   if(typeof renderWsExcPremium==='function')renderWsExcPremium();
   if(typeof renderWsReview==='function')renderWsReview();
   var caPanel=document.getElementById('p-cash-app');if(caPanel&&caPanel.classList.contains('active')){if(RES.length>0)setCaTab('review',document.getElementById('ca-tab-review'));else if(EXC.length>0)setCaTab('exc',document.getElementById('ca-tab-exc'));}
@@ -7212,7 +7212,7 @@ function processImport(){
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
-    ' loaded. Click ⚡ Auto-match all to run matching.');
+    ' loaded. Click ⚡ Auto match to run matching.');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -8687,7 +8687,7 @@ var HELP_CONTENT = {
         <h3>Customer Open Items</h3>
         <p>The bottom panel shows open invoices for the selected payment's account. Invoices are automatically sorted by relevance — best matches appear first. All columns support sorting (click header) and per-column filtering (type in the filter row). Drag the divider handle to resize the split.</p>
         <h3>Auto-Matching Engine</h3>
-        <p>Click <strong>⚡ Auto-match all</strong> to run matching across all payments. The engine tries these methods in order:</p>
+        <p>Click <strong>⚡ Auto match</strong> to run matching across all payments. The engine tries these methods in order:</p>
         <table><thead><tr><th>Priority</th><th>Method</th><th>Description</th></tr></thead><tbody>
         <tr><td>1</td><td>Invoice #</td><td>Payment references an exact invoice number</td></tr>
         <tr><td>2</td><td>PO Group</td><td>Sum of all open invoices on the same PO = payment amount</td></tr>
