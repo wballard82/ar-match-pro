@@ -5344,10 +5344,62 @@ function swTab(t,el){
 }
 
 // ── Clear data ──
-function clearInvData(){showConfirm('Clear all invoice data?\n\nThis cannot be undone.',function(){INV=[];saveToStorage();rInv();updDash();updTop();addAudit('Cleared invoice data');toast('Invoice data cleared');});}
-function clearPayData(){showConfirm('Clear all remittances data?\n\nThis cannot be undone.',function(){PAY=[];saveToStorage();rRem();updDash();updTop();addAudit('Cleared remittance data');toast('Remittance data cleared');});}
+function clearInvData(){
+  var msg='Clear all invoice data?\n\n'+INV.length+' invoices will be removed.\nThis cannot be undone.';
+  showConfirm(msg,function(){
+    INV=[];
+    saveToStorage();
+    rInv();
+    // Reset Customer Open Items
+    try{renderFbl5n('ca-open-items-body','','');}catch(e){}
+    try{
+      var inp=document.getElementById('ca-acct-input');if(inp)inp.value='';
+      var drop=document.getElementById('ca-acct-drop');if(drop)drop.style.display='none';
+      var sel=document.getElementById('ca-acct-dropdown');if(sel)sel.value='';
+      var lbl=document.getElementById('ca-bottom-cust-label');if(lbl)lbl.textContent='select account or payment';
+    }catch(e){}
+    updDash();updTop();
+    addAudit('Cleared invoice data');
+    toast('Invoice data cleared');
+  },'Clear invoices','btn-r');
+}
+function clearPayData(){
+  var msg='Clear all payment data?\n\n'+PAY.length+' payments will be removed.\nThis cannot be undone.';
+  showConfirm(msg,function(){
+    PAY=[];
+    saveToStorage();
+    rRem();
+    // Reset payment queue
+    try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+    // Reset bank account dropdown
+    try{
+      var bankSel=document.getElementById('ca-bank-sel');
+      if(bankSel)bankSel.innerHTML='<option value="">All bank accounts</option>';
+    }catch(e){}
+    updDash();updTop();
+    addAudit('Cleared payment data');
+    toast('Payment data cleared');
+  },'Clear payments','btn-r');
+}
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
-function clearAllData(){showConfirm('Clear all data?\n\nThis cannot be undone.',function(){INV=[];PAY=[];RES=[];EXC=[];rAll();updDash();updTop();setStatus('ready');['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});addAudit('Cleared all data');toast('All data cleared');});}
+function clearAllData(){
+  showConfirm('Clear ALL data?\n\nInvoices, payments, matches, and exceptions will be permanently removed.\nThis cannot be undone.',function(){
+    INV=[];PAY=[];RES=[];EXC=[];
+    rAll();
+    try{renderFbl5n('ca-open-items-body','','');}catch(e){}
+    try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+    try{
+      var inp=document.getElementById('ca-acct-input');if(inp)inp.value='';
+      var lbl=document.getElementById('ca-bottom-cust-label');if(lbl)lbl.textContent='select account or payment';
+      var bankSel=document.getElementById('ca-bank-sel');
+      if(bankSel)bankSel.innerHTML='<option value="">All bank accounts</option>';
+    }catch(e){}
+    updDash();updTop();setStatus('ready');
+    ['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});
+    addAudit('Cleared all data');
+    toast('All data cleared');
+  },'Clear all data','btn-r');
+}
 function resetAllData(){
   if(!window.confirm('Reset ALL data?\n\nThis will clear:\n• All invoices\n• All remittance / payments\n• All match results\n• All exceptions\n\nThis cannot be undone.'))return;
   _doResetAll();
@@ -7166,12 +7218,11 @@ async function handleFile(inp){
 
 // ════════════════════════════════════════════════════════════════════════════
 // YAYPAY / MUFG BANK EXCEL PARSER
-// Dedicated parser for structured bank exports from YayPay / MUFG
+// Dedicated parser for structured YayPay/MUFG bank exports
 // Headers: Post Date, Bank ID, Account Number, Bank Reference, BAI Code, DETAIL1-20
 // ════════════════════════════════════════════════════════════════════════════
 
 function detectYayPay(headers){
-  // Normalize headers for matching
   var norm=headers.map(function(h){return String(h||'').toLowerCase().replace(/[^a-z0-9]/g,'');});
   var required=['postdate','bankreference','baicode','accountnumber'];
   var hasDetail=norm.some(function(h){return /^detail\d+$/.test(h);});
@@ -7180,17 +7231,14 @@ function detectYayPay(headers){
 }
 
 function _yyDate(val){
-  // Convert Excel serial date number OR date string to MM/DD/YYYY
   if(!val)return '';
   if(typeof val==='object'&&val instanceof Date){
     var m=val.getMonth()+1,d=val.getDate(),y=val.getFullYear();
     return (m<10?'0'+m:m)+'/'+(d<10?'0'+d:d)+'/'+y;
   }
   var s=String(val).trim();
-  // Already formatted
   if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s))return s;
   if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(5,7)+'/'+s.slice(8,10)+'/'+s.slice(0,4);
-  // Excel serial (days since 1899-12-30)
   var n=parseFloat(s);
   if(!isNaN(n)&&n>40000&&n<60000){
     var epoch=new Date(Date.UTC(1899,11,30));
@@ -7198,56 +7246,41 @@ function _yyDate(val){
     var mo=epoch.getUTCMonth()+1,dy=epoch.getUTCDate(),yr=epoch.getUTCFullYear();
     return (mo<10?'0'+mo:mo)+'/'+(dy<10?'0'+dy:dy)+'/'+yr;
   }
-  // YYYYMMDD
   if(/^\d{8}$/.test(s)){return s.slice(4,6)+'/'+s.slice(6,8)+'/'+s.slice(0,4);}
   return s;
 }
 
 function _yyExtractCustomer(detail,method){
-  // Extract clean customer/remitter name from concatenated DETAIL fields
   if(!detail)return '';
   var d=String(detail).replace(/\s+/g,' ');
   var method_up=(method||'').toUpperCase();
   if(method_up==='ACH'||/^1[6-9]\d$/.test(method_up)){
-    // ACH: NAME:ORIG: ... stop before INF:
     var am=d.match(/NAME:ORIG:\s*([A-Z0-9][^\r\n]{2,50}?)(?:\s+INF:|\s+RCVR|\s{2,}|$)/i);
     if(am){
-      // Strip trailing standalone numbers (e.g. "LAM RESEARCH INT 1005549731" → "LAM RESEARCH INT")
       var aclean=am[1].replace(/\s+\d{6,}\s*$/,'').replace(/\s+/g,' ').trim();
       if(aclean.length>2)return aclean;
     }
-    // Fallback: RMKS ... NAME:ORIG
     var am2=d.match(/RMKS[^\/]*\/NAME:ORIG:\s*([^\r\n\/]{2,50})/i);
     if(am2)return am2[1].replace(/\s+\d{6,}\s*$/,'').replace(/\s+/g,' ').trim();
   }
   if(method_up==='WIRES'||method_up==='WIRE'||/^1[9][0-9]$/.test(method_up)||method_up==='214'){
-    // Wire: ORIGINATOR: is most reliable — use it first for wires
     var om=d.match(/ORIGINATOR:\s*([A-Z][^\r\n\/]{2,60}?)(?:\s{2,}|\s+[A-Z]{2,6}\s*:|\n|\/[A-Z]|$)/i);
     if(om){var on=om[1].replace(/\/.*$/,'').replace(/\s+/g,' ').trim();if(on.length>2)return on;}
-    // Fallback: text after AMT USD [amount] and slash
     var wm=d.match(/AMT\s+USD[\s\d,\.\/]+?\s+([A-Z][A-Z0-9][^\r\n]{2,60}?)(?:\s+RS:\w|\s+ORIGINATOR:|\s{3,}|$)/i);
     if(wm){var wn=wm[1].replace(/\s*\/.*$/,'').replace(/\s+/g,' ').trim();if(wn.length>2)return wn;}
   }
-  // Generic: NAME:ORIG
   var gm=d.match(/NAME:ORIG:\s*([A-Z0-9][^\r\n]{2,50}?)(?:\s+INF:|\s{2,}|$)/i);
   if(gm)return gm[1].replace(/\s+/g,' ').trim();
   return '';
 }
 
 function _yyExtractInvoice(detail){
-  // Extract invoice references from concatenated DETAIL fields
   if(!detail)return '';
   var d=String(detail);
-  // Explicit labels first
   var im=d.match(/(?:IMPORTINVOICE:|INVOICE[:\s#]*|INV[:\s#]*)(\d{8,12})/i);
   if(im)return im[1];
-  // Multiple invoice pattern like "5105152563 5105151439 5105151423"
-  var multi=d.match(/\b(5\d{9})\b/);
-  if(multi)return multi[1];
-  // 7-series invoices
-  var multi7=d.match(/\b(7\d{9})\b/);
-  if(multi7)return multi7[1];
-  // DETAIL:NTE... patterns (Ford etc)
+  var m5=d.match(/\b(5\d{9})\b/);if(m5)return m5[1];
+  var m7=d.match(/\b(7\d{9})\b/);if(m7)return m7[1];
   var det=d.match(/DETAIL:[^\s,]+,?(\w{7,})/i);
   if(det)return det[1];
   return '';
@@ -7261,32 +7294,24 @@ function _yyExtractPO(detail){
 }
 
 function parseYayPayExcel(wb){
-  // Parse YayPay / MUFG structured bank export workbook
   var ws=wb.Sheets[wb.SheetNames[0]];
   var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',blankrows:false,raw:true});
   if(!raw||raw.length<2)return[];
-  
   var headers=raw[0].map(function(h){return String(h||'').trim();});
   var norm=headers.map(function(h){return h.toLowerCase().replace(/[^a-z0-9]/g,'');});
-  
   function ci(){
     var names=Array.prototype.slice.call(arguments);
     for(var n=0;n<names.length;n++){
       var t=names[n].toLowerCase().replace(/[^a-z0-9]/g,'');
       var idx=norm.indexOf(t);if(idx>=0)return idx;
-      // Partial match
       for(var j=0;j<norm.length;j++){if(norm[j].startsWith(t)&&norm[j].length<=t.length+5)return j;}
     }
     return -1;
   }
-  
-  // Map columns
   var iPostDate=ci('Post Date','PostDate');
   var iBankId=ci('Bank ID','BankId');
   var iAcctNum=ci('Account Number','AccountNumber');
-  var iAcctName=ci('Account Name','AccountName');
   var iDesc=ci('Transaction Description','TransactionDescription');
-  var iStatus=ci('Status');
   var iDC=ci('Debit/Credit','DebitCredit');
   var iAmt=ci('Amount');
   var iBankRef=ci('Bank Reference','BankReference');
@@ -7294,97 +7319,36 @@ function parseYayPayExcel(wb){
   var iBaiCode=ci('BAI Code','BAICode','BAI');
   var iType=ci('Type');
   var iCurrency=ci('Currency');
-  var iAdvice=ci('Advice Reference');
-  
-  // Find all DETAIL columns
   var detailCols=[];
-  for(var i=0;i<headers.length;i++){
-    if(/^DETAIL\d+$/i.test(headers[i].trim()))detailCols.push(i);
-  }
-  
+  for(var i=0;i<headers.length;i++){if(/^DETAIL\d+$/i.test(headers[i].trim()))detailCols.push(i);}
   var payments=[];
-  
   for(var r=1;r<raw.length;r++){
     var row=raw[r];
     if(!row||row.every(function(c){return c===''||c===null||c===undefined;}))continue;
-    
-    // Only import Credit rows
     var dc=iDC>=0?String(row[iDC]||'').trim():'';
     if(dc&&dc.toLowerCase()!=='credit')continue;
-    
     var amt=iAmt>=0?parseFloat(String(row[iAmt]||'').replace(/[$,]/g,''))||0:0;
-    if(amt<=0)continue; // Skip zero/blank rows
-    
+    if(amt<=0)continue;
     var bankAcct=iAcctNum>=0?String(row[iAcctNum]||'').replace(/[^0-9]/g,'').trim():'';
     var bankRef=iBankRef>=0?String(row[iBankRef]||'').trim():'';
-    
-    // Skip rows with no bank account and no bank ref
     if(!bankAcct&&!bankRef)continue;
-    
     var method=iType>=0?String(row[iType]||'').trim():'';
     var baiCode=iBaiCode>=0?String(row[iBaiCode]||'').trim():'';
-    
-    // Concatenate DETAIL1-DETAIL20 into one raw detail string
-    var rawDetail=detailCols.map(function(c){
-      var v=String(row[c]||'').trim();
-      return v.replace(/\/\s*$/,'');
-    }).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
-    
-    // Use existing cfgIsInternalTransfer / cfgIsTaxPayment if available
+    var rawDetail=detailCols.map(function(c){return String(row[c]||'').trim().replace(/\/\s*$/,'');}).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
     if(typeof cfgIsInternalTransfer==='function'&&cfgIsInternalTransfer(rawDetail))continue;
     if(typeof cfgIsTaxPayment==='function'&&cfgIsTaxPayment(rawDetail))continue;
-    // Fallback ZBA/internal check
     var upperDetail=rawDetail.toUpperCase();
-    if(upperDetail.includes('POOLING(ZERO BALANCE)')||upperDetail.includes('REVERSE SWEEPING')||
-       upperDetail.includes('HORIBA AMERICAS HOLDING')||upperDetail.includes('MULTINETTING')||
-       upperDetail.includes('BOOK TRANSFER'))continue;
-    
+    if(upperDetail.includes('POOLING(ZERO BALANCE)')||upperDetail.includes('REVERSE SWEEPING')||upperDetail.includes('HORIBA AMERICAS HOLDING')||upperDetail.includes('MULTINETTING')||upperDetail.includes('BOOK TRANSFER'))continue;
     var postDate=iPostDate>=0?_yyDate(row[iPostDate]):'';
     var ccy=iCurrency>=0?String(row[iCurrency]||'USD').trim():'USD';
     var custRef=iCustRef>=0?String(row[iCustRef]||'').trim():'';
-    
-    // Extract customer name from detail
     var customer=_yyExtractCustomer(rawDetail,method||baiCode);
-    // Normalize via existing REMITTER_NAME_MAP / CFG_ALIASES
-    if(customer&&typeof normalizeRemitterName==='function'){
-      customer=normalizeRemitterName(customer);
-    }
-    
-    // Extract invoice ref from detail
+    if(customer&&typeof normalizeRemitterName==='function')customer=normalizeRemitterName(customer);
     var invRef=_yyExtractInvoice(rawDetail);
-    
-    // Extract PO from detail
     var poRef=_yyExtractPO(rawDetail);
-    
-    var desc=iDesc>=0?String(row[iDesc]||'').trim():'';
     var isCOA=rawDetail.toUpperCase().includes('CASH ON ACCOUNT')||rawDetail.toUpperCase().includes('UNAPPLIED');
-    
-    payments.push({
-      bankAcct:bankAcct,
-      bankId:iBankId>=0?String(row[iBankId]||'').trim():'',
-      a:'',          // Customer account — NOT bank account number
-      c:customer,
-      amt:amt,
-      i:invRef,
-      po:poRef,
-      so:'',
-      m:method||baiCode,
-      baiCode:baiCode,
-      txId:bankRef||custRef||'',
-      bankRef:bankRef,
-      custRef:custRef,
-      payDate:postDate,
-      ccy:ccy,
-      n:rawDetail,
-      desc:desc,
-      st:'Unapplied Cash',
-      coa:isCOA,
-      unapplied:false,
-      dp:false,
-      sourceFormat:'yaypay-excel'
-    });
+    payments.push({bankAcct:bankAcct,bankId:iBankId>=0?String(row[iBankId]||'').trim():'',a:'',c:customer,amt:amt,i:invRef,po:poRef,so:'',m:method||baiCode,baiCode:baiCode,txId:bankRef||custRef||'',bankRef:bankRef,custRef:custRef,payDate:postDate,ccy:ccy,n:rawDetail,st:'Unapplied Cash',coa:isCOA,unapplied:false,dp:false,sourceFormat:'yaypay-excel'});
   }
-  
   return payments;
 }
 
@@ -7491,23 +7455,16 @@ async function parsePDFRemittance(file){
     await new Promise(r=>setTimeout(r,30));
     
     // ── MUFG Bank Summary PDF detection ──
-    // If this is an account summary report, do NOT parse as remittance
     const _isBankSummary=(allText.includes('Account Summary')&&allText.includes('Transaction Summary'))||
                           (allText.includes('Posted Transaction Description'))||
-                          (allText.includes('Opening Ledger')&&allText.includes('Closing Ledger'))||
-                          (allText.includes('Total Credits')&&allText.includes('Total Debits')&&allText.includes('Opening Ledger'));
+                          (allText.includes('Opening Ledger')&&allText.includes('Closing Ledger'));
     if(_isBankSummary){
       hideProgress();
       showModal('Bank Summary PDF Detected',
         '<div style="padding:12px 0">'+
-        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This appears to be an <strong>MUFG Account Summary PDF</strong> — not a remittance advice file.</p>'+
-        '<p style="color:var(--t3);font-size:12px;margin:0 0 6px">Bank summary PDFs are used for <strong>reference only</strong>. To import bank transactions, use:</p>'+
-        '<ul style="color:var(--t2);font-size:12px;margin:0 0 12px;padding-left:18px">'+
-        '<li>The YayPay/MUFG Excel export (.xlsx)</li>'+
-        '<li>Or a BAI2 bank file (.bai / .txt)</li>'+
-        '</ul>'+
-        '<button class="btn btn-p btn-sm" onclick="closeModal()">OK</button>'+
-        '</div>'
+        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This is an <strong>MUFG Account Summary PDF</strong> — not a remittance advice file.</p>'+
+        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">To import bank transactions, use the YayPay/MUFG Excel export (.xlsx) or a BAI2 file (.txt).</p>'+
+        '<button class="btn btn-p btn-sm" onclick="closeModal()">OK</button></div>'
       );
       return;
     }
@@ -7766,6 +7723,13 @@ function processImport(){
       s:''
     }));
     rInv();setStatus('loaded');saveToStorage();addAudit('Invoices imported',INV.length+' rows');toast('Imported '+INV.length+' invoices');
+    // Populate Customer Open Items immediately after invoice import
+    try{renderFbl5n('ca-open-items-body','','');}catch(e){}
+    try{
+      var _lbl=document.getElementById('ca-bottom-cust-label');
+      if(_lbl)_lbl.textContent='All accounts · '+INV.length+' open invoices';
+    }catch(e){}
+    try{updDash();}catch(e){}
   }else{
     PAY=rows.filter(r=>r.some(c=>c)).map(r=>{
       const n=r[col(
@@ -8348,8 +8312,9 @@ function filterFbl5n(){
 }
 function refreshFbl5n(){
   var acct=(document.getElementById('ca-acct-dropdown')||{}).value||'';
-  var cust=ENG_PAY?ENG_PAY.c:'';
-  renderFbl5n('ca-open-items-body',acct,cust);
+  // Do NOT filter by ENG_PAY.c — that hides invoices from other customers
+  // renderFbl5n already sorts payment-relevant invoices to top when ENG_PAY is set
+  renderFbl5n('ca-open-items-body',acct,'');
 }
 function sortFbl5n(ci){ sortTbl('ca-open-items-tbl',ci); }
 function sortFbl5nExc(ci){ sortTbl('exc-open-items-tbl',ci); }
@@ -8381,7 +8346,7 @@ function caAcctDropdownChange(acct){
     if(acct){
       var accts={}; INV.forEach(function(v){ if(v.a&&v.c) accts[v.a]=v.c; });
       labelEl.textContent=acct+(accts[acct]?' — '+accts[acct]:'');
-    } else { labelEl.textContent='— all accounts'; }
+    } else { labelEl.textContent='All accounts · '+INV.length+' open invoices'; }
   }
   renderFbl5n('ca-open-items-body',acct,'');
 }
