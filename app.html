@@ -2674,9 +2674,7 @@ body.app-active #app {
                 <div class="wl-empty-icon">📂</div>
                 <div class="wl-empty-title">No payments waiting</div>
                 <div class="wl-empty-sub">Import remittance data to see payments that need allocation.</div>
-                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button>
-              <button class="btn btn-outline btn-sm" onclick="openImport('advice')" title="Line-level customer remittance advice (PDF/Excel/CSV)">📄 Import remittance advice</button>
-              <button class="btn btn-outline btn-sm" onclick="openRemAdviceManualEntry()" title="Manually enter remittance from check stub">✍ Manual remittance entry</button></div>
+                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
               </div>
             </div>
           </div>
@@ -3891,7 +3889,95 @@ body.app-active #app {
             </div>
           </div>
 
-          <!-- Plans -->
+          
+          <!-- ══ CONFIGURATION LAYER ══════════════════════════════════════ -->
+
+          <!-- 1. Import Mapping Templates -->
+          <div class="settings-section">
+            <div class="settings-section-title">📋 Import Mapping Templates</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:12px">
+              Map your file columns to AR Match Pro fields. Save templates per file type so imports auto-detect the right columns.
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+              <button class="btn btn-outline btn-sm" onclick="cfgOpenTemplate('bank')">🏦 Bank File</button>
+              <button class="btn btn-outline btn-sm" onclick="cfgOpenTemplate('invoice')">📄 Invoice File</button>
+              <button class="btn btn-outline btn-sm" onclick="cfgOpenTemplate('summary')">📊 Bank Summary</button>
+            </div>
+            <div id="cfg-templates-list" style="display:grid;gap:6px"></div>
+          </div>
+
+          <!-- 2. Matching Priority -->
+          <div class="settings-section">
+            <div class="settings-section-title">⚙️ Matching Rule Priority</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:8px">
+              Rules run top-to-bottom. Toggle, reorder, or disable rules. Changes take effect on next Auto Match run.
+            </div>
+            <div id="cfg-match-rules-list"></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn btn-p btn-sm" onclick="cfgSaveMatchRules()">Save rule order</button>
+              <button class="btn btn-outline btn-sm" onclick="cfgResetMatchRules()">Reset defaults</button>
+            </div>
+          </div>
+
+          <!-- 3. Tolerance Settings -->
+          <div class="settings-section">
+            <div class="settings-section-title">🎯 Matching Tolerances</div>
+            <div class="settings-row">
+              <div><div class="settings-label">Dollar variance ($)</div><div class="settings-desc">Max $ difference for an exact match</div></div>
+              <input class="inp" type="number" id="cfg-tol-dollar" min="0" max="500" step="0.50" style="width:80px;text-align:right;font-size:12.5px" oninput="cfgSaveTolerance()">
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-label">Percentage variance (%)</div><div class="settings-desc">Max % difference for a fuzzy match</div></div>
+              <input class="inp" type="number" id="cfg-tol-pct" min="0" max="20" step="0.1" style="width:80px;text-align:right;font-size:12.5px" oninput="cfgSaveTolerance()">
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-label">Short-pay threshold ($)</div><div class="settings-desc">Variances below this are flagged as short pays</div></div>
+              <input class="inp" type="number" id="cfg-tol-shortpay" min="0" max="10000" step="1" style="width:80px;text-align:right;font-size:12.5px" oninput="cfgSaveTolerance()">
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-label">Bank fee threshold ($)</div><div class="settings-desc">Variances at or below this may be bank fees</div></div>
+              <input class="inp" type="number" id="cfg-tol-bankfee" min="0" max="1000" step="1" style="width:80px;text-align:right;font-size:12.5px" oninput="cfgSaveTolerance()">
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-label">Rounding tolerance ($)</div><div class="settings-desc">Tiny differences treated as rounding, not exceptions</div></div>
+              <input class="inp" type="number" id="cfg-tol-rounding" min="0" max="5" step="0.01" style="width:80px;text-align:right;font-size:12.5px" oninput="cfgSaveTolerance()">
+            </div>
+          </div>
+
+          <!-- 4. Customer Name Normalization -->
+          <div class="settings-section">
+            <div class="settings-section-title">🏷️ Customer Name Normalization</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:10px">
+              Bank files often truncate or alter customer names. Map bank aliases to canonical names so matching works correctly.
+            </div>
+            <div id="cfg-alias-list" style="display:grid;gap:6px;margin-bottom:10px"></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input class="inp" id="cfg-alias-from" placeholder="Bank name (e.g. FORD MOTOR COMPA)" style="width:220px;font-size:12.5px">
+              <input class="inp" id="cfg-alias-to" placeholder="Canonical name (e.g. FORD MOTOR COMPANY)" style="width:220px;font-size:12.5px">
+              <button class="btn btn-p btn-sm" onclick="cfgAddAlias()">Add alias</button>
+            </div>
+          </div>
+
+          <!-- 5. ERP Export Profiles -->
+          <div class="settings-section">
+            <div class="settings-section-title">📤 ERP Export Profile</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:10px">
+              Choose which format the Posting Export uses. Fields always exported: Invoice #, Customer Account, Amount, Payment Date, Bank Reference.
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-label">Active export profile</div></div>
+              <select class="sel" id="cfg-export-profile" onchange="cfgSaveExportProfile()" style="font-size:12.5px;min-width:200px">
+                <option value="sap750">SAP S/4HANA 7.50</option>
+                <option value="sap">SAP ECC (legacy)</option>
+                <option value="netsuite">NetSuite</option>
+                <option value="csv">Generic CSV</option>
+                <option value="excel">Excel (.xlsx)</option>
+              </select>
+            </div>
+            <div id="cfg-export-profile-desc" style="font-size:11.5px;color:var(--t3);margin-top:6px;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--bdr)"></div>
+          </div>
+
+<!-- Plans -->
           <div class="settings-section">
             <div class="settings-section-title">💳 Plans &amp; Pricing</div>
             <div style="padding:16px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -4388,6 +4474,336 @@ const VALID_KEYS={
 
 // ── Storage ──
 function sk(k){return 'armp_'+CURRENT_USER+'_'+k;}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CUSTOMER CONFIGURATION LAYER  (Phase 5 — scalable config)
+// Keys: armp_<user>_cfg_*
+// Falls back to existing logic when no config is set
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── CFG_DEFAULTS ────────────────────────────────────────────────────────────
+const CFG_MATCH_RULES_DEFAULT=[
+  {id:'inv',       label:'Exact Invoice Number',     desc:'Invoice # matches exactly',            enabled:true},
+  {id:'inv-amt',   label:'Invoice + Amount',          desc:'Invoice # with amount tolerance',      enabled:true},
+  {id:'multi',     label:'Multi-Invoice Sum Match',   desc:'Payment covers multiple invoices',     enabled:true},
+  {id:'po',        label:'PO + Amount',               desc:'Purchase order # match',               enabled:true},
+  {id:'po-subset', label:'PO Subset Match',           desc:'PO partially matches',                 enabled:false},
+  {id:'so',        label:'Sales Order + Amount',      desc:'Sales order # match',                  enabled:true},
+  {id:'cust-amt',  label:'Customer Account + Amount', desc:'Account # + amount within tolerance',  enabled:true},
+  {id:'name-amt',  label:'Customer Name + Amount',    desc:'Name fuzzy match + amount',            enabled:true},
+  {id:'oldest',    label:'Oldest Invoice Suggestion', desc:'Suggest oldest open invoice',          enabled:false},
+  {id:'shortpay',  label:'Short Pay Detection',       desc:'Flag underpayments as exceptions',     enabled:true},
+  {id:'overpay',   label:'Overpay Detection',         desc:'Flag overpayments as exceptions',      enabled:true},
+  {id:'dup',       label:'Duplicate Detection',       desc:'Flag possible duplicate payments',     enabled:true},
+  {id:'bankfee',   label:'Bank Fee Variance',         desc:'Small variance = possible bank fee',   enabled:true},
+  {id:'coa',       label:'Cash on Account',           desc:'Post unmatched as cash on account',    enabled:true}
+];
+
+const CFG_TOL_DEFAULT={dollar:1, pct:0, shortpay:500, bankfee:50, rounding:0.05};
+
+const CFG_EXPORT_PROFILES={
+  sap750:{label:'SAP S/4HANA 7.50', fields:['Customer Invoice #','SAP Document #','Customer Account','Payment Date','Applied Amount','Posting Type','Bank Reference','Notes']},
+  sap:{label:'SAP ECC (legacy)', fields:['Customer Invoice #','SAP Document #','Customer Account','Payment Date','Applied Amount','Posting Type','Bank Reference','Notes']},
+  netsuite:{label:'NetSuite', fields:['Invoice Number','Internal ID','Entity','Trandate','Amount','Memo','Reference','Notes']},
+  csv:{label:'Generic CSV', fields:['Invoice #','Customer Account','Customer Name','Payment Date','Applied Amount','Payment Ref','Bank Ref','Notes']},
+  excel:{label:'Excel (.xlsx)', fields:['Invoice #','Customer Account','Customer Name','Payment Date','Applied Amount','Payment Ref','Bank Ref','Notes']}
+};
+
+// ── CFG STATE ────────────────────────────────────────────────────────────────
+var CFG_MATCH_RULES=CFG_MATCH_RULES_DEFAULT.map(r=>Object.assign({},r));
+var CFG_TOL=Object.assign({},CFG_TOL_DEFAULT);
+var CFG_ALIASES={};    // {bankName: canonicalName}
+var CFG_TEMPLATES={};  // {id: {name,type,mappings:{}}}
+var CFG_EXPORT_PROFILE='sap750';
+
+// ── LOAD / SAVE ──────────────────────────────────────────────────────────────
+function cfgLoad(){
+  try{
+    var mr=localStorage.getItem(sk('cfg_match_rules'));
+    if(mr)CFG_MATCH_RULES=JSON.parse(mr);
+    var tol=localStorage.getItem(sk('cfg_tol'));
+    if(tol)CFG_TOL=Object.assign({},CFG_TOL_DEFAULT,JSON.parse(tol));
+    var al=localStorage.getItem(sk('cfg_aliases'));
+    if(al)CFG_ALIASES=JSON.parse(al);
+    var tpl=localStorage.getItem(sk('cfg_templates'));
+    if(tpl)CFG_TEMPLATES=JSON.parse(tpl);
+    var ep=localStorage.getItem(sk('cfg_export_profile'));
+    if(ep)CFG_EXPORT_PROFILE=ep;
+  }catch(e){console.warn('cfgLoad:',e);}
+  // Merge REMITTER_NAME_MAP entries as CFG_ALIASES if aliases are empty
+  if(Object.keys(CFG_ALIASES).length===0&&typeof REMITTER_NAME_MAP!=='undefined'){
+    CFG_ALIASES=Object.assign({},REMITTER_NAME_MAP);
+  }
+}
+
+function cfgSave(){
+  if(typeof IS_DEMO!=='undefined'&&IS_DEMO)return;
+  try{
+    localStorage.setItem(sk('cfg_match_rules'),JSON.stringify(CFG_MATCH_RULES));
+    localStorage.setItem(sk('cfg_tol'),JSON.stringify(CFG_TOL));
+    localStorage.setItem(sk('cfg_aliases'),JSON.stringify(CFG_ALIASES));
+    localStorage.setItem(sk('cfg_templates'),JSON.stringify(CFG_TEMPLATES));
+    localStorage.setItem(sk('cfg_export_profile'),CFG_EXPORT_PROFILE);
+  }catch(e){console.warn('cfgSave:',e);}
+}
+
+// ── RENDER SETTINGS PANELS ────────────────────────────────────────────────────
+function cfgRenderAll(){
+  cfgRenderMatchRules();
+  cfgRenderTolerances();
+  cfgRenderAliases();
+  cfgRenderTemplates();
+  cfgRenderExportProfile();
+}
+
+// ── MATCH RULES ───────────────────────────────────────────────────────────────
+function cfgRenderMatchRules(){
+  var el=document.getElementById('cfg-match-rules-list');
+  if(!el)return;
+  el.innerHTML=CFG_MATCH_RULES.map(function(r,i){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface2);border:1px solid var(--bdr);border-radius:8px;margin-bottom:5px">'+
+      '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;min-width:0">'+
+        '<input type="checkbox" '+(r.enabled?'checked':'')+' onchange="cfgToggleRule('+i+',this.checked)" style="accent-color:var(--pd)">'+
+        '<div style="min-width:0">'+
+          '<div style="font-size:12.5px;font-weight:600;color:var(--t1)">'+r.label+'</div>'+
+          '<div style="font-size:11px;color:var(--t3)">'+r.desc+'</div>'+
+        '</div>'+
+      '</label>'+
+      '<div style="display:flex;gap:4px;flex-shrink:0">'+
+        '<button class="btn btn-ghost btn-xs" onclick="cfgMoveRule('+i+',-1)" '+(i===0?'disabled':'')+' title="Move up" style="padding:2px 6px">↑</button>'+
+        '<button class="btn btn-ghost btn-xs" onclick="cfgMoveRule('+i+',1)" '+(i===CFG_MATCH_RULES.length-1?'disabled':'')+' title="Move down" style="padding:2px 6px">↓</button>'+
+        '<div style="font-size:10px;color:var(--t3);min-width:20px;text-align:right;line-height:2.2">'+(i+1)+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function cfgToggleRule(i,v){if(CFG_MATCH_RULES[i])CFG_MATCH_RULES[i].enabled=v;}
+function cfgMoveRule(i,dir){
+  var j=i+dir;
+  if(j<0||j>=CFG_MATCH_RULES.length)return;
+  var tmp=CFG_MATCH_RULES[i];CFG_MATCH_RULES[i]=CFG_MATCH_RULES[j];CFG_MATCH_RULES[j]=tmp;
+  cfgRenderMatchRules();
+}
+function cfgSaveMatchRules(){cfgSave();toast('Match rule order saved');}
+function cfgResetMatchRules(){
+  CFG_MATCH_RULES=CFG_MATCH_RULES_DEFAULT.map(function(r){return Object.assign({},r);});
+  cfgRenderMatchRules();cfgSave();toast('Match rules reset to defaults');
+}
+
+// ── TOLERANCE ─────────────────────────────────────────────────────────────────
+function cfgRenderTolerances(){
+  function set(id,val){var el=document.getElementById(id);if(el)el.value=val;}
+  set('cfg-tol-dollar',CFG_TOL.dollar);
+  set('s-tol',CFG_TOL.dollar); // keep existing tol input in sync
+  set('cfg-tol-pct',CFG_TOL.pct);
+  set('cfg-tol-shortpay',CFG_TOL.shortpay);
+  set('cfg-tol-bankfee',CFG_TOL.bankfee);
+  set('cfg-tol-rounding',CFG_TOL.rounding);
+}
+function cfgSaveTolerance(){
+  function g(id){var el=document.getElementById(id);return el?parseFloat(el.value)||0:0;}
+  CFG_TOL.dollar=g('cfg-tol-dollar');
+  CFG_TOL.pct=g('cfg-tol-pct');
+  CFG_TOL.shortpay=g('cfg-tol-shortpay');
+  CFG_TOL.bankfee=g('cfg-tol-bankfee');
+  CFG_TOL.rounding=g('cfg-tol-rounding');
+  // Keep existing s-tol input in sync (used by runMatch)
+  var st=document.getElementById('s-tol');if(st)st.value=CFG_TOL.dollar;
+  cfgSave();
+}
+
+// ── CUSTOMER NAME ALIASES ──────────────────────────────────────────────────────
+function cfgRenderAliases(){
+  var el=document.getElementById('cfg-alias-list');
+  if(!el)return;
+  var entries=Object.entries(CFG_ALIASES);
+  if(!entries.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:8px 0">No aliases defined. Add one below.</div>';
+    return;
+  }
+  el.innerHTML=entries.map(function(kv){
+    var from=kv[0],to=kv[1];
+    var fromE=from.replace(/"/g,'&quot;');
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border:1px solid var(--bdr);border-radius:7px">'+
+      '<div style="flex:1;font-size:12px">'+
+        '<span style="font-weight:600;color:var(--t2)">'+from+'</span>'+
+        '<span style="color:var(--t3);margin:0 6px">→</span>'+
+        '<span style="color:var(--t1)">'+to+'</span>'+
+      '</div>'+
+      '<button class="btn btn-ghost btn-xs" onclick="cfgDeleteAlias(\''+fromE+'\')" style="color:var(--r-t)">✕</button>'+
+    '</div>';
+  }).join('');
+}
+function cfgAddAlias(){
+  var from=(document.getElementById('cfg-alias-from')||{}).value||'';
+  var to=(document.getElementById('cfg-alias-to')||{}).value||'';
+  from=from.trim().toUpperCase();to=to.trim().toUpperCase();
+  if(!from||!to){toast('Enter both bank name and canonical name','warn');return;}
+  CFG_ALIASES[from]=to;
+  // Also update REMITTER_NAME_MAP so existing normalizer picks it up immediately
+  if(typeof REMITTER_NAME_MAP!=='undefined')REMITTER_NAME_MAP[from]=to;
+  cfgSave();cfgRenderAliases();
+  var f=document.getElementById('cfg-alias-from');if(f)f.value='';
+  var t=document.getElementById('cfg-alias-to');if(t)t.value='';
+  toast('Alias added: '+from+' → '+to);
+}
+function cfgDeleteAlias(from){
+  delete CFG_ALIASES[from];
+  if(typeof REMITTER_NAME_MAP!=='undefined')delete REMITTER_NAME_MAP[from];
+  cfgSave();cfgRenderAliases();
+  toast('Alias removed');
+}
+
+// ── EXPORT PROFILE ─────────────────────────────────────────────────────────────
+function cfgRenderExportProfile(){
+  var sel=document.getElementById('cfg-export-profile');
+  if(sel)sel.value=CFG_EXPORT_PROFILE;
+  cfgUpdateExportDesc();
+}
+function cfgUpdateExportDesc(){
+  var profile=CFG_EXPORT_PROFILES[CFG_EXPORT_PROFILE];
+  var el=document.getElementById('cfg-export-profile-desc');
+  if(!el)return;
+  if(!profile){el.textContent='';return;}
+  el.innerHTML='<strong>'+profile.label+'</strong> — Fields: '+profile.fields.join(', ');
+}
+function cfgSaveExportProfile(){
+  var sel=document.getElementById('cfg-export-profile');
+  if(sel)CFG_EXPORT_PROFILE=sel.value;
+  cfgSave();cfgUpdateExportDesc();
+  toast('Export profile set to: '+((CFG_EXPORT_PROFILES[CFG_EXPORT_PROFILE]||{}).label||CFG_EXPORT_PROFILE));
+}
+
+// ── IMPORT TEMPLATES ───────────────────────────────────────────────────────────
+const CFG_FIELD_LABELS=[
+  {id:'bankAccount',    label:'Bank Account'},
+  {id:'customerAccount',label:'Customer Account'},
+  {id:'customerName',   label:'Customer Name'},
+  {id:'invoiceNumber',  label:'Invoice Number'},
+  {id:'poNumber',       label:'PO Number'},
+  {id:'salesOrder',     label:'Sales Order'},
+  {id:'deliveryNumber', label:'Delivery Number'},
+  {id:'trackingNumber', label:'Tracking Number'},
+  {id:'paymentRef',     label:'Payment Reference'},
+  {id:'bankRef',        label:'Bank Reference'},
+  {id:'amount',         label:'Amount'},
+  {id:'currency',       label:'Currency'},
+  {id:'paymentDate',    label:'Payment Date'},
+  {id:'notes',          label:'Notes / Raw Detail'}
+];
+
+function cfgRenderTemplates(){
+  var el=document.getElementById('cfg-templates-list');
+  if(!el)return;
+  var tpls=Object.values(CFG_TEMPLATES);
+  if(!tpls.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:4px 0">No templates saved yet. Click a file type above to create one.</div>';
+    return;
+  }
+  el.innerHTML=tpls.map(function(t){
+    var mappedCount=Object.values(t.mappings||{}).filter(Boolean).length;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:1px solid var(--bdr);border-radius:8px">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:12.5px;font-weight:600;color:var(--t1)">'+t.name+'</div>'+
+        '<div style="font-size:11px;color:var(--t3)">'+t.type+' · '+mappedCount+' fields mapped</div>'+
+      '</div>'+
+      '<button class="btn btn-outline btn-xs" onclick="cfgOpenTemplate(\''+t.type+'\',\''+t.id+'\')">Edit</button>'+
+      '<button class="btn btn-ghost btn-xs" onclick="cfgDeleteTemplate(\''+t.id+'\')" style="color:var(--r-t)">✕</button>'+
+    '</div>';
+  }).join('');
+}
+
+function cfgOpenTemplate(type,existingId){
+  var existing=existingId?CFG_TEMPLATES[existingId]:{name:'',type:type,id:'',mappings:{}};
+  var typeLabel=type==='bank'?'Bank File':type==='invoice'?'Invoice File':'Bank Summary Report';
+  var mid=existingId||('tpl-'+Date.now());
+  var mappingRows=CFG_FIELD_LABELS.map(function(f){
+    var val=(existing.mappings||{})[f.id]||'';
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+      '<div style="width:160px;font-size:12px;color:var(--t2);flex-shrink:0">'+f.label+'</div>'+
+      '<input type="text" placeholder="Column header in your file (e.g. Inv #)" value="'+val.replace(/"/g,'&quot;')+'" '+
+        'data-tpl-field="'+f.id+'" '+
+        'style="flex:1;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--t1);outline:none">'+
+    '</div>';
+  }).join('');
+  showModal('Import Template — '+typeLabel,
+    '<div style="margin-bottom:10px">'+
+      '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Template Name</div>'+
+      '<input id="_tpl-name" type="text" value="'+existing.name.replace(/"/g,'&quot;')+'" placeholder="e.g. MUFG BAI2, SAP Aging Report…" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:8px">Column Mappings</div>'+
+    '<div style="max-height:340px;overflow-y:auto;padding-right:4px">'+mappingRows+'</div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px">'+
+      '<button class="btn btn-p btn-sm" onclick="cfgSaveTemplate(\''+mid+'\',\''+type+'\')">Save template</button>'+
+      '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+    '</div>'
+  );
+}
+
+function cfgSaveTemplate(id,type){
+  var name=(document.getElementById('_tpl-name')||{}).value||'';
+  if(!name.trim()){toast('Enter a template name','warn');return;}
+  var mappings={};
+  document.querySelectorAll('[data-tpl-field]').forEach(function(inp){
+    var v=inp.value.trim();
+    if(v)mappings[inp.getAttribute('data-tpl-field')]=v;
+  });
+  CFG_TEMPLATES[id]={id:id,name:name.trim(),type:type,mappings:mappings};
+  cfgSave();
+  closeModal();
+  cfgRenderTemplates();
+  toast('Template "'+name.trim()+'" saved');
+}
+
+function cfgDeleteTemplate(id){
+  var name=(CFG_TEMPLATES[id]||{}).name||id;
+  delete CFG_TEMPLATES[id];
+  cfgSave();cfgRenderTemplates();
+  toast('Template "'+name+'" deleted');
+}
+
+// ── CFG HELPERS FOR MATCHING ENGINE ──────────────────────────────────────────
+// Returns whether a rule is enabled (checks CFG first, falls back to MP_RULES)
+function cfgRuleEnabled(ruleId){
+  var r=CFG_MATCH_RULES.find(function(x){return x.id===ruleId;});
+  if(r)return r.enabled;
+  // Fallback to existing MP_RULES
+  if(typeof MP_RULES!=='undefined'){
+    var mr=MP_RULES.find(function(x){return x.id===ruleId;});
+    if(mr)return mr.enabled;
+  }
+  return true; // default: enabled
+}
+
+// Get effective dollar tolerance
+function cfgGetTol(){
+  var st=document.getElementById('s-tol');
+  var stVal=st?parseFloat(st.value)||1:1;
+  return Math.max(CFG_TOL.dollar||0, stVal);
+}
+
+// Normalize a customer name using CFG_ALIASES (superset of REMITTER_NAME_MAP)
+function cfgNormalizeName(name){
+  if(!name)return '';
+  var upper=String(name).toUpperCase().trim();
+  if(CFG_ALIASES[upper])return CFG_ALIASES[upper];
+  // Partial match: check if any alias key is a prefix of the name
+  var keys=Object.keys(CFG_ALIASES);
+  for(var i=0;i<keys.length;i++){
+    if(upper.startsWith(keys[i]))return CFG_ALIASES[keys[i]];
+  }
+  // Fall back to existing normalizeCustomerName if it exists
+  if(typeof normalizeCustomerName==='function')return normalizeCustomerName(name);
+  return name;
+}
+
+// ── INIT: call on page load ───────────────────────────────────────────────────
+function cfgInit(){
+  cfgLoad();
+  // Render after a tick so DOM is ready
+  setTimeout(cfgRenderAll, 0);
+}
+
 function saveToStorage(){
   if(IS_DEMO)return;
   try{
@@ -4395,7 +4811,7 @@ function saveToStorage(){
     localStorage.setItem(sk('pay'),JSON.stringify(PAY));
     localStorage.setItem(sk('res'),JSON.stringify(RES));
     localStorage.setItem(sk('exc'),JSON.stringify(EXC));
-    localStorage.setItem(sk('remadvice'),JSON.stringify(REM_ADVICE));
+    localStorage.setItem(sk('remadvice'),JSON.stringify(REM_ADVICE||[]));
   }catch(e){}
 }
 function loadFromStorage(){
@@ -4466,6 +4882,7 @@ function sp(id){
   const sbi=document.getElementById('sbi-'+pid);
   if(sbi)sbi.classList.add('active');
   if(pid==='reporting')updReporting();
+  if(pid==='settings'){try{cfgRenderAll();}catch(e){}}
   if(pid==='cash-app'){engRefreshSel();renderPayQueue();}
   if(pid==='audit')initAuditTbl();
 }
@@ -4825,6 +5242,7 @@ function launchApp(user){
   try{updTop();}catch(e){console.warn('updTop:',e);}
   try{initAuditTbl();}catch(e){console.warn('initAuditTbl:',e);}
   addAudit('Login','User: '+(user.name||CURRENT_USER));
+  try{cfgInit();}catch(e){console.warn('cfgInit:',e);}
 
   setTimeout(navToWorklist, 0);
 }
@@ -4866,14 +5284,8 @@ function openImport(t){
   IMP_TYPE=t;
   IMP_BANK_MODE=false;
   const title=document.getElementById('imp-title');const lbl=document.getElementById('imp-lbl');
-  const titleMap={inv:'Import Invoice Data',rem:'Import Bank Remittance',advice:'Import Customer Remittance Advice'};
-  const lblMap={
-    inv:'Invoice CSV — Customer, Account, Invoice, PO, SO, Amount, Doc Type, Date, Due, Document #',
-    rem:'Remittance CSV — Account, Customer, Amount, PO Ref, Invoice Ref, Method, Notes',
-    advice:'Remittance Advice — Invoice #, Amount Paid, optional PO #, Customer, Payment Ref, Payment Date'
-  };
-  if(title)title.textContent=titleMap[t]||'Import Data';
-  if(lbl)lbl.textContent=lblMap[t]||'';
+  if(title)title.textContent=t==='inv'?'Import Invoice Data':'Import Remittance Data';
+  if(lbl)lbl.textContent=t==='inv'?'Invoice CSV — Customer, Account, Invoice, PO, SO, Amount, Doc Type, Date, Due, Document #':'Remittance CSV — Account, Customer, Amount, PO Ref, Invoice Ref, Method, Notes';
   const ta=document.getElementById('mo-ta');if(ta)ta.value='';
   hideProgress();
   document.getElementById('imp-modal').classList.add('open');
@@ -4953,7 +5365,7 @@ function _doResetAll(){
   addAudit('Full reset','All data cleared');
   toast('✓ All data reset');
 }
-function saveSettings(){toast('Settings saved');}
+function saveSettings(){cfgSaveTolerance();cfgSave();toast('Settings saved');}
 function filterDash(t){if(t==='exceptions')sp('exceptions');else sp('cash-app');}
 function filterByStatus(s){sp('exceptions');}
 function showRegister(){showLfView('register');}
@@ -5074,8 +5486,16 @@ function extractCleanRemitterName(rawText){
 function normalizeRemitterName(name){
   if(!name)return'';
   var cleaned=String(name).replace(/\s+/g,' ').trim().toUpperCase();
-  for(var key in REMITTER_NAME_MAP){
-    if(cleaned.includes(key))return REMITTER_NAME_MAP[key];
+  // Check CFG_ALIASES first (user-configurable, superset of REMITTER_NAME_MAP)
+  var aliasMap=(typeof CFG_ALIASES!=='undefined'&&CFG_ALIASES&&Object.keys(CFG_ALIASES).length)?CFG_ALIASES:REMITTER_NAME_MAP;
+  for(var key in aliasMap){
+    if(cleaned.includes(key))return aliasMap[key];
+  }
+  // Also check REMITTER_NAME_MAP if CFG_ALIASES was used but had no match
+  if(aliasMap!==REMITTER_NAME_MAP){
+    for(var key2 in REMITTER_NAME_MAP){
+      if(cleaned.includes(key2))return REMITTER_NAME_MAP[key2];
+    }
   }
   // Title-case the result
   return cleaned.replace(/\w\S*/g,function(w){return w.charAt(0)+w.slice(1).toLowerCase();});
@@ -5306,6 +5726,8 @@ function fc(id,ci,v){document.querySelectorAll('#'+id+' tr').forEach(tr=>{const 
 function csvDL(rows,fn){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=fn;a.click();}
 function exportExc(){if(!EXC.length){toast('No exceptions','warn');return;}csvDL([EH,...EXC.map(e=>[e.id,e.a,e.c,e.amt,e.ref,e.type,e.detail,e.action,e.dec,e.s])],'exceptions_'+new Date().toISOString().split('T')[0]+'.csv');toast('Exceptions exported');}
 function exportPost(){
+  var _activeProfile=(typeof CFG_EXPORT_PROFILE!=='undefined'&&typeof CFG_EXPORT_PROFILES!=='undefined')?((CFG_EXPORT_PROFILES[CFG_EXPORT_PROFILE]||{}).label||CFG_EXPORT_PROFILE):'Generic CSV';
+  addAudit('Export posted','Profile: '+_activeProfile);
   if(IS_DEMO){showUpgrade('Posting Export','Available on Starter, Pro, and Team plans.');return;}
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   if(!ap.length){toast('No approved results','warn');return;}
@@ -6157,7 +6579,7 @@ function renderPayQueue(){
     const bankTag=p.bank?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--pg);color:var(--pd);font-weight:700;margin-left:4px">${p.bank}</span>`:'';
     return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
-      <div class="pq-item-top"><div class="pq-item-cust">${(typeof getRemittanceForPayment==='function'&&getRemittanceForPayment(i))?'<span title="Remittance advice attached" style="margin-right:3px">📄</span>':''}${getDisplayCustomerName(p)||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
+      <div class="pq-item-top"><div class="pq-item-cust">${getDisplayCustomerName(p)||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
       <div class="pq-item-bot">
         <div class="pq-item-ref">${p.i||p.po||p.txId||'—'}</div>
         <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
@@ -6545,37 +6967,10 @@ async function runMatch(){
   await new Promise(r=>setTimeout(r,200));upd(15,0,0);
   await new Promise(r=>setTimeout(r,200));
   RES=[];EXC=[];INV.forEach(v=>v.s='');
-  const tol=parseFloat(document.getElementById('s-tol')?.value)||1;let ec=1;
+  const tol=(typeof cfgGetTol==='function')?cfgGetTol():(parseFloat(document.getElementById('s-tol')?.value)||1);let ec=1;
   for(let pi=0;pi<PAY.length;pi++){
     const p=PAY[pi];upd(20+Math.round(pi/PAY.length*65),RES.length,EXC.length);
     if(pi%2===0)await new Promise(r=>setTimeout(r,60));
-    // ── PHASE 4: Remittance advice priority ──
-    // If a remittance batch is paired to this payment, use its line-level invoice→amount data
-    const remBatch=(typeof getRemittanceForPayment==='function')?getRemittanceForPayment(pi):null;
-    if(remBatch&&remBatch.lines&&remBatch.lines.length){
-      let remApplied=0,remMatched=0,remMissed=0;
-      remBatch.lines.forEach(function(L){
-        if(!L.invoice)return;
-        const invMatch=INV.find(function(v){return String(v.i)===String(L.invoice)&&!v.s;});
-        if(invMatch){
-          const lineAmt=parseFloat(L.amount)||0;
-          const vr=lineAmt-invMatch.amt;
-          const st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';
-          invMatch.s=st;
-          RES.push({c:invMatch.c,a:invMatch.a,i:invMatch.i,po:invMatch.po,so:invMatch.so,d:invMatch.d,oa:invMatch.amt,pd:lineAmt,vr:vr,st:st,m:'Remittance Advice',n:'From remittance batch '+remBatch.batchId,fromRem:true,batchId:remBatch.batchId});
-          remApplied+=lineAmt;remMatched++;
-          if(st!=='Exact'){
-            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:Math.abs(vr),ref:invMatch.i,type:st,detail:'Remittance line '+lineAmt.toFixed(2)+' vs invoice '+invMatch.amt.toFixed(2),action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});
-          }
-        } else {
-          remMissed++;
-          // Invoice in remittance but not in INV — track as exception
-          EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:parseFloat(L.amount)||0,ref:L.invoice,type:'Missing invoice',detail:'Remittance lists invoice '+L.invoice+' but not in open AR',action:'Verify invoice number with customer',dec:'',s:'Open'});
-        }
-      });
-      addAudit('Remittance applied','Payment '+(p.txId||p.i)+' · '+remMatched+' invoices matched · $'+$f(remApplied));
-      continue; // skip standard matching, remittance overrode it
-    }
     if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Cash on Account or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
     if(!p.a||p.a==='40999999'){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c,amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account or reference found — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
     const ni=norm(p.i),np=norm(p.po),ns=norm(p.so);
@@ -6699,63 +7094,6 @@ async function handleFile(inp){
   showProgress('Reading '+f.name+'…',10);
   await new Promise(r=>setTimeout(r,60)); // yield to browser to render UI
   try{
-    // ── REMITTANCE ADVICE BRANCH (line-level invoice→amount data from customer) ──
-    if(IMP_TYPE==='advice'){
-      if(ext==='xlsx'||ext==='xls'){
-        if(typeof XLSX==='undefined'){hideProgress();toast('SheetJS required for Excel — try CSV instead','warn');return;}
-        showProgress('Parsing remittance Excel…',40);
-        const buf=await f.arrayBuffer();
-        const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true});
-        // Try sheets named like 'Remittance' first, else first sheet
-        let sheetName=wb.SheetNames.find(n=>/remit/i.test(n))||wb.SheetNames[0];
-        const ws=wb.Sheets[sheetName];
-        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',blankrows:false});
-        showProgress('Pairing remittance to payments…',80);
-        await new Promise(r=>setTimeout(r,30));
-        importRemittanceAdvice(rows,'excel:'+sheetName);
-        return;
-      } else if(ext==='csv'||ext==='txt'){
-        const t=await f.text();
-        const rows=parseCsv(t);
-        showProgress('Pairing remittance to payments…',80);
-        await new Promise(r=>setTimeout(r,30));
-        importRemittanceAdvice(rows,'csv');
-        return;
-      } else if(ext==='pdf'){
-        if(typeof pdfjsLib==='undefined'){hideProgress();toast('PDF parser loading — try again','warn');return;}
-        showProgress('Extracting PDF text…',30);
-        const buf=await f.arrayBuffer();
-        const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-        let allText='';
-        for(let p=1;p<=pdf.numPages;p++){
-          const page=await pdf.getPage(p);
-          const tc=await page.getTextContent();
-          let lastY=null,lineText='';
-          tc.items.forEach(item=>{
-            const y=Math.round(item.transform[5]);
-            if(lastY!==null&&Math.abs(y-lastY)>3){allText+=lineText+'\n';lineText='';}
-            lineText+=(lineText?' ':'')+item.str.trim();
-            lastY=y;
-          });
-          if(lineText)allText+=lineText+'\n';
-        }
-        showProgress('Parsing remittance advice…',70);
-        await new Promise(r=>setTimeout(r,30));
-        const batches=parseRemittancePDF(allText);
-        if(!batches.length){hideProgress();toast('No invoice/amount pairs found in PDF — try Excel/CSV or manual entry','warn');return;}
-        pairRemittanceToPayments(batches);
-        REM_ADVICE=REM_ADVICE.concat(batches);
-        saveToStorage();
-        const paired=batches.filter(b=>b.paymentIdx!==null).length;
-        hideProgress();
-        toast('Imported '+batches.length+' remittance batch(es) · '+paired+' auto-paired');
-        addAudit('Remittance advice imported',batches.length+' batches · '+paired+' paired');
-        document.getElementById('imp-modal').classList.remove('open');
-        if(typeof renderPayQueue==='function')renderPayQueue();
-        if(typeof updDash==='function')updDash();
-        return;
-      }
-    }
     if(ext==='xlsx'||ext==='xls'){
       if(typeof XLSX==='undefined'){hideProgress();toast('Excel parsing: include SheetJS for .xlsx support','warn');const t=await f.text();const _mt8=document.getElementById('mo-ta');if(_mt8)_mt8.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);return;}
       showProgress('Parsing Excel — large files may take a moment…',40);
@@ -6801,326 +7139,6 @@ async function handleFile(inp){
   const fn2=document.getElementById('imp-file-name');if(fn2)fn2.textContent='';
 }
 
-
-
-// ════════════════════════════════════════════════════════════
-// REMITTANCE ADVICE — Phase 4: third file type
-// REM_ADVICE structure: { batchId, paymentRef, customerName, customerAcct,
-//   paymentDate, totalAmount, lines:[{invoice, amount, po, customerRef}],
-//   paired:'auto-ref|auto-amt|manual|unmatched', paymentIdx:number|null }
-// ════════════════════════════════════════════════════════════
-
-function _remNormName(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().split(' ').slice(0,3).join(' ');}
-function _remColIdx(headers, ...names){
-  const norm = headers.map(h => String(h||'').toLowerCase().replace(/[^a-z0-9]/g,''));
-  for(const n of names){
-    const target = n.toLowerCase().replace(/[^a-z0-9]/g,'');
-    const idx = norm.indexOf(target);
-    if(idx >= 0) return idx;
-  }
-  return -1;
-}
-
-function parseRemittanceTable(rows){
-  // rows: array of arrays (first row = headers)
-  if(!rows || rows.length < 2) return [];
-  const headers = rows[0];
-  // Invoice column: prefer 'Invoice # (if present)' when both 'Invoice #' and that exist
-  let iInv = _remColIdx(headers, 'invoiceifpresent','invoicepaid','paidinvoice','remittanceinvoice');
-  if(iInv < 0) iInv = _remColIdx(headers, 'invoice','invoicenumber','invoice#','invoicenum','invno');
-  // If two columns match invoice-like, pick the one with more non-empty values in data rows
-  if(iInv >= 0){
-    const norm = headers.map(h => String(h||'').toLowerCase().replace(/[^a-z0-9]/g,''));
-    const otherInv = norm.findIndex((h,i)=>i!==iInv && (h.includes('invoice')||h.startsWith('inv')));
-    if(otherInv >= 0){
-      let nA=0, nB=0;
-      for(let r=1; r<rows.length; r++){
-        if(rows[r][iInv]) nA++;
-        if(rows[r][otherInv]) nB++;
-      }
-      if(nB > nA) iInv = otherInv;
-    }
-  }
-  // Amount paid column: prefer specific over generic
-  let iAmt = _remColIdx(headers, 'amountpaid','paidamount','appliedamount');
-  if(iAmt < 0) iAmt = _remColIdx(headers, 'amount','paid','payment');
-  // If two amount columns exist, pick the one with more non-empty values
-  if(iAmt >= 0){
-    const norm = headers.map(h => String(h||'').toLowerCase().replace(/[^a-z0-9]/g,''));
-    const otherAmt = norm.findIndex((h,i)=>i!==iAmt && (h.includes('amount')||h.includes('paid')));
-    if(otherAmt >= 0){
-      let nA=0, nB=0;
-      for(let r=1; r<rows.length; r++){
-        if(parseFloat(String(rows[r][iAmt]||'').replace(/[$,]/g,''))>0) nA++;
-        if(parseFloat(String(rows[r][otherAmt]||'').replace(/[$,]/g,''))>0) nB++;
-      }
-      if(nB > nA) iAmt = otherAmt;
-    }
-  }
-  const iPO = _remColIdx(headers, 'po','ponumber','po#','purchaseorder');
-  const iRef = _remColIdx(headers, 'remittanceref','paymentref','referencenumber','reference','transactionref','txnref','batchid','batchref');
-  const iDate = _remColIdx(headers, 'paymentdate','paiddate','postingdate','date','remittancedate');
-  const iCust = _remColIdx(headers, 'customername','customer','payer','remitter','vendor');
-  const iAcct = _remColIdx(headers, 'account','accountnumber','customerid','custid','customercode');
-  
-  if(iInv < 0 && iAmt < 0) return []; // no usable data
-  
-  const batches = new Map(); // key = ref|date
-  for(let r=1; r<rows.length; r++){
-    const row = rows[r];
-    if(!row || row.every(c => c===null || c===undefined || c==='')) continue;
-    
-    const invNum = iInv >= 0 ? row[iInv] : '';
-    const amtPaid = iAmt >= 0 ? parseFloat(String(row[iAmt]||'').replace(/[$,]/g,''))||0 : 0;
-    const po = iPO >= 0 ? row[iPO] : '';
-    const ref = iRef >= 0 ? String(row[iRef]||'').trim() : '';
-    const date = iDate >= 0 ? String(row[iDate]||'').trim() : '';
-    const cust = iCust >= 0 ? String(row[iCust]||'').trim() : '';
-    const acct = iAcct >= 0 ? String(row[iAcct]||'').trim() : '';
-    
-    // Skip rows that have no invoice AND no amount (truly empty)
-    if(!invNum && !amtPaid) continue;
-    
-    const batchKey = ref || ('__noref__' + (date || cust || acct || 'unknown'));
-    
-    if(!batches.has(batchKey)){
-      batches.set(batchKey, {
-        batchId: ref || ('BATCH-' + (batches.size + 1)),
-        paymentRef: ref,
-        customerName: cust,
-        customerAcct: acct,
-        paymentDate: date,
-        totalAmount: 0,
-        lines: [],
-        paired: 'unmatched',
-        paymentIdx: null,
-        sourceFormat: 'excel-csv'
-      });
-    }
-    const b = batches.get(batchKey);
-    if(invNum || amtPaid){
-      b.lines.push({
-        invoice: String(invNum||'').trim(),
-        amount: amtPaid,
-        po: String(po||'').trim(),
-        customerRef: cust || acct
-      });
-      b.totalAmount += amtPaid;
-    }
-    if(cust && !b.customerName) b.customerName = cust;
-    if(acct && !b.customerAcct) b.customerAcct = acct;
-    if(date && !b.paymentDate) b.paymentDate = date;
-  }
-  return Array.from(batches.values()).filter(b => b.lines.length > 0);
-}
-
-function parseRemittanceCSV(text){
-  const rows = parseCsv(text);
-  return parseRemittanceTable(rows);
-}
-
-function parseRemittancePDF(text){
-  // Heuristic: extract invoice/amount pairs from PDF text
-  // Most remittance PDFs have a table where each line has: <invoice#> ... <$amount>
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  
-  // Try to find a payment ref and date in the header
-  let paymentRef = '';
-  let paymentDate = '';
-  let customerName = '';
-  
-  const refMatch = text.match(/(?:payment|check|remit|transaction|reference)[\s#:]*(?:no\.?|number|#)?[\s:]*([A-Z0-9\-]{4,30})/i);
-  if(refMatch) paymentRef = refMatch[1];
-  const dateMatch = text.match(/(?:date|payment date|paid)[\s:]*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i);
-  if(dateMatch) paymentDate = dateMatch[1];
-  // Customer name: first ALL CAPS line of length 5-50 that's not "REMITTANCE ADVICE" etc.
-  for(const ln of lines.slice(0, 20)){
-    if(/^[A-Z][A-Z0-9 ,.\-&]{4,50}$/.test(ln) && !/^(REMITTANCE|PAYMENT|ADVICE|INVOICE|AMOUNT|TOTAL|DATE|CHECK)/.test(ln)){
-      customerName = ln.trim(); break;
-    }
-  }
-  
-  // Look for invoice/amount line pairs
-  // Pattern: 8-15 digit/alphanumeric invoice ref followed by amount with optional $ and decimal
-  const invAmtPairs = [];
-  const lineRegex = /\b(\d{6,15}|[A-Z]{1,4}\-?\d{4,15})\b[^\n]*?\$?\s*((?:\d{1,3}(?:,\d{3})*|\d+)\.\d{2})\b/g;
-  let m;
-  const seen = new Set();
-  while((m = lineRegex.exec(text)) !== null){
-    const inv = m[1];
-    const amt = parseFloat(m[2].replace(/,/g,''));
-    if(amt < 0.01 || amt > 100000000) continue;
-    const key = inv + '|' + amt.toFixed(2);
-    if(seen.has(key)) continue;
-    seen.add(key);
-    invAmtPairs.push({invoice: inv, amount: amt, po: '', customerRef: customerName});
-  }
-  
-  if(invAmtPairs.length === 0) return [];
-  
-  return [{
-    batchId: paymentRef || ('PDF-' + Date.now()),
-    paymentRef: paymentRef,
-    customerName: customerName,
-    customerAcct: '',
-    paymentDate: paymentDate,
-    totalAmount: invAmtPairs.reduce((s,l)=>s+l.amount, 0),
-    lines: invAmtPairs,
-    paired: 'unmatched',
-    paymentIdx: null,
-    sourceFormat: 'pdf'
-  }];
-}
-
-function pairRemittanceToPayments(batches){
-  // Match each remittance batch to a bank payment in PAY[]
-  // Pass 1: exact ref match (paymentRef === p.txId or p.bankRef)
-  // Pass 2: amount + customer name fuzzy match
-  // Pass 3: amount only, same date
-  
-  for(const b of batches){
-    if(b.paymentIdx !== null && b.paymentIdx !== undefined) continue;
-    
-    // Pass 1: bank ref / payment ref exact match
-    if(b.paymentRef){
-      const refN = String(b.paymentRef).toUpperCase().trim();
-      const idx = PAY.findIndex(p => {
-        if(!p) return false;
-        const txN = String(p.txId||'').toUpperCase().trim();
-        const cRef = String(p.bankRef||p.custRef||p.i||'').toUpperCase().trim();
-        return refN && (txN === refN || cRef === refN || (txN && refN.includes(txN)) || (cRef && refN.includes(cRef)));
-      });
-      if(idx >= 0){ b.paymentIdx = idx; b.paired = 'auto-ref'; continue; }
-    }
-    
-    // Pass 2: amount + customer name fuzzy match
-    if(b.totalAmount > 0){
-      const tgtAmt = b.totalAmount;
-      const custN = _remNormName(b.customerName);
-      const candidates = [];
-      PAY.forEach((p,i) => {
-        if(!p) return;
-        const pAmt = parseFloat(p.amt) || 0;
-        if(Math.abs(pAmt - tgtAmt) / Math.max(pAmt, tgtAmt, 1) > 0.01) return; // within 1%
-        const pCustN = _remNormName(p.c);
-        if(custN && pCustN && (custN === pCustN || pCustN.includes(custN) || custN.includes(pCustN))){
-          candidates.push({i, score: 2});
-        } else if(!custN){
-          candidates.push({i, score: 1});
-        }
-      });
-      if(candidates.length > 0){
-        candidates.sort((a,b)=>b.score - a.score);
-        b.paymentIdx = candidates[0].i;
-        b.paired = 'auto-amt';
-        continue;
-      }
-    }
-    
-    b.paired = 'unmatched';
-  }
-  return batches;
-}
-
-function getRemittanceForPayment(payIdx){
-  return REM_ADVICE.find(b => b.paymentIdx === payIdx);
-}
-
-
-
-function openRemAdviceManualEntry(){
-  showModal('Manual Remittance Advice Entry',
-    '<div style="display:grid;gap:10px;margin-bottom:14px">'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
-    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Payment Reference</div>'+
-    '<input id="_rem-payref" type="text" placeholder="ACH ID, check #, wire ref…" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
-    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Payment Date</div>'+
-    '<input id="_rem-paydate" type="date" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div></div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
-    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Name</div>'+
-    '<input id="_rem-custname" type="text" placeholder="e.g., FCA US LLC" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
-    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Account #</div>'+
-    '<input id="_rem-custacct" type="text" placeholder="Optional" style="width:100%;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div></div>'+
-    '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-top:4px">Invoice Lines</div>'+
-    '<div id="_rem-lines" style="display:grid;gap:6px"></div>'+
-    '<button class="btn btn-outline btn-xs" onclick="_remAddLine()" style="justify-self:start">+ Add invoice line</button>'+
-    '<div id="_rem-total" style="font-weight:700;color:var(--t1);font-size:13px;border-top:1px solid var(--bdr);padding-top:8px">Total: $0.00</div>'+
-    '</div>'+
-    '<div style="display:flex;gap:8px">'+
-    '<button class="btn btn-p btn-sm" onclick="_remSaveManual()">Save Remittance Advice</button>'+
-    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-    '</div>'
-  );
-  setTimeout(function(){_remAddLine();_remAddLine();_remAddLine();},80);
-}
-function _remAddLine(){
-  const c=document.getElementById('_rem-lines');if(!c)return;
-  const idx=c.children.length;
-  const div=document.createElement('div');
-  div.style.cssText='display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;align-items:center';
-  div.innerHTML='<input type="text" placeholder="Invoice #" data-rem-inv style="padding:6px 9px;border:1px solid var(--bdr);border-radius:5px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none">'+
-    '<input type="text" placeholder="PO #" data-rem-po style="padding:6px 9px;border:1px solid var(--bdr);border-radius:5px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none">'+
-    '<input type="number" step="0.01" placeholder="Amount" data-rem-amt oninput="_remUpdTotal()" style="padding:6px 9px;border:1px solid var(--bdr);border-radius:5px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none;text-align:right">'+
-    '<button class="btn btn-ghost btn-xs" onclick="this.parentElement.remove();_remUpdTotal()" style="color:var(--r-t)">−</button>';
-  c.appendChild(div);
-}
-function _remUpdTotal(){
-  const inputs=document.querySelectorAll('[data-rem-amt]');
-  let t=0;inputs.forEach(i=>t+=parseFloat(i.value)||0);
-  const el=document.getElementById('_rem-total');
-  if(el)el.textContent='Total: $'+$f(t);
-}
-function _remSaveManual(){
-  const payRef=(document.getElementById('_rem-payref')||{}).value||'';
-  const payDate=(document.getElementById('_rem-paydate')||{}).value||'';
-  const custName=(document.getElementById('_rem-custname')||{}).value||'';
-  const custAcct=(document.getElementById('_rem-custacct')||{}).value||'';
-  const lineDivs=document.querySelectorAll('#_rem-lines > div');
-  const lines=[];
-  lineDivs.forEach(d=>{
-    const inv=(d.querySelector('[data-rem-inv]')||{}).value||'';
-    const po=(d.querySelector('[data-rem-po]')||{}).value||'';
-    const amt=parseFloat((d.querySelector('[data-rem-amt]')||{}).value)||0;
-    if(inv||amt>0)lines.push({invoice:String(inv).trim(),amount:amt,po:String(po).trim(),customerRef:custName});
-  });
-  if(!lines.length){toast('Add at least one invoice line','warn');return;}
-  const totalAmount=lines.reduce((s,l)=>s+l.amount,0);
-  const batch={
-    batchId:payRef||('MANUAL-'+Date.now()),
-    paymentRef:payRef,customerName:custName,customerAcct:custAcct,
-    paymentDate:payDate,totalAmount:totalAmount,lines:lines,
-    paired:'unmatched',paymentIdx:null,sourceFormat:'manual'
-  };
-  pairRemittanceToPayments([batch]);
-  REM_ADVICE.push(batch);
-  saveToStorage();
-  closeModal();
-  toast('Remittance saved · '+lines.length+' lines · $'+$f(totalAmount)+(batch.paymentIdx!==null?' · auto-paired':''));
-  addAudit('Manual remittance entry',lines.length+' lines · $'+$f(totalAmount));
-  if(typeof renderPayQueue==='function')renderPayQueue();
-  if(typeof updDash==='function')updDash();
-}
-
-function importRemittanceAdvice(rows, sourceFormat){
-  const batches=parseRemittanceTable(rows);
-  if(!batches.length){
-    hideProgress();
-    toast('No invoice/amount data found — check column headers','warn');
-    return;
-  }
-  batches.forEach(b=>b.sourceFormat=sourceFormat||'unknown');
-  pairRemittanceToPayments(batches);
-  REM_ADVICE=REM_ADVICE.concat(batches);
-  saveToStorage();
-  const paired=batches.filter(b=>b.paymentIdx!==null).length;
-  const totalLines=batches.reduce((s,b)=>s+b.lines.length,0);
-  hideProgress();
-  toast('Imported '+batches.length+' batch(es) · '+totalLines+' lines · '+paired+' auto-paired');
-  addAudit('Remittance advice imported',batches.length+' batches · '+totalLines+' lines · '+paired+' paired');
-  const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
-  if(typeof renderPayQueue==='function')renderPayQueue();
-  if(typeof updDash==='function')updDash();
-}
 
 function parseBAI2(txt){
   const TYPE_METHOD={
