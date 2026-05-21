@@ -5345,7 +5345,7 @@ function swTab(t,el){
 
 // ── Clear data ──
 function clearInvData(){
-  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
+  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];_fbl5nBaseInvs=[];
   var msg='Clear all invoice data?\n\n'+INV.length+' invoices will be removed.\nThis cannot be undone.';
   showConfirm(msg,function(){
     INV=[];
@@ -5384,7 +5384,7 @@ function clearPayData(){
 }
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
 function clearAllData(){
-  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
+  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];_fbl5nBaseInvs=[];
   showConfirm('Clear ALL data?\n\nInvoices, payments, matches, and exceptions will be permanently removed.\nThis cannot be undone.',function(){
     INV=[];PAY=[];RES=[];EXC=[];
     rAll();
@@ -8160,22 +8160,27 @@ var _fbl5nTimer=null;
 var _fbl5nPageSize=250;
 var _fbl5nOffset=0;
 var _fbl5nFiltered=[];
+var _fbl5nBaseInvs=[];  // account-filtered base before text search
+var _fbl5nTbodyId='ca-open-items-body';
 var _invSearchTimer=null;
 
 function _buildSearchText(){
   INV.forEach(function(v){
-    v._st=[v.c||'',v.a||'',v.i||'',v.po||'',v.so||'',v.d||'',String(v.amt||'')].join(' ').toLowerCase();
+    v._st=[v.c||'',v.a||'',v.i||'',v.po||'',v.so||'',v.d||'',v.ccy||'',String(v.amt||'')].join(' ').toLowerCase();
   });
 }
 
 function renderFbl5n(tbodyId, filterAcct, filterCust){
   var tbody=document.getElementById(tbodyId); if(!tbody) return;
   _fbl5nOffset=0;
+  _fbl5nTbodyId=tbodyId;
+  // Build account/customer filtered base — always from full INV array
   var invs=INV.filter(function(v){
     if(filterAcct && v.a!==filterAcct) return false;
     if(filterCust && (v.c||'').toLowerCase()!==filterCust.toLowerCase()) return false;
     return true;
   });
+  // Sort: ENG_PAY matches float to top
   if(ENG_PAY){
     var n=function(s){return(s||'').replace(/\s/g,'').toLowerCase();};
     invs=invs.slice().sort(function(a,b){
@@ -8187,12 +8192,9 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
         return s;}
       return score(b)-score(a);});
   }
-  _fbl5nFiltered=invs;
-  if(!invs.length){
-    tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items for selected account</div></div></td></tr>';
-    return;
-  }
-  _fbl5nRenderPage(tbodyId,0);
+  _fbl5nBaseInvs=invs; // store full account-filtered set for text search
+  // Apply any active column text filters on top
+  _fbl5nApplyTextFilter(tbodyId, true);
 }
 
 function _fbl5nBuildRow(v){
@@ -8238,7 +8240,7 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   var footer='';
   if(end<invs.length){
     footer='<tr id="fbl5n-load-more"><td colspan="16" style="text-align:center;padding:12px">'+
-      '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' open items</span> '+
+      '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' matching open items — refine search or load more</span> '+
       '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
     '</td></tr>';
   } else if(invs.length>_fbl5nPageSize){
@@ -8339,27 +8341,68 @@ function filterFbl5nExc(){
     tr.style.display=show?'':'none';
   });
 }
-function filterFbl5n(){
+
+// Column-index → INV field mapping for OI table (aligns with thead order)
+// th cols: [0]=checkbox, [1]=account, [2]=customer, [3]=invoice, [4]=invDate,
+// [5]=dueDate, [6]=aging(skip), [7]=po, [8]=so, [9]=doc, [10]=amt, [11]=bal, [12]=applied, [13]=status
+var _fbl5nColFields=['','a','c','i','dt2','due','','po','so','d','amt','','','s'];
+
+function _fbl5nApplyTextFilter(tbodyId, forceReset){
   var filterRow=document.getElementById('fbl5n-filter-row');
-  if(!filterRow)return;
-  var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');
-  var filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});
-  var rows=document.querySelectorAll('#ca-open-items-body tr');
-  rows.forEach(function(tr){
-    if(tr.querySelector('td[colspan]')){tr.style.display='';return;} // empty state row
-    var cells=tr.querySelectorAll('td');
-    var show=true;
-    // inputs align to cols: 0=checkbox(skip), 1=account, 2=customer, 3=inv, 4=invdate,
-    // 5=duedate, 6=aging, 7=po, 8=so, 9=doc, 10=origamt, 11=bal, 12=applied, 13=status
-    filters.forEach(function(f,fi){
-      if(!f)return;
-      var cell=cells[fi];
-      if(!cell)return;
-      if(!cell.innerText.toLowerCase().includes(f))show=false;
+  var filters=[];
+  if(filterRow){
+    var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');
+    filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});
+  }
+  var hasFilter=filters.some(function(f){return f.length>0;});
+  var src=_fbl5nBaseInvs; // always filter from full account-filtered base
+  var matched;
+  if(!hasFilter){
+    matched=src; // no filter: show all (capped by pagination)
+  } else {
+    matched=src.filter(function(v){
+      // Ensure search text is built if not yet
+      if(!v._st) v._st=[v.c||'',v.a||'',v.i||'',v.po||'',v.so||'',v.d||'',String(v.amt||'')].join(' ').toLowerCase();
+      var ok=true;
+      filters.forEach(function(f,fi){
+        if(!f) return;
+        var field=_fbl5nColFields[fi]||'';
+        if(field){
+          // Field-specific search — fast
+          var val=String(v[field]||'').toLowerCase();
+          if(!val.includes(f)) ok=false;
+        } else if(fi===0){
+          // checkbox col — skip
+        } else {
+          // Fallback: search full _st
+          if(!v._st.includes(f)) ok=false;
+        }
+      });
+      return ok;
     });
-    tr.style.display=show?'':'none';
-  });
+  }
+  _fbl5nFiltered=matched;
+  _fbl5nOffset=0;
+  var tbody=document.getElementById(tbodyId||'ca-open-items-body');
+  if(!tbody) return;
+  if(!matched.length){
+    tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px">'+
+      '<div class="empty-t">No open items found</div>'+
+      '<div class="empty-s">Try account number, customer name, invoice #, PO, or sales order.</div>'+
+    '</div></td></tr>';
+    return;
+  }
+  _fbl5nRenderPage(tbodyId||'ca-open-items-body',0);
 }
+
+function filterFbl5n(){
+  // Debounced: search full _fbl5nBaseInvs array — NOT just rendered DOM rows
+  clearTimeout(_fbl5nTimer);
+  _fbl5nTimer=setTimeout(function(){
+    _fbl5nApplyTextFilter(_fbl5nTbodyId||'ca-open-items-body', false);
+  }, 300);
+}
+
 function refreshFbl5n(){
   var acct=(document.getElementById('ca-acct-dropdown')||{}).value||'';
   // Do NOT filter by ENG_PAY.c — that hides invoices from other customers
