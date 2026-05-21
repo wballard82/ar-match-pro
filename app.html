@@ -5911,21 +5911,24 @@ function renderPayQueue(){
   // Get current bank filter
   const bankSel=document.getElementById('ca-bank-sel');
   const bankVal=bankSel?bankSel.value:'';
-  const bankCode=bankVal?bankVal.split('-')[0]:'';
   const visiblePay=PAY.filter(function(p,i){
-    if(!bankCode)return true;
-    return !p.bank||p.bank===bankCode;
+    if(!bankVal)return true;
+    var acct=String(p.bankAcct||p.bankAccount||p.statementAccount||'').replace(/[^0-9A-Za-z\-]/g,'').trim();
+    return acct===bankVal;
   });
-  if(ct)ct.textContent='('+visiblePay.length+(bankCode?' · '+bankCode:'')+')';
+  if(ct)ct.textContent='('+visiblePay.length+(bankVal?' · '+bankVal:'')+')';
   if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
-  if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankCode+'</div><div class="empty-s">Load '+bankCode+' sample data or select a different bank.</div></div>';return;}
+  if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankVal+'</div><div class="empty-s">Select a different bank account.</div></div>';return;}
   list.innerHTML=PAY.map((p,i)=>{
-    if(bankCode&&p.bank&&p.bank!==bankCode)return'';
+    const _pa=String(p.bankAcct||p.bankAccount||p.statementAccount||'').replace(/[^0-9A-Za-z\-]/g,'').trim();
+    if(bankVal&&_pa!==bankVal)return'';
     const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
     const exc=EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
+    if(_payFilter==='matched'&&!matched)return'';
+    if(_payFilter==='unmatched'&&matched)return'';
     const isActive=ENG_PAY_IDX===i;
-    const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':'var(--bdr3)';
-    const stateLabel=matched?'Matched':exc?'Exception':p.dp?'Down Pay':'Pending';
+    const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':p.coa||p.unapplied?'var(--cy)':'var(--t3)';
+    const stateLabel=matched?'Matched':exc?(p.st==='Unapplied Cash'||p.unapplied?'Unapplied':'Exception'):p.dp?'Down Pay':p.coa||p.unapplied?'Unapplied':'Unmatched';
     const bankTag=p.bank?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--pg);color:var(--pd);font-weight:700;margin-left:4px">${p.bank}</span>`:'';
     return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
@@ -6630,7 +6633,7 @@ function parseBAI2(txt){
     }
   }
 
-  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
+  const header='Bank Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
   const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
   return [header,...dataRows].join('\n');
 }
@@ -6938,6 +6941,7 @@ function processImport(){
       )]||'';
       const isCOA=n.toUpperCase().includes('COA')||n.toUpperCase().includes('CASH ON ACCOUNT')||n.toUpperCase().includes('UNAPPLIED');
       return{
+        bankAcct:r[col('bankaccount','bankacct','bankaccountnumber','bankaccountnum')]||'',
         a:r[col(
           'account','acct','customerid',
           // SAP
@@ -7014,6 +7018,7 @@ function processImport(){
       };
     });
     rRem();setStatus('loaded');saveToStorage();addAudit('Remittances imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
+    setTimeout(function(){if(typeof refreshBankAccountOptions==='function')refreshBankAccountOptions();},150);
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
