@@ -3833,17 +3833,7 @@ body.app-active #app {
         <div class="panel-body" style="max-width:960px;margin:0 auto;width:100%">
 
           <!-- Account -->
-          
-          <!-- ─── Active Customer Configuration ─────────────────────────── -->
           <div class="settings-section">
-            <div class="settings-section-title">🏢 Active Customer Configuration</div>
-            <div class="settings-row">
-              <div><div class="settings-label">Customer config</div><div class="settings-desc">HORIBA SAP 750 template loaded by default. Drives imports, matching, and exports.</div></div>
-              <select class="sel" id="cfg-customer-select" onchange="CFG_ACTIVE_CUSTOMER=this.value;cfgSave();toast('Config: '+(CFG_CUSTOMERS[this.value]||{}).companyName||this.value)" style="font-size:12.5px;min-width:220px"></select>
-            </div>
-          </div>
-
-<div class="settings-section">
             <div class="settings-section-title">Account</div>
             <div class="settings-row">
               <div><div class="settings-label">First Name</div></div>
@@ -3985,17 +3975,6 @@ body.app-active #app {
               </select>
             </div>
             <div id="cfg-export-profile-desc" style="font-size:11.5px;color:var(--t3);margin-top:6px;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--bdr)"></div>
-          </div>
-
-
-          <!-- ─── Config Backup / Restore ─────────────────────────────────── -->
-          <div class="settings-section">
-            <div class="settings-section-title">💾 Configuration Backup</div>
-            <div style="font-size:12px;color:var(--t3);margin-bottom:8px">Export your full configuration as JSON for backup or transfer.</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="cfgExportJSON()">📥 Export config JSON</button>
-              <button class="btn btn-outline btn-sm" onclick="cfgImportJSON()">📤 Import config JSON</button>
-            </div>
           </div>
 
 <!-- Plans -->
@@ -4536,15 +4515,6 @@ var CFG_TOL=Object.assign({},CFG_TOL_DEFAULT);
 var CFG_ALIASES={};    // {bankName: canonicalName}
 var CFG_TEMPLATES={};  // {id: {name,type,mappings:{}}}
 var CFG_EXPORT_PROFILE='sap750';
-var CFG_ACTIVE_CUSTOMER=null;
-var CFG_CUSTOMERS={};
-var CFG_KPI_RULES={
-  excludeZBA:true,excludeInternalWires:true,excludeTaxPayments:true,
-  internalTransferKeywords:['HORIBA AMERICAS HOLDING','POOLING(ZERO BALANCE)','REVERSE SWEEPING','3110-USD-CU5','MULTINETTING','BOOK TRANSFER'],
-  taxPaymentKeywords:['DEPT REVENUE','TAX PYMT','TAXPAYMNT','DTF SALES','WEBFILE TAX','GEORGIA ITS TAX','AZ DEPT OF REV','WI DEPT REVENUE','NJ WEB PMT','COMMWLTHOFPAPATH','NC DEPT REVENUE','NEB DEPT REVENUE'],
-  arAccountNumbers:['0810020874'],
-  excludedAccountNumbers:['0810020882','0810020890','0060154840']
-};
 
 // ── LOAD / SAVE ──────────────────────────────────────────────────────────────
 function cfgLoad(){
@@ -4564,12 +4534,6 @@ function cfgLoad(){
   if(Object.keys(CFG_ALIASES).length===0&&typeof REMITTER_NAME_MAP!=='undefined'){
     CFG_ALIASES=Object.assign({},REMITTER_NAME_MAP);
   }
-  try{
-    var cust=localStorage.getItem(sk('cfg_customers'));if(cust)CFG_CUSTOMERS=JSON.parse(cust);
-    var act=localStorage.getItem(sk('cfg_active_customer'));if(act)CFG_ACTIVE_CUSTOMER=act;
-    var kpi=localStorage.getItem(sk('cfg_kpi_rules'));if(kpi)CFG_KPI_RULES=Object.assign({},CFG_KPI_RULES,JSON.parse(kpi));
-  }catch(e){console.warn('cfgLoad ext:',e);}
-  if(Object.keys(CFG_CUSTOMERS).length===0){cfgSeedHoribaDefault();}
 }
 
 function cfgSave(){
@@ -4584,122 +4548,7 @@ function cfgSave(){
 }
 
 // ── RENDER SETTINGS PANELS ────────────────────────────────────────────────────
-
-// ── HORIBA SAP 750 STARTER CONFIG ────────────────────────────────────────────
-function cfgGetHoribaDefault(){
-  return {
-    customerId:'horiba-instruments-inc',companyName:'HORIBA INSTRUMENTS INCORPORATED',
-    erpSystem:'SAP',erpVersion:'750',bankId:'026009632',arBankAccount:'0810020874',
-    configVersion:'1.0.0',environment:'local',isDefault:true,isActive:true,
-    createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),
-    invoiceTemplate:{
-      fieldMappings:{
-        customerAccount:{headerMatch:['Customer Account #','Customer Account','Acct','customerid']},
-        customerName:{headerMatch:['Customer Name','Name','Company','name1']},
-        customerInvoiceNumber:{headerMatch:['Customer Invoice #','Invoice #','Invoice Number','Inv#']},
-        poNumber:{headerMatch:['Customer PO','PO #','PO Number','Purchase Order']},
-        salesOrderNumber:{headerMatch:['Sales Order No.','Sales Order','SO Number','SO#']},
-        sapDocumentNumber:{headerMatch:['Document #','SAP Document #','Doc Number']},
-        currency:{headerMatch:['Currency','Ccy','CCY']},
-        invoiceDate:{headerMatch:['Invoice Date','Inv Date','Document Date']},
-        dueDate:{headerMatch:['Net Due Date','Due Date','Payment Due']},
-        openAmount:{headerMatch:['Net Due','Open Amount','Balance','Amount Due','amount']}
-      },
-      creditMemoDetection:{method:'negativeAmount'},
-      specialGLMapping:{F:'downPaymentRequest',A:'downPayment','':'standardInvoice'}
-    },
-    bankTemplate:{
-      zbaExclusionCodes:['275','276'],
-      internalTransferKeywords:['HORIBA AMERICAS HOLDING','POOLING(ZERO BALANCE)','REVERSE SWEEPING','3110-USD-CU5','MULTINETTING'],
-      taxPaymentKeywords:['DEPT REVENUE','TAX PYMT','WEBFILE TAX','GEORGIA ITS TAX','AZ DEPT OF REV','WI DEPT REVENUE','NJ WEB PMT','COMMWLTHOFPAPATH','NC DEPT REVENUE','NEB DEPT REVENUE']
-    },
-    matchingRules:CFG_MATCH_RULES_DEFAULT.map(function(r){return Object.assign({},r);}),
-    toleranceRules:Object.assign({},CFG_TOL_DEFAULT),
-    exportProfile:'sap750',
-    kpiRules:Object.assign({},CFG_KPI_RULES),
-    customerAliases:[
-      {rawAlias:'LAM RESEARCH INT',normalizedName:'LAM RESEARCH INTERNATIONAL',active:true},
-      {rawAlias:'LAM RESEARCH COR',normalizedName:'LAM RESEARCH CORPORATION',active:true},
-      {rawAlias:'LAM RESEARCH INTERNATIONAL SDN BH D',normalizedName:'LAM RESEARCH INTERNATIONAL',active:true},
-      {rawAlias:'CELESTICA ELECTRONICS (M)SDN BHD',normalizedName:'CELESTICA ELECTRONICS (M) SDN',active:true},
-      {rawAlias:'MICRON TECHNOLOG',normalizedName:'MICRON TECHNOLOGY INC',active:true},
-      {rawAlias:'CUMMINS ENG.COMP PAYMENTS',normalizedName:'CUMMINS INC',active:true},
-      {rawAlias:'GEN MED EDI PYMT',normalizedName:'GENERAL MEDICAL',active:true},
-      {rawAlias:'FORD MOTOR COMPA PAYMENTS',normalizedName:'FORD MOTOR COMPANY',active:true},
-      {rawAlias:'FORD MOTOR COMPA',normalizedName:'FORD MOTOR COMPANY',active:true},
-      {rawAlias:'AGILENT TECHNOLO',normalizedName:'AGILENT TECHNOLOGIES',active:true},
-      {rawAlias:'BLANCHARD REFINI',normalizedName:'BLANCHARD REFINING',active:true},
-      {rawAlias:'TSO RFNG MKTG C',normalizedName:'TSO REFINING & MARKETING',active:true},
-      {rawAlias:'LINDE GAS + EQUI EDI PAYMTS',normalizedName:'LINDE GAS & EQUIPMENT',active:true},
-      {rawAlias:'KERN OIL AND REF TRADE PAY',normalizedName:'KERN OIL & REFINING',active:true},
-      {rawAlias:'ECO-RENTAL SOLUT',normalizedName:'ECO RENTAL SOLUTIONS',active:true},
-      {rawAlias:'PINE ENVIRO CORP',normalizedName:'PINE ENVIRONMENTAL',active:true}
-    ]
-  };
-}
-function cfgSeedHoribaDefault(){
-  var h=cfgGetHoribaDefault();
-  CFG_CUSTOMERS[h.customerId]=h;
-  CFG_ACTIVE_CUSTOMER=h.customerId;
-  cfgSave();
-}
-function cfgGetActiveConfig(){
-  if(CFG_ACTIVE_CUSTOMER&&CFG_CUSTOMERS[CFG_ACTIVE_CUSTOMER])return CFG_CUSTOMERS[CFG_ACTIVE_CUSTOMER];
-  return null;
-}
-function cfgGetInvoiceTemplate(){var ac=cfgGetActiveConfig();return ac&&ac.invoiceTemplate?ac.invoiceTemplate:null;}
-function cfgGetBankTemplate(){var ac=cfgGetActiveConfig();return ac&&ac.bankTemplate?ac.bankTemplate:null;}
-function cfgIsInternalTransfer(text){
-  if(!text)return false;var upper=String(text).toUpperCase();
-  var kw=CFG_KPI_RULES.internalTransferKeywords||[];
-  for(var i=0;i<kw.length;i++){if(upper.includes(kw[i]))return true;}return false;
-}
-function cfgIsTaxPayment(text){
-  if(!text)return false;var upper=String(text).toUpperCase();
-  var kw=CFG_KPI_RULES.taxPaymentKeywords||[];
-  for(var i=0;i<kw.length;i++){if(upper.includes(kw[i]))return true;}return false;
-}
-function cfgRenderCustomerSelector(){
-  var el=document.getElementById('cfg-customer-select');if(!el)return;
-  var opts=Object.values(CFG_CUSTOMERS).map(function(c){
-    return '<option value="'+c.customerId+'"'+(c.customerId===CFG_ACTIVE_CUSTOMER?' selected':'')+'>'+c.companyName+' ('+c.erpSystem+' '+c.erpVersion+')</option>';
-  }).join('');
-  el.innerHTML='<option value="">— Select customer config —</option>'+opts;
-}
-function cfgExportJSON(){
-  var config={version:'1.0.0',exportedAt:new Date().toISOString(),
-    matchRules:CFG_MATCH_RULES,tolerances:CFG_TOL,aliases:CFG_ALIASES,
-    templates:CFG_TEMPLATES,exportProfile:CFG_EXPORT_PROFILE,
-    customers:CFG_CUSTOMERS,activeCustomer:CFG_ACTIVE_CUSTOMER,kpiRules:CFG_KPI_RULES};
-  var blob=new Blob([JSON.stringify(config,null,2)],{type:'application/json'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='armp-config-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();URL.revokeObjectURL(a.href);toast('Config exported');
-}
-function cfgImportJSON(){
-  var input=document.createElement('input');input.type='file';input.accept='.json';
-  input.onchange=function(){
-    var f=input.files[0];if(!f)return;
-    var reader=new FileReader();
-    reader.onload=function(){
-      try{
-        var c=JSON.parse(reader.result);
-        if(c.matchRules)CFG_MATCH_RULES=c.matchRules;
-        if(c.tolerances)CFG_TOL=Object.assign({},CFG_TOL_DEFAULT,c.tolerances);
-        if(c.aliases){CFG_ALIASES=c.aliases;if(typeof REMITTER_NAME_MAP!=='undefined')Object.assign(REMITTER_NAME_MAP,CFG_ALIASES);}
-        if(c.templates)CFG_TEMPLATES=c.templates;
-        if(c.exportProfile)CFG_EXPORT_PROFILE=c.exportProfile;
-        if(c.customers)CFG_CUSTOMERS=c.customers;
-        if(c.activeCustomer)CFG_ACTIVE_CUSTOMER=c.activeCustomer;
-        if(c.kpiRules)CFG_KPI_RULES=Object.assign({},CFG_KPI_RULES,c.kpiRules);
-        cfgSave();cfgRenderAll();toast('Config imported');
-      }catch(e){toast('Invalid config: '+e.message,'warn');}
-    };reader.readAsText(f);
-  };input.click();
-}
-
 function cfgRenderAll(){
-  cfgRenderCustomerSelector();
   cfgRenderMatchRules();
   cfgRenderTolerances();
   cfgRenderAliases();
@@ -5151,7 +5000,7 @@ function updReporting(){
   const top=Object.entries(cn).sort((a,b)=>b[1]-a[1])[0];
   const topEl=document.getElementById('rpt-top-issue');if(topEl)topEl.textContent=top?top[0].split(' ')[0]:'—';
   const topDesc=document.getElementById('rpt-top-issue-desc');if(topDesc)topDesc.textContent=top?`${top[0]} — ${top[1]} case${top[1]!==1?'s':''}` : 'No exceptions';
-  const todayEl=document.getElementById('rpt-matched-today');if(todayEl)todayEl.textContent=$fk(ma);
+  const todayEl=document.getElementById('rpt-matched-today');if(todayEl)todayEl.textContent='$'+$fk(ma);
   // Breakdown charts (text)
   const rcn={};RES.forEach(r=>{rcn[r.st]=(rcn[r.st]||0)+1;});
   const rbd=document.getElementById('rpt-breakdown');
@@ -7058,10 +6907,10 @@ function openCustomerDrawerForCustomer(custName,acctId){
     else if(days<=60)age60+=bal;
     else age90+=bal;
   });
-  const agEl=document.getElementById('aging-cur');if(agEl)agEl.textContent=$fk(ageCur);
-  const ag30El=document.getElementById('aging-30');if(ag30El)ag30El.textContent=$fk(age30);
-  const ag60El=document.getElementById('aging-60');if(ag60El)ag60El.textContent=$fk(age60);
-  const ag90El=document.getElementById('aging-90');if(ag90El)ag90El.textContent=$fk(age90);
+  const agEl=document.getElementById('aging-cur');if(agEl)agEl.textContent='$'+$fk(ageCur);
+  const ag30El=document.getElementById('aging-30');if(ag30El)ag30El.textContent='$'+$fk(age30);
+  const ag60El=document.getElementById('aging-60');if(ag60El)ag60El.textContent='$'+$fk(age60);
+  const ag90El=document.getElementById('aging-90');if(ag90El)ag90El.textContent='$'+$fk(age90);
   // Activity
   const actEl=document.getElementById('drawer-activity');
   if(actEl){
@@ -7250,8 +7099,31 @@ async function handleFile(inp){
       showProgress('Parsing Excel — large files may take a moment…',40);
       await new Promise(r=>setTimeout(r,50));
       const buf=await f.arrayBuffer();
-      const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true});
+      const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true,raw:true});
       const ws=wb.Sheets[wb.SheetNames[0]];
+      // ── YayPay / MUFG bank export detection ──
+      const _yyHeaders=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',blankrows:false})[0]||[];
+      if(IMP_TYPE==='rem'&&typeof detectYayPay==='function'&&detectYayPay(_yyHeaders)){
+        showProgress('Parsing YayPay/MUFG bank export…',60);
+        await new Promise(r=>setTimeout(r,40));
+        try{
+          const _yyPays=parseYayPayExcel(wb);
+          if(!_yyPays.length){hideProgress();toast('No credit transactions found in bank file','warn');return;}
+          PAY=_yyPays;
+          saveToStorage();
+          if(typeof refreshBankAccountOptions==='function')setTimeout(function(){refreshBankAccountOptions();},100);
+          if(typeof rRem==='function')rRem();
+          if(typeof updDash==='function')updDash();if(typeof updTop==='function')updTop();
+          if(typeof rAll==='function')rAll();
+          hideProgress();
+          const _yyAccts=[...new Set(_yyPays.map(p=>p.bankAcct).filter(Boolean))];
+          addAudit('YayPay/MUFG import',_yyPays.length+' payments · accounts: '+_yyAccts.join(', '));
+          toast('Imported '+_yyPays.length+' bank payments · '+_yyAccts.length+' account(s)');
+          const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
+        }catch(yyErr){hideProgress();toast('YayPay parse error: '+yyErr.message,'warn');console.error('YayPay:',yyErr);}
+        return;
+      }
+      // ── Standard Excel / CSV import ──
       const rows=XLSX.utils.sheet_to_csv(ws,{blankrows:false});
       setImportTextSafe(rows);
       swTab('paste',document.querySelectorAll('.imp-tab')[0]);
@@ -7293,130 +7165,227 @@ async function handleFile(inp){
 
 
 // ════════════════════════════════════════════════════════════════════════════
-// PHASE 4 — REMITTANCE ADVICE IMPORT
+// YAYPAY / MUFG BANK EXCEL PARSER
+// Dedicated parser for structured bank exports from YayPay / MUFG
+// Headers: Post Date, Bank ID, Account Number, Bank Reference, BAI Code, DETAIL1-20
 // ════════════════════════════════════════════════════════════════════════════
-function _remNormName(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().split(' ').slice(0,3).join(' ');}
-function _remColIdx(headers){
-  var args=Array.prototype.slice.call(arguments,1);
+
+function detectYayPay(headers){
+  // Normalize headers for matching
   var norm=headers.map(function(h){return String(h||'').toLowerCase().replace(/[^a-z0-9]/g,'');});
-  for(var n=0;n<args.length;n++){
-    var target=args[n].toLowerCase().replace(/[^a-z0-9]/g,'');
-    var idx=norm.indexOf(target);if(idx>=0)return idx;
-  }
-  return -1;
+  var required=['postdate','bankreference','baicode','accountnumber'];
+  var hasDetail=norm.some(function(h){return /^detail\d+$/.test(h);});
+  var hasRequired=required.every(function(r){return norm.some(function(h){return h===r||h.startsWith(r.slice(0,7));});});
+  return hasRequired&&hasDetail;
 }
-function parseRemittanceTable(rows){
-  if(!rows||rows.length<2)return[];
-  var headers=rows[0];
-  // Invoice column: prefer "if present" variant, else generic
-  var iInv=_remColIdx(headers,'invoiceifpresent','invoicepaid','remittanceinvoice');
-  if(iInv<0)iInv=_remColIdx(headers,'invoice/donumber','invoicenumber','invoice#','invoicenum','invno','invoice');
-  // If two columns match invoice-like, pick the one with more non-empty data rows
-  if(iInv>=0){
-    var norm=headers.map(function(h){return String(h||'').toLowerCase().replace(/[^a-z0-9]/g,'');});
-    var otherInv=norm.findIndex(function(h,i){return i!==iInv&&(h.includes('invoice')||h.startsWith('inv'));});
-    if(otherInv>=0){var nA=0,nB=0;for(var r=1;r<rows.length;r++){if(rows[r][iInv])nA++;if(rows[r][otherInv])nB++;}if(nB>nA)iInv=otherInv;}
+
+function _yyDate(val){
+  // Convert Excel serial date number OR date string to MM/DD/YYYY
+  if(!val)return '';
+  if(typeof val==='object'&&val instanceof Date){
+    var m=val.getMonth()+1,d=val.getDate(),y=val.getFullYear();
+    return (m<10?'0'+m:m)+'/'+(d<10?'0'+d:d)+'/'+y;
   }
-  var iAmt=_remColIdx(headers,'amountpaid','paidamount','paymentamount','appliedamount');
-  if(iAmt<0)iAmt=_remColIdx(headers,'amount','paid','payment');
-  // Prefer column with more numeric data if ambiguous
-  if(iAmt>=0){
-    var norm2=headers.map(function(h){return String(h||'').toLowerCase().replace(/[^a-z0-9]/g,'');});
-    var otherAmt=norm2.findIndex(function(h,i){return i!==iAmt&&(h.includes('amount')||h.includes('paid'));});
-    if(otherAmt>=0){var nC=0,nD=0;for(var r2=1;r2<rows.length;r2++){if(parseFloat(String(rows[r2][iAmt]||'').replace(/[$,]/g,''))>0)nC++;if(parseFloat(String(rows[r2][otherAmt]||'').replace(/[$,]/g,''))>0)nD++;}if(nD>nC)iAmt=otherAmt;}
+  var s=String(val).trim();
+  // Already formatted
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s))return s;
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(5,7)+'/'+s.slice(8,10)+'/'+s.slice(0,4);
+  // Excel serial (days since 1899-12-30)
+  var n=parseFloat(s);
+  if(!isNaN(n)&&n>40000&&n<60000){
+    var epoch=new Date(Date.UTC(1899,11,30));
+    epoch.setUTCDate(epoch.getUTCDate()+Math.floor(n));
+    var mo=epoch.getUTCMonth()+1,dy=epoch.getUTCDate(),yr=epoch.getUTCFullYear();
+    return (mo<10?'0'+mo:mo)+'/'+(dy<10?'0'+dy:dy)+'/'+yr;
   }
-  if(iInv<0&&iAmt<0)return[];
-  var iPO=_remColIdx(headers,'po','ponumber','po#','purchaseorder','pono');
-  var iRef=_remColIdx(headers,'remittanceref','paymentref','referencenumber','reference','batchid','refkey');
-  var iDate=_remColIdx(headers,'paymentdate','paiddate','dateofpaym','postingdate','date');
-  var iCust=_remColIdx(headers,'customername','customer','payer','remitter','vendor','vendorname');
-  var iAcct=_remColIdx(headers,'vendorcode','account','accountnumber','customerid','custid');
-  var iTotal=_remColIdx(headers,'totalpayment','totalamount');
-  var iSapDoc=_remColIdx(headers,'sapdocnumber','sapdocumentnumber','documentnumber','docnumber');
-  var batches=new Map();
-  for(var r3=1;r3<rows.length;r3++){
-    var row=rows[r3];if(!row||row.every(function(c){return c===null||c===undefined||c==='';}))continue;
-    var invNum=iInv>=0?String(row[iInv]||'').trim():'';
-    var amtPaid=iAmt>=0?parseFloat(String(row[iAmt]||'').replace(/[$,"]/g,''))||0:0;
-    var po=iPO>=0?String(row[iPO]||'').trim():'';
-    var ref=iRef>=0?String(row[iRef]||'').trim():'';
-    var date=iDate>=0?String(row[iDate]||'').trim():'';
-    var cust=iCust>=0?String(row[iCust]||'').trim():'';
-    var acct=iAcct>=0?String(row[iAcct]||'').trim():'';
-    var sapDoc=iSapDoc>=0?String(row[iSapDoc]||'').trim():'';
-    var totalPay=iTotal>=0?parseFloat(String(row[iTotal]||'').replace(/[$,"]/g,''))||0:0;
-    if(!invNum&&!amtPaid)continue;
-    var batchKey=ref||('__noref__'+(date||cust||acct||'unknown'));
-    if(!batches.has(batchKey)){
-      batches.set(batchKey,{
-        batchId:ref||('BATCH-'+(batches.size+1)),paymentRef:ref,customerName:cust,
-        customerAcct:acct,paymentDate:date,totalAmount:totalPay||0,lines:[],
-        paired:'unmatched',paymentIdx:null,sourceFormat:'excel-csv'
-      });
-    }
-    var b=batches.get(batchKey);
-    if(invNum||amtPaid){b.lines.push({invoice:invNum,amount:amtPaid,po:po,sapDoc:sapDoc,customerRef:cust||acct});b.totalAmount+=amtPaid;}
-    if(totalPay>0&&b.totalAmount<totalPay)b.totalAmount=totalPay;
-    if(cust&&!b.customerName)b.customerName=cust;
-    if(acct&&!b.customerAcct)b.customerAcct=acct;
-    if(date&&!b.paymentDate)b.paymentDate=date;
-  }
-  return Array.from(batches.values()).filter(function(b){return b.lines.length>0;});
+  // YYYYMMDD
+  if(/^\d{8}$/.test(s)){return s.slice(4,6)+'/'+s.slice(6,8)+'/'+s.slice(0,4);}
+  return s;
 }
-function parseRemittanceCSV(text){return parseRemittanceTable(typeof parseCsv==='function'?parseCsv(text):text.split('\n').map(function(l){return l.split(',');}));}
-function pairRemittanceToPayments(batches){
-  for(var bi=0;bi<batches.length;bi++){
-    var b=batches[bi];
-    if(b.paymentIdx!==null&&b.paymentIdx!==undefined)continue;
-    // Pass 1: exact bank ref match
-    if(b.paymentRef){
-      var refN=String(b.paymentRef).toUpperCase().trim();
-      var idx=PAY.findIndex(function(p){
-        if(!p)return false;
-        var txN=String(p.txId||'').toUpperCase().trim();
-        var cRef=String(p.bankRef||p.custRef||p.i||'').toUpperCase().trim();
-        return refN&&(txN===refN||cRef===refN||(txN&&refN.includes(txN))||(cRef&&refN.includes(cRef)));
-      });
-      if(idx>=0){b.paymentIdx=idx;b.paired='auto-ref';continue;}
+
+function _yyExtractCustomer(detail,method){
+  // Extract clean customer/remitter name from concatenated DETAIL fields
+  if(!detail)return '';
+  var d=String(detail).replace(/\s+/g,' ');
+  var method_up=(method||'').toUpperCase();
+  if(method_up==='ACH'||/^1[6-9]\d$/.test(method_up)){
+    // ACH: NAME:ORIG: ... stop before INF:
+    var am=d.match(/NAME:ORIG:\s*([A-Z0-9][^\r\n]{2,50}?)(?:\s+INF:|\s+RCVR|\s{2,}|$)/i);
+    if(am){
+      // Strip trailing standalone numbers (e.g. "LAM RESEARCH INT 1005549731" → "LAM RESEARCH INT")
+      var aclean=am[1].replace(/\s+\d{6,}\s*$/,'').replace(/\s+/g,' ').trim();
+      if(aclean.length>2)return aclean;
     }
-    // Pass 2: amount + customer name fuzzy match
-    if(b.totalAmount>0){
-      var tgtAmt=b.totalAmount;
-      var custN=_remNormName(b.customerName);
-      var candidates=[];
-      PAY.forEach(function(p,i){
-        if(!p)return;
-        var pAmt=parseFloat(p.amt)||0;
-        if(Math.abs(pAmt-tgtAmt)/Math.max(pAmt,tgtAmt,1)>0.01)return;
-        var pCustN=_remNormName(p.c);
-        if(custN&&pCustN&&(custN===pCustN||pCustN.includes(custN)||custN.includes(pCustN))){candidates.push({i:i,score:2});}
-        else if(!custN){candidates.push({i:i,score:1});}
-      });
-      if(candidates.length>0){
-        candidates.sort(function(a,b){return b.score-a.score;});
-        b.paymentIdx=candidates[0].i;b.paired='auto-amt';continue;
-      }
-    }
-    b.paired='unmatched';
+    // Fallback: RMKS ... NAME:ORIG
+    var am2=d.match(/RMKS[^\/]*\/NAME:ORIG:\s*([^\r\n\/]{2,50})/i);
+    if(am2)return am2[1].replace(/\s+\d{6,}\s*$/,'').replace(/\s+/g,' ').trim();
   }
-  return batches;
+  if(method_up==='WIRES'||method_up==='WIRE'||/^1[9][0-9]$/.test(method_up)||method_up==='214'){
+    // Wire: ORIGINATOR: is most reliable — use it first for wires
+    var om=d.match(/ORIGINATOR:\s*([A-Z][^\r\n\/]{2,60}?)(?:\s{2,}|\s+[A-Z]{2,6}\s*:|\n|\/[A-Z]|$)/i);
+    if(om){var on=om[1].replace(/\/.*$/,'').replace(/\s+/g,' ').trim();if(on.length>2)return on;}
+    // Fallback: text after AMT USD [amount] and slash
+    var wm=d.match(/AMT\s+USD[\s\d,\.\/]+?\s+([A-Z][A-Z0-9][^\r\n]{2,60}?)(?:\s+RS:\w|\s+ORIGINATOR:|\s{3,}|$)/i);
+    if(wm){var wn=wm[1].replace(/\s*\/.*$/,'').replace(/\s+/g,' ').trim();if(wn.length>2)return wn;}
+  }
+  // Generic: NAME:ORIG
+  var gm=d.match(/NAME:ORIG:\s*([A-Z0-9][^\r\n]{2,50}?)(?:\s+INF:|\s{2,}|$)/i);
+  if(gm)return gm[1].replace(/\s+/g,' ').trim();
+  return '';
 }
-function getRemittanceForPayment(payIdx){return typeof REM_ADVICE!=='undefined'?REM_ADVICE.find(function(b){return b.paymentIdx===payIdx;}):null;}
-function importRemittanceAdvice(rows,sourceFormat){
-  var batches=parseRemittanceTable(rows);
-  if(!batches.length){hideProgress();toast('No invoice/amount data found — check column headers','warn');return;}
-  batches.forEach(function(b){b.sourceFormat=sourceFormat||'unknown';});
-  pairRemittanceToPayments(batches);
-  REM_ADVICE=REM_ADVICE.concat(batches);
-  saveToStorage();
-  var paired=batches.filter(function(b){return b.paymentIdx!==null;}).length;
-  var totalLines=batches.reduce(function(s,b){return s+b.lines.length;},0);
-  hideProgress();
-  toast('Imported '+batches.length+' batch(es) · '+totalLines+' lines · '+paired+' auto-paired');
-  addAudit('Remittance advice imported',batches.length+' batches · '+totalLines+' lines · '+paired+' paired');
-  var modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
-  if(typeof renderPayQueue==='function')renderPayQueue();
-  if(typeof updDash==='function')updDash();
+
+function _yyExtractInvoice(detail){
+  // Extract invoice references from concatenated DETAIL fields
+  if(!detail)return '';
+  var d=String(detail);
+  // Explicit labels first
+  var im=d.match(/(?:IMPORTINVOICE:|INVOICE[:\s#]*|INV[:\s#]*)(\d{8,12})/i);
+  if(im)return im[1];
+  // Multiple invoice pattern like "5105152563 5105151439 5105151423"
+  var multi=d.match(/\b(5\d{9})\b/);
+  if(multi)return multi[1];
+  // 7-series invoices
+  var multi7=d.match(/\b(7\d{9})\b/);
+  if(multi7)return multi7[1];
+  // DETAIL:NTE... patterns (Ford etc)
+  var det=d.match(/DETAIL:[^\s,]+,?(\w{7,})/i);
+  if(det)return det[1];
+  return '';
+}
+
+function _yyExtractPO(detail){
+  if(!detail)return '';
+  var m=String(detail).match(/\bPO\s+(\w{4,20})/i);
+  if(m)return m[1];
+  return '';
+}
+
+function parseYayPayExcel(wb){
+  // Parse YayPay / MUFG structured bank export workbook
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',blankrows:false,raw:true});
+  if(!raw||raw.length<2)return[];
+  
+  var headers=raw[0].map(function(h){return String(h||'').trim();});
+  var norm=headers.map(function(h){return h.toLowerCase().replace(/[^a-z0-9]/g,'');});
+  
+  function ci(){
+    var names=Array.prototype.slice.call(arguments);
+    for(var n=0;n<names.length;n++){
+      var t=names[n].toLowerCase().replace(/[^a-z0-9]/g,'');
+      var idx=norm.indexOf(t);if(idx>=0)return idx;
+      // Partial match
+      for(var j=0;j<norm.length;j++){if(norm[j].startsWith(t)&&norm[j].length<=t.length+5)return j;}
+    }
+    return -1;
+  }
+  
+  // Map columns
+  var iPostDate=ci('Post Date','PostDate');
+  var iBankId=ci('Bank ID','BankId');
+  var iAcctNum=ci('Account Number','AccountNumber');
+  var iAcctName=ci('Account Name','AccountName');
+  var iDesc=ci('Transaction Description','TransactionDescription');
+  var iStatus=ci('Status');
+  var iDC=ci('Debit/Credit','DebitCredit');
+  var iAmt=ci('Amount');
+  var iBankRef=ci('Bank Reference','BankReference');
+  var iCustRef=ci('Customer Reference','CustomerReference');
+  var iBaiCode=ci('BAI Code','BAICode','BAI');
+  var iType=ci('Type');
+  var iCurrency=ci('Currency');
+  var iAdvice=ci('Advice Reference');
+  
+  // Find all DETAIL columns
+  var detailCols=[];
+  for(var i=0;i<headers.length;i++){
+    if(/^DETAIL\d+$/i.test(headers[i].trim()))detailCols.push(i);
+  }
+  
+  var payments=[];
+  
+  for(var r=1;r<raw.length;r++){
+    var row=raw[r];
+    if(!row||row.every(function(c){return c===''||c===null||c===undefined;}))continue;
+    
+    // Only import Credit rows
+    var dc=iDC>=0?String(row[iDC]||'').trim():'';
+    if(dc&&dc.toLowerCase()!=='credit')continue;
+    
+    var amt=iAmt>=0?parseFloat(String(row[iAmt]||'').replace(/[$,]/g,''))||0:0;
+    if(amt<=0)continue; // Skip zero/blank rows
+    
+    var bankAcct=iAcctNum>=0?String(row[iAcctNum]||'').replace(/[^0-9]/g,'').trim():'';
+    var bankRef=iBankRef>=0?String(row[iBankRef]||'').trim():'';
+    
+    // Skip rows with no bank account and no bank ref
+    if(!bankAcct&&!bankRef)continue;
+    
+    var method=iType>=0?String(row[iType]||'').trim():'';
+    var baiCode=iBaiCode>=0?String(row[iBaiCode]||'').trim():'';
+    
+    // Concatenate DETAIL1-DETAIL20 into one raw detail string
+    var rawDetail=detailCols.map(function(c){
+      var v=String(row[c]||'').trim();
+      return v.replace(/\/\s*$/,'');
+    }).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+    
+    // Use existing cfgIsInternalTransfer / cfgIsTaxPayment if available
+    if(typeof cfgIsInternalTransfer==='function'&&cfgIsInternalTransfer(rawDetail))continue;
+    if(typeof cfgIsTaxPayment==='function'&&cfgIsTaxPayment(rawDetail))continue;
+    // Fallback ZBA/internal check
+    var upperDetail=rawDetail.toUpperCase();
+    if(upperDetail.includes('POOLING(ZERO BALANCE)')||upperDetail.includes('REVERSE SWEEPING')||
+       upperDetail.includes('HORIBA AMERICAS HOLDING')||upperDetail.includes('MULTINETTING')||
+       upperDetail.includes('BOOK TRANSFER'))continue;
+    
+    var postDate=iPostDate>=0?_yyDate(row[iPostDate]):'';
+    var ccy=iCurrency>=0?String(row[iCurrency]||'USD').trim():'USD';
+    var custRef=iCustRef>=0?String(row[iCustRef]||'').trim():'';
+    
+    // Extract customer name from detail
+    var customer=_yyExtractCustomer(rawDetail,method||baiCode);
+    // Normalize via existing REMITTER_NAME_MAP / CFG_ALIASES
+    if(customer&&typeof normalizeRemitterName==='function'){
+      customer=normalizeRemitterName(customer);
+    }
+    
+    // Extract invoice ref from detail
+    var invRef=_yyExtractInvoice(rawDetail);
+    
+    // Extract PO from detail
+    var poRef=_yyExtractPO(rawDetail);
+    
+    var desc=iDesc>=0?String(row[iDesc]||'').trim():'';
+    var isCOA=rawDetail.toUpperCase().includes('CASH ON ACCOUNT')||rawDetail.toUpperCase().includes('UNAPPLIED');
+    
+    payments.push({
+      bankAcct:bankAcct,
+      bankId:iBankId>=0?String(row[iBankId]||'').trim():'',
+      a:'',          // Customer account — NOT bank account number
+      c:customer,
+      amt:amt,
+      i:invRef,
+      po:poRef,
+      so:'',
+      m:method||baiCode,
+      baiCode:baiCode,
+      txId:bankRef||custRef||'',
+      bankRef:bankRef,
+      custRef:custRef,
+      payDate:postDate,
+      ccy:ccy,
+      n:rawDetail,
+      desc:desc,
+      st:'Unapplied Cash',
+      coa:isCOA,
+      unapplied:false,
+      dp:false,
+      sourceFormat:'yaypay-excel'
+    });
+  }
+  
+  return payments;
 }
 
 function parseBAI2(txt){
@@ -7449,8 +7418,7 @@ function parseBAI2(txt){
         const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
         const rawAmt=parseFloat(bField(parts[2])||'0');
         const amt=rawAmt/100;
-        const _zbaEx=(typeof cfgGetBankTemplate==='function'&&cfgGetBankTemplate())?cfgGetBankTemplate().zbaExclusionCodes:['275','276'];
-        if(_zbaEx.includes(typeCode))continue;
+        if(typeCode==='275'||typeCode==='276')continue;
         const p3=bField(parts[3]||'');
         const hasFundsType=p3.length===1&&/[A-Z0-9]/.test(p3);
         const off=hasFundsType?4:0;
@@ -7471,9 +7439,6 @@ function parseBAI2(txt){
         if(customer)customer=customer.replace(/\s+D\s+\d{3}-\d{2}.*$/,'').trim();
         const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
         const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
-        const _isInternal=(typeof cfgIsInternalTransfer==='function')&&cfgIsInternalTransfer(fullText);
-        const _isTax=(typeof cfgIsTaxPayment==='function')&&cfgIsTaxPayment(fullText);
-        if(_isInternal||_isTax)continue;
         txRows.push([currentAccount,customer,amt.toFixed(2),invM?invM[1]:'',poM?poM[1]:'',bankRef||custRef||'',currentDate,method,fullText.replace(/\s+/g,' ').trim()]);
       }catch(e){console.warn('BAI2 row skip:',e.message);}
     }
@@ -7522,6 +7487,31 @@ async function parsePDFRemittance(file){
       if(lineText)allText+=lineText+'\n';
       allText+='\n---PAGE---\n';
     }
+    showProgress('Detecting document type…',80);
+    await new Promise(r=>setTimeout(r,30));
+    
+    // ── MUFG Bank Summary PDF detection ──
+    // If this is an account summary report, do NOT parse as remittance
+    const _isBankSummary=(allText.includes('Account Summary')&&allText.includes('Transaction Summary'))||
+                          (allText.includes('Posted Transaction Description'))||
+                          (allText.includes('Opening Ledger')&&allText.includes('Closing Ledger'))||
+                          (allText.includes('Total Credits')&&allText.includes('Total Debits')&&allText.includes('Opening Ledger'));
+    if(_isBankSummary){
+      hideProgress();
+      showModal('Bank Summary PDF Detected',
+        '<div style="padding:12px 0">'+
+        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This appears to be an <strong>MUFG Account Summary PDF</strong> — not a remittance advice file.</p>'+
+        '<p style="color:var(--t3);font-size:12px;margin:0 0 6px">Bank summary PDFs are used for <strong>reference only</strong>. To import bank transactions, use:</p>'+
+        '<ul style="color:var(--t2);font-size:12px;margin:0 0 12px;padding-left:18px">'+
+        '<li>The YayPay/MUFG Excel export (.xlsx)</li>'+
+        '<li>Or a BAI2 bank file (.bai / .txt)</li>'+
+        '</ul>'+
+        '<button class="btn btn-p btn-sm" onclick="closeModal()">OK</button>'+
+        '</div>'
+      );
+      return;
+    }
+    
     showProgress('Parsing remittance data…',85);
     await new Promise(r=>setTimeout(r,30));
 
@@ -7858,7 +7848,6 @@ function processImport(){
           'receiveddate','depositdate','creditdate'
         )]||'',
         ccy:r[col('currency','ccy','curr','currencycode')]||'USD',
-        st:'Unapplied Cash',
         n,coa:isCOA,dp:n.toLowerCase().includes('down')
       };
     });
@@ -8600,10 +8589,10 @@ function buildWorklist(){
   if(urgentCt){ urgentCt.textContent=urgent.length; urgentCt.style.display=urgent.length?'inline-flex':'none'; }
   if(urgent.length&&urgentList){
     var items=[];
-    if(shortPays.length) items.push({cls:'warn',icon:'💸',title:shortPays.length+' short pay'+(shortPays.length>1?'s':'')+' need resolution',sub:'Total exposure: $'+$f(shortPays.reduce(function(s,e){return s+e.amt;},0))+' · Contact customers or write off',amt:$fk(shortPays.reduce(function(s,e){return s+e.amt;},0)),action:'Resolve',fn:"wlGoExc()"});
-    if(dups.length) items.push({cls:'urgent',icon:'⚠️',title:dups.length+' possible duplicate payment'+(dups.length>1?'s':'')+' detected',sub:'Same reference and amount — verify before posting',amt:$fk(dups.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
-    if(unmatched.length) items.push({cls:'urgent',icon:'❓',title:unmatched.length+' payment'+(unmatched.length>1?'s':'')+' with no invoice match',sub:'No matching invoice, PO, or SO found',amt:$fk(unmatched.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
-    if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference',amt:$fk(unapplied.reduce(function(s,e){return s+e.amt;},0)),action:'Apply',fn:"wlGoExc()"});
+    if(shortPays.length) items.push({cls:'warn',icon:'💸',title:shortPays.length+' short pay'+(shortPays.length>1?'s':'')+' need resolution',sub:'Total exposure: $'+$f(shortPays.reduce(function(s,e){return s+e.amt;},0))+' · Contact customers or write off',amt:'$'+$fk(shortPays.reduce(function(s,e){return s+e.amt;},0)),action:'Resolve',fn:"wlGoExc()"});
+    if(dups.length) items.push({cls:'urgent',icon:'⚠️',title:dups.length+' possible duplicate payment'+(dups.length>1?'s':'')+' detected',sub:'Same reference and amount — verify before posting',amt:'$'+$fk(dups.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
+    if(unmatched.length) items.push({cls:'urgent',icon:'❓',title:unmatched.length+' payment'+(unmatched.length>1?'s':'')+' with no invoice match',sub:'No matching invoice, PO, or SO found',amt:'$'+$fk(unmatched.reduce(function(s,e){return s+e.amt;},0)),action:'Review',fn:"wlGoExc()"});
+    if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference',amt:'$'+$fk(unapplied.reduce(function(s,e){return s+e.amt;},0)),action:'Apply',fn:"wlGoExc()"});
     urgentList.innerHTML=items.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div><div class="wl-item-amount">'+item.amt+'</div><div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(urgentList){
     urgentList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'No urgent items')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments processed without issues.':'Import data and run matching to detect exceptions.')+'</div></div>';
@@ -8626,11 +8615,11 @@ function buildWorklist(){
       unalloc.forEach(function(p){ var k=p.c||p.a; if(!byCust[k])byCust[k]={c:p.c,a:p.a,payments:[],total:0}; byCust[k].payments.push(p); byCust[k].total+=p.amt; });
       Object.values(byCust).slice(0,5).forEach(function(cg){
         var acctSafe=(cg.a||'').replace(/'/g,"\\'");
-        itms.push({cls:'info',icon:'💳',title:cg.c||cg.a,sub:cg.payments.length+' payment'+(cg.payments.length>1?'s':'')+' waiting · '+(cg.payments[0].m||'ACH'),amt:$fk(cg.total),action:'Allocate',fn:"wlGoAlloc('"+acctSafe+"')"});
+        itms.push({cls:'info',icon:'💳',title:cg.c||cg.a,sub:cg.payments.length+' payment'+(cg.payments.length>1?'s':'')+' waiting · '+(cg.payments[0].m||'ACH'),amt:'$'+$fk(cg.total),action:'Allocate',fn:"wlGoAlloc('"+acctSafe+"')"});
       });
       if(Object.keys(byCust).length>5) itms.push({cls:'info',icon:'💳',title:(Object.keys(byCust).length-5)+' more customers',sub:'Click to open the allocation workspace',amt:'',action:'Open all',fn:"wlGoMatch()"});
     }
-    if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
+    if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
     allocList.innerHTML=itms.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div>'+(item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':'')+' <div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(allocList){
     allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittance data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittances</button></div>')+'</div>';
@@ -8759,20 +8748,20 @@ function updateCfoSummary(){
 
   // Hero: Cash Application Performance
   if(autoCount>0){
-    setEl('cfo-hours-saved',$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
+    setEl('cfo-hours-saved','$'+$fk(ma)+' matched · '+rt.toFixed(1)+'% match rate · '+periodLabel);
     setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received ('+periodLabel+')');
   } else {
     setEl('cfo-hours-saved','No matches yet');
     setEl('cfo-hero-sub','Import data and run matching to see performance');
   }
   setEl('cfo-hero-matched',$fk(tp));       // Cash Received
-  setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'0%');
+  setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'—');
   setEl('cfo-hero-payments',PAY.length);
   setEl('cfo-hero-invoices',matched.length);
 
   // Savings callout: Cash Received vs Cash Matched
   if(tp>0){
-    setEl('cfo-savings-headline',$fk(ma)+' in cash matched of $'+$fk(tp)+' received');
+    setEl('cfo-savings-headline','$'+$fk(ma)+' in cash matched of $'+$fk(tp)+' received');
     var bodyEl=document.getElementById('cfo-savings-body');
     if(bodyEl) bodyEl.innerHTML='<strong>'+autoCount+' payments</strong> auto-matched · <strong>'+(tp>0?((ma/tp)*100).toFixed(1)+'%':'—')+'</strong> straight-through rate · <strong>$'+$fk(ua)+'</strong> unapplied';
   } else {
@@ -8781,7 +8770,7 @@ function updateCfoSummary(){
     if(be2) be2.textContent='Load sample data or import invoices and remittance to begin.';
   }
 
-  setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'0%');
+  setEl('cfo-stp',tp>0?rt.toFixed(1)+'%':'—');
   var stpEl=document.getElementById('cfo-stp-trend'); if(stpEl) stpEl.style.color=rt>=80?'var(--g-t)':rt>=50?'var(--am-t)':'var(--r-t)';
   var openExcCt=EXC.filter(function(e){return !e.s||e.s==='Open';}).length;
   setEl('cfo-exc-rate',PAY.length>0?(openExcCt/PAY.length*100).toFixed(1)+'%':'—');
