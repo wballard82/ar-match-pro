@@ -2492,7 +2492,7 @@ body.app-active #app {
     </div>
     <div class="kpi-card kpi-blue" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(function(){var f=document.getElementById('ws-exc-type-filter');if(f){f.value='Unapplied payment';renderWsExcPremium();}},80)" style="cursor:pointer;min-width:160px">
       <div class="kpi-card-label">
-        <div class="kpi-dot" style="background:#0EA5E9"></div>
+        <div class="kpi-dot kpi-dot-blue"></div>
         Posted to Account
       </div>
       <div class="kpi-card-val" id="kpi-posted-unapplied" style="color:#0EA5E9">$0</div>
@@ -3964,14 +3964,7 @@ console.log('AR Match Pro v60736518 — fixed build loading');
 // ── Phase 2 polish additions ──
 function clearAllExceptions(){
   if(!EXC.length){toast('No exceptions to clear');return;}
-  showConfirm('Clear all '+EXC.length+' exception records?\n\nThis cannot be undone.',function(){EXC=[];saveToStorage();if(typeof renderWsExcPremium==='function')renderWsExcPremium();rExc();updDash();updTop();addAudit('Cleared exceptions');toast('Exceptions cleared');});return;
-  EXC=[];
-  saveToStorage();
-  rExc();
-  updDash();
-  updTop();
-  addAudit('Cleared all exceptions','All records removed');
-  toast('All exceptions cleared');
+  showConfirm('Clear all '+EXC.length+' exception records?\n\nThis cannot be undone.',function(){EXC=[];saveToStorage();if(typeof renderWsExcPremium==='function')renderWsExcPremium();rExc();updDash();updTop();addAudit('Cleared exceptions');toast('Exceptions cleared');});
 }
 
 
@@ -4831,6 +4824,7 @@ function showModal(title,bodyHtml){
 }
 function closeModal(){const o=document.getElementById('exc-modal-overlay');if(o)o.classList.remove('open');}
 function showConfirm(msg,onYes,yesLabel,yesClass){
+  closeModal();
   yesLabel=yesLabel||'Confirm';yesClass=yesClass||'btn-r';
   var overlay=document.getElementById('exc-modal-overlay');
   if(!overlay){if(window.confirm(msg))onYes&&onYes();return;}
@@ -6519,123 +6513,83 @@ async function handleFile(inp){
 
 
 function parseBAI2(txt){
-  // BAI2 type-code → payment method label
   const TYPE_METHOD={
     '115':'Lockbox','116':'Lockbox','117':'Lockbox',
     '165':'ACH','166':'ACH','167':'ACH','169':'ACH',
     '195':'Wire','196':'Wire','197':'Wire',
-    '275':'ZBA Transfer','276':'ZBA Transfer',
-    '175':'Check','176':'Check',
-    '214':'Wire'
+    '175':'Check','176':'Check','214':'Wire'
   };
-
-  // Step 1 — strip trailing whitespace/\r and join continuation (88,) lines
-  // BAI2 wraps long fields across multiple 88, records; reassemble them first.
-  const rawLines=txt.split('\n').map(l=>l.replace(/\r/g,'').trimEnd());
+  const rawLines=txt.split('\n');
   const joined=[];
-  for(const l of rawLines){
+  for(let i=0;i<rawLines.length;i++){
+    const l=rawLines[i].replace(/\r/g,'').trimEnd();
     if(l.startsWith('88,')){
-      // Append to previous line, stripping the leading "88," and trailing "/"
       if(joined.length){
-        const prev=joined[joined.length-1];
         const cont=l.slice(3).replace(/\/\s*$/,'').trim();
-        // Only append non-empty continuation
-        if(cont) joined[joined.length-1]=prev.replace(/\/\s*$/,'')+' '+cont;
+        if(cont) joined[joined.length-1]=joined[joined.length-1].replace(/\/\s*$/,'')+' '+cont;
       }
-    } else {
-      joined.push(l);
-    }
+    } else { joined.push(l); }
   }
-
-  // Step 2 — parse joined records
-  // Helper: strip trailing "/" and whitespace from a BAI2 field value
-  function bField(s){ return (s||'').replace(/\/\s*$/,'').trim(); }
-
-  // Helper: parse a BAI2 date YYMMDD → MM/DD/YYYY
+  function bField(s){return (s||'').replace(/\/\s*$/,'').trim();}
   function bDate(s){
-    s=s?s.trim():'';
-    if(s.length===6){
-      const yy=s.slice(0,2),mm=s.slice(2,4),dd=s.slice(4,6);
-      return mm+'/'+dd+'/'+(parseInt(yy,10)<50?'20':'19')+yy;
-    }
+    s=(s||'').trim();
+    if(s.length===6){const yy=s.slice(0,2),mm=s.slice(2,4),dd=s.slice(4,6);return mm+'/'+dd+'/'+(parseInt(yy)<50?'20':'19')+yy;}
     return s;
   }
-
-  let currentDate='';
-  let currentAccount='';
+  let currentDate='',currentAccount='';
   const txRows=[];
-
-  for(const line of joined){
+  for(let li=0;li<joined.length;li++){
+    const line=joined[li];
     if(!line) continue;
     const parts=line.split(',');
     const recType=parts[0];
-
     if(recType==='02'){
-      // Group header — contains the value date at parts[4] (YYMMDD)
-      const d=bField(parts[4]||'');
-      if(d) currentDate=bDate(d);
-
+      const d=bField(parts[4]||''); if(d) currentDate=bDate(d);
     } else if(recType==='03'){
-      // Account identifier — account number at parts[1]
       currentAccount=bField(parts[1]||'');
-
     } else if(recType==='16'){
-      // Transaction detail
-      // 16,TypeCode,Amount,FundsType,BankRef,CustomerRef,Text/[88 continuation already merged]
-      const typeCode=bField(parts[1]);
-      const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
-
-      // Amount: lockbox (115,116,117) is in cents; ACH/Wire/others already in dollars
-      const rawAmt=parseFloat(bField(parts[2])||'0');
-      const amt=['115','116','117'].includes(typeCode) ? rawAmt/100 : rawAmt/100;
-      // MUFG always stores in implied cents (divide by 100 for all types)
-
-      const bankRef=bField(parts[4]||'');
-      const custRef=bField(parts[5]||'');
-
-      // The merged text (from parts[6] onward + all 88 lines) is in parts[6]
-      const fullText=parts.slice(6).join(',').replace(/\/\s*$/,'').trim();
-
-      // Extract customer/originator name — look for "NAME:ORIG:" or "ORIGINATOR:" pattern
-      let customer='';
-      const nameM=fullText.match(/(?:NAME:ORIG:|ORIGINATOR:)\s*([^/\r\n]{3,60?)(?:\s+INF:|\s+RCVR|\s+ORIG\s+ID|$)/i);
-      if(nameM) customer=nameM[1].trim();
-      // Fallback: for wire (195), grab the line after "INWARD REMITTANCE" which is usually the sender
-      if(!customer){
-        const wireM=fullText.match(/INWARD REMITTANCE\s+([A-Z][^/]{3,60})/i);
-        if(wireM) customer=wireM[1].trim();
-      }
-      // Fallback: for ZBA/pooling, grab company name after POOLING lines
-      if(!customer){
-        const zbaM=fullText.match(/POOLING[^/]*\s+([A-Z][A-Z\s]{4,50}(?:INC|LLC|CORP|LTD|CO|HOLDING)[A-Z\s]*)/i);
-        if(zbaM) customer=zbaM[1].trim();
-      }
-
-      // Extract invoice/PO references from the full memo text
-      const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
-      const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
-      const refId=bankRef||custRef||'';
-
-      // Build a clean notes field from the most useful parts of the memo
-      const notes=fullText.replace(/\s+/g,' ').slice(0,120);
-
-      txRows.push([
-        currentAccount,
-        customer,
-        amt.toFixed(2),
-        invM?invM[1]:'',
-        poM?poM[1]:'',
-        refId,
-        currentDate,
-        method,
-        notes
-      ]);
+      try{
+        const typeCode=bField(parts[1]);
+        const method=TYPE_METHOD[typeCode]||('Type '+typeCode);
+        const rawAmt=parseFloat(bField(parts[2])||'0');
+        const amt=rawAmt/100;
+        if(typeCode==='275'||typeCode==='276') continue;
+        const p3=bField(parts[3]||'');
+        const hasFundsType=p3.length===1&&/[A-Z0-9]/.test(p3);
+        const off=hasFundsType?4:0;
+        const bankRef=bField(parts[4+off]||'');
+        const custRef=bField(parts[5+off]||'');
+        const fullText=parts.slice(6+off).join(',').replace(/\/\s*$/,'').trim();
+        let customer='';
+        if(typeCode==='195'||typeCode==='196'||typeCode==='214'){
+          const wm=fullText.match(/AMT\s+USD[\s\d,]+\.\d{2}\s+(.{3,60}?)(?:\s{3,}|\s+RS:|\s+ADV\s|\s+ORIGINATOR:|$)/i);
+          if(wm) customer=wm[1].replace(/\s+/g,' ').trim();
+          if(!customer){
+            const om=fullText.match(/ORIGINATOR:\s*([A-Z][^\r\n]{2,60}?)(?:\s{2,}|\s+[A-Z]{2,4}\s*:|$)/i);
+            if(om) customer=om[1].replace(/\s+/g,' ').trim();
+          }
+        } else if(typeCode==='165'||typeCode==='166'||typeCode==='167'||typeCode==='169'){
+          const am=fullText.match(/NAME:ORIG:\s*([A-Z0-9][^\r\n]{2,50}?)(?:\s+INF:|\s{2,}|$)/i);
+          if(am) customer=am[1].replace(/\s+/g,' ').trim();
+        } else if(typeCode==='115'||typeCode==='116'||typeCode==='117'){
+          customer='Lockbox Batch';
+        } else if(typeCode==='175'||typeCode==='176'){
+          customer='Check Deposit';
+        } else {
+          const nm=fullText.match(/NAME:ORIG:\s*([A-Z][^\r\n]{2,60})(?:\s+INF:|\s+RCVR|$)/i);
+          if(nm) customer=nm[1].replace(/\s+/g,' ').trim();
+        }
+        if(customer) customer=customer.replace(/\s+D\s+\d{3}-\d{2}.*$/,'').trim();
+        const invM=fullText.match(/(?:INV[#\s\-:]*|INVOICE[#\s\-:]*)([\w\-]+)/i);
+        const poM=fullText.match(/(?:PO[#\s\-:]*|P\.O\.[#\s\-:]*)([\w\-]+)/i);
+        txRows.push([currentAccount,customer,amt.toFixed(2),
+          invM?invM[1]:'',poM?poM[1]:'',bankRef||custRef||'',
+          currentDate,method,fullText.replace(/\s+/g,' ').trim()]);
+      }catch(e){console.warn('BAI2 row skip:',e.message);}
     }
   }
-
-  const header='Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
-  const dataRows=txRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
-  return [header,...dataRows].join('\n');
+  const header='Bank Account,Customer,Amount,Invoice Ref,PO Ref,TX ID,Date,Method,Notes';
+  return [header,...txRows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','))].join('\n');
 }
 
 function parseCAMT(txt){
@@ -6809,6 +6763,18 @@ async function parsePDFRemittance(file){
   }
 }
 
+// ── Safe import buffer ──
+let pendingImportText='';
+function setImportTextSafe(text){
+  pendingImportText=text||'';
+  const ta=document.getElementById('mo-ta');
+  if(ta)ta.value=pendingImportText;
+}
+function getImportTextSafe(){
+  const ta=document.getElementById('mo-ta');
+  return String(ta?ta.value:pendingImportText||'').trim();
+}
+
 function processImport(){
   const _motar=document.getElementById('mo-ta');const raw=_motar?_motar.value.trim():'';if(!raw){toast('No data to import','warn');return;}
   const fl=raw.split('\n')[0],delim=fl.split('\t').length>fl.split(',').length?'\t':',';
@@ -6876,7 +6842,7 @@ function processImport(){
         
         'salesorderid','orderid','tranid2'
       )]||'',
-      amt:parseFloat(String(r[col(
+      amt:Math.abs(parseFloat(String(r[col(
         // Standard
         'amount','amt','openamount','balance','invoiceamount',
         'netdue','netamount','openbalance',
@@ -6889,7 +6855,9 @@ function processImport(){
         'invoicetotal','grossamount','originalamount',
         
         'amountremaining','amountopen','unpaidamount','balance2'
-      )]||'0').replace(/[$,\s]/g,''))||0,
+      )]||'0').replace(/[$,\s]/g,''))||0),
+      isCreditMemo:(parseFloat(String(r[col('amount','amt','openamount','balance','netdue','netamount','wrbtr','dmbtr')]||'0').replace(/[$,\s]/g,''))||0)<0,
+      sapDocNum:r[col('document','documentnumber','docnum')]||'',
       dt:r[col('doctype','documenttype','type','dt','blart','postingkeytype')]||'RV',
       dt2:r[col(
         // Standard
@@ -6919,6 +6887,7 @@ function processImport(){
       dl:r[col('delivery','del','deliverynumber','deliveryno','vbeln2')]||'',
       s:''
     }));
+    INV.forEach(function(v){if(v.isCreditMemo)v.dt='CR';});
     rInv();setStatus('loaded');saveToStorage();addAudit('Invoices imported',INV.length+' rows');toast('Imported '+INV.length+' invoices');
   }else{
     PAY=rows.filter(r=>r.some(c=>c)).map(r=>{
@@ -6929,6 +6898,7 @@ function processImport(){
       )]||'';
       const isCOA=n.toUpperCase().includes('COA')||n.toUpperCase().includes('CASH ON ACCOUNT')||n.toUpperCase().includes('UNAPPLIED');
       return{
+        bankAcct:r[col('bankaccount','bankacct','bankaccountnumber','bankaccountnum')]||'',
         a:r[col(
           'account','acct','customerid',
           // SAP
@@ -7005,6 +6975,7 @@ function processImport(){
       };
     });
     rRem();setStatus('loaded');saveToStorage();addAudit('Remittances imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
+    setTimeout(function(){if(typeof refreshBankAccountOptions==='function')refreshBankAccountOptions();},100);
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
@@ -7315,21 +7286,14 @@ function refreshBankAccountOptions(preferredAcct){
   var cur=preferredAcct||sel.value||'';
   var seen={};
   PAY.forEach(function(p){
-    var acct=cleanBankAccountNumber(p.bankAcct||p.bankAccount||p.statementAccount||'');
-    var code=inferBankCode(p.bank||p.bankName||acct||'BANK');
-    if(acct){
-      var value=code+'-'+acct;
-      seen[value]={value:value,label:code+' - '+acct};
-    }else if(p.bank){
-      seen[code]={value:code,label:code};
-    }
+    var acct=String(p.bankAcct||p.bankAccount||p.statementAccount||'').replace(/[^0-9A-Za-z\-]/g,'').trim();
+    if(acct)seen[acct]=acct;
   });
-  var opts=Object.keys(seen).sort().map(function(k){
-    var o=seen[k];
-    return '<option value="'+o.value+'"'+(o.value===cur?' selected':'')+'>'+o.label+'</option>';
-  }).join('');
-  sel.innerHTML='<option value="">All bank accounts</option>'+opts;
-  if(cur&&seen[cur])sel.value=cur;
+  var keys=Object.keys(seen).sort();
+  sel.innerHTML='<option value="">All bank accounts</option>'+
+    keys.map(function(k){return'<option value="'+k+'"'+(k===cur?' selected':'')+'>'+k+'</option>';}).join('');
+  if(keys.length===1){sel.value=keys[0];if(typeof caFilterUpdate==='function')caFilterUpdate();}
+  else if(cur&&seen[cur])sel.value=cur;
 }
 
 // ═══════════════════════════════════════════════════════════
