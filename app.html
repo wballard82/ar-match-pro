@@ -2916,7 +2916,9 @@ body.app-active #app {
                     <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
                       <button class="btn btn-g btn-sm" id="eng-approve-btn" onclick="engApprove()" style="display:none">✓ Approve</button>
                       <button class="btn btn-p btn-sm" id="eng-export-btn" onclick="engExport()" style="display:none">↓ Export &amp; lock</button>
-                      <button class="btn btn-outline btn-sm" id="eng-unapplied-btn" onclick="engPostUnapplied()" style="display:none" title="Post payment to a customer account without invoice allocation">💰 Post as Unapplied</button>
+                      <button class="btn btn-outline btn-sm" id="eng-unapplied-btn" onclick="engPostUnapplied()" style="display:none" title="Post payment to a customer account without invoice allocation">💰 Cash on Account</button>
+                      <button class="btn btn-outline btn-sm" id="eng-writeoff-btn" onclick="engWriteOff()" style="display:none">Write Off</button>
+                      <button class="btn btn-outline btn-sm" id="eng-bankfee-btn" onclick="engBankFee()" style="display:none">Bank Fee</button>
                       <button class="btn btn-outline btn-sm" onclick="engReopen()">↩ Reopen</button>
                     </div>
                   </div>
@@ -4006,7 +4008,7 @@ function _engUpdateRightPanel(){
     const custExc=EXC.filter(e=>(e.c||'').toLowerCase()===(p.c||'').toLowerCase()&&e.type==='Unapplied payment');
     if(custExc.length)cards.push({priority:'low',icon:'💰',title:`Existing Unapplied Cash: ${$fk(custExc.reduce((s,e)=>s+e.amt,0))}`,body:`This customer has ${custExc.length} unapplied payment(s). Consider netting against current invoices.`,conf:80,confColor:'var(--cy)'});
     // No invoices
-    if(!rows.length)cards.push({priority:'high',icon:'🔍',title:'No Open Invoices Found',body:'No matching invoices for this customer. Payment may need to be posted as unapplied cash.',action:'Post as unapplied',conf:null,confColor:'var(--r)'});
+    if(!rows.length)cards.push({priority:'high',icon:'🔍',title:'No Open Invoices Found',body:'No matching invoices for this customer. Payment may need to be posted as cash on account.',action:'Cash on Account',conf:null,confColor:'var(--r)'});
     // Missing PO
     if(!p.po&&!p.i)cards.push({priority:'med',icon:'📎',title:'No PO or Invoice Reference',body:'Payment has no reference. Auto-matching by amount only — lower confidence.',conf:45,confColor:'var(--am)'});
     // Good match rate
@@ -4127,7 +4129,7 @@ function renderWsExcPremium(){
   }
   const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
   const typeSev={'Short pay':'med','Unapplied payment':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
-  const POST_D=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
+  const POST_D=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
@@ -4148,8 +4150,8 @@ function renderWsExcPremium(){
           `<span class="badge badge-g">${ex.dec||'Resolved'}</span>
            <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
           :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExcPremium,700)">
-            <option value="">— Resolve —</option>
-            <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
+            <option value="">— Select action —</option>
+            <option>Cash on Account</option>
             <option>Write off</option><option>Bank fee</option>
             <option>Chase customer</option><option>Duplicate — reject</option>
           </select>
@@ -4429,14 +4431,14 @@ function updTop(){
   const spc=EXC.filter(e=>e.type==='Short pay').length;
   setEl('kpi-matched',tp>0?$fk(ma):'$0');
   setEl('kpi-rate',tp>0?(ma/tp*100).toFixed(1)+'%':'—');
-  // Posted to Account = sum of resolved "Post as Unapplied Cash" exceptions
+  // Posted to Account = sum of resolved "Cash on Account" exceptions
   const postedUnapplied=
-    EXC.filter(e=>e.dec==='Post as Unapplied Cash'&&(e.s==='Resolved'||e.s==='Posted')).reduce((s,e)=>s+e.amt,0)+
+    EXC.filter(e=>e.dec==='Cash on Account'&&(e.s==='Resolved'||e.s==='Posted')).reduce((s,e)=>s+e.amt,0)+
     RES.filter(r=>r.isUnapplied===true).reduce((s,r)=>s+r.pd,0);
   const uaAdjusted=Math.max(0,ua-postedUnapplied);
   setEl('kpi-unapplied',$fk(uaAdjusted));
   setEl('kpi-posted-unapplied',$fk(postedUnapplied));
-  const postedCt=EXC.filter(e=>e.dec==='Post as Unapplied Cash'&&(e.s==='Resolved'||e.s==='Posted')).length;
+  const postedCt=EXC.filter(e=>e.dec==='Cash on Account'&&(e.s==='Resolved'||e.s==='Posted')).length;
   setEl('kpi-posted-unapplied-ct',postedCt+' unapplied payment'+(postedCt!==1?'s':''));
   setEl('kpi-exc',EXC.filter(e=>!e.s||e.s==='Open').length);
   setEl('kpi-shortpay',spc);
@@ -5100,8 +5102,8 @@ function rExc(){
       <td>
         <select class="ed" style="font-size:11.5px;width:120px" data-idx="${idx}" onchange="resolveException(parseInt(this.dataset.idx),this.value)">
           <option value="">— Select —</option>
-          <option ${ex.dec==='Apply to invoice'?'selected':''}>Apply to invoice</option>
-          <option ${ex.dec==='Post as Unapplied Cash'?'selected':''}>Post as Unapplied Cash</option>
+          
+          <option ${ex.dec==='Cash on Account'?'selected':''}>Cash on Account</option>
           <option ${ex.dec==='Write off'?'selected':''}>Write off</option>
           <option ${ex.dec==='Bank fee'?'selected':''}>Bank fee</option>
           
@@ -5121,8 +5123,8 @@ function rPost(){
   const tb=document.getElementById('post-tb');if(!tb)return;
   if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations.</div></div></td></tr>';return;}
   const d=new Date().toISOString().split('T')[0];const dDisp=fmtDate(d);
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
-  const excBadge={'Apply to invoice':'badge-g','Post as Unapplied Cash':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Cash on Account':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
+  const excBadge={'Apply to invoice':'badge-g','Cash on Account':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
   tb.innerHTML=ap.map(r=>{
     const isExc=!!r.fromExc;
     const inv=INV.find(v=>v.i===r.i)||{};
@@ -5237,7 +5239,7 @@ function exportPost(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
-  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Post as Unapplied Cash':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
+  const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Cash on Account':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
   const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Write-off','Bank Fee'];
   const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(r.writeOff||0).toFixed(2),(r.bankFee||0).toFixed(2)];});
   csvDL([PH,...rows],'posting_'+d+'.csv');
@@ -5250,7 +5252,7 @@ function selFmt(el){document.querySelectorAll('.fmt-pill').forEach(p=>p.classLis
 // ══════════════════════════════════════════════════════════
 // EXCEPTION RESOLUTION ENGINE
 // ══════════════════════════════════════════════════════════
-const POST_DECISIONS=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
+const POST_DECISIONS=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
 const HOLD_DECISIONS=['Chase customer'];
 const DROP_DECISIONS=['Duplicate — reject'];
 let EXC_VIEW='open';
@@ -5300,10 +5302,10 @@ function resolveException(idx,dec){
     },150);
     return;
   }
-  if(dec==='Post as Unapplied Cash'){
+  if(dec==='Cash on Account'){
     const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
     const accts=Object.keys(acctMap).sort();
-    showModal('Post as Unapplied Cash',
+    showModal('Cash on Account',
       '<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px">Select customer account:</div>'+
       '<div style="font-size:11.5px;color:var(--t3);margin-bottom:12px">Type to search — modal closes automatically on selection</div>'+
       '<div style="position:relative;margin-bottom:6px">'+
@@ -5360,9 +5362,9 @@ function excUnappliedSearch(q,idx){
 function excUnappliedConfirm(idx,acctId,acctLabel){
   closeModal();
   const ex=EXC[idx];if(!ex)return;
-  ex.dec='Post as Unapplied Cash';ex.appliedToAcct=acctId;ex.appliedToAcctLabel=acctLabel;
-  finalizeExcResolution(idx,'Post as Unapplied Cash');
-  toast('✓ Posted as unapplied cash → '+acctLabel);
+  ex.dec='Cash on Account';ex.appliedToAcct=acctId;ex.appliedToAcctLabel=acctLabel;
+  finalizeExcResolution(idx,'Cash on Account');
+  toast('✓ Posted as cash on account → '+acctLabel);
 }
 function confirmExcAcct(idx){
   const manual=document.getElementById('exc-acct-manual');
@@ -5370,8 +5372,8 @@ function confirmExcAcct(idx){
   const acctRef=(manual&&manual.value.trim())||(sel&&sel.value)||'';
   if(!acctRef){toast('Please select or enter an account number','warn');return;}
   const ex=EXC[idx];if(!ex)return;
-  ex.dec='Post as Unapplied Cash';ex.appliedToAcct=acctRef;
-  closeModal();finalizeExcResolution(idx,'Post as Unapplied Cash');
+  ex.dec='Cash on Account';ex.appliedToAcct=acctRef;
+  closeModal();finalizeExcResolution(idx,'Cash on Account');
 }
 
 function finalizeExcResolution(idx,dec){
@@ -5398,7 +5400,7 @@ function finalizeExcResolution(idx,dec){
       const acctRef=ex.appliedToAcct||ex.a||'—';
       RES.push({a:acctRef,c:ex.c,i:invRef,d:ex.id,id:ex.id,oa:ex.amt,pd:ex.amt,vr:0,st:'Resolved',m:dec,n:ex.notes||'',fromExc:true,excDec:dec});
       saveToStorage();rAll();updDash();updTop();
-      const msgs={'Apply to invoice':'Applied to '+invRef,'Post as Unapplied Cash':'Posted to account '+acctRef,'Write off':'Written off','Bank fee':'Bank fee recorded','Wire transfer':'Wire transfer recorded'};
+      const msgs={'Apply to invoice':'Applied to '+invRef,'Cash on Account':'Posted to account '+acctRef,'Write off':'Written off','Bank fee':'Bank fee recorded','Wire transfer':'Wire transfer recorded'};
       addAudit('Exception resolved: '+dec,ex.id);
       toast('✓ '+(msgs[dec]||'Resolved — added to posting export'));
     },550);
@@ -5460,7 +5462,7 @@ function engLoadPayment(idx){
   const aw=document.getElementById('alloc-totals');if(aw)aw.style.display='none';
   document.getElementById('eng-export-btn').style.display='none';
   document.getElementById('eng-approve-btn').style.display='inline-flex';
-  // Show Post as Unapplied whenever a payment is loaded and not yet locked/approved
+  // Show Cash on Account whenever a payment is loaded and not yet locked/approved
   var _ub=document.getElementById('eng-unapplied-btn');
   if(_ub)_ub.style.display='inline-flex';
   document.getElementById('eng-short-pay-warn').style.display='none';
@@ -5552,7 +5554,7 @@ function _legacyEngBuildAI(p,invs){
   const dp=invs.filter(v=>v.n&&v.n.toLowerCase().includes('down'));if(dp.length)tips.push(`💡 ${dp.length} invoice(s) may be down payments`);
   const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);if(sp.length)tips.push(`⚠️ ${sp.length} invoice(s) likely short paid — consider partial`);
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));if(sharedPO.length>1)tips.push(`💡 ${sharedPO.length} invoices share PO ${p.po} — consolidated remittance`);
-  if(!invs.length)tips.push('⚠️ No open invoices — post as unapplied cash?');
+  if(!invs.length)tips.push('⚠️ No open invoices — cash on account?');
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
   if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✓ ${invs.length} invoices sum exactly to ${$f(p.amt)} — auto-apply all recommended`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:4px 0;border-bottom:1px solid rgba(139,92,246,.1);line-height:1.5;font-size:12.5px">${t}</div>`).join('');}
@@ -5605,6 +5607,10 @@ function engToggleRow(idx,checked){
   if(!checked)ENG_ROWS[idx].applyAmt=0;
   engUpdateTotals();engRenderRows();
   engAudit((checked?'Selected':'Deselected')+': '+ENG_ROWS[idx].inv.i+' · $'+$f(ENG_ROWS[idx].applyAmt));
+  var _hasSel=ENG_ROWS.some(function(r){return r.selected;});
+  var _ub=document.getElementById('eng-unapplied-btn');if(_ub)_ub.style.display=_hasSel?'none':'inline-flex';
+  var _wo=document.getElementById('eng-writeoff-btn');if(_wo)_wo.style.display=_hasSel?'inline-flex':'none';
+  var _bf=document.getElementById('eng-bankfee-btn');if(_bf)_bf.style.display=_hasSel?'inline-flex':'none';
 }
 
 function engSetAmt(idx,amt){
@@ -5718,13 +5724,21 @@ function engExport(){
 
 function engReopen(){
   ENG_LOCKED=false;ENG_STATE='suggested';
-  document.getElementById('eng-locked-badge').style.display='none';
-  document.getElementById('eng-approve-btn').style.display='inline-flex';
-  document.getElementById('eng-export-btn').style.display='none';
+  var _lb=document.getElementById('eng-locked-badge');if(_lb)_lb.style.display='none';
+  var _ab=document.getElementById('eng-approve-btn');if(_ab)_ab.style.display='inline-flex';
+  var _eb=document.getElementById('eng-export-btn');if(_eb)_eb.style.display='none';
+  // Remove previously approved RES entries for this payment so they can be re-applied
+  if(ENG_PAY){
+    var pid=ENG_PAY.txId||ENG_PAY.i||'';
+    if(pid)RES=RES.filter(function(r){return !(r.fromAlloc&&(r.d===pid||r.id===pid));});
+    ENG_PAY.coa=false;
+    ENG_ROWS.forEach(function(r){r.selected=false;r.applyAmt=0;});
+  }
   engUpdateWS('suggested');engRenderRows();
   engAudit('Reopened for editing');
   addAudit('Allocation reopened','');
-  toast('Allocation reopened — make changes and re-approve');
+  saveToStorage();rAll();updDash();updTop();
+  toast('Allocation reopened — previous approvals reversed');
 }
 
 function engUpdateWS(step){
@@ -5759,7 +5773,7 @@ function engPostUnapplied(){
           '</div>';
       }).join('')
     :'<div style="padding:12px;font-size:12px;color:var(--t3)">No accounts in imported data.<br>Enter account number below.</div>';
-  showModal('Post as Unapplied Payment',
+  showModal('Cash on Account',
     '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">Payment <strong style="color:var(--t1)">'+(p.txId||p.i||'—')+'</strong> &middot; <strong style="color:var(--t1)">$'+$f(p.amt)+'</strong></div>'+
     '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:5px">Customer Account</div>'+
     '<input type="text" id="_uapp-acct-inp" placeholder="Type to filter or enter account #…" autocomplete="off" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;margin-bottom:5px" oninput="_uappFilterAccts(this.value)">'+
@@ -5768,7 +5782,7 @@ function engPostUnapplied(){
     '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:5px">Notes (optional)</div>'+
     '<input type="text" id="_uapp-notes-inp" placeholder="Reason or detail…" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;margin-bottom:12px">'+
     '<div style="display:flex;gap:8px">'+
-    '<button class="btn btn-p btn-sm" onclick="_uappConfirm('+idx+')">Post as Unapplied</button>'+
+    '<button class="btn btn-p btn-sm" onclick="_uappConfirm('+idx+')">Cash on Account</button>'+
     '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
   );
   setTimeout(function(){var inp=document.getElementById('_uapp-acct-inp');if(inp)inp.focus();},80);
@@ -5863,7 +5877,7 @@ function _uappConfirm(payIdx){
 
   // Audit trail
   addAudit(
-    'Posted as unapplied cash',
+    'Posted as cash on account',
     '$'+$f(p.amt)+' → Acct '+acct+' · Ref: '+(p.txId||p.i||'—')
   );
 
@@ -5872,16 +5886,99 @@ function _uappConfirm(payIdx){
   rAll();
   updDash();
   updTop();
-  // Hide the Post as Unapplied button — payment is now posted
+  // Hide the Cash on Account button — payment is now posted
   var ub=document.getElementById('eng-unapplied-btn');if(ub)ub.style.display='none';
   // Reset engine state for this payment
   ENG_PAY=null;ENG_PAY_IDX=-1;ENG_ROWS=[];
   var emp=document.getElementById('eng-empty');if(emp)emp.style.display='flex';
   ['eng-header','eng-grid-wrap','eng-approve-btn','eng-export-btn'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
 
-  toast('✓ $'+$f(p.amt)+' posted as unapplied cash → Account '+acct);
+  toast('✓ $'+$f(p.amt)+' posted as cash on account → Account '+acct);
 }
 
+
+function engWriteOff(){
+  if(!ENG_PAY){toast('No payment selected','warn');return;}
+  var sel=ENG_ROWS?ENG_ROWS.filter(function(r){return r.selected;}):[]; 
+  if(!sel.length){toast('Select an invoice before applying a write-off.','warn');return;}
+  var ti=sel.reduce(function(s,r){return s+r.inv.amt;},0),tp=ENG_PAY.amt,vr=ti-tp;
+  showModal('Write Off Variance',
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">Payment <strong>$'+$f(tp)+'</strong> | Invoice(s) <strong>$'+$f(ti)+'</strong> | Variance <strong style="color:var(--am-t)">$'+$f(Math.abs(vr))+'</strong></div>'+
+    '<div style="display:grid;gap:10px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Write-Off Amount</div>'+
+    '<input type="number" id="_wo-amt" value="'+Math.max(0,vr).toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<div style="font-size:11px;color:var(--t3);margin-top:3px">Payment + write-off must equal invoice total</div></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Reason</div>'+
+    '<select id="_wo-rsn" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option>Short pay</option><option>Customer deduction</option><option>Approved write-off</option><option>Rounding</option><option>Other</option></select></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Notes</div>'+
+    '<input type="text" id="_wo-nts" placeholder="Additional detail..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '</div><div style="display:flex;gap:8px;margin-top:14px">'+
+    '<button class="btn btn-p btn-sm" onclick="_woOk()">Confirm Write-Off</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
+  );
+  setTimeout(function(){var el=document.getElementById('_wo-amt');if(el){el.focus();el.select();}},80);
+}
+function _woOk(){
+  if(!ENG_PAY){closeModal();return;}
+  var woAmt=parseFloat((document.getElementById('_wo-amt')||{}).value)||0;
+  var reason=(document.getElementById('_wo-rsn')||{}).value||'Other';
+  var notes=((document.getElementById('_wo-nts')||{}).value||'').trim();
+  if(woAmt<=0){toast('Enter a write-off amount','warn');return;}
+  var sel=ENG_ROWS.filter(function(r){return r.selected;}),p=ENG_PAY;
+  var totalApplied=sel.reduce(function(s,r){return s+r.applyAmt;},0);
+  if(Math.abs(totalApplied+woAmt-p.amt)>1){toast('Payment ($'+$f(p.amt)+') must equal applied ($'+$f(totalApplied)+') + write-off ($'+$f(woAmt)+')','warn');return;}
+  sel.forEach(function(r){
+    if(!RES.find(function(x){return x.i===r.inv.i&&x.fromAlloc;})){
+      RES.push({a:p.a||p.c,c:p.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:p.txId||'',id:p.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr:0,st:'Exact',m:'Cash Application',writeOff:woAmt/sel.length,writeOffReason:reason,n:notes||reason,fromAlloc:true,approved:true});
+    }
+  });
+  addAudit('Write-off applied','$'+$f(woAmt)+' '+reason+' Ref:'+(p.txId||p.i||''));
+  closeModal();ENG_STATE='approved';engUpdateWS('approved');
+  var _eb2=document.getElementById('eng-export-btn');if(_eb2)_eb2.style.display='inline-flex';
+  saveToStorage();rAll();updDash();updTop();
+  setCaTab('review',document.getElementById('ca-tab-review'));
+  toast('Write-off $'+$f(woAmt)+' recorded');
+}
+function engBankFee(){
+  if(!ENG_PAY){toast('No payment selected','warn');return;}
+  var sel=ENG_ROWS?ENG_ROWS.filter(function(r){return r.selected;}):[]; 
+  if(!sel.length){toast('Select an invoice before applying a bank fee.','warn');return;}
+  var ti=sel.reduce(function(s,r){return s+r.inv.amt;},0),tp=ENG_PAY.amt,vr=ti-tp;
+  showModal('Bank Fee',
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">Payment <strong>$'+$f(tp)+'</strong> | Invoice(s) <strong>$'+$f(ti)+'</strong> | Variance <strong style="color:var(--am-t)">$'+$f(Math.abs(vr))+'</strong></div>'+
+    '<div style="display:grid;gap:10px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Bank Fee Amount</div>'+
+    '<input type="number" id="_bf-amt" value="'+Math.max(0,vr).toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<div style="font-size:11px;color:var(--t3);margin-top:3px">Payment + bank fee must equal invoice total</div></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Notes</div>'+
+    '<input type="text" id="_bf-nts" placeholder="Bank name, fee type..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '</div><div style="display:flex;gap:8px;margin-top:14px">'+
+    '<button class="btn btn-p btn-sm" onclick="_bfOk()">Confirm Bank Fee</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
+  );
+  setTimeout(function(){var el=document.getElementById('_bf-amt');if(el){el.focus();el.select();}},80);
+}
+function _bfOk(){
+  if(!ENG_PAY){closeModal();return;}
+  var bfAmt=parseFloat((document.getElementById('_bf-amt')||{}).value)||0;
+  var notes=((document.getElementById('_bf-nts')||{}).value||'').trim();
+  if(bfAmt<=0){toast('Enter a bank fee amount','warn');return;}
+  var sel=ENG_ROWS.filter(function(r){return r.selected;}),p=ENG_PAY;
+  var totalApplied=sel.reduce(function(s,r){return s+r.applyAmt;},0);
+  if(Math.abs(totalApplied+bfAmt-p.amt)>1){toast('Payment ($'+$f(p.amt)+') must equal applied ($'+$f(totalApplied)+') + bank fee ($'+$f(bfAmt)+')','warn');return;}
+  sel.forEach(function(r){
+    if(!RES.find(function(x){return x.i===r.inv.i&&x.fromAlloc;})){
+      RES.push({a:p.a||p.c,c:p.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:p.txId||'',id:p.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr:0,st:'Exact',m:'Cash Application',bankFee:bfAmt/sel.length,n:notes||'Bank fee',fromAlloc:true,approved:true});
+    }
+  });
+  addAudit('Bank fee applied','$'+$f(bfAmt)+' Ref:'+(p.txId||p.i||''));
+  closeModal();ENG_STATE='approved';engUpdateWS('approved');
+  var _eb3=document.getElementById('eng-export-btn');if(_eb3)_eb3.style.display='inline-flex';
+  saveToStorage();rAll();updDash();updTop();
+  setCaTab('review',document.getElementById('ca-tab-review'));
+  toast('Bank fee $'+$f(bfAmt)+' recorded');
+}
 function engAudit(action){
   ENG_AUDIT.unshift({user:CURRENT_USER||'user',action,ts:new Date().toLocaleTimeString()});
   const el=document.getElementById('eng-audit-list');
@@ -6068,7 +6165,7 @@ function renderWsExc(){
     list.innerHTML=isResolved?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div>':'<div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect issues.</div></div>';
     return;
   }
-  const POST_D=['Apply to invoice','Post as Unapplied Cash','Write off','Bank fee','Wire transfer'];
+  const POST_D=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
@@ -6087,8 +6184,8 @@ function renderWsExc(){
       ${isResV?`<span class="badge badge-gray" style="font-size:10px">${ex.dec||'—'}</span><button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});renderWsExc()">↩ Revert</button>`
         :`<input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
          <select class="ed" style="font-size:11.5px;width:120px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExc,600)">
-           <option value="">— Resolve —</option>
-           <option>Apply to invoice</option><option>Post as Unapplied Cash</option>
+           <option value="">— Select action —</option>
+           <option>Cash on Account</option>
            <option>Write off</option><option>Bank fee</option>
            <option>Chase customer</option><option>Duplicate — reject</option>
          </select>`}
@@ -6343,7 +6440,7 @@ async function runMatch(){
   for(let pi=0;pi<PAY.length;pi++){
     const p=PAY[pi];upd(20+Math.round(pi/PAY.length*65),RES.length,EXC.length);
     if(pi%2===0)await new Promise(r=>setTimeout(r,60));
-    if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Post as Unapplied Cash or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
+    if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Cash on Account or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
     if(!p.a||p.a==='40999999'){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c,amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account or reference found — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
     const ni=norm(p.i),np=norm(p.po),ns=norm(p.so);
     const useInv=document.getElementById('s-inv')?.checked!==false;
@@ -8300,7 +8397,7 @@ loadSampleInv = function(){
   }, 150);
 };
 
-// ── excAcctManualSearch: live account lookup for Post as Unapplied Cash ──
+// ── excAcctManualSearch: live account lookup for Cash on Account ──
 function excAcctManualSearch(q){
   var preview = document.getElementById('exc-acct-preview');
   var sugg = document.getElementById('exc-acct-suggestions');
@@ -8442,7 +8539,7 @@ var HELP_CONTENT = {
         </tbody></table>
         <h3>Resolution Options</h3>
         <p><strong>Apply to Invoice</strong> — Closes the modal and navigates to Customer Open Items, pre-filtered to the exception's account. Click any invoice row to see a confirmation (amount, variance). Confirm to resolve and move to Review.</p>
-        <p><strong>Post as Unapplied Cash</strong> — Opens an account search popup. Type an account number or customer name. Click any result to post immediately — the popup closes automatically.</p>
+        <p><strong>Cash on Account</strong> — Opens an account search popup. Type an account number or customer name. Click any result to post immediately — the popup closes automatically.</p>
         <p><strong>Write Off</strong> — Marks the variance as a write-off. Appears in the Write-off column in Reconcile.</p>
         <p><strong>Bank Fee</strong> — Marks the variance as a bank fee. Appears in the Bank Fee column in Reconcile.</p>
         <p><strong>Chase Customer</strong> — Holds the exception for follow-up. Stays Open on Today's Work.</p>
