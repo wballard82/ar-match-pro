@@ -3830,7 +3830,7 @@ body.app-active #app {
           <div class="panel-title">Settings</div>
           <div class="panel-sub">Account · Role · Matching engine · Appearance · Plans &amp; Pricing</div>
         </div>
-        <div class="panel-body" style="max-width:960px;margin:0 auto;width:100%">
+        <div class="panel-body" style="max-width:1400px;margin:0 auto;width:100%;padding-left:20px;padding-right:20px">
 
           <!-- Account -->
           <div class="settings-section">
@@ -3982,8 +3982,8 @@ body.app-active #app {
             <div class="settings-section-title">💳 Plans &amp; Pricing</div>
             <div style="padding:16px 18px;background:var(--surface2);border:1px solid var(--bdr);border-radius:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div>
-                <div style="font-size:14px;font-weight:700;color:var(--t1)">Current plan</div>
-                <div style="font-size:12.5px;color:var(--t3);margin-top:2px" id="settings-plan-name2">Demo plan</div>
+                <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Current plan</div>
+                <div style="font-size:16px;font-weight:700;color:var(--t1);margin-top:2px" id="settings-plan-name2">Demo</div>
                 <div style="font-size:11.5px;color:var(--t3);margin-top:3px" id="settings-plan-features"></div>
               </div>
               <div style="display:flex;gap:8px">
@@ -4294,6 +4294,7 @@ function renderWsExcPremium(){
            <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
           :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExcPremium,700)">
             <option value="">— Select action —</option>
+            <option>Apply to invoice</option>
             <option>Cash on Account</option>
             <option>Write off</option><option>Bank fee</option>
             <option>Chase customer</option><option>Duplicate — reject</option>
@@ -4848,7 +4849,7 @@ function checkFeature(f){
 function norm(s){return String(s||'').toUpperCase().replace(/[-\s\.]/g,'')}
 function $f(n){return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function $fk(n){const a=Math.abs(n);if(a>=1000000)return(n<0?'-':'')+'$'+(a/1000000).toFixed(1)+'M';if(a>=1000)return(n<0?'-':'')+'$'+(a/1000).toFixed(0)+'K';return(n<0?'-':'')+'$'+$f(a)}
-function fmtDate(s){if(!s)return'—';const d=new Date(s+'T00:00:00');if(isNaN(d))return s;return(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getDate().toString().padStart(2,'0')+'/'+d.getFullYear()}
+function fmtDate(s){if(!s)return'—';var _d=_parseAgingDate(s);if(!_d)return s;return(_d.getMonth()+1).toString().padStart(2,'0')+'/'+_d.getDate().toString().padStart(2,'0')+'/'+_d.getFullYear()}
 function isoDate(s){if(!s)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const d=new Date(s);if(isNaN(d))return'';return d.toISOString().split('T')[0]}
 function badge(s){const m={Exact:'badge badge-g','Subset exact':'badge badge-p','Short pay':'badge badge-am',Overpay:'badge badge-am','Unapplied payment':'badge badge-cy',Unmatched:'badge badge-r','Amount match':'badge badge-pu','Down payment':'badge badge-cy'};return`<span class="${m[s]||'badge badge-gray'}">${s||'—'}</span>`}
 function whyTip(r){const txt=r.m==='Direct invoice'?`Exact invoice # match (${r.i}). Amount within tolerance.`:r.m.includes('PO')?`PO # match (${r.po}).`:r.m.includes('SO')?`SO # match.`:`Matched via ${r.m}.`;return`<div class="tip-wrap"><button class="why-btn">Why?</button><div class="tip"><strong>Match reason</strong>${txt}</div></div>`}
@@ -5345,7 +5346,7 @@ function swTab(t,el){
 
 // ── Clear data ──
 function clearInvData(){
-  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];_fbl5nBaseInvs=[];
+  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
   var msg='Clear all invoice data?\n\n'+INV.length+' invoices will be removed.\nThis cannot be undone.';
   showConfirm(msg,function(){
     INV=[];
@@ -5384,7 +5385,7 @@ function clearPayData(){
 }
 function clearMatchData(){showConfirm('Clear all match results?\n\nThis cannot be undone.',function(){RES=[];saveToStorage();rPost();updDash();updTop();addAudit('Cleared match data');toast('Match data cleared');});}
 function clearAllData(){
-  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];_fbl5nBaseInvs=[];
+  clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
   showConfirm('Clear ALL data?\n\nInvoices, payments, matches, and exceptions will be permanently removed.\nThis cannot be undone.',function(){
     INV=[];PAY=[];RES=[];EXC=[];
     rAll();
@@ -5823,30 +5824,118 @@ function revertException(idx){
   toast('↩ Reverted — exception reopened');
 }
 
+
+function excWriteOffModal(excIdx){
+  var ex=EXC[excIdx];if(!ex)return;
+  var acctMap={};INV.forEach(function(v){if(v.a&&v.c)acctMap[v.a]=v.c;});
+  var invList=INV.filter(function(v){return v.a===ex.a;});
+  var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+  showModal('Write-Off',
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
+    'Payment <strong>'+ex.id+'</strong> — <strong>$'+$f(ex.amt)+'</strong></div>'+
+    '<div style="display:grid;gap:10px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Account</div>'+
+    '<div style="font-size:13px;font-weight:600;color:var(--t1);padding:8px 12px;background:var(--surface2);border-radius:6px;border:1px solid var(--bdr)">'+(ex.a||'')+(ex.c?' — '+ex.c:'')+'</div></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice</div>'+
+    '<select id="_excwo-inv" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option value="">— Select invoice —</option>'+invOpts+'</select></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Write-Off Amount</div>'+
+    '<input type="number" id="_excwo-amt" value="'+ex.amt.toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Reason</div>'+
+    '<select id="_excwo-rsn" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option>Short pay</option><option>Customer deduction</option><option>Approved write-off</option><option>Rounding</option><option>Other</option></select></div>'+
+    '</div><div style="display:flex;gap:8px;margin-top:14px">'+
+    '<button class="btn btn-p btn-sm" onclick="_excWriteOffConfirm('+excIdx+')">Confirm Write-Off</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
+  );
+}
+function _excWriteOffConfirm(excIdx){
+  var ex=EXC[excIdx];if(!ex)return;
+  var invSel=(document.getElementById('_excwo-inv')||{}).value||'';
+  var woAmt=parseFloat((document.getElementById('_excwo-amt')||{}).value)||0;
+  var reason=(document.getElementById('_excwo-rsn')||{}).value||'Other';
+  if(!invSel){toast('Select an invoice','warn');return;}
+  if(woAmt<=0){toast('Enter a write-off amount','warn');return;}
+  var inv=INV.find(function(v){return v.i===invSel;});
+  RES.push({a:ex.a,c:ex.c,i:invSel,d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:woAmt,pd:0,wo:woAmt,st:'Write-off',m:'Write-Off Adjustment',n:reason,fromAlloc:true,approved:true});
+  ex.s='Resolved';ex.dec='Write off';
+  closeModal();saveToStorage();rExc();rAll();updDash();updTop();
+  addAudit('Write-off applied',ex.id+' — $'+$f(woAmt)+' · Invoice: '+invSel+' · '+reason);
+  toast('Write-off recorded — $'+$f(woAmt));
+}
+
+function excApplyToInvModal(excIdx){
+  var ex=EXC[excIdx];if(!ex)return;
+  var invList=INV.filter(function(v){return v.a===ex.a;});
+  var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+  showModal('Apply to Invoice',
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
+    'Payment <strong>'+ex.id+'</strong> — <strong style="color:var(--g-t)">$'+$f(ex.amt)+'</strong></div>'+
+    '<div style="display:grid;gap:10px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Account</div>'+
+    '<div style="font-size:13px;font-weight:600;color:var(--t1);padding:8px 12px;background:var(--surface2);border-radius:6px;border:1px solid var(--bdr)">'+(ex.a||'')+(ex.c?' — '+ex.c:'')+'</div></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice to Apply</div>'+
+    '<select id="_excai-inv" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option value="">— Select invoice —</option>'+invOpts+'</select></div>'+
+    '</div><div style="display:flex;gap:8px;margin-top:14px">'+
+    '<button class="btn btn-p btn-sm" onclick="_excApplyToInvConfirm('+excIdx+')">Apply Payment</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
+  );
+}
+function _excApplyToInvConfirm(excIdx){
+  var ex=EXC[excIdx];if(!ex)return;
+  var invSel=(document.getElementById('_excai-inv')||{}).value||'';
+  if(!invSel){toast('Select an invoice','warn');return;}
+  var inv=INV.find(function(v){return v.i===invSel;});
+  var vr=ex.amt-(inv?inv.amt:ex.amt);
+  RES.push({a:ex.a,c:ex.c,i:invSel,d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:ex.amt,pd:ex.amt,vr:vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'Applied from Exceptions',fromAlloc:true,approved:true});
+  ex.s='Resolved';ex.dec='Apply to invoice';
+  closeModal();saveToStorage();rExc();rAll();updDash();updTop();
+  addAudit('Applied to invoice',ex.id+' → '+invSel+' $'+$f(ex.amt));
+  toast('Payment applied to invoice '+invSel);
+}
+
+function excBankFeeModal(excIdx){
+  var ex=EXC[excIdx];if(!ex)return;
+  var invList=INV.filter(function(v){return v.a===ex.a;});
+  var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+  showModal('Bank Fee',
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
+    'Payment <strong>'+ex.id+'</strong> — <strong>$'+$f(ex.amt)+'</strong></div>'+
+    '<div style="display:grid;gap:10px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice</div>'+
+    '<select id="_excbf-inv" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option value="">— Select invoice —</option>'+invOpts+'</select></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Bank Fee Amount</div>'+
+    '<input type="number" id="_excbf-amt" value="0.00" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Notes</div>'+
+    '<input type="text" id="_excbf-nts" placeholder="Bank name, fee type..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '</div><div style="display:flex;gap:8px;margin-top:14px">'+
+    '<button class="btn btn-p btn-sm" onclick="_excBankFeeConfirm('+excIdx+')">Confirm Bank Fee</button>'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
+  );
+  setTimeout(function(){var el=document.getElementById('_excbf-amt');if(el){el.focus();el.select();}},80);
+}
+function _excBankFeeConfirm(excIdx){
+  var ex=EXC[excIdx];if(!ex)return;
+  var invSel=(document.getElementById('_excbf-inv')||{}).value||'';
+  var bfAmt=parseFloat((document.getElementById('_excbf-amt')||{}).value)||0;
+  var notes=((document.getElementById('_excbf-nts')||{}).value||'').trim();
+  if(bfAmt<=0){toast('Enter a bank fee amount','warn');return;}
+  var inv=invSel?INV.find(function(v){return v.i===invSel;}):null;
+  var applied=ex.amt-bfAmt;
+  RES.push({a:ex.a,c:ex.c,i:invSel||'',d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:ex.amt,pd:applied>0?applied:0,bf:bfAmt,st:'Bank fee',m:'Bank Fee Adjustment',n:notes||'Bank fee',fromAlloc:true,approved:true});
+  ex.s='Resolved';ex.dec='Bank fee';
+  closeModal();saveToStorage();rExc();rAll();updDash();updTop();
+  addAudit('Bank fee recorded',ex.id+' — fee: $'+$f(bfAmt)+(invSel?' · Invoice: '+invSel:''));
+  toast('Bank fee recorded — $'+$f(bfAmt));
+}
+
 function resolveException(idx,dec){
   const ex=EXC[idx];if(!ex)return;
   if(!dec||dec==='— Select —')return;
   if(dec==='Apply to invoice'){
-    // Navigate to To Be Matched tab, pre-filter Customer Open Items to this account
-    const ex2=EXC[idx];
-    closeModal();
-    // Store pending exception so invoice row click can resolve it
-    window._pendingExcApply={idx,ex:ex2};
-    // Navigate
-    setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app');
-    // Pre-filter open items to this customer's account
-    setTimeout(function(){
-      const acctInp=document.getElementById('ca-acct-input');
-      const acctSel=document.getElementById('ca-acct-dropdown');
-      if(acctInp)acctInp.value=(ex2.a||'')+(ex2.c?' — '+ex2.c:'');
-      if(acctSel)acctSel.value=ex2.a||'';
-      renderFbl5n('ca-open-items-body',ex2.a||'','');
-      // Show a banner in the open items header
-      const lbl=document.getElementById('ca-bottom-cust-label');
-      if(lbl)lbl.innerHTML='<span style="color:var(--am-t);font-weight:700">📌 Click an invoice to apply '+ex2.id+' ($'+$f(ex2.amt)+')</span>';
-      // Scroll open items into view
-      const el=document.getElementById('ca-open-items-tbl');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
-    },150);
+    if(typeof excApplyToInvModal==='function')excApplyToInvModal(idx);
     return;
   }
   if(dec==='Cash on Account'){
@@ -5872,26 +5961,12 @@ function resolveException(idx,dec){
     setTimeout(function(){var inp=document.getElementById('exc-acct-search');if(inp){inp.focus();excUnappliedSearch('',_excIdx);}},80);
     return;
   }
-  if(dec==='Write off'||dec==='Bank fee'){
-    // Navigate to To Be Matched, load the payment, pre-filter Customer Open Items
-    const ex3=EXC[idx];
-    closeModal();
-    window._pendingExcAction={idx:idx,ex:ex3,action:dec};
-    setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app');
-    // Find the payment in PAY and load it
-    var payIdx=PAY.findIndex(function(p){return p.a===ex3.a&&Math.abs(p.amt-ex3.amt)<0.01;});
-    if(payIdx>=0){
-      setTimeout(function(){
-        engLoadPaymentFromQueue(payIdx);
-        renderFbl5n('ca-open-items-body',ex3.a||'','');
-        var lbl=document.getElementById('ca-bottom-cust-label');
-        if(lbl)lbl.innerHTML='<span style="color:var(--am-t);font-weight:700">Select invoice(s) for '+dec+' — '+ex3.id+' ($'+$f(ex3.amt)+')</span>';
-        var el=document.getElementById('ca-open-items-tbl');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
-        toast('Select invoice(s) in Customer Open Items, then click '+dec+' button above');
-      },200);
-    } else {
-      toast('Payment not found in queue — resolve manually','warn');
-    }
+  if(dec==='Write off'){
+    if(typeof excWriteOffModal==='function')excWriteOffModal(idx);
+    return;
+  }
+  if(dec==='Bank fee'){
+    if(typeof excBankFeeModal==='function')excBankFeeModal(idx);
     return;
   }
   if(dec==='Chase customer'){
@@ -6017,7 +6092,7 @@ function engRefreshSel(){
   const prev=ENG_PAY_IDX;
   sel.innerHTML='<option value="">— Select a payment to allocate —</option>'+
     PAY.map((p,i)=>{
-      const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
+      const matched=RES.find(r=>r.fromAlloc&&(r.d===(p.txId||p.i||p.po)||r.i===p.i||r.po===p.po||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
       const status=matched?'✓ ':p.dp?'↓ ':'';
       const label=`${status}${p.c||'Unknown'} · ${p.i||p.po||p.txId||'—'} · ${$f(p.amt)}${p.payDate?' · '+fmtDate(p.payDate):''}`;
       return`<option value="${i}" ${i===prev?'selected':''}>${label}</option>`;
@@ -6617,7 +6692,7 @@ function renderPayQueue(){
     // Date range filter
     if(fromD&&p.payDate&&new Date(p.payDate)<fromD)return'';
     if(toD&&p.payDate&&new Date(p.payDate)>toD)return'';
-    const matched=RES.find(r=>r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1));
+    const matched=RES.find(r=>r.fromAlloc&&(r.d===(p.txId||p.i||p.po)||r.i===p.i||r.po===p.po||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
     const exc=EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
     // Matched/Unmatched tab filter
     if(_payFilter==='matched'&&!matched)return'';
@@ -6629,7 +6704,7 @@ function renderPayQueue(){
     }
     const isActive=ENG_PAY_IDX===i;
     const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':p.coa||p.unapplied?'var(--cy)':'var(--t3)';
-    const stateLabel=matched?'Matched':exc?(p.st==='Unapplied Cash'||p.unapplied?'Unapplied':'Exception'):p.dp?'Down Pay':p.coa||p.unapplied?'Unapplied':'Unmatched';
+    const stateLabel=matched?'Applied':exc?(p.st==='Unapplied Cash'||p.unapplied?'Unapplied':'Exception'):p.dp?'Down Pay':p.coa||p.unapplied?'Unapplied':'Unmatched';
     const bankTag=p.bank?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--pg);color:var(--pd);font-weight:700;margin-left:4px">${p.bank}</span>`:'';
     return`<div class="pq-item${isActive?' active':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
@@ -8143,15 +8218,35 @@ function refreshBankAccountOptions(preferredAcct){
 // ═══════════════════════════════════════════════════════════
 // FBL5N OPEN ITEMS TABLE
 // ═══════════════════════════════════════════════════════════
+function _parseAgingDate(s){
+  if(!s)return null;
+  // Already a Date object
+  if(s instanceof Date)return isNaN(s)?null:s;
+  var str=String(s).trim();
+  // ISO: YYYY-MM-DD
+  if(/^\d{4}-\d{2}-\d{2}$/.test(str))return new Date(str+'T00:00:00');
+  // M/D/YYYY or MM/DD/YYYY
+  var mdy=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(mdy)return new Date(parseInt(mdy[3]),parseInt(mdy[1])-1,parseInt(mdy[2]));
+  // M/D/YY — 2-digit year: 00-49 = 2000s, 50-99 = 1900s
+  var mdy2=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+  if(mdy2){var yr=parseInt(mdy2[3]);return new Date(yr<50?2000+yr:1900+yr,parseInt(mdy2[1])-1,parseInt(mdy2[2]));}
+  // Excel serial
+  var n=parseFloat(str);
+  if(!isNaN(n)&&n>40000&&n<60000){var e=new Date(Date.UTC(1899,11,30));e.setUTCDate(e.getUTCDate()+Math.floor(n));return e;}
+  // Last resort
+  var d2=new Date(str);return isNaN(d2)?null:d2;
+}
 function agingChip(due){
-  if(!due) return '<span class="aging-chip aging-na">—</span>';
-  var d=new Date(due+'T00:00:00');
-  var days=Math.floor((new Date()-d)/86400000);
-  if(days<0) return '<span class="aging-chip aging-cur">Current ('+Math.abs(days)+'d)</span>';
-  if(days===0) return '<span class="aging-chip aging-cur">Due today</span>';
-  if(days<=30) return '<span class="aging-chip aging-30">'+days+' days</span>';
-  if(days<=60) return '<span class="aging-chip aging-60">'+days+' days</span>';
-  return '<span class="aging-chip aging-90">'+days+' days</span>';
+  if(!due)return'<span class="aging-chip aging-na">—</span>';
+  var d=_parseAgingDate(due);
+  if(!d)return'<span class="aging-chip aging-na">—</span>';
+  var days=Math.floor((Date.now()-d.getTime())/86400000);
+  if(days<0)return'<span class="aging-chip aging-cur">-'+Math.abs(days)+' days</span>';
+  if(days===0)return'<span class="aging-chip aging-cur">Due today</span>';
+  if(days<=30)return'<span class="aging-chip aging-30">'+days+' days</span>';
+  if(days<=60)return'<span class="aging-chip aging-60">'+days+' days</span>';
+  return'<span class="aging-chip aging-90">'+days+' days</span>';
 }
 
 
@@ -8160,13 +8255,11 @@ var _fbl5nTimer=null;
 var _fbl5nPageSize=250;
 var _fbl5nOffset=0;
 var _fbl5nFiltered=[];
-var _fbl5nBaseInvs=[];  // account-filtered base before text search
-var _fbl5nTbodyId='ca-open-items-body';
 var _invSearchTimer=null;
 
 function _buildSearchText(){
   INV.forEach(function(v){
-    v._st=[v.c||'',v.a||'',v.i||'',v.po||'',v.so||'',v.d||'',v.ccy||'',String(v.amt||'')].join(' ').toLowerCase();
+    v._st=[v.c||'',v.a||'',v.i||'',v.po||'',v.so||'',v.d||'',String(v.amt||'')].join(' ').toLowerCase();
   });
 }
 
@@ -8174,13 +8267,11 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
   var tbody=document.getElementById(tbodyId); if(!tbody) return;
   _fbl5nOffset=0;
   _fbl5nTbodyId=tbodyId;
-  // Build account/customer filtered base — always from full INV array
   var invs=INV.filter(function(v){
     if(filterAcct && v.a!==filterAcct) return false;
     if(filterCust && (v.c||'').toLowerCase()!==filterCust.toLowerCase()) return false;
     return true;
   });
-  // Sort: ENG_PAY matches float to top
   if(ENG_PAY){
     var n=function(s){return(s||'').replace(/\s/g,'').toLowerCase();};
     invs=invs.slice().sort(function(a,b){
@@ -8192,10 +8283,110 @@ function renderFbl5n(tbodyId, filterAcct, filterCust){
         return s;}
       return score(b)-score(a);});
   }
-  _fbl5nBaseInvs=invs; // store full account-filtered set for text search
-  // Apply any active column text filters on top
+  _fbl5nBaseInvs=invs;
   _fbl5nApplyTextFilter(tbodyId, true);
 }
+
+function _fbl5nBuildRow(v){
+  var matched=RES.find(function(r){return r.i===v.i;});
+  var applied=matched?matched.pd:0;
+  var balance=v.amt-applied;
+  var ENG_ROW=(typeof ENG_ROWS!=='undefined')?ENG_ROWS.find(function(r){return r.inv&&r.inv.i===v.i;}):null;
+  var conf=ENG_ROW?ENG_ROW.conf:(ENG_PAY&&typeof engGetConfidence==='function'?engGetConfidence(v,ENG_PAY):0);
+  var status=v.s||'Open';
+  var sb=v.s==='Exact'||v.s==='Applied'?'<span class="badge badge-g">'+status+'</span>':
+          v.s==='Short pay'?'<span class="badge badge-am">'+status+'</span>':
+          v.s==='Overpay'?'<span class="badge badge-r">'+status+'</span>':
+          '<span style="color:var(--t3);font-size:12px">Open</span>';
+  var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>':'\u2014';
+  var sel=ENG_ROW&&ENG_ROW.selected;
+  var vi=v.i||'';
+  return '<tr class="'+(sel?'selected-inv':'')+'" onclick="fbl5nRowClick(\''+vi+'\')" style="cursor:pointer">'+
+    '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+vi+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.a||'')+'</td>'+
+    '<td style="font-weight:600">'+(v.c||'')+'</td>'+
+    '<td class="td-mono" style="color:var(--pd)">'+vi+'</td>'+
+    '<td class="td-mono">'+(typeof fmtDate==='function'?fmtDate(v.dt2):(v.dt2||''))+'</td>'+
+    '<td class="td-mono" style="color:'+(v.due&&_parseAgingDate(v.due)&&_parseAgingDate(v.due)<new Date()?'var(--r-t)':'')+'">'+
+      (typeof fmtDate==='function'?fmtDate(v.due):(v.due||''))+'</td>'+
+    '<td>'+(typeof agingChip==='function'?agingChip(v.due):'')+'</td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.po||'\u2014')+'</td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.so||'\u2014')+'</td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.d||'\u2014')+'</td>'+
+    '<td class="td-num">'+(typeof $f==='function'?'$'+$f(v.amt):'$'+v.amt)+'</td>'+
+    '<td class="td-num" style="color:'+(balance<v.amt*0.5?'var(--am-t)':'')+'">'+(typeof $f==='function'?'$'+$f(Math.max(0,balance)):'')+'</td>'+
+    '<td class="td-num" style="color:var(--g-t)">'+(applied>0?(typeof $f==='function'?'$'+$f(applied):'$'+applied):'\u2014')+'</td>'+
+    '<td>'+sb+'</td>'+
+    '<td style="text-align:center">'+cd+'</td>'+
+    '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(\''+vi+'\')" style="white-space:nowrap">Apply</button></td>'+
+  '</tr>';
+}
+
+function _fbl5nRenderPage(tbodyId,startIdx){
+  var tbody=document.getElementById(tbodyId);if(!tbody)return;
+  var invs=_fbl5nFiltered;
+  var end=Math.min(startIdx+_fbl5nPageSize,invs.length);
+  var rows=[];for(var ri=startIdx;ri<end;ri++){rows.push(_fbl5nBuildRow(invs[ri]));}
+  var footer='';
+  if(end<invs.length){
+    footer='<tr id="fbl5n-load-more"><td colspan="16" style="text-align:center;padding:12px">'+
+      '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' matching open items \u2014 refine search or load more</span> '+
+      '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
+    '</td></tr>';
+  } else if(invs.length>_fbl5nPageSize){
+    footer='<tr><td colspan="16" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
+  }
+  if(startIdx===0){tbody.innerHTML=rows.join('')+footer;}
+  else{var old=document.getElementById('fbl5n-load-more');if(old)old.remove();tbody.insertAdjacentHTML('beforeend',rows.join('')+footer);}
+  _fbl5nOffset=end;
+}
+
+function _fbl5nLoadMore(tbodyId){_fbl5nRenderPage(tbodyId,_fbl5nOffset);}
+
+var _fbl5nColFields=['','a','c','i','dt2','due','','po','so','d','amt','','','s'];
+
+function _fbl5nApplyTextFilter(tbodyId, forceReset){
+  var filterRow=document.getElementById('fbl5n-filter-row');
+  var filters=[];
+  if(filterRow){var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});}
+  var hasFilter=filters.some(function(f){return f.length>0;});
+  var src=_fbl5nBaseInvs;
+  var matched;
+  if(!hasFilter){matched=src;}
+  else{
+    matched=src.filter(function(v){
+      if(!v._st)v._st=[v.c||'',v.a||'',v.i||'',v.po||'',v.so||'',v.d||'',String(v.amt||'')].join(' ').toLowerCase();
+      var ok=true;
+      filters.forEach(function(f,fi){
+        if(!f)return;
+        var field=_fbl5nColFields[fi]||'';
+        if(field){var val=String(v[field]||'').toLowerCase();if(!val.includes(f))ok=false;}
+        else if(fi>0){if(!v._st.includes(f))ok=false;}
+      });
+      return ok;
+    });
+  }
+  _fbl5nFiltered=matched;
+  _fbl5nOffset=0;
+  var tbody=document.getElementById(tbodyId||'ca-open-items-body');
+  if(!tbody)return;
+  if(!matched.length){
+    tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px">'+
+      '<div class="empty-t">No open items found</div>'+
+      '<div class="empty-s">Try account number, customer name, invoice #, PO, or sales order.</div>'+
+    '</div></td></tr>';
+    return;
+  }
+  _fbl5nRenderPage(tbodyId||'ca-open-items-body',0);
+}
+
+function filterFbl5n(){
+  clearTimeout(_fbl5nTimer);
+  _fbl5nTimer=setTimeout(function(){
+    _fbl5nApplyTextFilter(_fbl5nTbodyId||'ca-open-items-body', false);
+  }, 300);
+}
+
 
 function _fbl5nBuildRow(v){
   var matched=RES.find(function(r){ return r.i===v.i; });
@@ -8240,7 +8431,7 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   var footer='';
   if(end<invs.length){
     footer='<tr id="fbl5n-load-more"><td colspan="16" style="text-align:center;padding:12px">'+
-      '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' matching open items — refine search or load more</span> '+
+      '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' open items</span> '+
       '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
     '</td></tr>';
   } else if(invs.length>_fbl5nPageSize){
@@ -8341,68 +8532,27 @@ function filterFbl5nExc(){
     tr.style.display=show?'':'none';
   });
 }
-
-// Column-index → INV field mapping for OI table (aligns with thead order)
-// th cols: [0]=checkbox, [1]=account, [2]=customer, [3]=invoice, [4]=invDate,
-// [5]=dueDate, [6]=aging(skip), [7]=po, [8]=so, [9]=doc, [10]=amt, [11]=bal, [12]=applied, [13]=status
-var _fbl5nColFields=['','a','c','i','dt2','due','','po','so','d','amt','','','s'];
-
-function _fbl5nApplyTextFilter(tbodyId, forceReset){
-  var filterRow=document.getElementById('fbl5n-filter-row');
-  var filters=[];
-  if(filterRow){
-    var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');
-    filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});
-  }
-  var hasFilter=filters.some(function(f){return f.length>0;});
-  var src=_fbl5nBaseInvs; // always filter from full account-filtered base
-  var matched;
-  if(!hasFilter){
-    matched=src; // no filter: show all (capped by pagination)
-  } else {
-    matched=src.filter(function(v){
-      // Ensure search text is built if not yet
-      if(!v._st) v._st=[v.c||'',v.a||'',v.i||'',v.po||'',v.so||'',v.d||'',String(v.amt||'')].join(' ').toLowerCase();
-      var ok=true;
-      filters.forEach(function(f,fi){
-        if(!f) return;
-        var field=_fbl5nColFields[fi]||'';
-        if(field){
-          // Field-specific search — fast
-          var val=String(v[field]||'').toLowerCase();
-          if(!val.includes(f)) ok=false;
-        } else if(fi===0){
-          // checkbox col — skip
-        } else {
-          // Fallback: search full _st
-          if(!v._st.includes(f)) ok=false;
-        }
-      });
-      return ok;
-    });
-  }
-  _fbl5nFiltered=matched;
-  _fbl5nOffset=0;
-  var tbody=document.getElementById(tbodyId||'ca-open-items-body');
-  if(!tbody) return;
-  if(!matched.length){
-    tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px">'+
-      '<div class="empty-t">No open items found</div>'+
-      '<div class="empty-s">Try account number, customer name, invoice #, PO, or sales order.</div>'+
-    '</div></td></tr>';
-    return;
-  }
-  _fbl5nRenderPage(tbodyId||'ca-open-items-body',0);
-}
-
 function filterFbl5n(){
-  // Debounced: search full _fbl5nBaseInvs array — NOT just rendered DOM rows
-  clearTimeout(_fbl5nTimer);
-  _fbl5nTimer=setTimeout(function(){
-    _fbl5nApplyTextFilter(_fbl5nTbodyId||'ca-open-items-body', false);
-  }, 300);
+  var filterRow=document.getElementById('fbl5n-filter-row');
+  if(!filterRow)return;
+  var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');
+  var filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});
+  var rows=document.querySelectorAll('#ca-open-items-body tr');
+  rows.forEach(function(tr){
+    if(tr.querySelector('td[colspan]')){tr.style.display='';return;} // empty state row
+    var cells=tr.querySelectorAll('td');
+    var show=true;
+    // inputs align to cols: 0=checkbox(skip), 1=account, 2=customer, 3=inv, 4=invdate,
+    // 5=duedate, 6=aging, 7=po, 8=so, 9=doc, 10=origamt, 11=bal, 12=applied, 13=status
+    filters.forEach(function(f,fi){
+      if(!f)return;
+      var cell=cells[fi];
+      if(!cell)return;
+      if(!cell.innerText.toLowerCase().includes(f))show=false;
+    });
+    tr.style.display=show?'':'none';
+  });
 }
-
 function refreshFbl5n(){
   var acct=(document.getElementById('ca-acct-dropdown')||{}).value||'';
   // Do NOT filter by ENG_PAY.c — that hides invoices from other customers
