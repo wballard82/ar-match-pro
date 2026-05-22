@@ -1552,15 +1552,9 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
   box-shadow: 0 2px 12px rgba(59,130,246,.1);
 }
 .pq-item:hover:not(.active) { transform: translateX(2px); }
-.pq-item.pq-applied {
-  background: rgba(34,197,94,.12) !important;
-  border-color: rgba(34,197,94,.35) !important;
-}
+.pq-item.pq-applied { background: rgba(34,197,94,.12) !important; border-color: rgba(34,197,94,.35) !important; }
 .pq-item.pq-applied:hover { background: rgba(34,197,94,.18) !important; }
-.pq-item.pq-applied.active {
-  background: linear-gradient(135deg, rgba(34,197,94,.18), rgba(34,197,94,.10)) !important;
-  border-color: rgba(34,197,94,.5) !important;
-}
+.pq-item.pq-applied.active { background: linear-gradient(135deg,rgba(34,197,94,.18),rgba(34,197,94,.10)) !important; border-color: rgba(34,197,94,.5) !important; }
 
 /* ── Exception cards (not just rows) ── */
 .exc-card {
@@ -5835,7 +5829,8 @@ function revertException(idx){
 
 
 function excWriteOffModal(excIdx){
-  var ex=EXC[excIdx];if(!ex)return;
+  console.log('[excWriteOffModal] called with idx=',excIdx,'EXC.length=',EXC.length);
+  var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
   var acctMap={};INV.forEach(function(v){if(v.a&&v.c)acctMap[v.a]=v.c;});
   var invList=INV.filter(function(v){return v.a===ex.a;});
   var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
@@ -5874,7 +5869,8 @@ function _excWriteOffConfirm(excIdx){
 }
 
 function excApplyToInvModal(excIdx){
-  var ex=EXC[excIdx];if(!ex)return;
+  console.log('[excApplyToInvModal] called with idx=',excIdx,'EXC.length=',EXC.length);
+  var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
   var invList=INV.filter(function(v){return v.a===ex.a;});
   var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
   showModal('Apply to Invoice',
@@ -5905,7 +5901,8 @@ function _excApplyToInvConfirm(excIdx){
 }
 
 function excBankFeeModal(excIdx){
-  var ex=EXC[excIdx];if(!ex)return;
+  console.log('[excBankFeeModal] called with idx=',excIdx,'EXC.length=',EXC.length);
+  var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
   var invList=INV.filter(function(v){return v.a===ex.a;});
   var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
   showModal('Bank Fee',
@@ -6364,12 +6361,12 @@ function engApprove(){
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
   addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
   saveToStorage();updDash();updTop();
+  try{if(typeof rPost==='function')rPost();}catch(e){console.warn('rPost err',e);}
+  try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){console.warn('renderWsReview err',e);}
+  try{if(typeof rAll==='function')rAll();}catch(e){}
   try{renderPayQueue();}catch(e){}
-  try{if(typeof rPost==='function')rPost();}catch(e){}
-  try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
-  try{rAll();}catch(e){}
   setCaTab('review',document.getElementById('ca-tab-review'));
-  toast('✓ Approved — '+sel.length+' invoice(s) moved to Review · Posting Export updated');
+  toast('✓ Approved — '+sel.length+' invoice(s) moved to Review');
 }
 
 function engExport(){
@@ -6719,7 +6716,7 @@ function renderPayQueue(){
     const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':p.coa||p.unapplied?'var(--cy)':'var(--t3)';
     const stateLabel=matched?'Applied':exc?(p.st==='Unapplied Cash'||p.unapplied?'Unapplied':'Exception'):p.dp?'Down Pay':p.coa||p.unapplied?'Unapplied':'Unmatched';
     const bankTag=p.bank?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--pg);color:var(--pd);font-weight:700;margin-left:4px">${p.bank}</span>`:'';
-    return`<div class="pq-item${isActive?' active':''}${matched?' pq-applied':''}" style="${matched?'background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35)':''}" onclick="engLoadPaymentFromQueue(${i})">
+    return`<div class="pq-item${isActive?' active':''}${matched?' pq-applied':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
       <div class="pq-item-top"><div class="pq-item-cust">${getDisplayCustomerName(p)||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
       <div class="pq-item-bot">
@@ -7094,29 +7091,29 @@ function caFilterUpdate(){
 
 // ── Multi-invoice matching helpers ──────────────────────────────────────
 function _extractInvoiceRefs(p){
-  // Extract all 10-digit invoice numbers (5xxx/7xxx pattern) from payment fields
+  if(!p)return[];
   var text=[p.i||'',p.po||'',p.n||'',p.bankRef||'',p.custRef||''].join(' ');
   var refs=new Set();
   var matches=text.match(/\b[57]\d{9}\b/g);
   if(matches)matches.forEach(function(m){refs.add(m);});
-  // Also accept 8-9 digit refs in INVOICE: / INV: labels
-  var labeled=text.match(/(?:INVOICE|INV|IMPORTINVOICE)[:\s#]*(\d{7,12})/gi);
+  var labeled=text.match(/(?:IMPORTINVOICE|INVOICE|INV)[:\s#]*(\d{7,12})/gi);
   if(labeled)labeled.forEach(function(m){var d=m.match(/\d{7,12}/);if(d)refs.add(d[0]);});
   return Array.from(refs);
 }
 
 function _findInvoicesForPayment(p){
-  // Try to find ALL invoices for this payment via multiple strategies
+  if(!p||typeof INV==='undefined')return[];
   var refs=_extractInvoiceRefs(p);
   var found=[];
-  // Strategy 1: exact invoice # match (already used in main loop, but multi)
   if(refs.length){
     refs.forEach(function(ref){
-      var inv=INV.find(function(v){return v.i===ref||v.i&&String(v.i).replace(/^0+/,'')===String(ref).replace(/^0+/,'');});
+      var inv=INV.find(function(v){
+        return v.i===ref||(v.i&&String(v.i).replace(/^0+/,'')===String(ref).replace(/^0+/,''));
+      });
       if(inv&&!found.find(function(x){return x.i===inv.i;}))found.push(inv);
     });
   }
-  // Strategy 2: if no refs found, try by customer name (when p.a is empty — YayPay case)
+  // Fallback: customer name search when no refs match and no customer account
   if(!found.length&&p.c&&!p.a){
     var pCustN=String(p.c).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,15);
     if(pCustN.length>=4){
@@ -7125,9 +7122,8 @@ function _findInvoicesForPayment(p){
         var iCustN=String(v.c).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,15);
         return iCustN.includes(pCustN)||pCustN.includes(iCustN);
       });
-      if(custInvs.length){
-        // Find subset that sums close to p.amt
-        var sub=findSub(custInvs,p.amt,50); // $50 tolerance for bank fee
+      if(custInvs.length&&typeof findSub==='function'){
+        var sub=findSub(custInvs,p.amt,50);
         if(sub&&sub.length)found=sub;
       }
     }
@@ -7146,16 +7142,11 @@ async function runMatch(){
     showUpgrade('Row limit reached',`Your ${planName} plan supports up to ${rowLimit.toLocaleString()} invoice rows. You have ${INV.length.toLocaleString()} rows imported. Upgrade to Pro for unlimited rows.`);
     return;
   }
-  const overlay=document.getElementById('match-progress');if(overlay)overlay.classList.add('show');setStatus('running');
+  const overlay=document.getElementById('match-progress');if(overlay){overlay.classList.add('show');overlay.style.display='flex';}setStatus('running');
+  await new Promise(r=>setTimeout(r,100));
   const msgs=['Normalizing references…','Running invoice # pass…','Running PO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
   let mi=0;
-  const upd=(pct,mc,ec)=>{
-    var _mb=document.getElementById('mp-bar');if(_mb)_mb.style.width=pct+'%';
-    var _mm=document.getElementById('mp-matched');if(_mm)_mm.textContent=mc;
-    var _me=document.getElementById('mp-exc');if(_me)_me.textContent=ec;
-    var _ms=document.getElementById('mp-msg');if(_ms)_ms.textContent=msgs[Math.min(mi++,msgs.length-1)]+' ('+pct+'%)';
-    var _mp=document.getElementById('mp-pct');if(_mp)_mp.textContent=pct+'%';
-  };
+  const upd=(pct,mc,ec)=>{var _mb=document.getElementById('mp-bar');if(_mb)_mb.style.width=pct+'%';var _mm=document.getElementById('mp-matched');if(_mm)_mm.textContent=mc;var _me=document.getElementById('mp-exc');if(_me)_me.textContent=ec;var _ms=document.getElementById('mp-msg');if(_ms)_ms.textContent=msgs[Math.min(mi++,msgs.length-1)]+' ('+pct+'%)';var _mp=document.getElementById('mp-pct');if(_mp)_mp.textContent=pct+'%';};
   await new Promise(r=>setTimeout(r,200));upd(15,0,0);
   await new Promise(r=>setTimeout(r,200));
   RES=[];EXC=[];INV.forEach(v=>v.s='');
@@ -7164,11 +7155,35 @@ async function runMatch(){
     const p=PAY[pi];upd(20+Math.round(pi/PAY.length*65),RES.length,EXC.length);
     if(pi%2===0)await new Promise(r=>setTimeout(r,60));
     if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Cash on Account or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
-    if(!p.a||p.a==='40999999'){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c,amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account or reference found — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
+    if(!p.a&&!p.c&&!p.i&&!p.po){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c||'',amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account, customer, or reference — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
     const ni=norm(p.i),np=norm(p.po),ns=norm(p.so);
     const useInv=document.getElementById('s-inv')?.checked!==false;
     const usePO=document.getElementById('s-po')?.checked!==false;
     const useSO=document.getElementById('s-so')?.checked!==false;
+    // ── PRIORITY: Multi-invoice match (Celestica/Micron pattern) — tries to match all invoice refs in notes ──
+    try{
+      var _miRefs=(typeof _extractInvoiceRefs==='function')?_extractInvoiceRefs(p):[];
+      if(_miRefs.length>=2){
+        var _miFound=[];
+        _miRefs.forEach(function(ref){
+          var hit=INV.find(function(v){return v.i===ref||(v.i&&String(v.i).replace(/^0+/,'')===String(ref).replace(/^0+/,''));});
+          if(hit&&!_miFound.find(function(x){return x.i===hit.i;}))_miFound.push(hit);
+        });
+        if(_miFound.length>=2){
+          var _miSum=_miFound.reduce(function(s,v){return s+v.amt;},0);
+          var _miDiff=p.amt-_miSum;
+          if(Math.abs(_miDiff)<=tol){
+            _miFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_miFound.length+'-invoice payment (refs from notes)',fromAlloc:false});});
+            continue;
+          }
+          if(Math.abs(_miDiff)<=50&&_miSum>0){
+            _miFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_miFound.length+'-invoice + $'+(Math.abs(_miDiff)).toFixed(2)+' variance',fromAlloc:false});});
+            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||(_miFound[0]&&_miFound[0].a)||'',c:p.c||(_miFound[0]&&_miFound[0].c)||'',amt:Math.abs(_miDiff),ref:_miFound.map(function(v){return v.i;}).join(', '),type:'Bank fee',detail:'Payment $'+$f(p.amt)+' covers '+_miFound.length+' invoices ($'+$f(_miSum)+') — $'+$f(Math.abs(_miDiff))+' variance. Likely bank fee or write-off.',action:_miDiff<0?'Bank fee':'Write-off',dec:'',s:'Open'});
+            continue;
+          }
+        }
+      }
+    }catch(_miErr){console.warn('Multi-invoice priority match error:',_miErr);}
     if(ni&&useInv){
       const h=INV.find(v=>norm(v.i)===ni&&(v.a===p.a||(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim()));
       if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
@@ -7177,25 +7192,6 @@ async function runMatch(){
     if(ns&&useSO&&hasFeat('so')){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
     const am=INV.filter(v=>v.a===p.a&&Math.abs(v.amt-p.amt)<=tol&&!v.s);
     if(am.length===1){am[0].s='Amount match';RES.push({c:am[0].c,a:am[0].a,i:am[0].i,po:am[0].po,so:am[0].so,d:am[0].d,oa:am[0].amt,pd:p.amt,vr:p.amt-am[0].amt,st:'Amount match',m:'Amount match',n:'Customer + amount'});continue;}
-    // ── NEW: Multi-invoice match from payment notes/refs (Celestica/Micron pattern) ──
-    try{
-      var multiInvs=_findInvoicesForPayment(p);
-      if(multiInvs&&multiInvs.length){
-        var invSum=multiInvs.reduce(function(s,v){return s+v.amt;},0);
-        var diff=p.amt-invSum;
-        // Exact or within tolerance
-        if(Math.abs(diff)<=tol){
-          multiInvs.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:multiInvs.length+'-invoice payment'});});
-          continue;
-        }
-        // Small variance — likely bank fee or write-off (under $50)
-        if(Math.abs(diff)<=50&&invSum>0){
-          multiInvs.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:multiInvs.length+'-invoice + bank fee variance'});});
-          EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||(multiInvs[0]&&multiInvs[0].a)||'',c:p.c||(multiInvs[0]&&multiInvs[0].c)||'',amt:Math.abs(diff),ref:multiInvs.map(function(v){return v.i;}).join(', '),type:'Bank fee',detail:'Payment $'+$f(p.amt)+' covers '+multiInvs.length+' invoices ($'+$f(invSum)+') — $'+$f(Math.abs(diff))+' variance. Likely bank fee or write-off.',action:diff<0?'Bank fee':'Write-off',dec:'',s:'Open',_varianceAmt:Math.abs(diff)});
-          continue;
-        }
-      }
-    }catch(_miErr){console.warn('Multi-invoice match error:',_miErr);}
     // Duplicate check
     const dupChk=PAY.filter((q,qi)=>qi!==pi&&Math.abs(q.amt-p.amt)<0.01&&(q.txId===p.txId||q.i===p.i)&&q.payDate===p.payDate);
     const excType=dupChk.length?'Duplicate':'Unmatched';
@@ -7419,7 +7415,7 @@ function _yyExtractCustomer(detail,method){
       var aclean=am[1].replace(/\s+\d{6,}\s*$/,'').replace(/\s+/g,' ').trim();
       if(aclean.length>2)return aclean;
     }
-    var am2=d.match(/RMKS[^\/]*\/NAME:ORIG:\s*([^\r\n\/]{2,100})/i);
+    var am2=d.match(/RMKS[^\/]*\/NAME:ORIG:\s*([^\r\n\/]{2,50})/i);
     if(am2)return am2[1].replace(/\s+\d{6,}\s*$/,'').replace(/\s+/g,' ').trim();
   }
   if(method_up==='WIRES'||method_up==='WIRE'||/^1[9][0-9]$/.test(method_up)||method_up==='214'){
@@ -8425,20 +8421,14 @@ function _fbl5nRenderPage(tbodyId,startIdx){
 
 function _fbl5nLoadMore(tbodyId){_fbl5nRenderPage(tbodyId,_fbl5nOffset);}
 
-var _fbl5nColFields=['','a','c','i','dt2','due','','po','so','d','amt','','','s'];
+var _fbl5nColFields=['a','c','i','dt2','due','','po','so','d','amt','','','s'];
 
 function _fbl5nApplyTextFilter(tbodyId, forceReset){
   var filterRow=document.getElementById('fbl5n-filter-row');
   var filters=[];
   if(filterRow){var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});}
   var hasFilter=filters.some(function(f){return f.length>0;});
-  // If _fbl5nBaseInvs is empty (user typed in filter before renderFbl5n ran),
-  // fall back to filtering the full INV array. This ensures typing always works.
-  var src=(_fbl5nBaseInvs&&_fbl5nBaseInvs.length)?_fbl5nBaseInvs:(INV||[]).slice();
-  if(src===INV.slice()||src.length===0){
-    // Lazy-init: store the fallback as the base for subsequent filters
-    if(_fbl5nBaseInvs.length===0&&INV.length)_fbl5nBaseInvs=INV.slice();
-  }
+  var src=_fbl5nBaseInvs;
   var matched;
   if(!hasFilter){matched=src;}
   else{
