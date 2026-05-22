@@ -6365,7 +6365,17 @@ function engApprove(){
   document.getElementById('eng-export-btn').style.display='inline-flex';
   var _ub2=document.getElementById('eng-unapplied-btn');if(_ub2)_ub2.style.display='none';
   const totalApplied=sel.reduce((s,r)=>s+r.applyAmt,0);
-  sel.forEach(r=>{if(!RES.find(res=>res.i===r.inv.i&&res.fromAlloc)){const vr=r.applyAmt-r.inv.amt;RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.txId||'',id:ENG_PAY.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});}});
+  sel.forEach(function(r){
+    // Remove ANY existing RES entry for this invoice that didn't come from explicit user approval.
+    // This prevents double-counting when user approves a payment that was already auto-matched.
+    for(var dupIdx=RES.length-1;dupIdx>=0;dupIdx--){
+      if(RES[dupIdx].i===r.inv.i&&!RES[dupIdx].fromAlloc){RES.splice(dupIdx,1);}
+    }
+    // Skip if already user-approved (idempotent)
+    if(RES.find(function(res){return res.i===r.inv.i&&res.fromAlloc;}))return;
+    var vr=r.applyAmt-r.inv.amt;
+    RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.txId||'',id:ENG_PAY.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr:vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});
+  });
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
   addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
   saveToStorage();updDash();updTop();
