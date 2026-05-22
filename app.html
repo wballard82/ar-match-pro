@@ -2189,6 +2189,30 @@ body.app-active #app {
 .match-reasons { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:4px; }
 .match-reason { font-size:11.5px; color:var(--g-t); display:inline-flex; align-items:center; gap:3px; }
 .match-reason::before { content:"✓ "; font-weight:700; }
+
+/* ── Item 14: Sticky table headers (Reconcile section) ──────────────── */
+#ws-recon .tbl thead th,
+#ws-recon table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface) !important;
+  box-shadow: 0 1px 0 var(--bdr);
+}
+.recon-tbl thead th,
+#recon-tbl thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface) !important;
+  box-shadow: 0 1px 0 var(--bdr);
+}
+/* Also apply to any table inside a scrollable reconcile container */
+#ws-recon .scroll-wrap,
+#ws-recon [class*="scroll"] {
+  overflow-y: auto;
+  max-height: 100%;
+}
 </style>
 </head>
 <body>
@@ -2735,7 +2759,7 @@ body.app-active #app {
                 <div class="wl-empty-icon">📂</div>
                 <div class="wl-empty-title">No payments waiting</div>
                 <div class="wl-empty-sub">Import remittance data to see payments that need allocation.</div>
-                <div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
+                
               </div>
             </div>
           </div>
@@ -2785,10 +2809,7 @@ body.app-active #app {
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
                 Import invoices
               </button>
-              <button class="btn btn-outline btn-sm" onclick="openImport('rem')">
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import remittance
-              </button>
+              
               
             </div>
           </div>
@@ -2877,11 +2898,7 @@ body.app-active #app {
             </div>
             <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:20px">
               
-              <button class="btn btn-outline hover-lift" onclick="runMatch()" style="justify-content:center;padding:20px 12px;flex-direction:column;height:auto;gap:6px">
-                <span style="font-size:24px">⚡</span>
-                <span style="font-size:12.5px;font-weight:700">Auto match</span>
-                <span style="font-size:11px;color:var(--t3)">Invoice, PO, SO, amount</span>
-              </button>
+              
               <button class="btn btn-outline hover-lift" onclick="sp('posting')" style="justify-content:center;padding:20px 12px;flex-direction:column;height:auto;gap:6px">
                 <span style="font-size:24px">📤</span>
                 <span style="font-size:12.5px;font-weight:700">Posting export</span>
@@ -2923,7 +2940,7 @@ body.app-active #app {
             </div>
             <div style="display:flex;gap:8px;align-items:center">
               <button class="btn btn-outline btn-sm" onclick="openImport('inv')">+ Invoices</button>
-              <button class="btn btn-outline btn-sm" onclick="openImport('rem')">+ Remittance</button>
+              
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
               <button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Auto match</button>
             </div>
@@ -2955,14 +2972,6 @@ body.app-active #app {
                 <option value="">All</option><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option>
               </select>
             </div>
-            <div class="ca-filter-item">
-              <span class="ca-filter-label">From</span>
-              <input type="date" id="ca-date-from" class="ca-filter-sel" onchange="caFilterUpdate()">
-            </div>
-            <div class="ca-filter-item">
-              <span class="ca-filter-label">To</span>
-              <input type="date" id="ca-date-to" class="ca-filter-sel" onchange="caFilterUpdate()">
-            </div>
             <div class="ca-filter-item" style="margin-left:auto">
               <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
             </div>
@@ -2990,7 +2999,7 @@ body.app-active #app {
                     </div>
                   </div>
                   <div class="ca-queue-list" id="pq-list">
-                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import</button></div></div>
+                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"></div></div>
                   </div>
                 </div>
 
@@ -3093,7 +3102,7 @@ body.app-active #app {
                     <div class="empty-icon">💳</div>
                     <div class="empty-t">Select a payment to allocate</div>
                     <div class="empty-s">Choose from the queue on the left.</div>
-                    <div class="empty-btn" style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openImport('rem')">Import remittances</button></div>
+                    <div class="empty-btn" style="display:flex;gap:8px"></div>
                   </div>
 
                   <div class="alloc-fully-bar" id="alloc-fully">✅ Payment fully allocated — click Approve</div>
@@ -3141,18 +3150,7 @@ body.app-active #app {
                   📋 Customer Open Items
                   <span style="font-weight:500;color:var(--t3);text-transform:none;letter-spacing:0;font-size:11px" id="ca-bottom-cust-label">select account or payment</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account</span>
-                  <div style="position:relative">
-                    <input type="text" id="ca-acct-input" class="ca-acct-sel" placeholder="Search account…" autocomplete="off"
-                      style="min-width:220px;cursor:text" oninput="clearTimeout(_fbl5nTimer);var _v=this.value;_fbl5nTimer=setTimeout(function(){caAcctInputSearch(_v);},250)"
-                      onblur="setTimeout(function(){var d=document.getElementById('ca-acct-drop');if(d)d.style.display='none';},200)"
-                      onfocus="caAcctInputSearch(this.value)">
-                    <div id="ca-acct-drop" style="display:none;position:absolute;top:100%;left:0;right:0;min-width:280px;background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;box-shadow:var(--shadow-md);z-index:50;max-height:220px;overflow-y:auto;margin-top:3px"></div>
-                  </div>
-                  <select id="ca-acct-dropdown" style="display:none" onchange="caAcctDropdownChange(this.value)"><option value="">All accounts</option></select>
-                  <button class="btn btn-ghost btn-xs" onclick="caAcctInputClear()">✕ Clear</button>
-                </div>
+                
               </div>
               <div class="ca-bottom-tbl-wrap">
                 
@@ -3179,22 +3177,6 @@ body.app-active #app {
                       <th onclick="sortFbl5n(10)">Status<span class="si2"></span></th>
                       <th style="text-align:center">Match %</th>
                       <th>Apply</th>
-                    </tr>
-                    <tr class="fbl5n-filter-row" id="fbl5n-filter-row">
-                      <th></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()" style="text-align:right"></th>
-                      <th></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th></th>
-                      <th></th>
                     </tr>
                   </thead>
                   <tbody id="ca-open-items-body">
@@ -3246,11 +3228,11 @@ body.app-active #app {
             <div class="exc-bottom-half">
               <div class="ca-bottom-header">
                 <div class="ca-bottom-title">📋 Account Open Items — Exception Context</div>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Account</span>
-                  <select id="exc-acct-dropdown" class="ca-acct-sel" onchange="excAcctDropdownChange(this.value)">
-                    <option value="">All accounts</option>
-                  </select>
+                <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;max-width:520px">
+                  <input id="exc-open-search" type="search" placeholder="Search by account number or customer name…"
+                    style="flex:1;max-width:480px;padding:8px 14px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none"
+                    oninput="excOpenItemsSearch(this.value)">
+                  <span id="exc-open-search-ct" style="font-size:11.5px;color:var(--t3);white-space:nowrap"></span>
                 </div>
               </div>
               <div class="ca-bottom-tbl-wrap">
@@ -3267,10 +3249,6 @@ body.app-active #app {
                       <th onclick="sortFbl5nExc(7)" style="text-align:right">Orig Amt<span class="si2"></span></th>
                       <th onclick="sortFbl5nExc(8)" style="text-align:right">Open Balance<span class="si2"></span></th>
                       <th onclick="sortFbl5nExc(9)">Status<span class="si2"></span></th>
-                    </tr>
-                  
-                    <tr class="fbl5n-filter-row" id="exc-fbl5n-filter-row">
-                      <th></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th><th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5nExc()"></th>
                     </tr>
                   </thead>
                   <tbody id="exc-open-items-body">
@@ -3362,6 +3340,13 @@ body.app-active #app {
           </div>
         </div>
         <div class="panel-body" style="padding:0">
+          
+          <div style="padding:10px 14px;background:var(--surface1);border-bottom:1px solid var(--bdr);display:flex;gap:10px;align-items:center">
+            <input id="exc-search-input" type="search" placeholder="Search by account number or customer name…"
+              style="flex:1;max-width:480px;padding:8px 14px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none"
+              oninput="excSearchHandler(this.value)">
+            <span id="exc-search-ct" style="font-size:11.5px;color:var(--t3)"></span>
+          </div>
           <div class="na-chips" id="na-chips">
             <button class="na-chip na-chip-active" data-type="" onclick="naChipClick(this)">All <span class="na-chip-ct" id="na-ct-all">0</span></button>
             <button class="na-chip" data-type="Short pay" onclick="naChipClick(this)">Short Pays <span class="na-chip-ct" id="na-ct-Short pay">0</span></button>
@@ -3416,10 +3401,7 @@ body.app-active #app {
               
               <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
               <button class="btn btn-outline btn-sm" onclick="addRemRowAfter()">+ Add row</button>
-              <button class="btn btn-p btn-sm" onclick="openImport('rem')">
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import remittance
-              </button>
+              
             </div>
           </div>
         </div>
@@ -3457,18 +3439,6 @@ body.app-active #app {
                   <th>Status</th>
                   <th>Allocation</th>
                   <th style="width:60px">Actions</th>
-                </tr>
-                <tr class="fbl5n-filter-row" id="rem-filter-row">
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterRemTable()"></th>
-                  <th></th><th></th><th></th><th></th>
                 </tr>
               </thead>
               <tbody id="rem-tb">
@@ -4971,6 +4941,32 @@ function _matchReasonsHtml(r){
 }
 
 // ── Needs Attention filter chips ─────────────────────────────────────
+
+// ── Item 3: Needs Attention search by account number or customer name ─
+var _excSearchQuery = '';
+var _excSearchTimer;
+function excSearchHandler(q){
+  console.log('[excSearchHandler] query=',JSON.stringify(q));
+  clearTimeout(_excSearchTimer);
+  _excSearchTimer=setTimeout(function(){
+    _excSearchQuery=String(q||'').trim().toLowerCase();
+    try{rExc();}catch(e){console.warn('[excSearch] rExc failed',e);}
+    // Update count indicator
+    var ct=document.getElementById('exc-search-ct');
+    if(ct){
+      if(_excSearchQuery){
+        var n=EXC.filter(function(e){
+          if(e.s==='Resolved'||e.s==='Resolved — rejected')return false;
+          var a=String(e.a||'').toLowerCase();
+          var c=String(e.c||'').toLowerCase();
+          return a.indexOf(_excSearchQuery)>=0||c.indexOf(_excSearchQuery)>=0;
+        }).length;
+        ct.textContent=n+' match'+(n===1?'':'es');
+      } else { ct.textContent=''; }
+    }
+  },200);
+}
+
 function naChipClick(el){
   if(!el)return;
   var type=el.getAttribute('data-type')||'';
@@ -5800,7 +5796,15 @@ function rExc(){
   try{naUpdateChipCounts();}catch(e){}
   const tb=document.getElementById('exc-tb');if(!tb)return;
   const nb=document.getElementById('sb-exc-ct');
-  const openItems=EXC.filter(ex=>ex.s!=='Resolved'&&ex.s!=='Resolved — rejected');
+  const openItems=EXC.filter(function(ex){
+    if(ex.s==='Resolved'||ex.s==='Resolved — rejected')return false;
+    if(typeof _excSearchQuery!=='undefined'&&_excSearchQuery){
+      var a=String(ex.a||'').toLowerCase();
+      var c=String(ex.c||'').toLowerCase();
+      if(a.indexOf(_excSearchQuery)<0&&c.indexOf(_excSearchQuery)<0)return false;
+    }
+    return true;
+  });
   const resolvedItems=EXC.filter(ex=>ex.s==='Resolved'||ex.s==='Resolved — rejected');
   const needsAction=EXC.filter(ex=>!ex.s||ex.s==='Open'||ex.s==='In review');
   if(nb){nb.textContent=needsAction.length;nb.style.display='none';} // badge hidden, use notif-dot
@@ -5823,13 +5827,27 @@ function rExc(){
       <td><button class="btn btn-outline btn-xs" onclick="revertException(${realIdx})" style="color:var(--am-t);border-color:rgba(245,158,11,.3)">↩ Revert</button></td>
     </tr>`;}).join('');return;
   }
-  const shown=EXC.filter(ex=>ex.s!=='Resolved'&&ex.s!=='Resolved — rejected'&&(!tval||ex.type===tval));
+  const shown=EXC.filter(function(ex){
+    if(ex.s==='Resolved'||ex.s==='Resolved — rejected')return false;
+    if(tval&&ex.type!==tval)return false;
+    if(typeof _excSearchQuery!=='undefined'&&_excSearchQuery){
+      var a=String(ex.a||'').toLowerCase();
+      var c=String(ex.c||'').toLowerCase();
+      if(a.indexOf(_excSearchQuery)<0&&c.indexOf(_excSearchQuery)<0)return false;
+    }
+    return true;
+  });
   if(ec)ec.textContent=shown.length+' exception'+(shown.length!==1?'s':'');
   if(!EXC.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div></td></tr>';return;}
   if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">🎉</div><div class="empty-t">All exceptions resolved</div></div></td></tr>';return;}
   tb.innerHTML=EXC.map((ex,idx)=>{
     if(ex.s==='Resolved'||ex.s==='Resolved — rejected')return'';
     if(tval&&ex.type!==tval)return'';
+    if(typeof _excSearchQuery!=='undefined'&&_excSearchQuery){
+      var _a=String(ex.a||'').toLowerCase();
+      var _c=String(ex.c||'').toLowerCase();
+      if(_a.indexOf(_excSearchQuery)<0&&_c.indexOf(_excSearchQuery)<0)return'';
+    }
     const isPending=ex.s==='Pending follow-up';
     return`<tr id="exc-row-${idx}">
       <td class="td-mono" style="font-weight:600;color:var(--t3)">${ex.id}</td>
@@ -6103,6 +6121,337 @@ function _excWriteOffConfirm(excIdx){
   toast('Write-off approved — $'+$f(woAmt));
 }
 
+
+// ── Items 8-11: Unified typeahead exception action modal ────────────────
+// Replaces the per-action modals with a single flow:
+// Customer search (suggestive) → Invoice search (suggestive) → Amount → Note → Approve
+// On approve: pushes resolution to RES (Review) and marks EXC as Resolved.
+var _excActionCtx = null;  // {idx, action, custAcct, custName, invI}
+
+function _excActionLabels(action){
+  if(action==='apply')    return {title:'Apply to Invoice',    btn:'Approve Payment',    amtLabel:'Amount to Apply'};
+  if(action==='cash')     return {title:'Cash on Account',     btn:'Approve Cash Posting',amtLabel:'Amount to Apply to Account'};
+  if(action==='writeoff') return {title:'Write-Off',           btn:'Approve Write-Off',  amtLabel:'Write-Off Amount'};
+  if(action==='bankfee')  return {title:'Bank Fee',            btn:'Approve Bank Fee',   amtLabel:'Bank Fee Amount'};
+  return {title:'Action', btn:'Approve', amtLabel:'Amount'};
+}
+
+function excActionOpen(idx, action){
+  console.log('[excActionOpen] idx=',idx,'action=',action);
+  var ex = EXC[idx];
+  if(!ex){toast('Exception not found','warn');return;}
+  var lbl = _excActionLabels(action);
+  // Initialize context. Pre-fill customer if exception has one.
+  _excActionCtx = {idx:idx, action:action, custAcct:ex.a||'', custName:ex.c||'', invI:''};
+  
+  showModal(lbl.title,
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:14px">'+
+      'Exception <strong>'+ex.id+'</strong> — <strong style="color:var(--g-t)">$'+$f(ex.amt)+'</strong>'+
+      (ex.c?' · '+_escapeHtml(ex.c):'')+
+    '</div>'+
+    '<div style="display:grid;gap:12px">'+
+    
+    // Customer typeahead
+    '<div>'+
+      '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer (account # or name)</div>'+
+      '<div style="position:relative">'+
+        '<input type="text" id="_excA-cust" autocomplete="off" placeholder="Type account number or customer name…" '+
+          'value="'+_escapeAttr(ex.a?(ex.a+(ex.c?' — '+ex.c:'')):(ex.c||''))+'" '+
+          'oninput="_excActionCustSearch(this.value)" '+
+          'onfocus="_excActionCustSearch(this.value)" '+
+          'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+        '<div id="_excA-cust-drop" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:30;max-height:200px;overflow-y:auto;margin-top:3px;display:none"></div>'+
+      '</div>'+
+      '<div id="_excA-cust-status" style="font-size:11px;color:var(--t3);margin-top:3px;'+(ex.a?'':'display:none')+'">'+(ex.a?'Selected: '+_escapeHtml(ex.a)+(ex.c?' — '+_escapeHtml(ex.c):''):'')+'</div>'+
+    '</div>'+
+    
+    // Invoice typeahead
+    '<div>'+
+      '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice'+(action==='bankfee'||action==='cash'?' <span style="font-weight:400;text-transform:none;color:var(--t3)">(optional)</span>':'')+'</div>'+
+      '<div style="position:relative">'+
+        '<input type="text" id="_excA-inv" autocomplete="off" placeholder="Type invoice number or click to browse…" '+
+          'oninput="_excActionInvSearch(this.value)" '+
+          'onfocus="_excActionInvSearch(this.value)" '+
+          'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+        '<div id="_excA-inv-drop" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:30;max-height:200px;overflow-y:auto;margin-top:3px;display:none"></div>'+
+      '</div>'+
+      '<div id="_excA-inv-status" style="font-size:11px;color:var(--t3);margin-top:3px;display:none"></div>'+
+    '</div>'+
+    
+    // Amount
+    '<div>'+
+      '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">'+lbl.amtLabel+' ($)</div>'+
+      '<input type="number" id="_excA-amt" value="'+(ex.amt||0).toFixed(2)+'" step="0.01" min="0" '+
+        'style="width:100%;padding:10px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:15px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;font-family:var(--mono)">'+
+    '</div>'+
+    
+    // Note
+    '<div>'+
+      '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Note '+(action==='writeoff'||action==='bankfee'?'<span style="font-weight:400;text-transform:none;color:var(--t3)">(reason)</span>':'<span style="font-weight:400;text-transform:none;color:var(--t3)">(optional)</span>')+'</div>'+
+      '<input type="text" id="_excA-note" placeholder="'+_excActionDefaultNote(action)+'" '+
+        'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '</div>'+
+    
+    '</div>'+
+    
+    // Buttons
+    '<div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">'+
+      '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn btn-p btn-sm" onclick="_excActionApprove()">'+lbl.btn+'</button>'+
+    '</div>'
+  );
+  // Focus the customer input
+  setTimeout(function(){var i=document.getElementById('_excA-cust');if(i)i.focus();},80);
+}
+
+function _escapeHtml(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function _escapeAttr(s){return _escapeHtml(s);}
+
+function _excActionDefaultNote(action){
+  if(action==='apply')    return 'e.g., applied per remittance advice';
+  if(action==='cash')     return 'e.g., unapplied cash pending instructions';
+  if(action==='writeoff') return 'Short pay · customer deduction · approved adjustment…';
+  if(action==='bankfee')  return 'Bank name, fee type…';
+  return '';
+}
+
+// Build the unique-customer list once: account → display name
+function _excActionGetCustList(){
+  var seen={};
+  var list=[];
+  INV.forEach(function(v){
+    if(v.a&&!seen[v.a]){seen[v.a]=true;list.push({a:v.a,c:v.c||'',src:'invoice'});}
+  });
+  PAY.forEach(function(p){
+    if(p.a&&!seen[p.a]){seen[p.a]=true;list.push({a:p.a,c:p.c||'',src:'payment'});}
+    // If payment has no account but has a customer, allow lookup by name
+    if(!p.a&&p.c){
+      var key='__noacct__'+p.c;
+      if(!seen[key]){seen[key]=true;list.push({a:'',c:p.c,src:'payment-no-acct'});}
+    }
+  });
+  return list;
+}
+
+function _excActionCustSearch(q){
+  var drop=document.getElementById('_excA-cust-drop');
+  if(!drop)return;
+  var query=String(q||'').trim().toLowerCase();
+  var list=_excActionGetCustList();
+  var matches;
+  if(!query){
+    matches=list.slice(0,30);
+  } else {
+    matches=list.filter(function(item){
+      var a=String(item.a||'').toLowerCase();
+      var c=String(item.c||'').toLowerCase();
+      return a.indexOf(query)>=0||c.indexOf(query)>=0;
+    }).slice(0,30);
+  }
+  if(!matches.length){
+    drop.innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--t3)">No matches</div>';
+    drop.style.display='block';
+    return;
+  }
+  drop.innerHTML=matches.map(function(item){
+    var label=(item.a?'<span style="font-family:var(--mono);color:var(--pd);font-weight:600">'+_escapeHtml(item.a)+'</span>':'<span style="color:var(--t3);font-style:italic">(no account)</span>')+
+              ' &nbsp; <span style="color:var(--t1)">'+_escapeHtml(item.c)+'</span>';
+    return '<div onclick="_excActionPickCust('+JSON.stringify(item.a).replace(/"/g,'&quot;')+','+JSON.stringify(item.c).replace(/"/g,'&quot;')+')" '+
+           'style="padding:8px 14px;cursor:pointer;border-bottom:1px solid var(--bdr);font-size:12.5px" '+
+           'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+
+           label+'</div>';
+  }).join('');
+  drop.style.display='block';
+}
+
+function _excActionPickCust(a, c){
+  if(!_excActionCtx)return;
+  _excActionCtx.custAcct=a||'';
+  _excActionCtx.custName=c||'';
+  _excActionCtx.invI='';  // Reset invoice when customer changes
+  var inp=document.getElementById('_excA-cust');
+  if(inp)inp.value=(a?a+(c?' — '+c:''):c);
+  var drop=document.getElementById('_excA-cust-drop');
+  if(drop)drop.style.display='none';
+  var st=document.getElementById('_excA-cust-status');
+  if(st){st.textContent='Selected: '+(a?a+(c?' — '+c:''):c);st.style.display='';}
+  // Reset invoice input
+  var invI=document.getElementById('_excA-inv');
+  if(invI)invI.value='';
+  var invS=document.getElementById('_excA-inv-status');
+  if(invS){invS.style.display='none';invS.textContent='';}
+  // Focus invoice
+  setTimeout(function(){var i=document.getElementById('_excA-inv');if(i)i.focus();},80);
+}
+
+function _excActionInvSearch(q){
+  var drop=document.getElementById('_excA-inv-drop');
+  if(!drop)return;
+  if(!_excActionCtx||(!_excActionCtx.custAcct&&!_excActionCtx.custName)){
+    drop.innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--t3)">Select a customer first</div>';
+    drop.style.display='block';
+    return;
+  }
+  var query=String(q||'').trim().toLowerCase();
+  // Filter invoices by selected customer
+  var invs=INV.filter(function(v){
+    if(_excActionCtx.custAcct)return v.a===_excActionCtx.custAcct;
+    if(_excActionCtx.custName)return String(v.c||'').toLowerCase()===_excActionCtx.custName.toLowerCase();
+    return false;
+  });
+  if(query){
+    invs=invs.filter(function(v){
+      var i=String(v.i||'').toLowerCase();
+      var po=String(v.po||'').toLowerCase();
+      var so=String(v.so||'').toLowerCase();
+      return i.indexOf(query)>=0||po.indexOf(query)>=0||so.indexOf(query)>=0;
+    });
+  }
+  invs=invs.slice(0,30);
+  if(!invs.length){
+    drop.innerHTML='<div style="padding:10px 14px;font-size:12px;color:var(--t3)">No invoices for this customer'+(query?' matching "'+_escapeHtml(query)+'"':'')+'</div>';
+    drop.style.display='block';
+    return;
+  }
+  drop.innerHTML=invs.map(function(v){
+    return '<div onclick="_excActionPickInv('+JSON.stringify(v.i).replace(/"/g,'&quot;')+')" '+
+           'style="padding:8px 14px;cursor:pointer;border-bottom:1px solid var(--bdr);font-size:12.5px" '+
+           'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+
+           '<span style="font-family:var(--mono);color:var(--pd);font-weight:600">'+_escapeHtml(v.i)+'</span>'+
+           ' &nbsp; <span style="color:var(--t1)">$'+$f(v.amt)+'</span>'+
+           (v.po?' &nbsp; <span style="color:var(--t3);font-size:11px">PO '+_escapeHtml(v.po)+'</span>':'')+
+           '</div>';
+  }).join('');
+  drop.style.display='block';
+}
+
+function _excActionPickInv(i){
+  if(!_excActionCtx)return;
+  _excActionCtx.invI=i;
+  var inp=document.getElementById('_excA-inv');
+  if(inp)inp.value=i;
+  var drop=document.getElementById('_excA-inv-drop');
+  if(drop)drop.style.display='none';
+  var inv=INV.find(function(v){return v.i===i;});
+  var st=document.getElementById('_excA-inv-status');
+  if(st&&inv){st.textContent='Selected: '+i+' · $'+$f(inv.amt);st.style.display='';}
+  // Pre-fill amount with invoice balance for Apply / Cash
+  if(_excActionCtx.action==='apply'||_excActionCtx.action==='cash'){
+    var amtInp=document.getElementById('_excA-amt');
+    var ex=EXC[_excActionCtx.idx];
+    if(amtInp&&inv&&ex){
+      // Default to min(exception amount, invoice amount)
+      amtInp.value=Math.min(ex.amt, inv.amt).toFixed(2);
+    }
+  }
+  // Focus amount
+  setTimeout(function(){var i2=document.getElementById('_excA-amt');if(i2){i2.focus();i2.select();}},80);
+}
+
+// Close dropdowns when clicking outside the modal body
+document.addEventListener('click', function(e){
+  var t=e.target;
+  if(t&&t.closest&&!t.closest('#_excA-cust-drop')&&!t.closest('#_excA-cust')){
+    var d=document.getElementById('_excA-cust-drop');if(d)d.style.display='none';
+  }
+  if(t&&t.closest&&!t.closest('#_excA-inv-drop')&&!t.closest('#_excA-inv')){
+    var d=document.getElementById('_excA-inv-drop');if(d)d.style.display='none';
+  }
+}, true);
+
+function _excActionApprove(){
+  if(!_excActionCtx){toast('Action context lost','warn');return;}
+  var ctx=_excActionCtx;
+  var ex=EXC[ctx.idx];
+  if(!ex){toast('Exception missing','warn');return;}
+  
+  var acct=ctx.custAcct||'';
+  var custName=ctx.custName||'';
+  var invI=ctx.invI||'';
+  var amtInp=document.getElementById('_excA-amt');
+  var amt=amtInp?parseFloat(amtInp.value):0;
+  var noteInp=document.getElementById('_excA-note');
+  var note=noteInp?noteInp.value.trim():'';
+  
+  // Validation per action
+  if(!acct&&!custName){toast('Select a customer first','warn');return;}
+  if(amt<=0||isNaN(amt)){toast('Enter a valid amount','warn');return;}
+  
+  var requiresInv = (ctx.action==='apply'||ctx.action==='writeoff');
+  if(requiresInv&&!invI){toast('Select an invoice','warn');return;}
+  
+  var inv = invI ? INV.find(function(v){return v.i===invI;}) : null;
+  var finalCust = custName || (inv?inv.c:'') || ex.c || '';
+  var finalAcct = acct || (inv?inv.a:'') || ex.a || '';
+  
+  // Build RES entry per action type
+  var resRec = {
+    a: finalAcct,
+    c: finalCust,
+    i: invI || '',
+    po: inv ? inv.po : '',
+    so: inv ? inv.so : '',
+    d: ex.id || '',
+    id: ex.id || '',
+    oa: inv ? inv.amt : amt,
+    pd: amt,
+    vr: inv ? (amt - inv.amt) : 0,
+    m: '',           // set per action
+    st: '',          // set per action
+    n: note || '',
+    fromExc: true,
+    fromAlloc: true,
+    approved: true
+  };
+  
+  if(ctx.action==='apply'){
+    resRec.m = 'Apply to invoice';
+    resRec.st = Math.abs(resRec.vr)<0.01 ? 'Exact' : (resRec.vr<0?'Short pay':'Overpay');
+    ex.dec='Apply to invoice';
+  } else if(ctx.action==='cash'){
+    resRec.m = 'Cash on Account';
+    resRec.st = 'Cash on account';
+    resRec.coa = true;
+    ex.dec='Cash on Account';
+  } else if(ctx.action==='writeoff'){
+    resRec.m = 'Write off';
+    resRec.st = 'Write-off';
+    resRec.writeOff = amt;
+    resRec.writeOffReason = note;
+    resRec.pd = 0;          // write-offs don't post payment
+    resRec.vr = -amt;
+    ex.dec='Write off';
+  } else if(ctx.action==='bankfee'){
+    resRec.m = 'Bank fee';
+    resRec.st = 'Bank fee';
+    resRec.bankFee = amt;
+    resRec.pd = 0;
+    resRec.vr = -amt;
+    ex.dec='Bank fee';
+  }
+  
+  // Push to RES (Review) and mark EXC resolved
+  RES.push(resRec);
+  ex.s = 'Resolved';
+  
+  // Close modal and refresh ALL the relevant areas
+  closeModal();
+  try{saveToStorage();}catch(e){}
+  try{rExc();}catch(e){}
+  try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
+  try{if(typeof renderWsExcPremium==='function')renderWsExcPremium();}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+  try{if(typeof rAll==='function')rAll();}catch(e){}
+  try{updDash();updTop();}catch(e){}
+  try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+  
+  var lbl=_excActionLabels(ctx.action);
+  addAudit(lbl.title+' approved', ex.id+' — '+finalCust+' $'+$f(amt)+(invI?' → '+invI:''));
+  toast(lbl.title+' approved — $'+$f(amt)+' moved to Review');
+  _excActionCtx=null;
+}
+
 function excApplyToInvModal(excIdx){
   console.log('[excApplyToInvModal] called with idx=',excIdx,'EXC.length=',EXC.length);
   var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
@@ -6222,54 +6571,70 @@ function resolveException(idx,dec){
   const ex=EXC[idx];if(!ex){console.warn('[resolveException] EXC['+idx+'] not found');toast('Exception not found','warn');return;}
   if(!dec||dec==='— Select —'||dec==='— Select action —'||dec===''){return;}
   if(dec==='Apply to invoice'){
-    if(typeof excApplyToInvModal==='function')excApplyToInvModal(idx);
+    excActionOpen(idx,'apply');
     return;
   }
   if(dec==='Cash on Account'){
-    const acctMap={};INV.forEach(v=>{if(v.a&&v.c)acctMap[v.a]=v.c;});PAY.forEach(p=>{if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
-    const accts=Object.keys(acctMap).sort();
-    showModal('Cash on Account',
-      '<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px">Select customer account:</div>'+
-      '<div style="font-size:11.5px;color:var(--t3);margin-bottom:12px">Type to search — modal closes automatically on selection</div>'+
-      '<div style="position:relative;margin-bottom:6px">'+
-        '<input type="text" id="exc-acct-search" placeholder="Account # or customer name…" autocomplete="off"'+
-        ' style="width:100%;padding:10px 14px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;font-family:var(--font);background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"'+
-        ' oninput="excUnappliedSearch(this.value,'+idx+')"'+
-        ' onfocus="excUnappliedSearch(this.value,'+idx+')"'+
-        ' onkeydown="if(event.key===\'Escape\')closeModal()">'+
-        '<div id="exc-unapp-drop" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;box-shadow:var(--shadow-md);z-index:30;max-height:220px;overflow-y:auto;margin-top:3px;display:none"></div>'+
-      '</div>'+
-      '<div style="display:flex;gap:8px;margin-top:10px">'+
-        '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-      '</div>'
-    );
-    // Focus the input after modal renders
-    const _excIdx=idx;
-    setTimeout(function(){var inp=document.getElementById('exc-acct-search');if(inp){inp.focus();excUnappliedSearch('',_excIdx);}},80);
+    excActionOpen(idx,'cash');
     return;
   }
   if(dec==='Write off'){
-    if(typeof excWriteOffModal==='function')excWriteOffModal(idx);
+    excActionOpen(idx,'writeoff');
     return;
   }
   if(dec==='Bank fee'){
-    if(typeof excBankFeeModal==='function')excBankFeeModal(idx);
+    excActionOpen(idx,'bankfee');
     return;
   }
   if(dec==='Chase customer'){
-    ex.dec=dec;ex.s='Pending follow-up';
-    saveToStorage();rExc();if(typeof renderWsExcPremium==='function')renderWsExcPremium();
-    updDash();updTop();
+    ex.dec=dec;ex.s='Resolved';
+    // Push to RES so payment moves to Review with Chase Customer status
+    RES.push({
+      a: ex.a||'', c: ex.c||'', i: '', po: '', so: '',
+      d: ex.id||'', id: ex.id||'',
+      oa: ex.amt, pd: 0, vr: 0,
+      m: 'Chase customer',
+      st: 'Pending follow-up',
+      n: 'Customer contact pending — awaiting response',
+      fromExc: true, fromAlloc: true, approved: true
+    });
+    try{saveToStorage();}catch(e){}
+    try{rExc();}catch(e){}
+    try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
+    try{if(typeof renderWsExcPremium==='function')renderWsExcPremium();}catch(e){}
+    try{if(typeof rPost==='function')rPost();}catch(e){}
+    try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+    try{if(typeof rAll==='function')rAll();}catch(e){}
+    try{updDash();updTop();}catch(e){}
+    try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
     addAudit('Chase customer',ex.id+' — '+ex.c+' $'+$f(ex.amt));
-    toast('Marked for customer follow-up — '+ex.c);
+    toast('Marked for follow-up — moved to Review');
     return;
   }
   if(dec==='Duplicate — reject'){
-    ex.dec=dec;ex.s='Resolved — rejected';
-    saveToStorage();
-    setTimeout(function(){rAll();updDash();updTop();if(typeof renderWsExcPremium==='function')renderWsExcPremium();},400);
+    ex.dec=dec;ex.s='Resolved';
+    // Push to RES so user has audit trail showing rejection
+    RES.push({
+      a: ex.a||'', c: ex.c||'', i: '', po: '', so: '',
+      d: ex.id||'', id: ex.id||'',
+      oa: ex.amt, pd: 0, vr: 0,
+      m: 'Duplicate rejected',
+      st: 'Rejected',
+      n: 'Duplicate payment — rejected and not posted',
+      fromExc: true, fromAlloc: true, approved: true,
+      rejected: true
+    });
+    try{saveToStorage();}catch(e){}
+    try{rExc();}catch(e){}
+    try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
+    try{if(typeof renderWsExcPremium==='function')renderWsExcPremium();}catch(e){}
+    try{if(typeof rPost==='function')rPost();}catch(e){}
+    try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+    try{if(typeof rAll==='function')rAll();}catch(e){}
+    try{updDash();updTop();}catch(e){}
+    try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
     addAudit('Duplicate rejected',ex.id+' — $'+$f(ex.amt));
-    toast('Duplicate rejected and discarded');
+    toast('Duplicate rejected — moved to Review (audit trail)');
     return;
   }
   ex.dec=dec;
@@ -6975,7 +7340,7 @@ function renderPayQueue(){
     return acct===bankVal;
   });
   if(ct)ct.textContent='('+PAY.length+')';
-  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import</button></div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div></div>';return;}
   if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankVal+'</div><div class="empty-s">Select a different bank account.</div></div>';return;}
   // Read all active filters
   const ccySel2=document.getElementById('ca-ccy-sel');
@@ -8779,6 +9144,41 @@ function _fbl5nApplyTextFilter(tbodyId, forceReset){
 }
 
 
+
+// ── Item 3: Account/Customer search for Needs Attention Open Items table ──
+var _excOpenSearchTimer, _excOpenSearchQuery='';
+function excOpenItemsSearch(q){
+  clearTimeout(_excOpenSearchTimer);
+  _excOpenSearchTimer=setTimeout(function(){
+    _excOpenSearchQuery=String(q||'').trim().toLowerCase();
+    var tbody=document.getElementById('exc-open-items-body');
+    if(!tbody){return;}
+    // Filter INV by account # OR customer name (case-insensitive substring)
+    var src=(typeof INV!=='undefined'&&INV)?INV.slice():[];
+    var matched;
+    if(!_excOpenSearchQuery){matched=src;}
+    else{
+      matched=src.filter(function(v){
+        var a=String(v.a||'').toLowerCase();
+        var c=String(v.c||'').toLowerCase();
+        return a.indexOf(_excOpenSearchQuery)>=0||c.indexOf(_excOpenSearchQuery)>=0;
+      });
+    }
+    // Set base, use the standard render pipeline
+    _fbl5nBaseInvs=matched;
+    _fbl5nTbodyId='exc-open-items-body';
+    _fbl5nOffset=0;
+    if(typeof _fbl5nApplyTextFilter==='function'){_fbl5nApplyTextFilter('exc-open-items-body',true);}
+    else if(typeof _fbl5nRenderPage==='function'){_fbl5nFiltered=matched;_fbl5nRenderPage('exc-open-items-body',0);}
+    // Update count indicator
+    var ct=document.getElementById('exc-open-search-ct');
+    if(ct){
+      if(_excOpenSearchQuery){ct.textContent=matched.length+' match'+(matched.length===1?'':'es');}
+      else {ct.textContent='';}
+    }
+  },200);
+}
+
 // ── COI top-level search (Item 1) ────────────────────────────────────
 var _caOpenSearchTimer;
 function caOpenSearch(q){
@@ -9012,7 +9412,7 @@ function caAcctDropdownChange(acct){
   renderFbl5n('ca-open-items-body',acct,'');
 }
 
-function excAcctDropdownChange(acct){ renderFbl5n('exc-open-items-body',acct,''); }
+function excAcctDropdownChange(acct){ /* dropdown removed in favor of search box */ if(typeof excOpenItemsSearch==="function")excOpenItemsSearch(""); }
 
 // ═══════════════════════════════════════════════════════════
 // INVOICE / REMITTANCE FILTERING
@@ -9276,7 +9676,7 @@ function buildWorklist(){
     if(dpays.length) itms.push({cls:'warn',icon:'↓',title:dpays.length+' down payment'+(dpays.length>1?'s':'')+' received',sub:'Apply to open invoices or hold on account',amt:'$'+$fk(dpays.reduce(function(s,p){return s+p.amt;},0)),action:'Review',fn:"wlGoMatch()"});
     allocList.innerHTML=itms.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div>'+(item.amt?'<div class="wl-item-amount">'+item.amt+'</div>':'')+' <div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(allocList){
-    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittance data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="openImport(\'rem\')">Import remittances</button></div>')+'</div>';
+    allocList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">'+(PAY.length?'🎉':'📂')+'</div><div class="wl-empty-title">'+(PAY.length?'All payments allocated':'No payments waiting')+'</div><div class="wl-empty-sub">'+(PAY.length?'Great work — no unallocated payments remaining.':'Import remittance data to see payments that need allocation.')+'</div>'+(PAY.length?'':'<div style="margin-top:12px"></div>')+'</div>';
   }
 
   // Ready to export
