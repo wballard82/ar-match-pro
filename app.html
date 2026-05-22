@@ -2124,6 +2124,71 @@ body.app-active #app {
   .ca-tab-bar { flex-wrap:wrap; }
   .ca-tab { font-size:12px; padding:8px 10px; }
 }
+
+/* ── Workflow Status Header ─────────────────────────────────────── */
+.wf-strip { display:flex; align-items:center; gap:0; padding:10px 20px; background:var(--surface1); border-bottom:1px solid var(--bdr); }
+.wf-step { display:flex; align-items:center; gap:8px; padding:6px 14px; font-size:12px; font-weight:500; color:var(--t3); position:relative; cursor:default; transition:color 120ms ease; }
+.wf-step.wf-done { color:var(--g-t); }
+.wf-step.wf-current { color:var(--t1); font-weight:600; }
+.wf-step.wf-next { color:var(--p); font-weight:600; }
+.wf-step .wf-dot { width:18px; height:18px; border-radius:50%; background:var(--bdr); display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; color:var(--surface1); flex-shrink:0; transition:background 120ms ease; }
+.wf-step.wf-done .wf-dot { background:var(--g); color:var(--surface1); }
+.wf-step.wf-current .wf-dot { background:var(--p); color:var(--surface1); box-shadow:0 0 0 3px rgba(59,130,246,.18); }
+.wf-step.wf-next .wf-dot { background:transparent; color:var(--p); border:1.5px solid var(--p); }
+.wf-arrow { color:var(--bdr); font-size:13px; margin:0 2px; user-select:none; }
+.wf-status { margin-left:auto; font-size:12px; color:var(--t2); display:flex; align-items:center; gap:6px; }
+.wf-cta {
+  margin-left:auto; padding:6px 14px; background:var(--p); color:#fff;
+  border:none; border-radius:8px; font-size:12.5px; font-weight:600;
+  cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+  transition:all 120ms ease;
+  box-shadow:0 1px 3px rgba(59,130,246,.3);
+}
+.wf-cta:hover { background:var(--pd); transform:translateY(-1px); box-shadow:0 2px 6px rgba(59,130,246,.4); }
+.wf-cta:active { transform:translateY(0); }
+.wf-cta::after { content:'›'; font-size:14px; font-weight:700; }
+/* When CTA visible, status goes left */
+.wf-status:has(+ .wf-cta) { margin-left:auto; }
+.wf-status .wf-status-dot { width:6px; height:6px; border-radius:50%; background:var(--p); animation:wfPulse 2s ease-in-out infinite; }
+@keyframes wfPulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+@media (max-width:900px) { .wf-strip { flex-wrap:wrap; gap:6px; } .wf-step { padding:4px 8px; font-size:11px; } }
+
+/* ── UX Polish (calmer enterprise look) ─────────────────────────── */
+/* Quieter badges — convert most badges to text with colored bg-tint */
+.badge { font-weight:500 !important; letter-spacing:0 !important; text-transform:none !important; padding:2px 8px !important; }
+.badge-g { background:rgba(34,197,94,.10) !important; color:var(--g-t) !important; border:none !important; }
+.badge-am { background:rgba(245,158,11,.10) !important; color:var(--am-t) !important; border:none !important; }
+.badge-r { background:rgba(239,68,68,.10) !important; color:var(--r-t) !important; border:none !important; }
+.badge-cy { background:rgba(14,165,233,.10) !important; color:#0284c7 !important; border:none !important; }
+.badge-p { background:rgba(99,102,241,.10) !important; color:#4f46e5 !important; border:none !important; }
+.badge-gray { background:rgba(148,163,184,.12) !important; color:var(--t2) !important; border:none !important; }
+
+/* Quieter table rows — remove row borders, keep hover */
+.tbl tbody tr { border-bottom:1px solid transparent !important; }
+.tbl tbody tr:hover { background:rgba(99,102,241,.03) !important; }
+.tbl tbody tr td { padding-top:9px !important; padding-bottom:9px !important; }
+
+/* Title Case for many UPPERCASE labels - applied selectively via JS */
+.panel-sub { text-transform:none !important; }
+
+/* Quieter section headers (settings/cards) */
+.settings-section-title { letter-spacing:0 !important; text-transform:none !important; font-weight:600 !important; }
+
+/* Softer dividers */
+.tbl thead th { border-bottom:1px solid var(--bdr) !important; background:transparent !important; font-weight:600 !important; text-transform:none !important; letter-spacing:0 !important; color:var(--t3) !important; padding-top:11px !important; padding-bottom:11px !important; }
+
+/* ── Needs Attention filter chips ─────────────────────────────────── */
+.na-chips { display:flex; gap:6px; flex-wrap:wrap; padding:10px 20px 4px; background:var(--surface1); }
+.na-chip { padding:5px 12px; border-radius:14px; border:1px solid var(--bdr); background:transparent; color:var(--t2); font-size:12px; font-weight:500; cursor:pointer; transition:all 120ms ease; display:inline-flex; align-items:center; gap:6px; }
+.na-chip:hover { border-color:var(--p); color:var(--t1); }
+.na-chip.na-chip-active { background:var(--p); color:#fff; border-color:var(--p); }
+.na-chip .na-chip-ct { background:rgba(0,0,0,.12); padding:1px 6px; border-radius:8px; font-size:10.5px; font-weight:600; }
+.na-chip.na-chip-active .na-chip-ct { background:rgba(255,255,255,.22); }
+
+/* ── "Why this matched" reason chips in Review ────────────────────── */
+.match-reasons { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:4px; }
+.match-reason { font-size:11.5px; color:var(--g-t); display:inline-flex; align-items:center; gap:3px; }
+.match-reason::before { content:"✓ "; font-weight:700; }
 </style>
 </head>
 <body>
@@ -2798,7 +2863,7 @@ body.app-active #app {
                 </div>
               </div>
               <div class="card-footer" style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-outline btn-sm" onclick="sp('exceptions')">View exceptions</button>
+                <button class="btn btn-outline btn-sm" onclick="sp('exceptions')">View needs attention</button>
                 <button class="btn btn-outline btn-sm" onclick="sp('cash-app')">Open workspace</button>
                 <button class="btn btn-ghost btn-sm" onclick="clearAllData()" style="color:var(--r-t)">Clear all</button>
               </div>
@@ -2835,6 +2900,21 @@ body.app-active #app {
 
       <!-- ════════════════ CASH APPLICATION ════════════════ -->
       <div class="panel" id="p-cash-app">
+        <div class="wf-strip" id="wf-strip">
+          <div class="wf-step" data-stage="import"><span class="wf-dot">1</span><span>Import</span></div>
+          <span class="wf-arrow">›</span>
+          <div class="wf-step" data-stage="match"><span class="wf-dot">2</span><span>Auto Match</span></div>
+          <span class="wf-arrow">›</span>
+          <div class="wf-step" data-stage="review"><span class="wf-dot">3</span><span>Review</span></div>
+          <span class="wf-arrow">›</span>
+          <div class="wf-step" data-stage="attention"><span class="wf-dot">4</span><span>Needs Attention</span></div>
+          <span class="wf-arrow">›</span>
+          <div class="wf-step" data-stage="export"><span class="wf-dot">5</span><span>Export</span></div>
+          <span class="wf-arrow">›</span>
+          <div class="wf-step" data-stage="reconcile"><span class="wf-dot">6</span><span>Reconcile</span></div>
+          <button class="wf-cta" id="wf-cta" onclick="wfCtaClick()" style="display:none">Next: <span id="wf-cta-label">—</span></button>
+          <div class="wf-status" id="wf-status"><span class="wf-status-dot"></span><span id="wf-status-text">Waiting for import</span></div>
+        </div>
         <div class="panel-header" style="padding:12px 20px 10px">
           <div class="panel-header-row">
             <div>
@@ -2854,7 +2934,7 @@ body.app-active #app {
         <div class="ca-tabs">
           <button class="ca-tab active" id="ca-tab-match" onclick="setCaTab('match',this)">To Be Matched</button>
           <button class="ca-tab" id="ca-tab-review" onclick="setCaTab('review',this)">Review</button>
-          <button class="ca-tab" id="ca-tab-exc" onclick="setCaTab('exc',this)">Exceptions</button>
+          <button class="ca-tab" id="ca-tab-exc" onclick="setCaTab('exc',this)">Needs Attention</button>
           <button class="ca-tab" id="ca-tab-recon" onclick="if(checkFeature('reconcile'))setCaTab('recon',this)">Reconcile</button>
         </div>
 
@@ -3261,7 +3341,7 @@ body.app-active #app {
         <div class="panel-header">
           <div class="panel-header-row">
             <div>
-              <div class="panel-title">Exceptions</div>
+              <div class="panel-title">Needs Attention</div>
               <div class="panel-sub">Short pays · Unapplied cash · Duplicates · Missing PO · Unmatched payments</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -3279,6 +3359,16 @@ body.app-active #app {
           </div>
         </div>
         <div class="panel-body" style="padding:0">
+          <div class="na-chips" id="na-chips">
+            <button class="na-chip na-chip-active" data-type="" onclick="naChipClick(this)">All <span class="na-chip-ct" id="na-ct-all">0</span></button>
+            <button class="na-chip" data-type="Short pay" onclick="naChipClick(this)">Short Pays <span class="na-chip-ct" id="na-ct-Short pay">0</span></button>
+            <button class="na-chip" data-type="Unmatched" onclick="naChipClick(this)">Missing Invoice <span class="na-chip-ct" id="na-ct-Unmatched">0</span></button>
+            <button class="na-chip" data-type="Duplicate" onclick="naChipClick(this)">Duplicate Risk <span class="na-chip-ct" id="na-ct-Duplicate">0</span></button>
+            <button class="na-chip" data-type="Unapplied payment" onclick="naChipClick(this)">Cash on Account <span class="na-chip-ct" id="na-ct-Unapplied payment">0</span></button>
+            <button class="na-chip" data-type="Bank fee" onclick="naChipClick(this)">Bank Fee <span class="na-chip-ct" id="na-ct-Bank fee">0</span></button>
+            <button class="na-chip" data-type="Missing PO" onclick="naChipClick(this)">Missing PO <span class="na-chip-ct" id="na-ct-Missing PO">0</span></button>
+            <button class="na-chip" data-type="Overpay" onclick="naChipClick(this)">Overpay <span class="na-chip-ct" id="na-ct-Overpay">0</span></button>
+          </div>
           <div style="padding:10px 20px;font-size:12px;color:var(--t3);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:16px;background:var(--surface2)">
             <span id="exc-ct">0 exceptions</span>
           </div>
@@ -4260,6 +4350,7 @@ function renderWsReview(){
           ${r.po?`<span>PO: ${r.po}</span>`:''}
           ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: ${$f(Math.abs(r.vr))}</span>`:''}
         </div>
+        ${_matchReasonsHtml(r)}
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">${$f(r.pd)}</div>
@@ -4850,6 +4941,137 @@ function updTop(){
 }
 
 // ── Dashboard ──
+
+
+
+// ── "Why this matched" reason chip helper ──────────────────────────────
+function _matchReasons(r){
+  var reasons=[];
+  var m=String(r&&r.m||'');
+  if(/Direct invoice/i.test(m)) reasons.push('Invoice # matched');
+  if(/Multi-invoice/i.test(m)){
+    reasons.push('Multi-invoice sum matched');
+    if(r&&r.n&&/variance/i.test(r.n)) reasons.push('Within bank-fee tolerance');
+  }
+  if(/PO/i.test(m)) reasons.push('PO reference matched');
+  if(/SO/i.test(m)) reasons.push('Sales order matched');
+  if(/Amount match/i.test(m)) reasons.push('Customer + exact amount');
+  if(/Cash Application/i.test(m)) reasons.push('Manual allocation');
+  if(r&&Math.abs(r.vr||0)<0.01) reasons.push('Exact amount');
+  if(reasons.length===0&&r&&r.c) reasons.push('Customer matched');
+  return reasons;
+}
+function _matchReasonsHtml(r){
+  var rs=_matchReasons(r);
+  if(!rs.length)return '';
+  return '<div class="match-reasons">'+rs.map(function(t){return '<span class="match-reason">'+t+'</span>';}).join('')+'</div>';
+}
+
+// ── Needs Attention filter chips ─────────────────────────────────────
+function naChipClick(el){
+  if(!el)return;
+  var type=el.getAttribute('data-type')||'';
+  // Update visual state
+  document.querySelectorAll('.na-chip').forEach(function(c){c.classList.remove('na-chip-active');});
+  el.classList.add('na-chip-active');
+  // Sync the existing exc-type-filter dropdown
+  var sel=document.getElementById('exc-type-filter');
+  if(sel){sel.value=type;}
+  // Re-render
+  try{rExc();}catch(e){}
+}
+function naUpdateChipCounts(){
+  try{
+    if(typeof EXC==='undefined')return;
+    var counts={};
+    EXC.forEach(function(e){
+      if(e.s==='Resolved'||e.s==='Resolved — rejected')return;
+      counts[e.type||'Other']=(counts[e.type||'Other']||0)+1;
+    });
+    var total=0;Object.keys(counts).forEach(function(k){total+=counts[k];});
+    var allEl=document.getElementById('na-ct-all');if(allEl)allEl.textContent=total;
+    ['Short pay','Unmatched','Duplicate','Unapplied payment','Bank fee','Missing PO','Overpay'].forEach(function(t){
+      var el=document.getElementById('na-ct-'+t);
+      if(el)el.textContent=counts[t]||0;
+    });
+  }catch(e){console.warn('[naChipCounts]',e);}
+}
+
+// ── Workflow status logic ───────────────────────────────────────────
+function updWorkflow(){
+  try{
+    var strip = document.getElementById('wf-strip');
+    if(!strip) return;
+    var steps = strip.querySelectorAll('.wf-step');
+    var statusText = document.getElementById('wf-status-text');
+    // Determine current stage
+    var hasPay = (typeof PAY!=='undefined' && PAY.length>0);
+    var hasInv = (typeof INV!=='undefined' && INV.length>0);
+    var hasMatches = (typeof RES!=='undefined' && RES.length>0);
+    var pendingReview = (typeof RES!=='undefined') ? RES.filter(function(r){return !r.fromAlloc;}).length : 0;
+    var openExc = (typeof EXC!=='undefined') ? EXC.filter(function(e){return e.s!=='Resolved'&&e.s!=='Resolved — rejected';}).length : 0;
+    var approved = (typeof RES!=='undefined') ? RES.filter(function(r){return r.fromAlloc;}).length : 0;
+    
+    var currentStage='import', label='Waiting for import';
+    if(!hasPay && !hasInv && openExc===0){ currentStage='import'; label='Waiting for import'; }
+    else if(pendingReview>0){ currentStage='review'; label=pendingReview+' match'+(pendingReview===1?'':'es')+' awaiting review'; }
+    else if(openExc>0){ currentStage='attention'; label=openExc+' item'+(openExc===1?'':'s')+' need attention'; }
+    else if(approved>0){ currentStage='export'; label=approved+' approved ready for export'; }
+    else if(hasPay && hasInv && !hasMatches){ currentStage='match'; label='Ready for Auto Match'; }
+    else if(hasPay||hasInv){ currentStage='match'; label='Ready for Auto Match'; }
+    
+    // Apply done/current/next classes
+    var stageOrder=['import','match','review','attention','export','reconcile'];
+    var currentIdx=stageOrder.indexOf(currentStage);
+    steps.forEach(function(el){
+      var s=el.getAttribute('data-stage');
+      var idx=stageOrder.indexOf(s);
+      el.classList.remove('wf-done','wf-current','wf-next');
+      if(idx<currentIdx) el.classList.add('wf-done');
+      else if(idx===currentIdx) el.classList.add('wf-current');
+      else if(idx===currentIdx+1) el.classList.add('wf-next');
+    });
+    if(statusText) statusText.textContent=label;
+    // Update Next Recommended Action CTA
+    var cta=document.getElementById('wf-cta');
+    var ctaLabel=document.getElementById('wf-cta-label');
+    if(cta&&ctaLabel){
+      var ctaMap={
+        'import':{label:'Import data',show:false},
+        'match':{label:'Run Auto Match',show:hasPay&&hasInv,action:'match'},
+        'review':{label:'Review matches',show:true,action:'review'},
+        'attention':{label:'Resolve exceptions',show:true,action:'attention'},
+        'export':{label:'Export to ERP',show:true,action:'export'},
+        'reconcile':{label:'Reconcile',show:false}
+      };
+      var cfg=ctaMap[currentStage]||{show:false};
+      if(cfg.show){
+        ctaLabel.textContent=cfg.label;
+        cta.style.display='inline-flex';
+        cta.setAttribute('data-action',cfg.action||'');
+      } else {
+        cta.style.display='none';
+      }
+    }
+  }catch(e){console.warn('[wf]',e);}
+}
+function wfCtaClick(){
+  var cta=document.getElementById('wf-cta');
+  if(!cta)return;
+  var action=cta.getAttribute('data-action');
+  if(action==='match'){
+    if(typeof runMatch==='function')runMatch();
+  } else if(action==='review'){
+    sp('cash-app');
+    setTimeout(function(){setCaTab('review',document.getElementById('ca-tab-review'));},80);
+  } else if(action==='attention'){
+    sp('cash-app');
+    setTimeout(function(){setCaTab('exc',document.getElementById('ca-tab-exc'));},80);
+  } else if(action==='export'){
+    sp('posting');
+  }
+}
+
 function updDash(){
   const tp=PAY.reduce((s,p)=>s+p.amt,0);
   const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Approved');
@@ -4894,6 +5116,7 @@ function updDash(){
       ${ua_tot>0?`<div class="ai-suggestion"><span class="ai-suggestion-icon">💙</span>Unapplied cash: <strong>${$f(ua_tot)}</strong> pending decision</div>`:''}
       ${top?`<div class="ai-suggestion"><span class="ai-suggestion-icon">🔴</span>Top exception: <strong>${top[0]}</strong> — ${top[1]} case${top[1]!==1?'s':''}</div>`:''}
     </div>`;
+  try{updWorkflow();}catch(e){}
 }
 
 // ── Reporting ──
@@ -5546,6 +5769,7 @@ function rRem(){
 }
 
 function rExc(){
+  try{naUpdateChipCounts();}catch(e){}
   const tb=document.getElementById('exc-tb');if(!tb)return;
   const nb=document.getElementById('sb-exc-ct');
   const openItems=EXC.filter(ex=>ex.s!=='Resolved'&&ex.s!=='Resolved — rejected');
@@ -5606,9 +5830,24 @@ function rExc(){
 
 function rPost(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
-  const ct=document.getElementById('post-ct');if(ct)ct.textContent=ap.length+' rows';
   const tb=document.getElementById('post-tb');if(!tb)return;
-  if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Auto match or approve allocations.</div></div></td></tr>';return;}
+  // Compute readiness counts
+  var nReady=0, nReview=0, nExported=0;
+  ap.forEach(function(r){
+    if(r.exported){nExported++;}
+    else if(r.fromAlloc||r.fromExc||r.st==='Exact'||r.st==='Subset exact'){nReady++;}
+    else{nReview++;}
+  });
+  // Update header count with summary
+  const ct=document.getElementById('post-ct');
+  if(ct){
+    var bits=[];
+    if(nReady) bits.push('<span style="color:var(--g-t);font-weight:600">'+nReady+' ready</span>');
+    if(nReview) bits.push('<span style="color:var(--am-t);font-weight:600">'+nReview+' review</span>');
+    if(nExported) bits.push('<span style="color:var(--t3)">'+nExported+' exported</span>');
+    ct.innerHTML = bits.length ? bits.join(' · ') : ap.length+' rows';
+  }
+  if(!ap.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Auto match or approve allocations.</div></div></td></tr>';return;}
   const d=new Date().toISOString().split('T')[0];const dDisp=fmtDate(d);
   const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Cash on Account':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
   const excBadge={'Apply to invoice':'badge-g','Cash on Account':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
@@ -5617,6 +5856,11 @@ function rPost(){
     const inv=INV.find(v=>v.i===r.i)||{};
     const typeLbl=typeMap[r.m]||'Invoice';
     const badgeCls=isExc?(excBadge[r.excDec||r.m]||'badge-gray'):'badge-g';
+    // Per-row status
+    var statusLabel, statusCls;
+    if(r.exported){statusLabel='Exported';statusCls='badge-gray';}
+    else if(r.fromAlloc||r.fromExc||r.st==='Exact'||r.st==='Subset exact'){statusLabel='Ready to Export';statusCls='badge-g';}
+    else{statusLabel='Requires Review';statusCls='badge-am';}
     return`<tr style="${isExc?'background:rgba(14,165,233,.03)':''}">
       <td class="td-mono">${r.a||'—'}</td>
       <td>${r.c||'—'}</td>
@@ -5627,9 +5871,9 @@ function rPost(){
       <td><span class="badge ${badgeCls}" style="font-size:10px">${typeLbl}</span></td>
       <td class="td-key">${r.d||r.id||'—'}</td>
       <td class="td-amt pos">${$f(r.pd)}</td>
-      <!-- short pay col removed -->
       <td class="td-amt" style="color:var(--am-t)">${r.writeOff>0?$f(r.writeOff):'—'}</td>
       <td class="td-amt" style="color:var(--pu-t)">${r.bankFee>0?$f(r.bankFee):'—'}</td>
+      <td><span class="badge ${statusCls}" style="font-size:10.5px">${statusLabel}</span></td>
     </tr>`;
   }).join('');
 }
@@ -5733,6 +5977,7 @@ function exportPost(){
   const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(r.writeOff||0).toFixed(2),(r.bankFee||0).toFixed(2)];});
   csvDL([PH,...rows],'posting_'+d+'.csv');
   addAudit('Posting export downloaded',ap.length+' rows');
+  ap.forEach(function(r){r.exported=true;});try{if(typeof rPost==="function")rPost();}catch(e){}
   toast('Posting file exported · '+ap.length+' rows');
 }
 function selFmt(el){document.querySelectorAll('.fmt-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');}
