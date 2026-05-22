@@ -2636,7 +2636,7 @@ body.app-active #app {
             <div class="wl-summary-pills" id="wl-summary-pills"></div>
             <div style="display:flex;gap:8px">
               
-              <button class="btn btn-p btn-sm" onclick="runMatch();sp('worklist')">⚡ Run matching</button>
+              <button class="btn btn-p btn-sm" onclick="runMatch();sp('worklist')">⚡ Auto match</button>
             </div>
           </div>
         </div>
@@ -2655,7 +2655,7 @@ body.app-active #app {
               <div class="wl-empty-state">
                 <div class="wl-empty-icon">✅</div>
                 <div class="wl-empty-title">No urgent items</div>
-                <div class="wl-empty-sub">Run matching to detect exceptions and short pays.</div>
+                <div class="wl-empty-sub">Auto match to detect exceptions and short pays.</div>
               </div>
             </div>
           </div>
@@ -2775,14 +2775,14 @@ body.app-active #app {
                 </div>
                 <button class="btn btn-p btn-sm" onclick="runMatch()">
                   <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="4,2 14,8 4,14"/></svg>
-                  Run matching
+                  Auto match
                 </button>
               </div>
               <div class="card-body" id="dk-breakdown">
                 <div class="empty" style="padding:28px">
                   <div class="empty-icon">⚡</div>
                   <div class="empty-t">No match data</div>
-                  <div class="empty-s">Import invoices and remittance, then run matching</div>
+                  <div class="empty-s">Import invoices and remittance, then auto match</div>
                 </div>
               </div>
             </div>
@@ -2798,7 +2798,7 @@ body.app-active #app {
                 <div class="empty" style="padding:28px">
                   <div class="empty-icon">💡</div>
                   <div class="empty-t">Insights appear after matching</div>
-                  <div class="empty-s">Run matching to see AI-powered recommendations</div>
+                  <div class="empty-s">Auto match to see AI-powered recommendations</div>
                 </div>
               </div>
               <div class="card-footer" style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2818,7 +2818,7 @@ body.app-active #app {
               
               <button class="btn btn-outline hover-lift" onclick="runMatch()" style="justify-content:center;padding:20px 12px;flex-direction:column;height:auto;gap:6px">
                 <span style="font-size:24px">⚡</span>
-                <span style="font-size:12.5px;font-weight:700">Run matching</span>
+                <span style="font-size:12.5px;font-weight:700">Auto match</span>
                 <span style="font-size:11px;color:var(--t3)">Invoice, PO, SO, amount</span>
               </button>
               <button class="btn btn-outline hover-lift" onclick="sp('posting')" style="justify-content:center;padding:20px 12px;flex-direction:column;height:auto;gap:6px">
@@ -3136,7 +3136,7 @@ body.app-active #app {
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting file</button>
             </div>
           </div>
-          <div style="flex:1;overflow-y:auto"><div id="review-list"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Run matching or approve allocations.</div></div></div></div>
+          <div style="flex:1;overflow-y:auto"><div id="review-list"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Auto match or approve allocations.</div></div></div></div>
         </div>
 
         <!-- ── TAB: EXCEPTIONS (in cash-app) ── -->
@@ -3160,7 +3160,7 @@ body.app-active #app {
                   <button class="btn btn-outline btn-sm" onclick="exportExc()">Export CSV</button>
                 </div>
               </div>
-              <div id="ws-exc-list"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect issues.</div></div></div>
+              <div id="ws-exc-list"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div></div>
             </div><!-- end exc-top-half -->
 
             <!-- BOTTOM: FBL5N view for exception context -->
@@ -3255,7 +3255,7 @@ body.app-active #app {
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
           </div>
-          <div style="flex:1;overflow-y:auto;padding:12px 16px"><div id="recon-list"><div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No reconciliation data</div><div class="empty-s">Import data and run matching to reconcile.</div></div></div></div>
+          <div style="flex:1;overflow-y:auto;padding:12px 16px"><div id="recon-list"><div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No reconciliation data</div><div class="empty-s">Import data and auto match to reconcile.</div></div></div></div>
         </div>
 
       </div><!-- end p-cash-app -->
@@ -3304,7 +3304,7 @@ body.app-active #app {
                 </tr>
               </thead>
               <tbody id="exc-tb">
-                <tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect issues.</div></div></td></tr>
+                <tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -3507,7 +3507,7 @@ body.app-active #app {
                 </tr>
               </thead>
               <tbody id="post-tb">
-                <tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations to populate.</div></div></td></tr>
+                <tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Auto match or approve allocations to populate.</div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -3547,7 +3547,7 @@ body.app-active #app {
           <div class="cfo-hero">
             <div class="cfo-hero-label">Cash Application Performance</div>
             <div class="cfo-hero-headline" id="cfo-hours-saved">Cash Application Summary</div>
-            <div class="cfo-hero-sub" id="cfo-hero-sub">Import data and run matching to see performance metrics</div>
+            <div class="cfo-hero-sub" id="cfo-hero-sub">Import data and auto match to see performance metrics</div>
             <div class="cfo-hero-metrics">
               <div class="cfo-hero-metric">
                 <div class="cfo-hero-metric-val" id="cfo-hero-matched">$0</div>
@@ -3574,7 +3574,7 @@ body.app-active #app {
             <div>
               <div class="cfo-savings-headline" id="cfo-savings-headline">$0 in cash matched this session</div>
               <div class="cfo-savings-body" id="cfo-savings-body">
-                Import invoices and remittance, then run matching to calculate savings.
+                Import invoices and remittance, then auto match to calculate savings.
               </div>
             </div>
           </div>
@@ -3651,7 +3651,7 @@ body.app-active #app {
                 <span style="font-size:12px;color:var(--t3)" id="cfo-match-total-lbl"></span>
               </div>
               <div style="padding:18px" id="cfo-match-breakdown">
-                <div style="color:var(--t3);font-size:12.5px;text-align:center;padding:24px 0">Run matching to see breakdown</div>
+                <div style="color:var(--t3);font-size:12.5px;text-align:center;padding:24px 0">Auto match to see breakdown</div>
               </div>
             </div>
 
@@ -3811,7 +3811,7 @@ body.app-active #app {
             <div class="card">
               <div class="card-header"><div class="card-title">Match Results Breakdown</div></div>
               <div class="card-body" id="rpt-breakdown">
-                <div class="empty" style="padding:20px"><div class="empty-t">Run matching to see breakdown</div></div>
+                <div class="empty" style="padding:20px"><div class="empty-t">Auto match to see breakdown</div></div>
               </div>
             </div>
             <div class="card">
@@ -4267,7 +4267,7 @@ function renderWsExcPremium(){
       <div class="empty-icon">${icon}</div>
       <div class="empty-t">${isResolved?'No resolved exceptions':'Zero exceptions'}</div>
       <div class="empty-s">${msg}</div>
-      ${!isResolved&&PAY.length?'<div class="empty-btn"><button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Run matching</button></div>':''}
+      ${!isResolved&&PAY.length?'<div class="empty-btn"><button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Auto match</button></div>':''}
     </div>`;return;
   }
   const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
@@ -4315,7 +4315,7 @@ function renderWsReview(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
   if(ct)ct.textContent=ap.length+' matched record'+(ap.length!==1?'s':'');
   if(!ap.length){
-    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Run matching or approve allocations from the To Be Matched tab to populate the review queue.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">← Back to matching</button></div></div>`;
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Auto match or approve allocations from the To Be Matched tab to populate the review queue.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">← Back to matching</button></div></div>`;
     return;
   }
   const stColor={Exact:'var(--g)','Subset exact':'var(--p)','Short pay':'var(--am)',Overpay:'var(--am)',Resolved:'var(--g)','Amount match':'var(--pu)',Partial:'var(--am)'};
@@ -4362,7 +4362,7 @@ function renderWsRecon(){
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
   if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance and run matching to reconcile.</div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance and auto match to reconcile.</div></div>';return;}
   list.innerHTML=`<table class="tbl" style="width:100%">
     <thead><tr>
       <th>Customer</th><th>Invoice #</th><th>PO #</th>
@@ -5631,7 +5631,7 @@ function rExc(){
   }
   const shown=EXC.filter(ex=>ex.s!=='Resolved'&&ex.s!=='Resolved — rejected'&&(!tval||ex.type===tval));
   if(ec)ec.textContent=shown.length+' exception'+(shown.length!==1?'s':'');
-  if(!EXC.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect issues.</div></div></td></tr>';return;}
+  if(!EXC.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div></td></tr>';return;}
   if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">🎉</div><div class="empty-t">All exceptions resolved</div></div></td></tr>';return;}
   tb.innerHTML=EXC.map((ex,idx)=>{
     if(ex.s==='Resolved'||ex.s==='Resolved — rejected')return'';
@@ -5667,7 +5667,7 @@ function rPost(){
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
   const ct=document.getElementById('post-ct');if(ct)ct.textContent=ap.length+' rows';
   const tb=document.getElementById('post-tb');if(!tb)return;
-  if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Run matching or approve allocations.</div></div></td></tr>';return;}
+  if(!ap.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📤</div><div class="empty-t">No posting data</div><div class="empty-s">Auto match or approve allocations.</div></div></td></tr>';return;}
   const d=new Date().toISOString().split('T')[0];const dDisp=fmtDate(d);
   const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Cash on Account':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
   const excBadge={'Apply to invoice':'badge-g','Cash on Account':'badge-cy','Write off':'badge-am','Bank fee':'badge-am','Wire transfer':'badge-p'};
@@ -5706,7 +5706,7 @@ function getRemStatus(p,idx){
 
 function buildAllocWaterfall(p,idx){
   const matched=RES.filter(r=>!r.fromExc&&(r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
-  if(!matched.length)return`<div style="padding:10px 0;color:var(--t3);font-size:12px">No allocation — run matching first.</div>`;
+  if(!matched.length)return`<div style="padding:10px 0;color:var(--t3);font-size:12px">No allocation — auto match first.</div>`;
   const totalDeducted=matched.reduce((s,r)=>s+r.pd,0);
   const balance=p.amt-totalDeducted;
   const isPerfect=Math.abs(balance)<0.01;
@@ -6355,6 +6355,7 @@ function engApprove(){
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
   addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
   saveToStorage();updDash();updTop();
+  try{renderPayQueue();}catch(e){}
   setCaTab('review',document.getElementById('ca-tab-review'));
   toast('✓ Approved — '+sel.length+' invoice(s) moved to Review');
 }
@@ -6760,7 +6761,7 @@ function _legacy_renderWsReview(){
   if(!list)return;
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
   if(ct)ct.textContent=ap.length+' matched record'+(ap.length!==1?'s':'');
-  if(!ap.length){list.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Run matching or approve allocations from the To Be Matched tab.</div></div>';return;}
+  if(!ap.length){list.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Auto match or approve allocations from the To Be Matched tab.</div></div>';return;}
   const d=new Date().toISOString().split('T')[0];
   const stBadge={Exact:'badge-g','Subset exact':'badge-p','Short pay':'badge-am',Overpay:'badge-am',Resolved:'badge-g','Amount match':'badge-pu','Partial':'badge-am'};
   list.innerHTML=ap.map((r,i)=>{
@@ -6822,7 +6823,7 @@ function renderWsExc(){
   if(tval)items=items.filter(ex=>ex.type===tval);
   if(ct)ct.textContent=items.length+(isResolved?' resolved':' exception'+(items.length!==1?'s':''));
   if(!items.length){
-    list.innerHTML=isResolved?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div>':'<div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Run matching to detect issues.</div></div>';
+    list.innerHTML=isResolved?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div>':'<div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div>';
     return;
   }
   const POST_D=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
@@ -6981,7 +6982,7 @@ function _legacy_renderWsRecon(){
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   if(summary)summary.textContent=`${$fk(totalMatched)} matched of ${$fk(totalPay)} total — ${PAY.length} payments · ${matched.length} reconciled`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance data and run matching to reconcile.</div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance data and auto match to reconcile.</div></div>';return;}
   const rows=[...matched.map(r=>({type:'matched',r})),...unmatched.map(p=>({type:'unmatched',p}))];
   list.innerHTML=rows.map(item=>{
     if(item.type==='matched'){const r=item.r;return`<div class="recon-row" style="padding:12px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px">
@@ -7898,7 +7899,7 @@ function processImport(){
   }
   updTop();closeMo();toast('✅ Import complete — '+
     (IMP_TYPE==='inv'?INV.length+' invoices':PAY.length+' payments')+
-    ' loaded. Click ⚡ Auto match to run matching.');
+    ' loaded. Click ⚡ Auto match to auto match.');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -8803,7 +8804,7 @@ function buildWorklist(){
     if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference',amt:'$'+$fk(unapplied.reduce(function(s,e){return s+e.amt;},0)),action:'Apply',fn:"wlGoExc()"});
     urgentList.innerHTML=items.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div><div class="wl-item-amount">'+item.amt+'</div><div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(urgentList){
-    urgentList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'No urgent items')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments processed without issues.':'Import data and run matching to detect exceptions.')+'</div></div>';
+    urgentList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'No urgent items')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments processed without issues.':'Import data and auto match to detect exceptions.')+'</div></div>';
   }
 
   // Payments to allocate
@@ -8960,7 +8961,7 @@ function updateCfoSummary(){
     setEl('cfo-hero-sub',autoCount+' payments auto-matched · $'+$fk(tp)+' cash received ('+periodLabel+')');
   } else {
     setEl('cfo-hours-saved','No matches yet');
-    setEl('cfo-hero-sub','Import data and run matching to see performance');
+    setEl('cfo-hero-sub','Import data and auto match to see performance');
   }
   setEl('cfo-hero-matched',$fk(tp));       // Cash Received
   setEl('cfo-hero-rate',rt>0?rt.toFixed(1)+'%':'—');
@@ -9068,7 +9069,7 @@ loadDemoData = function(){
     populateAllAcctDropdowns();
     renderPayQueue();
     engRefreshSel();
-    toast('Sample data loaded — click ⚡ Run matching to match payments');
+    toast('Sample data loaded — click ⚡ Auto match to match payments');
   },150);
 };
 
@@ -9539,7 +9540,7 @@ var HELP_CONTENT = {
         <h3>Customer Open Items</h3>
         <p>The bottom panel shows open invoices for the selected payment's account. Invoices are automatically sorted by relevance — best matches appear first. All columns support sorting (click header) and per-column filtering (type in the filter row). Drag the divider handle to resize the split.</p>
         <h3>Auto-Matching Engine</h3>
-        <p>Click <strong>⚡ Auto match</strong> to run matching across all payments. The engine tries these methods in order:</p>
+        <p>Click <strong>⚡ Auto match</strong> to auto match across all payments. The engine tries these methods in order:</p>
         <table><thead><tr><th>Priority</th><th>Method</th><th>Description</th></tr></thead><tbody>
         <tr><td>1</td><td>Invoice #</td><td>Payment references an exact invoice number</td></tr>
         <tr><td>2</td><td>PO Group</td><td>Sum of all open invoices on the same PO = payment amount</td></tr>
@@ -9711,10 +9712,10 @@ var HELP_CONTENT = {
         <table><thead><tr><th>Issue</th><th>Cause</th><th>Solution</th></tr></thead><tbody>
         <tr><td>Matching finds no results</td><td>Account # mismatch</td><td>Verify account numbers match exactly between invoices and remittance. Edit cells inline in the Invoices panel.</td></tr>
         <tr><td>Payment queue empty after bank filter</td><td>Data loaded without bank tags</td><td>Import a bank file. Imported files should include a "bank" column to tag transactions by account.</td></tr>
-        <tr><td>DSO shows "—"</td><td>No matched revenue yet</td><td>Run matching first. DSO requires at least one matched record as the denominator.</td></tr>
+        <tr><td>DSO shows "—"</td><td>No matched revenue yet</td><td>Auto match first. DSO requires at least one matched record as the denominator.</td></tr>
         <tr><td>Exception won't resolve</td><td>Invoice already matched or account not found</td><td>Check invoice status in Invoices panel. Ensure the target account exists in your data.</td></tr>
-        <tr><td>Export produces empty file</td><td>No approved records in Review</td><td>Run matching and click ✓ Approve in the allocation workspace before exporting.</td></tr>
-        <tr><td>CFO metrics show zero</td><td>No matching run in current period</td><td>Run matching at least once. CFO snapshots record automatically after each run.</td></tr>
+        <tr><td>Export produces empty file</td><td>No approved records in Review</td><td>Auto match and click ✓ Approve in the allocation workspace before exporting.</td></tr>
+        <tr><td>CFO metrics show zero</td><td>No matching run in current period</td><td>Auto match at least once. CFO snapshots record automatically after each run.</td></tr>
         <tr><td>Reset button not working</td><td>Browser blocks confirm dialogs</td><td>Allow dialogs/popups for this site in browser settings, then try again.</td></tr>
         <tr><td>Slashed zeros in numbers</td><td>Browser font feature override</td><td>Hard-reload: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac).</td></tr>
         <tr><td>Modal doesn't close</td><td>Click event blocked</td><td>Click the × button or press Escape. Cancel always closes any modal.</td></tr>
