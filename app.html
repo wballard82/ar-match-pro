@@ -3155,25 +3155,30 @@ body.app-active #app {
                 </div>
               </div>
               <div class="ca-bottom-tbl-wrap">
+                
+                <div style="padding:10px 14px;background:var(--surface1);border-bottom:1px solid var(--bdr);display:flex;gap:10px;align-items:center">
+                  <input id="ca-open-search" type="search" placeholder="Search by account number or customer name…" 
+                    style="flex:1;max-width:480px;padding:8px 14px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none"
+                    oninput="caOpenSearch(this.value)">
+                  <span id="ca-open-search-ct" style="font-size:11.5px;color:var(--t3)"></span>
+                </div>
                 <table class="fbl5n-tbl" id="ca-open-items-tbl">
                   <thead>
                     <tr>
                       <th style="width:32px"></th>
                       <th onclick="sortFbl5n(0)">Account<span class="si2"></span></th>
                       <th onclick="sortFbl5n(1)">Customer<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(2)">Invoice #<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(3)">Inv Date<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(4)">Due Date<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(5)">Aging<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(6)">PO #<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(7)">Sales Order<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(8)">Document #<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(9)" style="text-align:right">Orig Amt<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(10)" style="text-align:right">Open Balance<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(11)" style="text-align:right">Applied<span class="si2"></span></th>
-                      <th onclick="sortFbl5n(12)">Status<span class="si2"></span></th>
-                      <th style="text-align:center">Conf%</th>
-                      <th>Action</th>
+                      <th onclick="sortFbl5n(2)">Invoice<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(3)">PO #<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(4)">Sales Order<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(5)">Invoice Date<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(6)">Due Date<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(7)">Aging<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(8)" style="text-align:right">Net Due<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(9)" style="text-align:right">Balance<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(10)">Status<span class="si2"></span></th>
+                      <th style="text-align:center">Match %</th>
+                      <th>Apply</th>
                     </tr>
                     <tr class="fbl5n-filter-row" id="fbl5n-filter-row">
                       <th></th>
@@ -3184,18 +3189,16 @@ body.app-active #app {
                       <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
                       <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
                       <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
-                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
+                      <th></th>
+                      <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()" style="text-align:right"></th>
+                      <th></th>
                       <th><input class="fbl5n-filter-inp" placeholder="Filter…" oninput="filterFbl5n()"></th>
                       <th></th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody id="ca-open-items-body">
-                    <tr><td colspan="16"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
+                    <tr><td colspan="14"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3688,7 +3691,7 @@ body.app-active #app {
             <div class="card-header">
               <div>
                 <div class="card-title">Return on Investment — Labor Cost &amp; Hours Saved</div>
-                <div class="card-sub">Based on 8 min/payment manual baseline · $65/hr fully-loaded AR rate</div>
+                <div class="card-sub">Based on 8 min/payment manual baseline · <span id="roi-rate-display">$<span id="roi-rate-value">65</span>/hr</span> fully-loaded AR rate <button class="btn btn-ghost btn-xs" id="roi-rate-edit-btn" onclick="roiEditRate()" style="margin-left:6px;font-size:11px;padding:2px 8px;display:none">Edit rate</button></div>
               </div>
             </div>
             <div class="card-body">
@@ -3706,7 +3709,7 @@ body.app-active #app {
                 <div style="padding:16px;background:var(--surface2);border:1px solid var(--bdr);border-radius:12px">
                   <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Labor Cost Saved</div>
                   <div style="font-size:28px;font-weight:900;font-family:var(--mono);color:var(--g-t)" id="cfo-roi-dollars">$0</div>
-                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">at $65/hr loaded rate</div>
+                  <div style="font-size:11.5px;color:var(--t3);margin-top:4px">at $<span id="roi-rate-value-2">65</span>/hr loaded rate</div>
                 </div>
                 <div style="padding:16px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.2);border-radius:12px">
                   <div style="font-size:10px;font-weight:700;color:var(--pd);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI Multiple</div>
@@ -5452,41 +5455,66 @@ function showUpgrade(title,sub){
   document.getElementById('upgrade-modal').classList.add('open');
 }
 function showModal(title,bodyHtml){
-  const overlay=document.getElementById('exc-modal-overlay');
-  const t=document.getElementById('exc-modal-title');const b=document.getElementById('exc-modal-body');
-  if(t)t.textContent=title;if(b)b.innerHTML=bodyHtml;
-  if(overlay)overlay.classList.add('open');
+  console.log('[showModal] title=',JSON.stringify(title));
+  var overlay=document.getElementById('exc-modal-overlay');
+  var t=document.getElementById('exc-modal-title');
+  var b=document.getElementById('exc-modal-body');
+  if(!overlay||!b){console.error('[showModal] missing DOM (overlay='+!!overlay+', body='+!!b+')');return false;}
+  if(t)t.textContent=title;
+  b.innerHTML=bodyHtml;
+  // BULLETPROOF: set BOTH inline display AND class so neither CSS nor stale state blocks it
+  overlay.style.display='flex';
+  overlay.classList.add('open');
+  // Verify it became visible
+  setTimeout(function(){
+    var ov=document.getElementById('exc-modal-overlay');
+    if(ov && (ov.style.display==='none'||window.getComputedStyle(ov).display==='none')){
+      console.warn('[showModal] still hidden after open, forcing display:flex');
+      ov.style.display='flex';
+      ov.classList.add('open');
+    }
+  },20);
+  return true;
 }
-function closeModal(){const o=document.getElementById('exc-modal-overlay');if(o)o.classList.remove('open');}
+function closeModal(){
+  var o=document.getElementById('exc-modal-overlay');
+  if(o){
+    o.classList.remove('open');
+    o.style.display='none';
+    // Clear inline after 50ms so future shows work via CSS class
+    setTimeout(function(){if(o)o.style.display='';},50);
+  }
+}
 function showConfirm(msg,onYes,yesLabel,yesClass){
   console.log('[showConfirm]',msg.split('\n')[0]);
   closeModal();
   yesLabel=yesLabel||'Confirm';yesClass=yesClass||'btn-r';
-  var overlay=document.getElementById('exc-modal-overlay');
-  // If modal infrastructure isn't present OR is broken, fall back to browser confirm
-  if(!overlay||!document.getElementById('exc-modal-body')){
-    console.log('[showConfirm] using browser confirm fallback');
-    if(window.confirm(msg))onYes&&onYes();
-    return;
-  }
-  // Unique callback key to avoid collision with other modals
-  var cbKey='_confirmCb_'+Date.now();
-  window[cbKey]=onYes;
-  showModal('Confirm',
+  // Stash the callback in a stable slot — inline onclick will read it
+  window.__lastConfirmCb=onYes;
+  window.__lastConfirmMsg=msg;
+  // Build modal with INLINE onclick that reads the stable slot
+  var ok=showModal('Confirm',
     '<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:20px;white-space:pre-line">'+msg+'</div>'+
     '<div style="display:flex;gap:8px;justify-content:flex-end">'+
     '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-    '<button class="btn btn-sm '+yesClass+'" onclick="var fn=window[\''+cbKey+'\'];closeModal();if(fn)fn();delete window[\''+cbKey+'\'];">'+yesLabel+'</button>'+
+    '<button class="btn btn-sm '+yesClass+'" id="_confirmYesBtn" onclick="var fn=window.__lastConfirmCb;closeModal();window.__lastConfirmCb=null;if(fn){try{fn();}catch(e){console.error(\'[confirm cb]\',e);}}">'+yesLabel+'</button>'+
     '</div>'
   );
-  // Verify modal actually became visible — if not, fall back
-  setTimeout(function(){
-    var ov=document.getElementById('exc-modal-overlay');
-    if(!ov||!ov.classList.contains('open')){
-      console.warn('[showConfirm] modal failed to open, using browser confirm');
-      if(window.confirm(msg))onYes&&onYes();
-    }
-  },100);
+  // Verify modal really opens — if not, drop straight to browser confirm
+  if(ok){
+    setTimeout(function(){
+      var ov=document.getElementById('exc-modal-overlay');
+      if(!ov||window.getComputedStyle(ov).display==='none'){
+        console.warn('[showConfirm] modal not visible — using window.confirm');
+        var fn=window.__lastConfirmCb;window.__lastConfirmCb=null;
+        if(window.confirm(msg)&&fn)fn();
+      }
+    },50);
+  } else {
+    console.log('[showConfirm] no modal infrastructure — using window.confirm');
+    var fn=window.__lastConfirmCb;window.__lastConfirmCb=null;
+    if(window.confirm(msg)&&fn)fn();
+  }
 }
 function showProgress(msg,pct){
   // Show new progress area, hide file picker
@@ -6619,7 +6647,7 @@ function engApprove(){
     // Skip if already user-approved (idempotent)
     if(RES.find(function(res){return res.i===r.inv.i&&res.fromAlloc;}))return;
     var vr=r.applyAmt-r.inv.amt;
-    RES.push({a:ENG_PAY.a||ENG_PAY.c,c:ENG_PAY.c,i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.txId||'',id:ENG_PAY.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr:vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});
+    RES.push({a:r.inv.a||ENG_PAY.a||'',c:r.inv.c||ENG_PAY.c||'',i:r.inv.i,po:r.inv.po,so:r.inv.so,d:ENG_PAY.txId||'',id:ENG_PAY.txId||'',oa:r.inv.amt,pd:r.applyAmt,vr:vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'',fromAlloc:true,approved:true});
   });
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
   addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
@@ -8433,6 +8461,7 @@ function applyCfoAccess(){
   var wrap = document.getElementById('cfo-content-wrap');
   if(gate) gate.style.display = canSeeCfo ? 'none' : 'block';
   if(wrap) wrap.style.display = canSeeCfo ? '' : 'none';
+  try{if(typeof roiApplyRateVisibility==="function")roiApplyRateVisibility();}catch(e){}
 }
 
 function initRole(){
@@ -8670,16 +8699,14 @@ function _fbl5nBuildRow(v){
     '<td class="td-mono" style="font-size:11.5px">'+(v.a||'')+'</td>'+
     '<td style="font-weight:600">'+(v.c||'')+'</td>'+
     '<td class="td-mono" style="color:var(--pd)">'+vi+'</td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.po||'\u2014')+'</td>'+
+    '<td class="td-mono" style="font-size:11.5px">'+(v.so||'\u2014')+'</td>'+
     '<td class="td-mono">'+(typeof fmtDate==='function'?fmtDate(v.dt2):(v.dt2||''))+'</td>'+
     '<td class="td-mono" style="color:'+(v.due&&_parseAgingDate(v.due)&&_parseAgingDate(v.due)<new Date()?'var(--r-t)':'')+'">'+
       (typeof fmtDate==='function'?fmtDate(v.due):(v.due||''))+'</td>'+
     '<td>'+(typeof agingChip==='function'?agingChip(v.due):'')+'</td>'+
-    '<td class="td-mono" style="font-size:11.5px">'+(v.po||'\u2014')+'</td>'+
-    '<td class="td-mono" style="font-size:11.5px">'+(v.so||'\u2014')+'</td>'+
-    '<td class="td-mono" style="font-size:11.5px">'+(v.d||'\u2014')+'</td>'+
     '<td class="td-num">'+(typeof $f==='function'?'$'+$f(v.amt):'$'+v.amt)+'</td>'+
     '<td class="td-num" style="color:'+(balance<v.amt*0.5?'var(--am-t)':'')+'">'+(typeof $f==='function'?'$'+$f(Math.max(0,balance)):'')+'</td>'+
-    '<td class="td-num" style="color:var(--g-t)">'+(applied>0?(typeof $f==='function'?'$'+$f(applied):'$'+applied):'\u2014')+'</td>'+
     '<td>'+sb+'</td>'+
     '<td style="text-align:center">'+cd+'</td>'+
     '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(\''+vi+'\')" style="white-space:nowrap">Apply</button></td>'+
@@ -8693,12 +8720,12 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   var rows=[];for(var ri=startIdx;ri<end;ri++){rows.push(_fbl5nBuildRow(invs[ri]));}
   var footer='';
   if(end<invs.length){
-    footer='<tr id="fbl5n-load-more"><td colspan="16" style="text-align:center;padding:12px">'+
+    footer='<tr id="fbl5n-load-more"><td colspan="14" style="text-align:center;padding:12px">'+
       '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' matching open items \u2014 refine search or load more</span> '+
       '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
     '</td></tr>';
   } else if(invs.length>_fbl5nPageSize){
-    footer='<tr><td colspan="16" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
+    footer='<tr><td colspan="14" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
   }
   if(startIdx===0){tbody.innerHTML=rows.join('')+footer;}
   else{var old=document.getElementById('fbl5n-load-more');if(old)old.remove();tbody.insertAdjacentHTML('beforeend',rows.join('')+footer);}
@@ -8707,7 +8734,7 @@ function _fbl5nRenderPage(tbodyId,startIdx){
 
 function _fbl5nLoadMore(tbodyId){_fbl5nRenderPage(tbodyId,_fbl5nOffset);}
 
-var _fbl5nColFields=['a','c','i','dt2','due','','po','so','d','amt','','','s'];
+var _fbl5nColFields=['a','c','i','po','so','dt2','due','amt','s'];
 
 function _fbl5nApplyTextFilter(tbodyId, forceReset){
   console.log('[fbl5nFilter] called, base=',_fbl5nBaseInvs?_fbl5nBaseInvs.length:0,'INV=',INV.length);
@@ -8742,13 +8769,53 @@ function _fbl5nApplyTextFilter(tbodyId, forceReset){
   var tbody=document.getElementById(tbodyId||'ca-open-items-body');
   if(!tbody){console.warn('[fbl5nFilter] tbody not found');return;}
   if(!matched.length){
-    tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px">'+
+    tbody.innerHTML='<tr><td colspan="14"><div class="empty" style="padding:16px">'+
       '<div class="empty-t">No open items found</div>'+
       '<div class="empty-s">Try account number, customer name, invoice #, PO, or sales order.</div>'+
     '</div></td></tr>';
     return;
   }
   _fbl5nRenderPage(tbodyId||'ca-open-items-body',0);
+}
+
+
+// ── COI top-level search (Item 1) ────────────────────────────────────
+var _caOpenSearchTimer;
+function caOpenSearch(q){
+  console.log('[caOpenSearch] query=',JSON.stringify(q));
+  clearTimeout(_caOpenSearchTimer);
+  _caOpenSearchTimer=setTimeout(function(){
+    var query=String(q||'').trim().toLowerCase();
+    // Lazy-init base from INV if empty
+    if((!_fbl5nBaseInvs||!_fbl5nBaseInvs.length)&&INV&&INV.length){
+      _fbl5nBaseInvs=INV.slice();
+    }
+    var src=(_fbl5nBaseInvs&&_fbl5nBaseInvs.length)?_fbl5nBaseInvs:(INV||[]).slice();
+    var matched;
+    if(!query){matched=src;}
+    else{
+      // Match account number OR customer name (case-insensitive substring)
+      matched=src.filter(function(v){
+        var a=String(v.a||'').toLowerCase();
+        var c=String(v.c||'').toLowerCase();
+        return a.indexOf(query)>=0||c.indexOf(query)>=0;
+      });
+    }
+    _fbl5nFiltered=matched;
+    _fbl5nOffset=0;
+    var ct=document.getElementById('ca-open-search-ct');
+    if(ct){
+      if(query)ct.textContent=matched.length+' match'+(matched.length===1?'':'es')+' of '+src.length;
+      else ct.textContent='';
+    }
+    var tbody=document.getElementById('ca-open-items-body');
+    if(!tbody)return;
+    if(!matched.length){
+      tbody.innerHTML='<tr><td colspan="14"><div class="empty" style="padding:16px"><div class="empty-t">No open items found</div><div class="empty-s">Try account number or customer name.</div></div></td></tr>';
+      return;
+    }
+    if(typeof _fbl5nRenderPage==='function')_fbl5nRenderPage('ca-open-items-body',0);
+  },200);
 }
 
 function filterFbl5n(){
@@ -8801,12 +8868,12 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   for(var ri=startIdx;ri<end;ri++){rows.push(_fbl5nBuildRow(invs[ri]));}
   var footer='';
   if(end<invs.length){
-    footer='<tr id="fbl5n-load-more"><td colspan="16" style="text-align:center;padding:12px">'+
+    footer='<tr id="fbl5n-load-more"><td colspan="14" style="text-align:center;padding:12px">'+
       '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' open items</span> '+
       '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
     '</td></tr>';
   } else if(invs.length>_fbl5nPageSize){
-    footer='<tr><td colspan="16" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
+    footer='<tr><td colspan="14" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
   }
   if(startIdx===0){
     tbody.innerHTML=rows.join('')+footer;
@@ -9272,6 +9339,68 @@ function navToWorklist(){
 // CFO SUMMARY ENGINE
 // ═══════════════════════════════════════════════════════════
 var CFO_PERIOD='month';
+
+
+// ── First load month tracker (Item 8) ─────────────────────────────────
+(function(){
+  try{
+    if(!localStorage.getItem('armp_first_load_month')){
+      var d=new Date();
+      var key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      localStorage.setItem('armp_first_load_month',key);
+      console.log('[first-load] month set to',key);
+    }
+  }catch(e){console.warn('[first-load]',e);}
+})();
+// ── ROI Hourly Rate (Item 7) ─────────────────────────────────────────
+var AR_HOURLY_RATE = (function(){
+  try{return parseFloat(localStorage.getItem('armp_hourly_rate'))||65;}
+  catch(e){return 65;}
+})();
+function roiCanEditRate(){
+  try{return (typeof IS_MASTER!=='undefined'&&IS_MASTER)||(typeof USER_ROLE!=='undefined'&&USER_ROLE==='cfo');}
+  catch(e){return false;}
+}
+function roiApplyRateVisibility(){
+  var btn=document.getElementById('roi-rate-edit-btn');
+  if(btn) btn.style.display=roiCanEditRate()?'inline-flex':'none';
+  // Update display values
+  var v1=document.getElementById('roi-rate-value');
+  var v2=document.getElementById('roi-rate-value-2');
+  if(v1) v1.textContent=Math.round(AR_HOURLY_RATE);
+  if(v2) v2.textContent=Math.round(AR_HOURLY_RATE);
+}
+function roiEditRate(){
+  if(!roiCanEditRate()){
+    if(typeof toast==='function')toast('Only CFO or Admin can change the labor rate','warn');
+    return;
+  }
+  showModal('Edit ROI Labor Rate',
+    '<div style="font-size:13px;color:var(--t2);margin-bottom:14px">Set the fully-loaded hourly rate used for ROI labor-cost calculations.</div>'+
+    '<div style="display:grid;gap:10px">'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Hourly Rate ($)</div>'+
+    '<input type="number" id="_roi-rate" value="'+AR_HOURLY_RATE+'" min="1" step="0.5" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:15px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '<div style="font-size:11.5px;color:var(--t3);line-height:1.5">Industry guidance: $45–85/hr for AR specialists, $80–130/hr for AR managers, $120–200/hr for AR controllers.</div>'+
+    '</div><div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">'+
+    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn btn-p btn-sm" onclick="roiSaveRate()">Save</button>'+
+    '</div>'
+  );
+  setTimeout(function(){var i=document.getElementById('_roi-rate');if(i){i.focus();i.select();}},80);
+}
+function roiSaveRate(){
+  var inp=document.getElementById('_roi-rate');
+  var v=inp?parseFloat(inp.value):NaN;
+  if(!v||v<=0){if(typeof toast==='function')toast('Enter a valid rate','warn');return;}
+  AR_HOURLY_RATE=v;
+  try{localStorage.setItem('armp_hourly_rate',String(v));}catch(e){}
+  closeModal();
+  roiApplyRateVisibility();
+  // Refresh CFO summary since labor savings depends on the rate
+  try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
+  if(typeof toast==='function')toast('Hourly rate saved: $'+v+'/hr');
+}
+
 function setCfoPeriod(p,btn){
   CFO_PERIOD=p;
   document.querySelectorAll('.cfo-period-btn').forEach(function(b){b.classList.remove('active');});
@@ -9319,8 +9448,28 @@ function simPlanChange(newPlan){
 function updateCfoSummary(){
   var setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   var setW=function(id,w){var el=document.getElementById(id);if(el)el.style.width=w;};
-  // Period multiplier: month=1x, quarter=3x, ytd=12x (annualized estimation)
-  var periodMult = CFO_PERIOD==='quarter'?3:CFO_PERIOD==='ytd'?12:1;
+  // Period logic: on first month of data, Q and YTD = This Month.
+  // Once additional months accumulate, scale up to reflect actual elapsed time.
+  // FIRST_LOAD_MONTH persists across sessions via localStorage.
+  var nowDate=new Date();
+  var nowKey=nowDate.getFullYear()+'-'+String(nowDate.getMonth()+1).padStart(2,'0');
+  if(!window._firstLoadMonth){
+    try{
+      var stored=localStorage.getItem('armp_first_load_month');
+      if(stored){window._firstLoadMonth=stored;}
+      else{window._firstLoadMonth=nowKey;localStorage.setItem('armp_first_load_month',nowKey);}
+    }catch(e){window._firstLoadMonth=nowKey;}
+  }
+  // Calculate months elapsed since first load
+  var flParts=window._firstLoadMonth.split('-');
+  var flYear=parseInt(flParts[0],10);
+  var flMonth=parseInt(flParts[1],10);
+  var monthsSinceLoad=(nowDate.getFullYear()-flYear)*12+(nowDate.getMonth()+1-flMonth)+1;
+  if(monthsSinceLoad<1)monthsSinceLoad=1;
+  // For Q: cap at min(monthsSinceLoad, 3). For YTD: cap at min(monthsSinceLoad, current month of year)
+  var quarterMonths=Math.min(monthsSinceLoad,3);
+  var ytdMonths=Math.min(monthsSinceLoad,nowDate.getMonth()+1);
+  var periodMult = CFO_PERIOD==='quarter'?quarterMonths:CFO_PERIOD==='ytd'?ytdMonths:1;
   var periodLabel = CFO_PERIOD==='quarter'?'This quarter':CFO_PERIOD==='ytd'?'Year to date':'This month';
   var tp=PAY.reduce(function(s,p){return s+p.amt;},0)*periodMult;
   var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';});
@@ -9331,7 +9480,7 @@ function updateCfoSummary(){
   var rt=tp>0?(ma/tp*100):0;
   var autoCount=matched.length*periodMult;
   var hoursSaved=autoCount*8/60;
-  var dollarsSaved=hoursSaved*65;
+  var dollarsSaved=hoursSaved*(typeof AR_HOURLY_RATE!=='undefined'?AR_HOURLY_RATE:65);
 
   // Hero: Cash Application Performance
   if(autoCount>0){
