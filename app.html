@@ -2547,7 +2547,7 @@ body.app-active #app {
       <div class="kpi-card-val orange" id="kpi-shortpay">0</div>
       <div class="kpi-card-sub">Underpayments</div>
     </div>
-    <div class="kpi-card kpi-green" onclick="sp('invoices');setTimeout(function(){var s=document.getElementById('inv-search');if(s)s.value='';document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display='';});},80)" style="cursor:pointer;min-width:100px">
+    <div class="kpi-card kpi-green" onclick="sp('cash-app');" style="cursor:pointer;min-width:100px">
       <div class="kpi-card-label">
         <div class="kpi-dot kpi-dot-green"></div>
         Invoices
@@ -2586,15 +2586,7 @@ body.app-active #app {
       </div>
       <div class="sb-group">
         <div class="sb-group-label">Data</div>
-        <div class="sb-item" id="sbi-invoices" onclick="sp('invoices')">
-          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
-          Invoices
-        </div>
-        <div class="sb-item" id="sbi-remittance" onclick="sp('remittance')">
-          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h10M3 8h8M3 12h6"/><circle cx="13" cy="12" r="2.5"/><path d="M12 11l1 1 1.5-1.5"/></svg>
-          Remittance
-        </div>
-      </div>
+        
       <div class="sb-group">
         <div class="sb-group-label">Reports</div>
         <div class="sb-item" id="sbi-cfo" onclick="if(checkFeature('cfo'))sp('cfo')">
@@ -2935,10 +2927,10 @@ body.app-active #app {
                     </div>
                     <div class="ca-toolbar-sep"></div>
                     <div class="ca-toolbar-group">
-                      <button class="btn btn-outline btn-sm" onclick="engMarkAll()">Mark all</button>
-                      <button class="btn btn-outline btn-sm" onclick="engClearAll()">Clear</button>
-                      <button class="btn btn-outline btn-sm" onclick="engAutoOldest()">↓ Oldest first</button>
-                      <button class="btn btn-outline btn-sm" onclick="engAutoSuggest()">🤖 AI suggest</button>
+                      
+                      
+                      
+                      
                     </div>
                     <div class="ca-toolbar-sep"></div>
                     <div class="ws-steps">
@@ -3316,77 +3308,7 @@ body.app-active #app {
       </div>
 
       <!-- ════════════════ INVOICES ════════════════ -->
-      <div class="panel" id="p-invoices">
-        <div class="panel-header">
-          <div class="panel-header-row">
-            <div>
-              <div class="panel-title">Invoices</div>
-              <div class="panel-sub" id="inv-ct">0 rows · click any cell to edit</div>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              
-              <button class="btn btn-r btn-sm" onclick="clearInvData()">Clear all</button>
-              <button class="btn btn-p btn-sm" onclick="openImport('inv')">
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Import invoices
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="panel-body" style="padding:0">
-          <div style="padding:6px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);display:flex;align-items:center;gap:8px;flex-shrink:0">
-            <input class="inp" id="inv-search" placeholder="🔍 Search all columns…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" style="width:220px;font-size:12.5px">
-            <button class="btn btn-ghost btn-sm" onclick="clearInvColFilters()">✕ Clear filters</button>
-            <span style="font-size:12px;color:var(--t3);margin-left:auto" id="inv-ct">0 rows</span>
-          </div>
-          <div class="tbl-wrap" style="border:none;border-radius:0">
-            <table class="tbl" id="inv-tbl">
-              <thead>
-                <tr>
-                  <th onclick="invSortCol(0,this)">Customer<span class="si2"></span></th>
-                  <th onclick="invSortCol(1,this)">Account<span class="si2"></span></th>
-                  <th onclick="invSortCol(2,this)">Invoice #<span class="si2"></span></th>
-                  <th onclick="invSortCol(3,this)">PO #<span class="si2"></span></th>
-                  <th onclick="invSortCol(4,this)">Sales Order<span class="si2"></span></th>
-                  <th onclick="invSortCol(5,this)" style="text-align:right">Amount<span class="si2"></span></th>
-                  <th onclick="invSortCol(6,this)">Type<span class="si2"></span></th>
-                  <th onclick="invSortCol(7,this)">Invoice Date<span class="si2"></span></th>
-                  <th onclick="invSortCol(8,this)">Due Date<span class="si2"></span></th>
-                  <th onclick="invSortCol(9,this)">Document #<span class="si2"></span></th>
-                  <th onclick="invSortCol(10,this)">Status<span class="si2"></span></th>
-                </tr>
-                <tr class="col-filter-row" id="inv-filter-row">
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="0"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="1"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="2"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="3"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="4"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="5"></td>
-                  <td class="col-filter-row">
-                    <select class="col-filter-sel" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="6">
-                      <option value="">All types</option>
-                      <option>RV</option><option>DZ</option><option>Credit</option><option>Down Payment</option>
-                    </select>
-                  </td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="From…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="7" type="text"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="8"></td>
-                  <td class="col-filter-row"><input class="col-filter-inp" placeholder="Filter…" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="9"></td>
-                  <td class="col-filter-row">
-                    <select class="col-filter-sel" oninput="clearTimeout(_invSearchTimer);_invSearchTimer=setTimeout(invColFilter,300)" data-col="10">
-                      <option value="">All</option>
-                      <option value="open">Open</option><option value="Exact">Matched</option>
-                      <option value="Short pay">Short pay</option><option value="Overpay">Overpay</option>
-                    </select>
-                  </td>
-                </tr>
-              </thead>
-              <tbody id="inv-tb">
-                <tr><td colspan="11"><div class="empty"><div class="empty-icon">📄</div><div class="empty-t">No invoice data</div><div class="empty-s">Import a CSV file or load sample data.</div></div></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <!-- Invoices panel removed - data shown in Customer Open Items -->
 
       <!-- ════════════════ REMITTANCE ════════════════ -->
       <div class="panel" id="p-remittance">
@@ -3855,11 +3777,12 @@ body.app-active #app {
             <div class="settings-row">
               <div><div class="settings-label">Role</div><div class="settings-desc">Controls access to CFO Summary and admin features</div></div>
               <select class="sel" id="s-role" onchange="saveUserRole()" style="font-size:12.5px;min-width:180px">
-                <option value="specialist">AR Specialist</option>
-                <option value="manager">AR Manager</option>
-                <option value="controller">Controller / CFO</option>
-                <option value="admin">Admin</option>
-              </select>
+          <option value="specialist">Specialist (AR Analyst)</option>
+<option value="manager">Manager (AR Manager)</option>
+<option value="controller">Controller</option>
+<option value="cfo">CFO</option>
+<option value="finance">Finance</option>
+        </select>
             </div>
 
           </div>
@@ -3884,14 +3807,7 @@ body.app-active #app {
             </div>
           </div>
 
-          <!-- Appearance -->
-          <div class="settings-section">
-            <div class="settings-section-title">Appearance</div>
-            <div class="settings-row">
-              <div><div class="settings-label">Dark mode</div><div class="settings-desc">Use dark theme across the app</div></div>
-              <label class="toggle"><input type="checkbox" id="s-dm" checked onchange="toggleDark()"><div class="toggle-slider"></div></label>
-            </div>
-          </div>
+<!-- Appearance section removed - theme toggle is in top-right of every page -->
 
           
           <!-- ══ CONFIGURATION LAYER ══════════════════════════════════════ -->
@@ -4296,7 +4212,7 @@ function renderWsExcPremium(){
         ${isResV?
           `<span class="badge badge-g">${ex.dec||'Resolved'}</span>
            <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
-          :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExcPremium,700)">
+          :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="(function(s){var d=s.value;s.selectedIndex=0;resolveException(parseInt(s.dataset.idx),d);})(this)">
             <option value="">— Select action —</option>
             <option>Apply to invoice</option>
             <option>Cash on Account</option>
@@ -5264,9 +5180,15 @@ function gsLive(q){
   drop.style.display='block';
 }
 function globalSearch(q){
-  if(!q)return;var ql=q.toLowerCase();sp('invoices');
-  var el=document.getElementById('inv-search');if(el)el.value=q;
-  document.querySelectorAll('#inv-tb tr').forEach(function(tr){tr.style.display=tr.innerText.toLowerCase().includes(ql)?'':'none';});
+  if(!q)return;
+  sp('cash-app');
+  // Apply filter to Customer Open Items
+  setTimeout(function(){
+    try{
+      var inps=document.querySelectorAll('#fbl5n-filter-row input.fbl5n-filter-inp');
+      if(inps.length>=2){inps[1].value=q;_fbl5nApplyTextFilter('ca-open-items-body',false);}
+    }catch(e){}
+  },120);
 }
 
 // ── Modals ──
@@ -5314,18 +5236,34 @@ function showModal(title,bodyHtml){
 }
 function closeModal(){const o=document.getElementById('exc-modal-overlay');if(o)o.classList.remove('open');}
 function showConfirm(msg,onYes,yesLabel,yesClass){
+  console.log('[showConfirm]',msg.split('\n')[0]);
   closeModal();
   yesLabel=yesLabel||'Confirm';yesClass=yesClass||'btn-r';
   var overlay=document.getElementById('exc-modal-overlay');
-  if(!overlay){if(window.confirm(msg))onYes&&onYes();return;}
-  window._confirmCb=onYes;
+  // If modal infrastructure isn't present OR is broken, fall back to browser confirm
+  if(!overlay||!document.getElementById('exc-modal-body')){
+    console.log('[showConfirm] using browser confirm fallback');
+    if(window.confirm(msg))onYes&&onYes();
+    return;
+  }
+  // Unique callback key to avoid collision with other modals
+  var cbKey='_confirmCb_'+Date.now();
+  window[cbKey]=onYes;
   showModal('Confirm',
     '<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:20px;white-space:pre-line">'+msg+'</div>'+
-    '<div style="display:flex;gap:8px">'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end">'+
     '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-    '<button class="btn btn-sm '+yesClass+'" onclick="closeModal();window._confirmCb&&window._confirmCb()">'+yesLabel+'</button>'+
+    '<button class="btn btn-sm '+yesClass+'" onclick="var fn=window[\''+cbKey+'\'];closeModal();if(fn)fn();delete window[\''+cbKey+'\'];">'+yesLabel+'</button>'+
     '</div>'
   );
+  // Verify modal actually became visible — if not, fall back
+  setTimeout(function(){
+    var ov=document.getElementById('exc-modal-overlay');
+    if(!ov||!ov.classList.contains('open')){
+      console.warn('[showConfirm] modal failed to open, using browser confirm');
+      if(window.confirm(msg))onYes&&onYes();
+    }
+  },100);
 }
 function showProgress(msg,pct){
   // Show new progress area, hide file picker
@@ -5650,7 +5588,7 @@ function rExc(){
       <td style="color:var(--t2);max-width:180px;white-space:normal;font-size:12px;line-height:1.4">${ex.detail||'—'}</td>
       <td><input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${idx}].notes=this.value;saveToStorage()"></td>
       <td>
-        <select class="ed" style="font-size:11.5px;width:120px" data-idx="${idx}" onchange="resolveException(parseInt(this.dataset.idx),this.value)">
+        <select class="ed" style="font-size:11.5px;width:120px" data-idx="${idx}" onchange="(function(s){var d=s.value;s.selectedIndex=0;resolveException(parseInt(s.dataset.idx),d);})(this)">
           <option value="">— Select action —</option>
           <option ${ex.dec==='Apply to invoice'?'selected':''}>Apply to invoice</option>
           <option ${ex.dec==='Cash on Account'?'selected':''}>Cash on Account</option>
@@ -6007,8 +5945,9 @@ function _excBankFeeConfirm(excIdx){
 }
 
 function resolveException(idx,dec){
-  const ex=EXC[idx];if(!ex)return;
-  if(!dec||dec==='— Select —')return;
+  console.log('[resolveException] idx=',idx,'dec=',JSON.stringify(dec),'EXC.length=',EXC.length);
+  const ex=EXC[idx];if(!ex){console.warn('[resolveException] EXC['+idx+'] not found');toast('Exception not found','warn');return;}
+  if(!dec||dec==='— Select —'||dec==='— Select action —'||dec===''){return;}
   if(dec==='Apply to invoice'){
     if(typeof excApplyToInvModal==='function')excApplyToInvModal(idx);
     return;
@@ -6778,7 +6717,7 @@ function renderPayQueue(){
     if(_payFilter==='unmatched'&&matched)return'';
     // Search filter
     if(_pqSearch){
-      const searchable=[p.c,p.a,p.i,p.po,p.txId,String(p.amt),p.m,p.n,p.payDate].map(x=>(x||'').toLowerCase()).join(' ');
+      const searchable=[p.c,p.a,p.i,p.po,p.txId,String(p.amt||''),p.m,p.n,p.payDate].map(function(x){return String(x==null?'':x).toLowerCase();}).join(' ');
       if(!searchable.includes(_pqSearch))return'';
     }
     const isActive=ENG_PAY_IDX===i;
@@ -6922,7 +6861,7 @@ function renderWsExc(){
       <div><span class="badge ${isResV?'badge-g':'badge-am'}">${ex.s||'Open'}</span></div>
       ${isResV?`<span class="badge badge-gray" style="font-size:10px">${ex.dec||'—'}</span><button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});renderWsExc()">↩ Revert</button>`
         :`<input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
-         <select class="ed" style="font-size:11.5px;width:120px" data-idx="${realIdx}" onchange="resolveException(parseInt(this.dataset.idx),this.value);setTimeout(renderWsExc,600)">
+         <select class="ed" style="font-size:11.5px;width:120px" data-idx="${realIdx}" onchange="(function(s){var d=s.value;s.selectedIndex=0;resolveException(parseInt(s.dataset.idx),d);})(this)">
            <option value="">— Select action —</option>
            <option>Cash on Account</option>
            <option>Write off</option><option>Bank fee</option>
@@ -8217,7 +8156,8 @@ function loginShowPricing(){
 // USER ROLE SYSTEM
 // ═══════════════════════════════════════════════════════════
 var USER_ROLE = localStorage.getItem('armp_role') || 'specialist';
-var CFO_ROLES = ['manager','controller','admin','cfo','finance'];
+// CFO Summary visible to CFO + ADMIN (admin is owner-only)
+var CFO_ROLES = ['cfo'];
 
 function saveUserRole(){
   var sel = document.getElementById('s-role');
@@ -8230,6 +8170,7 @@ function saveUserRole(){
 }
 
 function applyCfoAccess(){
+  // ADMIN role is owner-only (gated by IS_MASTER); CFO role is the only selectable role with CFO Summary access
   var canSeeCfo = IS_MASTER || CFO_ROLES.indexOf(USER_ROLE) >= 0;
   var sbiCfo = document.getElementById('sbi-cfo');
   if(sbiCfo) sbiCfo.style.display = canSeeCfo ? '' : 'none';
@@ -8514,11 +8455,17 @@ function _fbl5nLoadMore(tbodyId){_fbl5nRenderPage(tbodyId,_fbl5nOffset);}
 var _fbl5nColFields=['a','c','i','dt2','due','','po','so','d','amt','','','s'];
 
 function _fbl5nApplyTextFilter(tbodyId, forceReset){
+  console.log('[fbl5nFilter] called, base=',_fbl5nBaseInvs?_fbl5nBaseInvs.length:0,'INV=',INV.length);
   var filterRow=document.getElementById('fbl5n-filter-row');
   var filters=[];
   if(filterRow){var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});}
   var hasFilter=filters.some(function(f){return f.length>0;});
-  var src=_fbl5nBaseInvs;
+  // ── CRITICAL: lazy-init base to full INV if empty ──
+  if((!_fbl5nBaseInvs||!_fbl5nBaseInvs.length)&&INV&&INV.length){
+    _fbl5nBaseInvs=INV.slice();
+    console.log('[fbl5nFilter] lazy-initialized base from INV:',_fbl5nBaseInvs.length);
+  }
+  var src=(_fbl5nBaseInvs&&_fbl5nBaseInvs.length)?_fbl5nBaseInvs:(INV||[]).slice();
   var matched;
   if(!hasFilter){matched=src;}
   else{
@@ -8534,10 +8481,11 @@ function _fbl5nApplyTextFilter(tbodyId, forceReset){
       return ok;
     });
   }
+  console.log('[fbl5nFilter] src=',src.length,'matched=',matched.length,'filters=',JSON.stringify(filters));
   _fbl5nFiltered=matched;
   _fbl5nOffset=0;
   var tbody=document.getElementById(tbodyId||'ca-open-items-body');
-  if(!tbody)return;
+  if(!tbody){console.warn('[fbl5nFilter] tbody not found');return;}
   if(!matched.length){
     tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px">'+
       '<div class="empty-t">No open items found</div>'+
@@ -8700,27 +8648,7 @@ function filterFbl5nExc(){
     tr.style.display=show?'':'none';
   });
 }
-function filterFbl5n(){
-  var filterRow=document.getElementById('fbl5n-filter-row');
-  if(!filterRow)return;
-  var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');
-  var filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});
-  var rows=document.querySelectorAll('#ca-open-items-body tr');
-  rows.forEach(function(tr){
-    if(tr.querySelector('td[colspan]')){tr.style.display='';return;} // empty state row
-    var cells=tr.querySelectorAll('td');
-    var show=true;
-    // inputs align to cols: 0=checkbox(skip), 1=account, 2=customer, 3=inv, 4=invdate,
-    // 5=duedate, 6=aging, 7=po, 8=so, 9=doc, 10=origamt, 11=bal, 12=applied, 13=status
-    filters.forEach(function(f,fi){
-      if(!f)return;
-      var cell=cells[fi];
-      if(!cell)return;
-      if(!cell.innerText.toLowerCase().includes(f))show=false;
-    });
-    tr.style.display=show?'':'none';
-  });
-}
+// (duplicate filterFbl5n removed - uses the proper _fbl5nApplyTextFilter version above)
 function refreshFbl5n(){
   var acct=(document.getElementById('ca-acct-dropdown')||{}).value||'';
   // Do NOT filter by ENG_PAY.c — that hides invoices from other customers
@@ -8883,12 +8811,11 @@ function closeNotifDrop(){
   var drop=document.getElementById('notif-dropdown');
   if(drop)drop.classList.remove('open');
 }
-var _dismissedNotifs={};
+var _dismissedNotifs=(function(){try{return JSON.parse(localStorage.getItem('armp_dismissed_notifs'))||{};}catch(e){return{};}})();
 function renderNotifDrop(){
   var list=document.getElementById('notif-drop-list');
   var ct=document.getElementById('notif-drop-ct');
   if(!list)return;
-  // Build action items from EXC and unmatched PAY
   var items=[];
   var openExc=EXC.filter(function(e){return e.s!=='Resolved'&&e.s!=='Resolved — rejected';});
   openExc.forEach(function(e,i){
@@ -8904,25 +8831,54 @@ function renderNotifDrop(){
   if(ct)ct.textContent=items.length?'('+items.length+')':'';
   if(!items.length){
     list.innerHTML='<div class="notif-drop-empty">✅ All caught up — no actions needed</div>';
+    var dotE=document.getElementById('notif-dot');
+    if(dotE)dotE.style.display='none';
     return;
   }
-  list.innerHTML=items.map(function(item){
-    return '<div class="notif-drop-item" onclick="'+
-      '(function(){var fn=_notifFns['+JSON.stringify(item.key)+'];if(fn)fn();})()" >'+
+  // Header with Clear All button
+  var headerHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bdr);font-size:11px;color:var(--t3)">'+
+    '<span>'+items.length+' notification'+(items.length===1?'':'s')+'</span>'+
+    '<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();dismissAllNotifs()" style="color:var(--r-t);font-size:11px;padding:4px 8px">Clear all</button>'+
+  '</div>';
+  // Build items — store fns in window._notifFns BEFORE rendering HTML
+  window._notifFns={};
+  items.forEach(function(item){window._notifFns[item.key]=item.fn;});
+  var listHtml=items.map(function(item){
+    var keyJson=JSON.stringify(item.key).replace(/"/g,'&quot;');
+    return '<div class="notif-drop-item" data-key="'+item.key.replace(/"/g,'&quot;')+'" onclick="_notifItemClick(this)">'+
       '<div class="notif-drop-item-icon">'+item.icon+'</div>'+
       '<div class="notif-drop-item-body">'+
         '<div class="notif-drop-item-title">'+item.title+'</div>'+
         '<div class="notif-drop-item-sub">'+item.sub+'</div>'+
       '</div>'+
-      '<div class="notif-drop-item-del" onclick="event.stopPropagation();dismissNotif('+JSON.stringify(item.key)+')">×</div>'+
+      '<div class="notif-drop-item-del" data-key="'+item.key.replace(/"/g,'&quot;')+'" onclick="event.stopPropagation();_notifItemDelete(this)" title="Dismiss" style="cursor:pointer;padding:4px 10px;font-size:18px;color:var(--t3);font-weight:600">×</div>'+
     '</div>';
   }).join('');
-  // Store functions by key
-  window._notifFns={};
-  items.forEach(function(item){window._notifFns[item.key]=item.fn;});
-  // Update dot
+  list.innerHTML=headerHtml+listHtml;
   var dot=document.getElementById('notif-dot');
   if(dot)dot.style.display=items.length?'block':'none';
+}
+function _notifItemClick(el){
+  var key=el.getAttribute('data-key');
+  var fn=window._notifFns&&window._notifFns[key];
+  if(fn){try{fn();}catch(e){console.warn('[notif] click error',e);}}
+}
+function _notifItemDelete(el){
+  var key=el.getAttribute('data-key');
+  console.log('[notif] dismiss',key);
+  _dismissedNotifs[key]=true;
+  try{localStorage.setItem('armp_dismissed_notifs',JSON.stringify(_dismissedNotifs));}catch(e){}
+  renderNotifDrop();
+}
+function dismissAllNotifs(){
+  console.log('[notif] dismiss all');
+  // Mark every current notif as dismissed
+  var openExc=EXC.filter(function(e){return e.s!=='Resolved'&&e.s!=='Resolved — rejected';});
+  openExc.forEach(function(e,i){_dismissedNotifs['exc_'+i+'_'+e.id]=true;});
+  _dismissedNotifs['unmatched_all']=true;
+  try{localStorage.setItem('armp_dismissed_notifs',JSON.stringify(_dismissedNotifs));}catch(e){}
+  renderNotifDrop();
+  toast('All notifications cleared');
 }
 function dismissNotif(key){
   _dismissedNotifs[key]=true;
