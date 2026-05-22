@@ -5831,110 +5831,179 @@ function revertException(idx){
 function excWriteOffModal(excIdx){
   console.log('[excWriteOffModal] called with idx=',excIdx,'EXC.length=',EXC.length);
   var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
-  var acctMap={};INV.forEach(function(v){if(v.a&&v.c)acctMap[v.a]=v.c;});
-  var invList=INV.filter(function(v){return v.a===ex.a;});
-  var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+  // Build account list from INV + PAY
+  var acctMap={};
+  INV.forEach(function(v){if(v.a&&v.c)acctMap[v.a]=v.c;});
+  PAY.forEach(function(p){if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
+  var accts=Object.keys(acctMap).sort();
+  var acctOpts=accts.map(function(a){return '<option value="'+a+'"'+(ex.a===a?' selected':'')+'>'+a+' — '+(acctMap[a]||'')+'</option>';}).join('');
+  // Initial invoice list (filtered by ex.a if available, otherwise empty until account selected)
+  var initialAcct=ex.a||'';
+  var invList=initialAcct?INV.filter(function(v){return v.a===initialAcct;}):[];
+  var invOpts='<option value="">— Select invoice —</option>'+invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
   showModal('Write-Off',
     '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
-    'Payment <strong>'+ex.id+'</strong> — <strong>$'+$f(ex.amt)+'</strong></div>'+
+    'Exception <strong>'+ex.id+'</strong> — <strong>$'+$f(ex.amt)+'</strong>'+(ex.c?' · '+ex.c:'')+'</div>'+
     '<div style="display:grid;gap:10px">'+
     '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Account</div>'+
-    '<div style="font-size:13px;font-weight:600;color:var(--t1);padding:8px 12px;background:var(--surface2);border-radius:6px;border:1px solid var(--bdr)">'+(ex.a||'')+(ex.c?' — '+ex.c:'')+'</div></div>'+
+    '<select id="_excwo-acct" onchange="_excwoAcctChange()" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option value="">— Select account —</option>'+acctOpts+'</select></div>'+
     '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice</div>'+
     '<select id="_excwo-inv" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-    '<option value="">— Select invoice —</option>'+invOpts+'</select></div>'+
+    invOpts+'</select></div>'+
     '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Write-Off Amount</div>'+
     '<input type="number" id="_excwo-amt" value="'+ex.amt.toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
     '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Reason</div>'+
     '<select id="_excwo-rsn" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
     '<option>Short pay</option><option>Customer deduction</option><option>Approved write-off</option><option>Rounding</option><option>Other</option></select></div>'+
     '</div><div style="display:flex;gap:8px;margin-top:14px">'+
-    '<button class="btn btn-p btn-sm" onclick="_excWriteOffConfirm('+excIdx+')">Confirm Write-Off</button>'+
+    '<button class="btn btn-p btn-sm" onclick="_excWriteOffConfirm('+excIdx+')">Approve Write-Off</button>'+
     '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
   );
 }
+function _excwoAcctChange(){
+  var acctSel=document.getElementById('_excwo-acct');
+  var invSel=document.getElementById('_excwo-inv');
+  if(!acctSel||!invSel)return;
+  var a=acctSel.value;
+  var invs=INV.filter(function(v){return v.a===a;});
+  invSel.innerHTML='<option value="">— Select invoice —</option>'+invs.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+}
+
 function _excWriteOffConfirm(excIdx){
   var ex=EXC[excIdx];if(!ex)return;
+  var acct=(document.getElementById('_excwo-acct')||{}).value||ex.a||'';
   var invSel=(document.getElementById('_excwo-inv')||{}).value||'';
   var woAmt=parseFloat((document.getElementById('_excwo-amt')||{}).value)||0;
   var reason=(document.getElementById('_excwo-rsn')||{}).value||'Other';
+  if(!acct){toast('Select a customer account','warn');return;}
   if(!invSel){toast('Select an invoice','warn');return;}
   if(woAmt<=0){toast('Enter a write-off amount','warn');return;}
   var inv=INV.find(function(v){return v.i===invSel;});
-  RES.push({a:ex.a,c:ex.c,i:invSel,d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:woAmt,pd:0,wo:woAmt,st:'Write-off',m:'Write-Off Adjustment',n:reason,fromAlloc:true,approved:true});
+  var cust=inv?inv.c:(ex.c||'');
+  RES.push({a:acct,c:cust,i:invSel,d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:woAmt,pd:0,wo:woAmt,vr:-woAmt,st:'Write-off',m:'Write-Off Adjustment',n:reason,fromAlloc:true,approved:true,fromExc:true});
   ex.s='Resolved';ex.dec='Write off';
-  closeModal();saveToStorage();rExc();rAll();updDash();updTop();
-  addAudit('Write-off applied',ex.id+' — $'+$f(woAmt)+' · Invoice: '+invSel+' · '+reason);
-  toast('Write-off recorded — $'+$f(woAmt));
+  closeModal();saveToStorage();
+  try{rExc();}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
+  try{rAll();updDash();updTop();}catch(e){}
+  addAudit('Write-off applied',ex.id+' — $'+$f(woAmt)+' · Account: '+acct+' · Invoice: '+invSel+' · '+reason);
+  toast('Write-off approved — $'+$f(woAmt));
 }
 
 function excApplyToInvModal(excIdx){
   console.log('[excApplyToInvModal] called with idx=',excIdx,'EXC.length=',EXC.length);
   var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
-  var invList=INV.filter(function(v){return v.a===ex.a;});
-  var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+  var acctMap={};INV.forEach(function(v){if(v.a&&v.c)acctMap[v.a]=v.c;});
+  PAY.forEach(function(p){if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
+  var accts=Object.keys(acctMap).sort();
+  var acctOpts=accts.map(function(a){return '<option value="'+a+'"'+(ex.a===a?' selected':'')+'>'+a+' — '+(acctMap[a]||'')+'</option>';}).join('');
+  var initialAcct=ex.a||'';
+  var invList=initialAcct?INV.filter(function(v){return v.a===initialAcct;}):[];
+  var invOpts='<option value="">— Select invoice —</option>'+invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
   showModal('Apply to Invoice',
     '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
-    'Payment <strong>'+ex.id+'</strong> — <strong style="color:var(--g-t)">$'+$f(ex.amt)+'</strong></div>'+
+    'Exception <strong>'+ex.id+'</strong> — <strong style="color:var(--g-t)">$'+$f(ex.amt)+'</strong>'+(ex.c?' · '+ex.c:'')+'</div>'+
     '<div style="display:grid;gap:10px">'+
     '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Account</div>'+
-    '<div style="font-size:13px;font-weight:600;color:var(--t1);padding:8px 12px;background:var(--surface2);border-radius:6px;border:1px solid var(--bdr)">'+(ex.a||'')+(ex.c?' — '+ex.c:'')+'</div></div>'+
+    '<select id="_excai-acct" onchange="_excaiAcctChange()" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option value="">— Select account —</option>'+acctOpts+'</select></div>'+
     '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice to Apply</div>'+
     '<select id="_excai-inv" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-    '<option value="">— Select invoice —</option>'+invOpts+'</select></div>'+
+    invOpts+'</select></div>'+
     '</div><div style="display:flex;gap:8px;margin-top:14px">'+
-    '<button class="btn btn-p btn-sm" onclick="_excApplyToInvConfirm('+excIdx+')">Apply Payment</button>'+
+    '<button class="btn btn-p btn-sm" onclick="_excApplyToInvConfirm('+excIdx+')">Approve Payment</button>'+
     '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
   );
 }
+function _excaiAcctChange(){
+  var acctSel=document.getElementById('_excai-acct');
+  var invSel=document.getElementById('_excai-inv');
+  if(!acctSel||!invSel)return;
+  var a=acctSel.value;
+  var invs=INV.filter(function(v){return v.a===a;});
+  invSel.innerHTML='<option value="">— Select invoice —</option>'+invs.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+}
+
 function _excApplyToInvConfirm(excIdx){
   var ex=EXC[excIdx];if(!ex)return;
+  var acct=(document.getElementById('_excai-acct')||{}).value||ex.a||'';
   var invSel=(document.getElementById('_excai-inv')||{}).value||'';
+  if(!acct){toast('Select a customer account','warn');return;}
   if(!invSel){toast('Select an invoice','warn');return;}
   var inv=INV.find(function(v){return v.i===invSel;});
+  var cust=inv?inv.c:(ex.c||'');
   var vr=ex.amt-(inv?inv.amt:ex.amt);
-  RES.push({a:ex.a,c:ex.c,i:invSel,d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:ex.amt,pd:ex.amt,vr:vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'Applied from Exceptions',fromAlloc:true,approved:true});
+  RES.push({a:acct,c:cust,i:invSel,d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:ex.amt,pd:ex.amt,vr:vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application',n:'Applied from Exceptions',fromAlloc:true,approved:true,fromExc:true});
   ex.s='Resolved';ex.dec='Apply to invoice';
-  closeModal();saveToStorage();rExc();rAll();updDash();updTop();
-  addAudit('Applied to invoice',ex.id+' → '+invSel+' $'+$f(ex.amt));
+  closeModal();saveToStorage();
+  try{rExc();}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
+  try{rAll();updDash();updTop();}catch(e){}
+  addAudit('Applied to invoice',ex.id+' → '+invSel+' · $'+$f(ex.amt));
   toast('Payment applied to invoice '+invSel);
 }
 
 function excBankFeeModal(excIdx){
   console.log('[excBankFeeModal] called with idx=',excIdx,'EXC.length=',EXC.length);
   var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
-  var invList=INV.filter(function(v){return v.a===ex.a;});
-  var invOpts=invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+  var acctMap={};INV.forEach(function(v){if(v.a&&v.c)acctMap[v.a]=v.c;});
+  PAY.forEach(function(p){if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
+  var accts=Object.keys(acctMap).sort();
+  var acctOpts=accts.map(function(a){return '<option value="'+a+'"'+(ex.a===a?' selected':'')+'>'+a+' — '+(acctMap[a]||'')+'</option>';}).join('');
+  var initialAcct=ex.a||'';
+  var invList=initialAcct?INV.filter(function(v){return v.a===initialAcct;}):[];
+  var invOpts='<option value="">— Select invoice —</option>'+invList.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
   showModal('Bank Fee',
     '<div style="font-size:13px;color:var(--t2);margin-bottom:12px">'+
-    'Payment <strong>'+ex.id+'</strong> — <strong>$'+$f(ex.amt)+'</strong></div>'+
+    'Exception <strong>'+ex.id+'</strong> — <strong>$'+$f(ex.amt)+'</strong>'+(ex.c?' · '+ex.c:'')+'</div>'+
     '<div style="display:grid;gap:10px">'+
-    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice</div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer Account</div>'+
+    '<select id="_excbf-acct" onchange="_excbfAcctChange()" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+    '<option value="">— Select account —</option>'+acctOpts+'</select></div>'+
+    '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice (optional)</div>'+
     '<select id="_excbf-inv" style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
-    '<option value="">— Select invoice —</option>'+invOpts+'</select></div>'+
+    invOpts+'</select></div>'+
     '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Bank Fee Amount</div>'+
-    '<input type="number" id="_excbf-amt" value="0.00" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
+    '<input type="number" id="_excbf-amt" value="'+ex.amt.toFixed(2)+'" step="0.01" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
     '<div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Notes</div>'+
     '<input type="text" id="_excbf-nts" placeholder="Bank name, fee type..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box"></div>'+
     '</div><div style="display:flex;gap:8px;margin-top:14px">'+
-    '<button class="btn btn-p btn-sm" onclick="_excBankFeeConfirm('+excIdx+')">Confirm Bank Fee</button>'+
+    '<button class="btn btn-p btn-sm" onclick="_excBankFeeConfirm('+excIdx+')">Approve Bank Fee</button>'+
     '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button></div>'
   );
   setTimeout(function(){var el=document.getElementById('_excbf-amt');if(el){el.focus();el.select();}},80);
 }
+function _excbfAcctChange(){
+  var acctSel=document.getElementById('_excbf-acct');
+  var invSel=document.getElementById('_excbf-inv');
+  if(!acctSel||!invSel)return;
+  var a=acctSel.value;
+  var invs=INV.filter(function(v){return v.a===a;});
+  invSel.innerHTML='<option value="">— Select invoice —</option>'+invs.map(function(v){return '<option value="'+v.i+'">'+v.i+' — $'+$f(v.amt)+(v.po?' PO:'+v.po:'')+'</option>';}).join('');
+}
+
 function _excBankFeeConfirm(excIdx){
   var ex=EXC[excIdx];if(!ex)return;
+  var acct=(document.getElementById('_excbf-acct')||{}).value||ex.a||'';
   var invSel=(document.getElementById('_excbf-inv')||{}).value||'';
   var bfAmt=parseFloat((document.getElementById('_excbf-amt')||{}).value)||0;
   var notes=((document.getElementById('_excbf-nts')||{}).value||'').trim();
+  if(!acct){toast('Select a customer account','warn');return;}
   if(bfAmt<=0){toast('Enter a bank fee amount','warn');return;}
   var inv=invSel?INV.find(function(v){return v.i===invSel;}):null;
-  var applied=ex.amt-bfAmt;
-  RES.push({a:ex.a,c:ex.c,i:invSel||'',d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:ex.amt,pd:applied>0?applied:0,bf:bfAmt,st:'Bank fee',m:'Bank Fee Adjustment',n:notes||'Bank fee',fromAlloc:true,approved:true});
+  var cust=inv?inv.c:(ex.c||'');
+  RES.push({a:acct,c:cust,i:invSel||'',d:ex.id||'',id:ex.id||'',oa:inv?inv.amt:ex.amt,pd:0,bf:bfAmt,vr:-bfAmt,st:'Bank fee',m:'Bank Fee Adjustment',n:notes||'Bank fee',fromAlloc:true,approved:true,fromExc:true});
   ex.s='Resolved';ex.dec='Bank fee';
-  closeModal();saveToStorage();rExc();rAll();updDash();updTop();
-  addAudit('Bank fee recorded',ex.id+' — fee: $'+$f(bfAmt)+(invSel?' · Invoice: '+invSel:''));
-  toast('Bank fee recorded — $'+$f(bfAmt));
+  closeModal();saveToStorage();
+  try{rExc();}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
+  try{rAll();updDash();updTop();}catch(e){}
+  addAudit('Bank fee recorded',ex.id+' — fee: $'+$f(bfAmt)+' · Account: '+acct+(invSel?' · Invoice: '+invSel:''));
+  toast('Bank fee approved — $'+$f(bfAmt));
 }
 
 function resolveException(idx,dec){
@@ -7142,7 +7211,7 @@ async function runMatch(){
     showUpgrade('Row limit reached',`Your ${planName} plan supports up to ${rowLimit.toLocaleString()} invoice rows. You have ${INV.length.toLocaleString()} rows imported. Upgrade to Pro for unlimited rows.`);
     return;
   }
-  const overlay=document.getElementById('match-progress');if(overlay){overlay.classList.add('show');overlay.style.display='flex';}setStatus('running');
+  const overlay=document.getElementById('match-progress');if(overlay){overlay.style.display='';overlay.classList.add('show');}setStatus('running');
   await new Promise(r=>setTimeout(r,100));
   const msgs=['Normalizing references…','Running invoice # pass…','Running PO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
   let mi=0;
@@ -7192,13 +7261,34 @@ async function runMatch(){
     if(ns&&useSO&&hasFeat('so')){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
     const am=INV.filter(v=>v.a===p.a&&Math.abs(v.amt-p.amt)<=tol&&!v.s);
     if(am.length===1){am[0].s='Amount match';RES.push({c:am[0].c,a:am[0].a,i:am[0].i,po:am[0].po,so:am[0].so,d:am[0].d,oa:am[0].amt,pd:p.amt,vr:p.amt-am[0].amt,st:'Amount match',m:'Amount match',n:'Customer + amount'});continue;}
+    // ── FALLBACK: customer-name subset-sum match (Medline/Cummins/Micron pattern) ──
+    try{
+      if(typeof _findInvoicesForPayment==='function'){
+        var _fbFound=_findInvoicesForPayment(p);
+        if(_fbFound&&_fbFound.length){
+          var _fbSum=_fbFound.reduce(function(s,v){return s+v.amt;},0);
+          var _fbDiff=p.amt-_fbSum;
+          // Exact
+          if(Math.abs(_fbDiff)<=tol){
+            _fbFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_fbFound.length+'-invoice subset-sum'});});
+            continue;
+          }
+          // With small variance — bank fee
+          if(Math.abs(_fbDiff)<=50&&_fbSum>0){
+            _fbFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_fbFound.length+'-invoice + $'+(Math.abs(_fbDiff)).toFixed(2)+' variance'});});
+            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||_fbFound[0].a||'',c:p.c||_fbFound[0].c||'',amt:Math.abs(_fbDiff),ref:_fbFound.map(function(v){return v.i;}).join(', '),type:'Bank fee',detail:'Payment $'+$f(p.amt)+' covers '+_fbFound.length+' invoices ($'+$f(_fbSum)+') — $'+$f(Math.abs(_fbDiff))+' variance.',action:_fbDiff<0?'Bank fee':'Write-off',dec:'',s:'Open'});
+            continue;
+          }
+        }
+      }
+    }catch(_fbErr){console.warn('Customer subset-sum fallback error:',_fbErr);}
     // Duplicate check
     const dupChk=PAY.filter((q,qi)=>qi!==pi&&Math.abs(q.amt-p.amt)<0.01&&(q.txId===p.txId||q.i===p.i)&&q.payDate===p.payDate);
     const excType=dupChk.length?'Duplicate':'Unmatched';
     EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:excType,detail:dupChk.length?`Possible duplicate — ${dupChk.length} matching payment(s) found`:'No matching invoice, PO, or SO found',action:dupChk.length?'Review for duplicate posting':'Contact customer for invoice reference',dec:'',s:'Open'});
   }
   upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
-  if(overlay)overlay.classList.remove('show');setStatus('ready');rAll();updDash();updTop();saveToStorage();
+  if(overlay){overlay.classList.remove('show');overlay.style.display='none';setTimeout(function(){if(overlay)overlay.style.display='';},50);}setStatus('ready');rAll();updDash();updTop();saveToStorage();
   if(typeof renderWsExcPremium==='function')renderWsExcPremium();
   if(typeof renderWsReview==='function')renderWsReview();
   var caPanel=document.getElementById('p-cash-app');if(caPanel&&caPanel.classList.contains('active')){if(RES.length>0)setCaTab('review',document.getElementById('ca-tab-review'));else if(EXC.length>0)setCaTab('exc',document.getElementById('ca-tab-exc'));}
@@ -9355,12 +9445,12 @@ function invColFilter(){
   rows.forEach(function(tr){
     var cells = tr.querySelectorAll('td');
     if(!cells.length){ tr.style.display=''; return; }
-    var rowText = tr.innerText.toLowerCase();
+    var rowText = (tr.innerText||tr.textContent||'').toLowerCase();
     var showGlobal = !globalQ || rowText.includes(globalQ.toLowerCase());
     var showCols = filters.every(function(f){
       var cell = cells[f.col];
       if(!cell) return true;
-      return cell.innerText.toLowerCase().includes(f.val);
+      return (cell.innerText||cell.textContent||'').toLowerCase().includes(f.val);
     });
     var show = showGlobal && showCols;
     tr.style.display = show ? '' : 'none';
