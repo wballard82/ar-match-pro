@@ -2720,8 +2720,7 @@ body.app-active #app {
           <div style="display:flex;align-items:center;gap:12px">
             <div class="wl-summary-pills" id="wl-summary-pills"></div>
             <div style="display:flex;gap:8px">
-              
-              <button class="btn btn-p btn-sm" onclick="runMatch();sp('worklist')">⚡ Auto match</button>
+
             </div>
           </div>
         </div>
@@ -2855,10 +2854,7 @@ body.app-active #app {
                   <div class="card-title">Match Breakdown</div>
                   <div class="card-sub">Click category to filter exceptions</div>
                 </div>
-                <button class="btn btn-p btn-sm" onclick="runMatch()">
-                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="4,2 14,8 4,14"/></svg>
-                  Auto match
-                </button>
+                
               </div>
               <div class="card-body" id="dk-breakdown">
                 <div class="empty" style="padding:28px">
@@ -3192,6 +3188,7 @@ body.app-active #app {
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
             <div style="font-size:12px;color:var(--t3)" id="review-ct">0 matched records</div>
             <div style="display:flex;gap:8px">
+              <button class="btn btn-p btn-sm" id="review-approve-all-btn" onclick="approveAllReviewItems()">✓ Approve All</button>
               <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting file</button>
             </div>
@@ -3238,16 +3235,19 @@ body.app-active #app {
                 <table class="fbl5n-tbl" id="exc-open-items-tbl">
                   <thead>
                     <tr>
+                      <th style="width:32px"></th>
                       <th onclick="sortFbl5nExc(0)">Account<span class="si2"></span></th>
                       <th onclick="sortFbl5nExc(1)">Customer<span class="si2"></span></th>
-                      <th onclick="sortFbl5nExc(2)">Invoice #<span class="si2"></span></th>
-                      <th onclick="sortFbl5nExc(3)">Inv Date<span class="si2"></span></th>
-                      <th onclick="sortFbl5nExc(4)">Due Date<span class="si2"></span></th>
-                      <th onclick="sortFbl5nExc(5)">Aging<span class="si2"></span></th>
-                      <th onclick="sortFbl5nExc(6)">PO #<span class="si2"></span></th>
-                      <th onclick="sortFbl5nExc(7)" style="text-align:right">Orig Amt<span class="si2"></span></th>
-                      <th onclick="sortFbl5nExc(8)" style="text-align:right">Open Balance<span class="si2"></span></th>
-                      <th onclick="sortFbl5nExc(9)">Status<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(2)">Invoice<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(3)">PO #<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(4)">Sales Order<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(5)">Invoice Date<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(6)">Due Date<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(7)">Aging<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(8)" style="text-align:right">Net Due<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(9)" style="text-align:right">Balance<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(10)">Status<span class="si2"></span></th>
+                      <th style="text-align:center">Match %</th>
                     </tr>
                   </thead>
                   <tbody id="exc-open-items-body">
@@ -3306,7 +3306,7 @@ body.app-active #app {
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
             <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-outline btn-sm" onclick="runMatch()">⚡ Auto-match</button>
+              <button class="btn btn-p btn-sm" id="recon-approve-all-btn" onclick="approveAllReconciled()" style="display:none">✓ Approve All Reconciled</button>
               <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
@@ -3459,9 +3459,9 @@ body.app-active #app {
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span id="post-ct" style="font-size:12.5px;color:var(--t3)">0 rows</span>
               <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
-              <button class="btn btn-p btn-sm" onclick="exportPost()">
+              <button class="btn btn-p btn-sm" id="post-export-lock-btn" onclick="exportPostAndLock()">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Download
+                <span id="post-export-lock-label">Export &amp; Lock</span>
               </button>
             </div>
           </div>
@@ -4073,10 +4073,10 @@ console.log('AR Match Pro v60736518 — fixed build loading');
 
 // ── Item 2 helper: navigate to Reconcile tab from Needs Attention empty state ──
 function excEmptyGoReconcile(){
-  try{sp('cash-app');}catch(e){}
+  try{sp('cash-app');}catch(e){console.warn('[excEmptyGoReconcile] sp failed',e);}
   setTimeout(function(){
     var tab=document.getElementById('ca-tab-recon');
-    if(typeof setCaTab==='function'&&tab){setCaTab('recon',tab);}
+    if(typeof setCaTab==='function'){setCaTab('recon',tab);}
   },80);
 }
 
@@ -4259,7 +4259,7 @@ function renderWsExcPremium(){
       <div class="empty-icon">${icon}</div>
       <div class="empty-t">${isResolved?'No resolved exceptions':'Zero exceptions'}</div>
       <div class="empty-s">${msg}</div>
-      ${!isResolved&&PAY.length?'<div class="empty-btn"><button class="btn btn-p btn-sm" onclick="runMatch()">⚡ Auto match</button></div>':''}
+      
     </div>`;return;
   }
   const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
@@ -4466,6 +4466,13 @@ function renderWsRecon(){
       '<td><span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Unreconciled</span></td>'+
     '</tr>';}).join('')+
     '</tbody></table>';
+
+  // Item 4: update Approve All button visibility at render time
+  var btn=document.getElementById('recon-approve-all-btn');
+  if(btn){
+    var allRec = matched.length>0 && reconciledCt===matched.length;
+    btn.style.display = allRec ? 'inline-flex' : 'none';
+  }
 }
 
 // ── Item 7: reconcile live-update (no table re-render during typing) ──────
@@ -4508,13 +4515,19 @@ function reconCommit(idx){
   try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
   // Recompute summary
   var summary=document.getElementById('recon-summary');
+  var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc;});
+  var reconciledCt=matched.filter(function(r){var v=r.vr||0,w=r.writeOff||0,b=r.bankFee||0;return Math.abs(v-w-b)<0.01;}).length;
   if(summary){
-    var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc;});
     var totalPay=PAY.reduce(function(s,p){return s+p.amt;},0);
     var totalMatched=matched.reduce(function(s,r){return s+r.pd;},0);
     var reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
-    var reconciledCt=matched.filter(function(r){var v=r.vr||0,w=r.writeOff||0,b=r.bankFee||0;return Math.abs(v-w-b)<0.01;}).length;
     summary.innerHTML='<strong style="color:var(--t1)">'+reconciledCt+'</strong> of <strong style="color:var(--t1)">'+matched.length+'</strong> reconciled · '+$fk(totalMatched)+' of '+$fk(totalPay)+' · <span style="color:'+(reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)')+'">'+reconPct+'%</span>';
+  }
+  // Item 4: show/hide "Approve All Reconciled" button based on full-reconciliation state
+  var btn=document.getElementById('recon-approve-all-btn');
+  if(btn){
+    var allReconciled=matched.length>0 && reconciledCt===matched.length;
+    btn.style.display=allReconciled?'inline-flex':'none';
   }
 }
 
@@ -5218,6 +5231,83 @@ function wfCtaClick(){
 }
 
 // ── Item 4: Approve All Reconciled — marks all reconciled RES as ready-to-post, navigates to Export
+
+// ── Item 7: Approve all visible Review entries at once ──
+function approveAllReviewItems(){
+  if(typeof RES==='undefined'||!RES.length){
+    if(typeof toast==='function')toast('Nothing to approve','warn');
+    return;
+  }
+  // Find rows that ARE in Review (same filter as renderWsReview)
+  var reviewable=RES.filter(function(r){
+    return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay';
+  });
+  // Exclude already-approved
+  var toApprove=reviewable.filter(function(r){return !(r.approved===true||r.fromAlloc===true);});
+  if(!toApprove.length){
+    if(typeof toast==='function')toast('All already approved','info');
+    return;
+  }
+  toApprove.forEach(function(r){r.approved=true;r.fromAlloc=true;});
+  try{saveToStorage();}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+  try{updDash();updTop();}catch(e){}
+  try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+  try{addAudit('Approve all review items',toApprove.length+' allocations');}catch(e){}
+  if(typeof toast==='function')toast('Approved '+toApprove.length+' allocation'+(toApprove.length===1?'':'s'));
+  if(typeof renderWsReview==='function')renderWsReview();
+}
+
+
+// ── Item 8: Export & Lock / Unlock & Edit toggle ──────────────────────
+function exportPostAndLock(){
+  var btn=document.getElementById('post-export-lock-btn');
+  var lbl=document.getElementById('post-export-lock-label');
+  var anyLocked=(typeof RES!=='undefined')&&RES.some(function(r){return r.exported===true;});
+  if(anyLocked){
+    // Unlock & Edit — clear exported flag on all rows, change button label
+    RES.forEach(function(r){if(r.exported)r.exported=false;});
+    try{saveToStorage();}catch(e){}
+    try{if(typeof rPost==='function')rPost();}catch(e){}
+    try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+    if(lbl)lbl.textContent='Export & Lock';
+    if(btn){btn.classList.remove('btn-outline');btn.classList.add('btn-p');}
+    try{if(typeof addAudit==='function')addAudit('Unlock export','All rows unlocked for editing');}catch(e){}
+    if(typeof toast==='function')toast('Unlocked — rows can be edited again');
+  } else {
+    // Export & Lock — call exportPost, then set r.exported on all approved rows
+    if(typeof exportPost==='function'){
+      try{exportPost();}catch(e){console.error('[exportPostAndLock] exportPost failed',e);}
+    }
+    // Mark all exportable rows as exported
+    var exportable=(typeof RES!=='undefined')?RES.filter(function(r){
+      return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc;
+    }):[];
+    exportable.forEach(function(r){r.exported=true;});
+    try{saveToStorage();}catch(e){}
+    try{if(typeof rPost==='function')rPost();}catch(e){}
+    try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+    if(lbl)lbl.textContent='Unlock & Edit';
+    if(btn){btn.classList.remove('btn-p');btn.classList.add('btn-outline');}
+    try{if(typeof addAudit==='function')addAudit('Export & Lock',exportable.length+' rows locked');}catch(e){}
+  }
+}
+// Helper called by rPost to keep the button label in sync with RES state
+function updatePostExportLockButton(){
+  var btn=document.getElementById('post-export-lock-btn');
+  var lbl=document.getElementById('post-export-lock-label');
+  if(!btn||!lbl)return;
+  var anyLocked=(typeof RES!=='undefined')&&RES.some(function(r){return r.exported===true;});
+  if(anyLocked){
+    lbl.textContent='Unlock & Edit';
+    btn.classList.remove('btn-p');btn.classList.add('btn-outline');
+  } else {
+    lbl.textContent='Export & Lock';
+    btn.classList.remove('btn-outline');btn.classList.add('btn-p');
+  }
+}
+
 function approveAllReconciled(){
   if(typeof RES==='undefined'||!RES.length){
     if(typeof toast==='function')toast('No payments to approve','warn');
@@ -5698,9 +5788,12 @@ function hideProgress(){
 }
 function swTab(t,el){
   document.querySelectorAll('.imp-tab').forEach(p=>p.classList.remove('active'));
-  if(el)el.classList.add('active');
-  document.getElementById('tab-paste').style.display=t==='paste'?'block':'none';
-  document.getElementById('tab-file').style.display=t==='file'?'block':'none';
+  if(el&&el.classList)el.classList.add('active');
+  // Item 5 fix: null-guard each tab element — they may not exist if user is on a different panel
+  var tabPaste=document.getElementById('tab-paste');
+  var tabFile=document.getElementById('tab-file');
+  if(tabPaste)tabPaste.style.display=t==='paste'?'block':'none';
+  if(tabFile)tabFile.style.display=t==='file'?'block':'none';
 }
 
 // ── Clear data ──
@@ -6092,6 +6185,8 @@ function rPost(){
       <td><span class="badge ${statusCls}" style="font-size:10.5px">${statusLabel}</span></td>
     </tr>`;
   }).join('');
+
+  try{updatePostExportLockButton();}catch(e){}
 }
 
 function getRemStatus(p,idx){
