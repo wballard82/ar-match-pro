@@ -4345,51 +4345,51 @@ function renderWsRecon(){
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
-  if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${$fk(totalMatched)}</strong> reconciled of <strong style="color:var(--t1)">${$fk(totalPay)}</strong> · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}% reconciled</span>`;
-  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import remittance and auto match to reconcile.</div></div>';return;}
+  // Count fully reconciled rows (vr - wo - bf = 0)
+  const reconciledCt=matched.filter(function(r){var v=r.vr||0,w=r.writeOff||0,b=r.bankFee||0;return Math.abs(v-w-b)<0.01;}).length;
+  if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${reconciledCt}</strong> of <strong style="color:var(--t1)">${matched.length}</strong> reconciled · ${$fk(totalMatched)} of ${$fk(totalPay)} · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}%</span>`;
+  if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import bank file and auto match to reconcile.</div></div>';return;}
+  // Item 3: variance, write-off, bank fee all editable
+  // Style helper for inputs
+  var inputStyle='width:84px;text-align:right;padding:4px 8px;border:1.5px solid var(--bdr);border-radius:6px;background:var(--surface2);color:var(--t1);font-family:var(--mono);font-size:12.5px;outline:none';
   list.innerHTML=`<table class="tbl" style="width:100%">
     <thead><tr>
       <th>Customer</th><th>Invoice #</th><th>PO #</th>
       <th style="text-align:right">Payment</th><th style="text-align:right">Applied</th>
+      <th style="text-align:right">Variance</th>
       <th style="text-align:right">Write-off</th><th style="text-align:right">Bank Fee</th>
-      <th style="text-align:right">Variance</th><th>Status</th>
+      <th style="text-align:right">Net Var</th><th>Status</th>
     </tr></thead><tbody>`+
-    matched.map(r=>{
-      const idx=RES.indexOf(r);
-      const wo=r.writeOff||0;const bf=r.bankFee||0;
-      const netVar=(r.vr||0)-wo-bf;
-      const tied=Math.abs(netVar)<0.01;
-      // Only editable when NOT exactly reconciled (i.e. has variance = short pay etc)
-      const editable=!tied||(wo>0||bf>0);
-      const woField=editable
-        ?`<input type="number" step="0.01" min="0" value="${wo||''}" placeholder="0.00"
-            style="width:76px;text-align:right;padding:3px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:${wo>0?'var(--am-t)':'var(--t1)'};font-family:var(--mono);font-size:12px"
-            oninput="RES[${idx}].writeOff=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?'var(--am-t)':'var(--t1)';saveToStorage();renderWsRecon()">`
-        :`<span style="font-size:12px;color:var(--t3);font-family:var(--mono)">${wo>0?$f(wo):'—'}</span>`;
-      const bfField=editable
-        ?`<input type="number" step="0.01" min="0" value="${bf||''}" placeholder="0.00"
-            style="width:76px;text-align:right;padding:3px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:${bf>0?'var(--pu-t)':'var(--t1)'};font-family:var(--mono);font-size:12px"
-            oninput="RES[${idx}].bankFee=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?'var(--pu-t)':'var(--t1)';saveToStorage();renderWsRecon()">`
-        :`<span style="font-size:12px;color:var(--t3);font-family:var(--mono)">${bf>0?$f(bf):'—'}</span>`;
-      return`<tr>
-        <td style="font-weight:600;color:var(--t1)">${r.c||'—'}</td>
-        <td class="td-mono">${r.i||'—'}</td>
-        <td class="td-mono">${r.po||'—'}</td>
-        <td class="td-amt">${$f(r.oa||r.pd)}</td>
-        <td class="td-amt" style="color:var(--g-t)">${$f(r.pd)}</td>
-        <td style="text-align:right;padding:4px 8px">${woField}</td>
-        <td style="text-align:right;padding:4px 8px">${bfField}</td>
-        <td class="td-amt" style="color:${tied?'var(--g-t)':'var(--r-t)'}">${tied?'Ties':$f(Math.abs(netVar))+(netVar<0?' CR':' DR')}</td>
-        <td><span class="ws-badge ${tied?'ws-badge-ready':'ws-badge-pending'}"><span class="ws-dot"></span>${tied?'Reconciled':'Open'}</span></td>
-      </tr>`;}).join('')+
-    unmatched.map(p=>`<tr style="background:rgba(245,158,11,.03)">
-      <td style="font-weight:600">${p.c||p.a||'Unknown'}</td>
-      <td class="td-mono">—</td><td class="td-mono">${p.po||p.txId||'—'}</td>
-      <td class="td-amt" style="color:var(--am-t)">${$f(p.amt)}</td>
-      <td>—</td><td>—</td><td>—</td>
-      <td class="td-amt" style="color:var(--am-t)">${$f(p.amt)}</td>
-      <td><span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Unreconciled</span></td>
-    </tr>`).join('')+
+    matched.map(function(r){
+      var idx=RES.indexOf(r);
+      var vr=r.vr||0;var wo=r.writeOff||0;var bf=r.bankFee||0;
+      var netVar=vr-wo-bf;
+      var tied=Math.abs(netVar)<0.01;
+      // All three fields editable for every reconcile row
+      var vrField='<input type="number" step="0.01" value="'+(vr!==0?vr.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(vr!==0?'var(--am-t)':'var(--t1)')+'" oninput="RES['+idx+'].vr=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)!==0?\'var(--am-t)\':\'var(--t1)\';if(typeof saveToStorage===\'function\')saveToStorage();renderWsRecon();if(typeof updWorkflow===\'function\')updWorkflow();">';
+      var woField='<input type="number" step="0.01" min="0" value="'+(wo>0?wo.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(wo>0?'var(--am-t)':'var(--t1)')+'" oninput="RES['+idx+'].writeOff=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?\'var(--am-t)\':\'var(--t1)\';if(typeof saveToStorage===\'function\')saveToStorage();renderWsRecon();if(typeof updWorkflow===\'function\')updWorkflow();">';
+      var bfField='<input type="number" step="0.01" min="0" value="'+(bf>0?bf.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(bf>0?'var(--pu-t)':'var(--t1)')+'" oninput="RES['+idx+'].bankFee=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?\'var(--pu-t)\':\'var(--t1)\';if(typeof saveToStorage===\'function\')saveToStorage();renderWsRecon();if(typeof updWorkflow===\'function\')updWorkflow();">';
+      return '<tr>'+
+        '<td style="font-weight:600;color:var(--t1)">'+(r.c||'—')+'</td>'+
+        '<td class="td-mono">'+(r.i||'—')+'</td>'+
+        '<td class="td-mono">'+(r.po||'—')+'</td>'+
+        '<td class="td-amt">'+$f(r.oa||r.pd)+'</td>'+
+        '<td class="td-amt" style="color:var(--g-t)">'+$f(r.pd)+'</td>'+
+        '<td style="text-align:right;padding:4px 8px">'+vrField+'</td>'+
+        '<td style="text-align:right;padding:4px 8px">'+woField+'</td>'+
+        '<td style="text-align:right;padding:4px 8px">'+bfField+'</td>'+
+        '<td class="td-amt" style="color:'+(tied?'var(--g-t)':'var(--r-t)')+'">'+(tied?'Ties':$f(Math.abs(netVar))+(netVar<0?' CR':' DR'))+'</td>'+
+        '<td><span class="ws-badge '+(tied?'ws-badge-ready':'ws-badge-pending')+'"><span class="ws-dot"></span>'+(tied?'Reconciled':'Open')+'</span></td>'+
+      '</tr>';
+    }).join('')+
+    unmatched.map(function(p){return '<tr style="background:rgba(245,158,11,.03)">'+
+      '<td style="font-weight:600">'+(p.c||p.a||'Unknown')+'</td>'+
+      '<td class="td-mono">—</td><td class="td-mono">'+(p.po||p.txId||'—')+'</td>'+
+      '<td class="td-amt" style="color:var(--am-t)">'+$f(p.amt)+'</td>'+
+      '<td>—</td><td>—</td><td>—</td><td>—</td>'+
+      '<td class="td-amt" style="color:var(--am-t)">'+$f(p.amt)+'</td>'+
+      '<td><span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Unreconciled</span></td>'+
+    '</tr>';}).join('')+
     '</tbody></table>';
 }
 
@@ -5011,11 +5011,24 @@ function updWorkflow(){
     var openExc = (typeof EXC!=='undefined') ? EXC.filter(function(e){return e.s!=='Resolved'&&e.s!=='Resolved — rejected';}).length : 0;
     var approved = (typeof RES!=='undefined') ? RES.filter(function(r){return r.fromAlloc;}).length : 0;
     
+    // Reconciliation state — a RES entry is reconciled when variance ties out (vr - writeOff - bankFee = 0)
+    var approvedRows=(typeof RES!=='undefined')?RES.filter(function(r){return r.fromAlloc;}):[];
+    var unreconciled=approvedRows.filter(function(r){
+      var vr=r.vr||0, wo=r.writeOff||0, bf=r.bankFee||0;
+      return Math.abs(vr-wo-bf)>=0.01;
+    }).length;
+    var reconciled=approvedRows.length-unreconciled;
+    var allReconciled=approvedRows.length>0&&unreconciled===0;
+    // Exported state — a RES is "exported" if r.exported set
+    var exportedAll=approvedRows.length>0&&approvedRows.every(function(r){return r.exported;});
+    
     var currentStage='import', label='Waiting for import';
     if(!hasPay && !hasInv && openExc===0){ currentStage='import'; label='Waiting for import'; }
     else if(pendingReview>0){ currentStage='review'; label=pendingReview+' match'+(pendingReview===1?'':'es')+' awaiting review'; }
     else if(openExc>0){ currentStage='attention'; label=openExc+' item'+(openExc===1?'':'s')+' need attention'; }
-    else if(approved>0){ currentStage='export'; label=approved+' approved ready for export'; }
+    else if(approvedRows.length>0 && !allReconciled){ currentStage='reconcile'; label=unreconciled+' to reconcile'; }
+    else if(allReconciled && !exportedAll){ currentStage='export'; label=approvedRows.length+' reconciled — ready to export'; }
+    else if(exportedAll){ currentStage='reconcile'; label='All exported · workflow complete'; }
     else if(hasPay && hasInv && !hasMatches){ currentStage='match'; label='Ready for Auto Match'; }
     else if(hasPay||hasInv){ currentStage='match'; label='Ready for Auto Match'; }
     
@@ -5040,8 +5053,8 @@ function updWorkflow(){
         'match':{label:'Run Auto Match',show:hasPay&&hasInv,action:'match'},
         'review':{label:'Review matches',show:true,action:'review'},
         'attention':{label:'Resolve exceptions',show:true,action:'attention'},
-        'export':{label:'Export to ERP',show:true,action:'export'},
-        'reconcile':{label:'Reconcile',show:false}
+        'reconcile':{label: exportedAll?'Workflow complete':'Reconcile', show: !exportedAll, action:'reconcile'},
+        'export':{label: allReconciled?'Approve All & Export':'Export to ERP', show:true, action: allReconciled?'approve_all':'export'}
       };
       var cfg=ctaMap[currentStage]||{show:false};
       if(cfg.show){
@@ -5066,9 +5079,41 @@ function wfCtaClick(){
   } else if(action==='attention'){
     sp('cash-app');
     setTimeout(function(){setCaTab('exc',document.getElementById('ca-tab-exc'));},80);
+  } else if(action==='reconcile'){
+    // Item 2: After all payments reviewed → Reconcile tab
+    sp('cash-app');
+    setTimeout(function(){setCaTab('recon',document.getElementById('ca-tab-recon'));},80);
+  } else if(action==='approve_all'){
+    // Item 4: After all reconciled → Approve All → Posting Export
+    if(typeof approveAllReconciled==='function'){approveAllReconciled();}
+    else{sp('posting');}
   } else if(action==='export'){
     sp('posting');
   }
+}
+
+// ── Item 4: Approve All Reconciled — marks all reconciled RES as ready-to-post, navigates to Export
+function approveAllReconciled(){
+  if(typeof RES==='undefined'||!RES.length){
+    if(typeof toast==='function')toast('No payments to approve','warn');
+    return;
+  }
+  var reconciled=RES.filter(function(r){
+    if(!r.fromAlloc)return false;
+    var vr=r.vr||0, wo=r.writeOff||0, bf=r.bankFee||0;
+    return Math.abs(vr-wo-bf)<0.01;
+  });
+  if(!reconciled.length){
+    if(typeof toast==='function')toast('Nothing reconciled yet — adjust variance, write-off, or bank fee first','warn');
+    return;
+  }
+  reconciled.forEach(function(r){r.approvedForExport=true;});
+  try{saveToStorage();}catch(e){}
+  try{if(typeof addAudit==='function')addAudit('Approve all reconciled', reconciled.length+' payments approved for posting');}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+  if(typeof toast==='function')toast(reconciled.length+' payment'+(reconciled.length===1?'':'s')+' approved — opening Posting Export');
+  setTimeout(function(){sp('posting');},250);
 }
 
 function updDash(){
@@ -9226,39 +9271,8 @@ function filterFbl5n(){
 }
 
 
-function _fbl5nBuildRow(v){
-  var matched=RES.find(function(r){ return r.i===v.i; });
-  var applied=matched?matched.pd:0;
-  var balance=v.amt-applied;
-  var ENG_ROW=(typeof ENG_ROWS!=='undefined')?ENG_ROWS.find(function(r){ return r.inv&&r.inv.i===v.i; }):null;
-  var conf=ENG_ROW?ENG_ROW.conf:(ENG_PAY&&typeof engGetConfidence==='function'?engGetConfidence(v,ENG_PAY):0);
-  var status=v.s||'Open';
-  var sb=v.s==='Exact'||v.s==='Applied'?'<span class="badge badge-g">'+status+'</span>':
-          v.s==='Short pay'?'<span class="badge badge-am">'+status+'</span>':
-          v.s==='Overpay'?'<span class="badge badge-r">'+status+'</span>':
-          '<span style="color:var(--t3);font-size:12px">Open</span>';
-  var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>':'\u2014';
-  var sel=ENG_ROW&&ENG_ROW.selected;
-  var vi=v.i||'';
-  return '<tr class="'+(sel?'selected-inv':'')+'" onclick="fbl5nRowClick(\''+vi+'\')" style="cursor:pointer">'+
-    '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+vi+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
-    '<td class="td-mono" style="font-size:11.5px">'+(v.a||'')+'</td>'+
-    '<td style="font-weight:600">'+(v.c||'')+'</td>'+
-    '<td class="td-mono" style="color:var(--pd)">'+vi+'</td>'+
-    '<td class="td-mono">'+(typeof fmtDate==='function'?fmtDate(v.dt2):(v.dt2||''))+'</td>'+
-    '<td class="td-mono" style="color:'+(v.due&&new Date(v.due+'T00:00:00')<new Date()?'var(--r-t)':'')+'">'+(typeof fmtDate==='function'?fmtDate(v.due):(v.due||''))+'</td>'+
-    '<td>'+(typeof agingChip==='function'?agingChip(v.due):'')+'</td>'+
-    '<td class="td-mono" style="font-size:11.5px">'+(v.po||'\u2014')+'</td>'+
-    '<td class="td-mono" style="font-size:11.5px">'+(v.so||'\u2014')+'</td>'+
-    '<td class="td-mono" style="font-size:11.5px">'+(v.d||'\u2014')+'</td>'+
-    '<td class="td-num">'+(typeof $f==='function'?'$'+$f(v.amt):'$'+v.amt)+'</td>'+
-    '<td class="td-num" style="color:'+(balance<v.amt*0.5?'var(--am-t)':'')+'">'+(typeof $f==='function'?'$'+$f(Math.max(0,balance)):'')+'</td>'+
-    '<td class="td-num" style="color:var(--g-t)">'+(applied>0?(typeof $f==='function'?'$'+$f(applied):'$'+applied):'\u2014')+'</td>'+
-    '<td>'+sb+'</td>'+
-    '<td style="text-align:center">'+cd+'</td>'+
-    '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(\''+vi+'\')">Apply</button></td>'+
-  '</tr>';
-}
+
+// (duplicate _fbl5nBuildRow removed - was overriding correct version with old column layout)
 
 function _fbl5nRenderPage(tbodyId,startIdx){
   var tbody=document.getElementById(tbodyId);if(!tbody)return;
