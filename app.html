@@ -3176,11 +3176,10 @@ body.app-active #app {
                       <th onclick="sortFbl5n(9)" style="text-align:right">Balance<span class="si2"></span></th>
                       <th onclick="sortFbl5n(10)">Status<span class="si2"></span></th>
                       <th style="text-align:center">Match %</th>
-                      <th>Apply</th>
                     </tr>
                   </thead>
                   <tbody id="ca-open-items-body">
-                    <tr><td colspan="14"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
+                    <tr><td colspan="13"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3221,7 +3220,7 @@ body.app-active #app {
                   <button class="btn btn-outline btn-sm" onclick="exportExc()">Export CSV</button>
                 </div>
               </div>
-              <div id="ws-exc-list"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div></div>
+              <div id="ws-exc-list"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></div>
             </div><!-- end exc-top-half -->
 
             <!-- BOTTOM: FBL5N view for exception context -->
@@ -3378,7 +3377,7 @@ body.app-active #app {
                 </tr>
               </thead>
               <tbody id="exc-tb">
-                <tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div></td></tr>
+                <tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp(&apos;cash-app&apos;);setTimeout(function(){setCaTab(&apos;recon&apos;,document.getElementById(&apos;ca-tab-recon&apos;));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -4071,6 +4070,16 @@ body.app-active #app {
 <script>
 console.log('AR Match Pro v60736518 — fixed build loading');
 // ── Phase 2 polish additions ──
+
+// ── Item 2 helper: navigate to Reconcile tab from Needs Attention empty state ──
+function excEmptyGoReconcile(){
+  try{sp('cash-app');}catch(e){}
+  setTimeout(function(){
+    var tab=document.getElementById('ca-tab-recon');
+    if(typeof setCaTab==='function'&&tab){setCaTab('recon',tab);}
+  },80);
+}
+
 function clearAllExceptions(){
   if(!EXC.length){toast('No exceptions to clear');return;}
   showConfirm('Clear all '+EXC.length+' exception records?\n\nThis cannot be undone.',function(){EXC=[];saveToStorage();if(typeof renderWsExcPremium==='function')renderWsExcPremium();rExc();updDash();updTop();addAudit('Cleared exceptions');toast('Exceptions cleared');});
@@ -4296,44 +4305,107 @@ function renderWsExcPremium(){
 function renderWsReview(){
   const list=document.getElementById('review-list');const ct=document.getElementById('review-ct');if(!list)return;
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
-  if(ct)ct.textContent=ap.length+' matched record'+(ap.length!==1?'s':'');
-  if(!ap.length){
-    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Auto match or approve allocations from the To Be Matched tab to populate the review queue.</div><div class="empty-btn"><button class="btn btn-outline btn-sm" onclick="setCaTab('match',document.getElementById('ca-tab-match'))">← Back to matching</button></div></div>`;
-    return;
+  
+  // ── Item 6: Group RES entries by payment ──────────────────────────
+  // Grouping key: r.d (transaction id, often payment.txId) is most reliable.
+  // Fallback: customer + total amount when d is missing.
+  function _groupKey(r){
+    if(r.d && r.d.length) return 'tx:'+r.d;
+    return 'cu:'+(r.c||'')+':'+(r.a||'');
   }
+  const groupsMap={};
+  const groupOrder=[];
+  ap.forEach(function(r,i){
+    const k=_groupKey(r);
+    if(!groupsMap[k]){
+      groupsMap[k]={key:k, items:[], idxs:[], c:r.c||'', a:r.a||'', d:r.d||''};
+      groupOrder.push(k);
+    }
+    groupsMap[k].items.push(r);
+    groupsMap[k].idxs.push(RES.indexOf(r));
+  });
+  const groups = groupOrder.map(k=>groupsMap[k]);
+  
+  if(ct)ct.textContent=ap.length+' allocation'+(ap.length!==1?'s':'')+' across '+groups.length+' payment'+(groups.length!==1?'s':'');
+  
+  if(!ap.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records to review</div><div class="empty-s">${(typeof PAY!=='undefined'&&PAY.length>0&&typeof INV!=='undefined'&&INV.length>0)?'All allocations approved. Ready for the next step.':'Import payments and invoices to begin.'}</div>${(typeof PAY!=='undefined'&&PAY.length>0&&typeof INV!=='undefined'&&INV.length>0)?`<div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp('cash-app');setTimeout(function(){setCaTab('recon',document.getElementById('ca-tab-recon'));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div>`:''}</div>`;return;
+  }
+  
   const stColor={Exact:'var(--g)','Subset exact':'var(--p)','Short pay':'var(--am)',Overpay:'var(--am)',Resolved:'var(--g)','Amount match':'var(--pu)',Partial:'var(--am)'};
   const stBadge={Exact:'badge-g','Subset exact':'badge-p','Short pay':'badge-am',Overpay:'badge-am',Resolved:'badge-g','Amount match':'badge-pu',Partial:'badge-am'};
   const wsBadge={Exact:'Ready for Export','Subset exact':'Ready for Export',Resolved:'Awaiting Export','Amount match':'Review Recommended','Short pay':'Requires Review',Overpay:'Requires Review'};
-  list.innerHTML=ap.map((r,i)=>{
-    const conf=r.st==='Exact'?'100%':r.st==='Subset exact'?'98%':r.st==='Amount match'?'72%':r.st==='Short pay'?'61%':'—';
-    const isExported=r.fromAlloc||r.fromExc;
-    const ws=wsBadge[r.st]||'Review';
-    const wsClass=r.st==='Exact'||r.st==='Resolved'||r.st==='Subset exact'?'ws-badge-ready':r.st==='Short pay'||r.st==='Overpay'?'ws-badge-review':'ws-badge-pending';
-    return`<div class="review-item" onclick="reviewItemInlineToggle(event,this)">
-      <div style="width:4px;height:100%;min-height:40px;border-radius:2px;background:${stColor[r.st]||'var(--p)'};flex-shrink:0;align-self:stretch;margin:-14px 0;border-radius:0"></div>
-      <div style="flex:1;min-width:0;margin-left:4px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-          <div style="font-size:13.5px;font-weight:800;color:var(--t1)">${r.c||'—'}</div>
-          <span class="badge ${stBadge[r.st]||'badge-gray'}">${r.st}</span>
-          <span class="ws-badge ${wsClass}" style="font-size:10.5px;padding:2px 8px"><span class="ws-dot"></span>${ws}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:14px;font-size:12px;color:var(--t2)">
-          <span>Acct: <strong style="color:var(--t1)">${r.a||'—'}</strong></span>
-          <span>Inv: <strong style="color:var(--pd);font-family:var(--mono)">${r.i||'—'}</strong></span>
-          ${r.po?`<span>PO: ${r.po}</span>`:''}
-          ${r.vr&&Math.abs(r.vr)>0.01?`<span style="color:var(--am-t)">Var: ${$f(Math.abs(r.vr))}</span>`:''}
-        </div>
-        ${_matchReasonsHtml(r)}
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">${$f(r.pd)}</div>
-        <div style="font-size:11px;color:var(--t3)">of ${$f(r.oa)}</div>
-        <div style="font-size:11.5px;font-weight:700;color:${conf==='100%'?'var(--g-t)':'var(--am-t)'}">Conf: ${conf}</div>
-      </div>
-      <div style="flex-shrink:0;margin-left:12px" onclick="event.stopPropagation()">
-        ${isExported?`<span class="badge badge-exported" style="font-size:10px">Exported</span>`:`<button class="btn btn-outline btn-xs" onclick="reopenResultItem(${i})">↩ Reopen</button>`}
-      </div>
-    </div>`;
+  
+  list.innerHTML = groups.map(function(g){
+    var items=g.items;
+    var idxs=g.idxs;
+    var isMulti = items.length > 1;
+    // Aggregate stats
+    var totalPaid=0, totalOrig=0;
+    items.forEach(function(r){totalPaid+=(r.pd||0);totalOrig+=(r.oa||0);});
+    // Take "worst" status across items for header badge
+    var statusPriority=['Short pay','Overpay','Amount match','Subset exact','Exact','Resolved'];
+    var headerStatus=items[0].st||'Exact';
+    statusPriority.forEach(function(s){if(items.some(function(r){return r.st===s;}))headerStatus=s;});
+    var conf = headerStatus==='Exact'?'100%':headerStatus==='Subset exact'?'98%':headerStatus==='Amount match'?'72%':headerStatus==='Short pay'?'61%':'—';
+    
+    // Approval state — Item 5
+    // A group is "approved" if every item has r.approved=true (user explicitly approved)
+    var allApproved = items.every(function(r){return r.approved===true||r.fromAlloc===true;});
+    var ws = wsBadge[headerStatus]||'Review';
+    var wsClass = headerStatus==='Exact'||headerStatus==='Resolved'||headerStatus==='Subset exact'?'ws-badge-ready':headerStatus==='Short pay'||headerStatus==='Overpay'?'ws-badge-review':'ws-badge-pending';
+    
+    // Build header row
+    var headerHtml = '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border-bottom:'+(isMulti?'1px solid var(--bdr)':'none')+'">'+
+      '<div style="width:4px;height:44px;border-radius:2px;background:'+(stColor[headerStatus]||'var(--p)')+';flex-shrink:0"></div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">'+
+          '<div style="font-size:13.5px;font-weight:800;color:var(--t1)">'+(g.c||'—')+'</div>'+
+          '<span class="badge '+(stBadge[headerStatus]||'badge-gray')+'">'+headerStatus+'</span>'+
+          '<span class="ws-badge '+wsClass+'" style="font-size:10.5px;padding:2px 8px"><span class="ws-dot"></span>'+ws+'</span>'+
+          (isMulti?'<span style="font-size:11px;color:var(--pd);font-weight:700;background:rgba(99,102,241,.10);padding:2px 8px;border-radius:10px">'+items.length+' invoices</span>':'')+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:14px;font-size:12px;color:var(--t2);flex-wrap:wrap">'+
+          '<span>Acct: <strong style="color:var(--t1)">'+(g.a||'—')+'</strong></span>'+
+          (g.d?'<span>Ref: <strong style="color:var(--pd);font-family:var(--mono)">'+g.d+'</strong></span>':'')+
+          (!isMulti && items[0].po?'<span>PO: '+items[0].po+'</span>':'')+
+        '</div>'+
+        (_matchReasonsHtml(items[0])||'')+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0">'+
+        '<div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">'+$f(totalPaid)+'</div>'+
+        '<div style="font-size:11px;color:var(--t3)">of '+$f(totalOrig)+'</div>'+
+        '<div style="font-size:11.5px;font-weight:700;color:'+(conf==='100%'?'var(--g-t)':'var(--am-t)')+'">Conf: '+conf+'</div>'+
+      '</div>'+
+      // Item 5: Approve + Revert buttons
+      '<div style="flex-shrink:0;margin-left:12px;display:flex;gap:6px" onclick="event.stopPropagation()">'+
+        (!allApproved
+          ? '<button class="btn btn-p btn-xs" onclick="approveResultGroup('+JSON.stringify(idxs).replace(/"/g,'&quot;')+')">✓ Approve</button>'
+          : '<span class="badge badge-g" style="font-size:10px;padding:4px 10px;font-weight:700">✓ Approved</span>')+
+        '<button class="btn btn-outline btn-xs" onclick="revertResultGroup('+JSON.stringify(idxs).replace(/"/g,'&quot;')+')">↩ Revert</button>'+
+      '</div>'+
+    '</div>';
+    
+    // Build per-invoice rows for multi-invoice groups
+    var rowsHtml = '';
+    if(isMulti){
+      rowsHtml = items.map(function(r, ii){
+        return '<div style="display:flex;align-items:center;gap:14px;padding:8px 16px 8px 36px;font-size:12.5px;border-bottom:'+(ii===items.length-1?'none':'1px solid var(--bdr-subtle, rgba(0,0,0,.04))')+';background:var(--surface1)">'+
+          '<div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px;color:var(--t2)">'+
+            '<span style="font-family:var(--mono);color:var(--pd);font-weight:600">'+(r.i||'—')+'</span>'+
+            (r.po?'<span style="font-size:11px">PO '+r.po+'</span>':'')+
+            (r.so?'<span style="font-size:11px">SO '+r.so+'</span>':'')+
+            (r.vr&&Math.abs(r.vr)>0.01?'<span style="font-size:11px;color:var(--am-t)">Var '+$f(Math.abs(r.vr))+'</span>':'')+
+          '</div>'+
+          '<div style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--t1);font-weight:600">'+$f(r.pd)+'</div>'+
+          '<div style="text-align:right;color:var(--t3);font-size:11px">of '+$f(r.oa)+'</div>'+
+        '</div>';
+      }).join('');
+    }
+    
+    return '<div class="review-item-group" style="margin-bottom:8px;border:1px solid var(--bdr);border-radius:10px;overflow:hidden;background:var(--surface)">'+
+      headerHtml + rowsHtml +
+    '</div>';
   }).join('');
 }
 
@@ -4345,14 +4417,16 @@ function renderWsRecon(){
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
-  // Count fully reconciled rows (vr - wo - bf = 0)
   const reconciledCt=matched.filter(function(r){var v=r.vr||0,w=r.writeOff||0,b=r.bankFee||0;return Math.abs(v-w-b)<0.01;}).length;
   if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${reconciledCt}</strong> of <strong style="color:var(--t1)">${matched.length}</strong> reconciled · ${$fk(totalMatched)} of ${$fk(totalPay)} · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}%</span>`;
   if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import bank file and auto match to reconcile.</div></div>';return;}
-  // Item 3: variance, write-off, bank fee all editable
-  // Style helper for inputs
-  var inputStyle='width:84px;text-align:right;padding:4px 8px;border:1.5px solid var(--bdr);border-radius:6px;background:var(--surface2);color:var(--t1);font-family:var(--mono);font-size:12.5px;outline:none';
-  list.innerHTML=`<table class="tbl" style="width:100%">
+  
+  // Item 7 FIX: inputs use onchange (not oninput) for table re-render,
+  // and oninput only updates RES[idx] field + recalculates Net Var span.
+  // This prevents losing keystrokes mid-typing.
+  var inputStyle='width:88px;text-align:right;padding:4px 8px;border:1.5px solid var(--bdr);border-radius:6px;background:var(--surface2);color:var(--t1);font-family:var(--mono);font-size:12.5px;outline:none';
+  
+  list.innerHTML=`<table class="tbl recon-tbl" style="width:100%">
     <thead><tr>
       <th>Customer</th><th>Invoice #</th><th>PO #</th>
       <th style="text-align:right">Payment</th><th style="text-align:right">Applied</th>
@@ -4365,11 +4439,12 @@ function renderWsRecon(){
       var vr=r.vr||0;var wo=r.writeOff||0;var bf=r.bankFee||0;
       var netVar=vr-wo-bf;
       var tied=Math.abs(netVar)<0.01;
-      // All three fields editable for every reconcile row
-      var vrField='<input type="number" step="0.01" value="'+(vr!==0?vr.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(vr!==0?'var(--am-t)':'var(--t1)')+'" oninput="RES['+idx+'].vr=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)!==0?\'var(--am-t)\':\'var(--t1)\';if(typeof saveToStorage===\'function\')saveToStorage();renderWsRecon();if(typeof updWorkflow===\'function\')updWorkflow();">';
-      var woField='<input type="number" step="0.01" min="0" value="'+(wo>0?wo.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(wo>0?'var(--am-t)':'var(--t1)')+'" oninput="RES['+idx+'].writeOff=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?\'var(--am-t)\':\'var(--t1)\';if(typeof saveToStorage===\'function\')saveToStorage();renderWsRecon();if(typeof updWorkflow===\'function\')updWorkflow();">';
-      var bfField='<input type="number" step="0.01" min="0" value="'+(bf>0?bf.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(bf>0?'var(--pu-t)':'var(--t1)')+'" oninput="RES['+idx+'].bankFee=parseFloat(this.value)||0;this.style.color=parseFloat(this.value)>0?\'var(--pu-t)\':\'var(--t1)\';if(typeof saveToStorage===\'function\')saveToStorage();renderWsRecon();if(typeof updWorkflow===\'function\')updWorkflow();">';
-      return '<tr>'+
+      // Item 7: onchange triggers full re-render (only on blur/Enter)
+      // oninput updates RES[idx] AND the Net Var span only (no re-render)
+      var vrField='<input type="number" step="0.01" value="'+(vr!==0?vr.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(vr!==0?'var(--am-t)':'var(--t1)')+'" oninput="reconLiveUpdate('+idx+',\'vr\',this.value)" onchange="reconCommit('+idx+')" data-recon-field="vr" data-recon-idx="'+idx+'">';
+      var woField='<input type="number" step="0.01" min="0" value="'+(wo>0?wo.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(wo>0?'var(--am-t)':'var(--t1)')+'" oninput="reconLiveUpdate('+idx+',\'writeOff\',this.value)" onchange="reconCommit('+idx+')" data-recon-field="writeOff" data-recon-idx="'+idx+'">';
+      var bfField='<input type="number" step="0.01" min="0" value="'+(bf>0?bf.toFixed(2):'')+'" placeholder="0.00" style="'+inputStyle+';color:'+(bf>0?'var(--pu-t)':'var(--t1)')+'" oninput="reconLiveUpdate('+idx+',\'bankFee\',this.value)" onchange="reconCommit('+idx+')" data-recon-field="bankFee" data-recon-idx="'+idx+'">';
+      return '<tr data-recon-row="'+idx+'">'+
         '<td style="font-weight:600;color:var(--t1)">'+(r.c||'—')+'</td>'+
         '<td class="td-mono">'+(r.i||'—')+'</td>'+
         '<td class="td-mono">'+(r.po||'—')+'</td>'+
@@ -4378,8 +4453,8 @@ function renderWsRecon(){
         '<td style="text-align:right;padding:4px 8px">'+vrField+'</td>'+
         '<td style="text-align:right;padding:4px 8px">'+woField+'</td>'+
         '<td style="text-align:right;padding:4px 8px">'+bfField+'</td>'+
-        '<td class="td-amt" style="color:'+(tied?'var(--g-t)':'var(--r-t)')+'">'+(tied?'Ties':$f(Math.abs(netVar))+(netVar<0?' CR':' DR'))+'</td>'+
-        '<td><span class="ws-badge '+(tied?'ws-badge-ready':'ws-badge-pending')+'"><span class="ws-dot"></span>'+(tied?'Reconciled':'Open')+'</span></td>'+
+        '<td class="td-amt recon-netvar" data-recon-netvar="'+idx+'" style="color:'+(tied?'var(--g-t)':'var(--r-t)')+'">'+(tied?'Ties':$f(Math.abs(netVar))+(netVar<0?' CR':' DR'))+'</td>'+
+        '<td><span class="ws-badge recon-status '+(tied?'ws-badge-ready':'ws-badge-pending')+'" data-recon-status="'+idx+'"><span class="ws-dot"></span>'+(tied?'Reconciled':'Open')+'</span></td>'+
       '</tr>';
     }).join('')+
     unmatched.map(function(p){return '<tr style="background:rgba(245,158,11,.03)">'+
@@ -4391,6 +4466,56 @@ function renderWsRecon(){
       '<td><span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Unreconciled</span></td>'+
     '</tr>';}).join('')+
     '</tbody></table>';
+}
+
+// ── Item 7: reconcile live-update (no table re-render during typing) ──────
+function reconLiveUpdate(idx, field, valStr){
+  // Update RES silently; recompute Net Var span only.
+  var r = RES[idx];
+  if(!r) return;
+  // Allow empty input → 0
+  var v = parseFloat(valStr);
+  if(isNaN(v)) v = 0;
+  r[field] = v;
+  // Update colour of THIS input live
+  var inputs = document.querySelectorAll('input[data-recon-idx="'+idx+'"][data-recon-field="'+field+'"]');
+  inputs.forEach(function(inp){
+    if(field==='bankFee') inp.style.color = v>0?'var(--pu-t)':'var(--t1)';
+    else inp.style.color = v!==0?'var(--am-t)':'var(--t1)';
+  });
+  // Recalculate Net Var span
+  var vr = r.vr||0, wo = r.writeOff||0, bf = r.bankFee||0;
+  var netVar = vr - wo - bf;
+  var tied = Math.abs(netVar) < 0.01;
+  var nvCell = document.querySelector('td.recon-netvar[data-recon-netvar="'+idx+'"]');
+  if(nvCell){
+    nvCell.style.color = tied?'var(--g-t)':'var(--r-t)';
+    nvCell.textContent = tied?'Ties':$f(Math.abs(netVar))+(netVar<0?' CR':' DR');
+  }
+  // Update status badge
+  var stBadge = document.querySelector('.recon-status[data-recon-status="'+idx+'"]');
+  if(stBadge){
+    stBadge.classList.remove('ws-badge-ready','ws-badge-pending');
+    stBadge.classList.add(tied?'ws-badge-ready':'ws-badge-pending');
+    // First inner span is the dot, keep it
+    var dotHtml = '<span class="ws-dot"></span>';
+    stBadge.innerHTML = dotHtml + (tied?'Reconciled':'Open');
+  }
+}
+function reconCommit(idx){
+  // Called on input blur/Enter — persist + update workflow + summary
+  try{if(typeof saveToStorage==='function')saveToStorage();}catch(e){}
+  try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+  // Recompute summary
+  var summary=document.getElementById('recon-summary');
+  if(summary){
+    var matched=RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc;});
+    var totalPay=PAY.reduce(function(s,p){return s+p.amt;},0);
+    var totalMatched=matched.reduce(function(s,r){return s+r.pd;},0);
+    var reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
+    var reconciledCt=matched.filter(function(r){var v=r.vr||0,w=r.writeOff||0,b=r.bankFee||0;return Math.abs(v-w-b)<0.01;}).length;
+    summary.innerHTML='<strong style="color:var(--t1)">'+reconciledCt+'</strong> of <strong style="color:var(--t1)">'+matched.length+'</strong> reconciled · '+$fk(totalMatched)+' of '+$fk(totalPay)+' · <span style="color:'+(reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)')+'">'+reconPct+'%</span>';
+  }
 }
 
 // ── Animate KPI updates ──
@@ -5883,8 +6008,8 @@ function rExc(){
     return true;
   });
   if(ec)ec.textContent=shown.length+' exception'+(shown.length!==1?'s':'');
-  if(!EXC.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div></td></tr>';return;}
-  if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">🎉</div><div class="empty-t">All exceptions resolved</div></div></td></tr>';return;}
+  if(!EXC.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>';return;}
+  if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">🎉</div><div class="empty-t">All exceptions resolved</div><div class="empty-s">Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp(&apos;cash-app&apos;);setTimeout(function(){setCaTab(&apos;recon&apos;,document.getElementById(&apos;ca-tab-recon&apos;));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>';return;}
   tb.innerHTML=EXC.map((ex,idx)=>{
     if(ex.s==='Resolved'||ex.s==='Resolved — rejected')return'';
     if(tval&&ex.type!==tval)return'';
@@ -7503,6 +7628,54 @@ function _legacy_renderWsReview(){
 }
 
 function reviewItemClick(idx){const r=RES[idx];if(!r)return;openCustomerDrawerForCustomer(r.c,r.a);}
+
+// ── Items 5+6: Approve/Revert group of RES entries (one payment, multiple invoices) ──
+function approveResultGroup(idxs){
+  if(!Array.isArray(idxs)||!idxs.length)return;
+  var n=0;
+  idxs.sort(function(a,b){return b-a;}).forEach(function(i){
+    var r=RES[i];
+    if(r){r.approved=true;r.fromAlloc=true;n++;}
+  });
+  try{saveToStorage();}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+  try{updDash();updTop();}catch(e){}
+  try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+  try{addAudit('Approved allocations',n+' invoice'+(n===1?'':'s'));}catch(e){}
+  if(typeof toast==='function')toast('Approved '+n+' allocation'+(n===1?'':'s'));
+  renderWsReview();
+}
+function revertResultGroup(idxs){
+  if(!Array.isArray(idxs)||!idxs.length)return;
+  // Sort descending so splices don't mess up subsequent indices
+  var sortedIdxs=idxs.slice().sort(function(a,b){return b-a;});
+  var n=0;
+  var removed=[];
+  sortedIdxs.forEach(function(i){
+    var r=RES[i];
+    if(r){
+      removed.push(r);
+      var inv=INV.find(function(v){return v.i===r.i;});
+      if(inv)inv.s='';
+      RES.splice(i,1);
+      n++;
+    }
+  });
+  try{saveToStorage();}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+  try{updDash();updTop();}catch(e){}
+  try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+  try{addAudit('Allocations reverted',n+' invoice'+(n===1?'':'s'));}catch(e){}
+  if(typeof toast==='function')toast('Reverted '+n+' allocation'+(n===1?'':'s'));
+  renderWsReview();
+}
+// Legacy alias - approve a single RES entry by index
+function approveResultItem(idx){
+  approveResultGroup([idx]);
+}
+
 function reopenResultItem(idx){
   const r=RES[idx];if(!r)return;
   // confirm replaced by showConfirm
@@ -7533,7 +7706,7 @@ function renderWsExc(){
   if(tval)items=items.filter(ex=>ex.type===tval);
   if(ct)ct.textContent=items.length+(isResolved?' resolved':' exception'+(items.length!==1?'s':''));
   if(!items.length){
-    list.innerHTML=isResolved?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div>':'<div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">Auto match to detect issues.</div></div>';
+    list.innerHTML=isResolved?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div>':'<div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div>';
     return;
   }
   const POST_D=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
@@ -9119,8 +9292,7 @@ function _fbl5nBuildRow(v){
     '<td class="td-num" style="color:'+(balance<v.amt*0.5?'var(--am-t)':'')+'">'+(typeof $f==='function'?'$'+$f(Math.max(0,balance)):'')+'</td>'+
     '<td>'+sb+'</td>'+
     '<td style="text-align:center">'+cd+'</td>'+
-    '<td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();fbl5nApplyRow(\''+vi+'\')" style="white-space:nowrap">Apply</button></td>'+
-  '</tr>';
+      '</tr>';
 }
 
 function _fbl5nRenderPage(tbodyId,startIdx){
@@ -9130,12 +9302,12 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   var rows=[];for(var ri=startIdx;ri<end;ri++){rows.push(_fbl5nBuildRow(invs[ri]));}
   var footer='';
   if(end<invs.length){
-    footer='<tr id="fbl5n-load-more"><td colspan="14" style="text-align:center;padding:12px">'+
+    footer='<tr id="fbl5n-load-more"><td colspan="13" style="text-align:center;padding:12px">'+
       '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' matching open items \u2014 refine search or load more</span> '+
       '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
     '</td></tr>';
   } else if(invs.length>_fbl5nPageSize){
-    footer='<tr><td colspan="14" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
+    footer='<tr><td colspan="13" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
   }
   if(startIdx===0){tbody.innerHTML=rows.join('')+footer;}
   else{var old=document.getElementById('fbl5n-load-more');if(old)old.remove();tbody.insertAdjacentHTML('beforeend',rows.join('')+footer);}
@@ -9179,7 +9351,7 @@ function _fbl5nApplyTextFilter(tbodyId, forceReset){
   var tbody=document.getElementById(tbodyId||'ca-open-items-body');
   if(!tbody){console.warn('[fbl5nFilter] tbody not found');return;}
   if(!matched.length){
-    tbody.innerHTML='<tr><td colspan="14"><div class="empty" style="padding:16px">'+
+    tbody.innerHTML='<tr><td colspan="13"><div class="empty" style="padding:16px">'+
       '<div class="empty-t">No open items found</div>'+
       '<div class="empty-s">Try account number, customer name, invoice #, PO, or sales order.</div>'+
     '</div></td></tr>';
@@ -9256,7 +9428,7 @@ function caOpenSearch(q){
     var tbody=document.getElementById('ca-open-items-body');
     if(!tbody)return;
     if(!matched.length){
-      tbody.innerHTML='<tr><td colspan="14"><div class="empty" style="padding:16px"><div class="empty-t">No open items found</div><div class="empty-s">Try account number or customer name.</div></div></td></tr>';
+      tbody.innerHTML='<tr><td colspan="13"><div class="empty" style="padding:16px"><div class="empty-t">No open items found</div><div class="empty-s">Try account number or customer name.</div></div></td></tr>';
       return;
     }
     if(typeof _fbl5nRenderPage==='function')_fbl5nRenderPage('ca-open-items-body',0);
@@ -9282,12 +9454,12 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   for(var ri=startIdx;ri<end;ri++){rows.push(_fbl5nBuildRow(invs[ri]));}
   var footer='';
   if(end<invs.length){
-    footer='<tr id="fbl5n-load-more"><td colspan="14" style="text-align:center;padding:12px">'+
+    footer='<tr id="fbl5n-load-more"><td colspan="13" style="text-align:center;padding:12px">'+
       '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' open items</span> '+
       '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
     '</td></tr>';
   } else if(invs.length>_fbl5nPageSize){
-    footer='<tr><td colspan="14" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
+    footer='<tr><td colspan="13" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
   }
   if(startIdx===0){
     tbody.innerHTML=rows.join('')+footer;
