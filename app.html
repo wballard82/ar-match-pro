@@ -2213,6 +2213,29 @@ body.app-active #app {
   overflow-y: auto;
   max-height: 100%;
 }
+
+/* ── Item 9: Overflow menu (utility actions) ─────────────────── */
+.ov-menu-wrap { position:relative; display:inline-block; }
+.ov-menu-btn {
+  background:transparent; border:1px solid var(--bdr); border-radius:8px;
+  padding:6px 10px; cursor:pointer; color:var(--t2); font-size:13px;
+  font-weight:700; line-height:1; transition:all .15s;
+}
+.ov-menu-btn:hover { background:var(--surface2); color:var(--t1); }
+.ov-menu-drop {
+  position:absolute; top:calc(100% + 4px); right:0;
+  background:var(--surface); border:1px solid var(--bdr2); border-radius:10px;
+  box-shadow:var(--shadow-md); min-width:180px; z-index:30;
+  display:none; padding:4px 0;
+}
+.ov-menu-drop.open { display:block; }
+.ov-menu-item {
+  display:flex; align-items:center; gap:10px; padding:8px 14px;
+  cursor:pointer; font-size:12.5px; color:var(--t1);
+  white-space:nowrap; transition:background .12s;
+}
+.ov-menu-item:hover { background:var(--surface2); }
+.ov-menu-item-icon { color:var(--t3); font-size:13px; }
 </style>
 </head>
 <body>
@@ -2566,7 +2589,8 @@ body.app-active #app {
   </nav>
 
   <!-- KPI STRIP — Executive-level metrics -->
-  <div class="kpi-strip">
+  <div class="kpi-strip" id="kpi-strip-primary">
+    <!-- ── Primary KPIs (5) ── -->
     <div class="kpi-card kpi-green" onclick="if(checkFeature('reconcile')){setCaTab('recon',document.getElementById('ca-tab-recon'));sp('cash-app');}" style="cursor:pointer;min-width:150px">
       <div class="kpi-card-label">
         <div class="kpi-dot kpi-dot-green"></div>
@@ -2577,15 +2601,6 @@ body.app-active #app {
         <span class="kpi-trend-up" id="kpi-matched-trend">↑</span>
         <span id="kpi-matched-sub">Auto-applied today</span>
       </div>
-      <div class="kpi-sparkline" id="kpi-matched-spark" style="color:var(--g-t)">
-        <div class="kpi-spark-bar" style="height:40%"></div>
-        <div class="kpi-spark-bar" style="height:55%"></div>
-        <div class="kpi-spark-bar" style="height:45%"></div>
-        <div class="kpi-spark-bar" style="height:70%"></div>
-        <div class="kpi-spark-bar" style="height:60%"></div>
-        <div class="kpi-spark-bar" style="height:85%"></div>
-        <div class="kpi-spark-bar" style="height:100%"></div>
-      </div>
     </div>
     <div class="kpi-card kpi-blue" onclick="sp('reporting')" style="cursor:pointer;min-width:130px">
       <div class="kpi-card-label">
@@ -2594,15 +2609,6 @@ body.app-active #app {
       </div>
       <div class="kpi-card-val blue" id="kpi-rate">—</div>
       <div class="kpi-card-sub" id="kpi-rate-sub">Auto-Match Rate</div>
-      <div class="kpi-sparkline" id="kpi-rate-spark" style="color:var(--pd)">
-        <div class="kpi-spark-bar" style="height:60%"></div>
-        <div class="kpi-spark-bar" style="height:72%"></div>
-        <div class="kpi-spark-bar" style="height:68%"></div>
-        <div class="kpi-spark-bar" style="height:80%"></div>
-        <div class="kpi-spark-bar" style="height:75%"></div>
-        <div class="kpi-spark-bar" style="height:90%"></div>
-        <div class="kpi-spark-bar" style="height:95%"></div>
-      </div>
     </div>
     <div class="kpi-card kpi-yellow" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')" style="cursor:pointer;min-width:140px">
       <div class="kpi-card-label">
@@ -2612,6 +2618,30 @@ body.app-active #app {
       <div class="kpi-card-val yellow" id="kpi-unapplied">$0</div>
       <div class="kpi-card-sub">Pending decision</div>
     </div>
+    <div class="kpi-card kpi-red" onclick="var f=document.getElementById('ws-exc-type-filter');if(f)f.value='';setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)" style="cursor:pointer;min-width:140px">
+      <div class="kpi-card-label">
+        <div class="kpi-dot kpi-dot-red"></div>
+        Needs Attention
+      </div>
+      <div class="kpi-card-val red" id="kpi-exc">0</div>
+      <div class="kpi-card-sub" id="kpi-exc-sub">Require action</div>
+    </div>
+    <div class="kpi-card kpi-green" onclick="sp('posting')" style="cursor:pointer;min-width:130px">
+      <div class="kpi-card-label">
+        <div class="kpi-dot kpi-dot-green"></div>
+        Ready to Export
+      </div>
+      <div class="kpi-card-val green" id="kpi-ready-export">0</div>
+      <div class="kpi-card-sub" id="kpi-ready-export-sub">Approved allocations</div>
+    </div>
+    <!-- Expand toggle -->
+    <button id="kpi-more-toggle" onclick="toggleKpiMore()" style="background:transparent;border:1px solid var(--bdr);border-radius:8px;padding:8px 14px;cursor:pointer;color:var(--t2);font-size:12.5px;font-weight:600;align-self:center;display:flex;align-items:center;gap:6px;white-space:nowrap;margin-left:auto">
+      <span id="kpi-more-toggle-label">Show more</span>
+      <span id="kpi-more-toggle-arrow" style="font-size:10px">▼</span>
+    </button>
+  </div>
+  <!-- ── Secondary KPIs (hidden by default) ── -->
+  <div class="kpi-strip" id="kpi-strip-secondary" style="display:none;margin-top:8px;border-top:1px dashed var(--bdr);padding-top:12px">
     <div class="kpi-card kpi-blue" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(function(){var f=document.getElementById('ws-exc-type-filter');if(f){f.value='Unapplied payment';renderWsExcPremium();}},80)" style="cursor:pointer;min-width:160px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:#0EA5E9"></div>
@@ -2619,14 +2649,6 @@ body.app-active #app {
       </div>
       <div class="kpi-card-val" id="kpi-posted-unapplied" style="color:#0EA5E9">$0</div>
       <div class="kpi-card-sub" id="kpi-posted-unapplied-ct">Unapplied payments</div>
-    </div>
-    <div class="kpi-card kpi-red" onclick="var f=document.getElementById('ws-exc-type-filter');if(f)f.value='';setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)" style="cursor:pointer;min-width:120px">
-      <div class="kpi-card-label">
-        <div class="kpi-dot kpi-dot-red"></div>
-        Exceptions
-      </div>
-      <div class="kpi-card-val red" id="kpi-exc">0</div>
-      <div class="kpi-card-sub" id="kpi-exc-sub">Require action</div>
     </div>
     <div class="kpi-card kpi-orange" onclick="var f=document.getElementById('ws-exc-type-filter');if(f)f.value='Short pay';setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)" style="cursor:pointer;min-width:120px">
       <div class="kpi-card-label">
@@ -2918,13 +2940,13 @@ body.app-active #app {
           <span class="wf-arrow">›</span>
           <div class="wf-step" data-stage="match"><span class="wf-dot">2</span><span>Auto Match</span></div>
           <span class="wf-arrow">›</span>
-          <div class="wf-step" data-stage="review"><span class="wf-dot">3</span><span>Review</span></div>
+          <div class="wf-step" data-stage="attention"><span class="wf-dot">3</span><span>Needs Attention</span></div>
           <span class="wf-arrow">›</span>
-          <div class="wf-step" data-stage="attention"><span class="wf-dot">4</span><span>Needs Attention</span></div>
+          <div class="wf-step" data-stage="review"><span class="wf-dot">4</span><span>Review</span></div>
           <span class="wf-arrow">›</span>
-          <div class="wf-step" data-stage="export"><span class="wf-dot">5</span><span>Export</span></div>
+          <div class="wf-step" data-stage="reconcile"><span class="wf-dot">5</span><span>Reconcile</span></div>
           <span class="wf-arrow">›</span>
-          <div class="wf-step" data-stage="reconcile"><span class="wf-dot">6</span><span>Reconcile</span></div>
+          <div class="wf-step" data-stage="export"><span class="wf-dot">6</span><span>Export</span></div>
           <button class="wf-cta" id="wf-cta" onclick="wfCtaClick()" style="display:none">Next: <span id="wf-cta-label">—</span></button>
           <div class="wf-status" id="wf-status"><span class="wf-status-dot"></span><span id="wf-status-text">Waiting for import</span></div>
         </div>
@@ -2946,8 +2968,8 @@ body.app-active #app {
         <!-- Workspace Tabs -->
         <div class="ca-tabs">
           <button class="ca-tab active" id="ca-tab-match" onclick="setCaTab('match',this)">To Be Matched</button>
-          <button class="ca-tab" id="ca-tab-review" onclick="setCaTab('review',this)">Review</button>
           <button class="ca-tab" id="ca-tab-exc" onclick="setCaTab('exc',this)">Needs Attention</button>
+          <button class="ca-tab" id="ca-tab-review" onclick="setCaTab('review',this)">Review</button>
           <button class="ca-tab" id="ca-tab-recon" onclick="if(checkFeature('reconcile'))setCaTab('recon',this)">Reconcile</button>
         </div>
 
@@ -3214,7 +3236,12 @@ body.app-active #app {
                   <button class="btn btn-outline btn-sm" id="ws-exc-tab-open" onclick="setWsExcView('open',this)">Open</button>
                   <button class="btn btn-outline btn-sm" id="ws-exc-tab-resolved" onclick="setWsExcView('resolved',this)">Resolved</button>
                   <button class="btn btn-r btn-sm" onclick="clearAllExceptions()">Clear all</button>
-                  <button class="btn btn-outline btn-sm" onclick="exportExc()">Export CSV</button>
+                  <div class="ov-menu-wrap">
+                    <button class="ov-menu-btn" onclick="toggleOvMenu('ov-ws-exc',event)" aria-label="More actions">⋯</button>
+                    <div class="ov-menu-drop" id="ov-ws-exc">
+                      <div class="ov-menu-item" onclick="document.getElementById('ov-ws-exc').classList.remove('open');exportExc()"><span class="ov-menu-item-icon">↓</span>Export CSV</div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div id="ws-exc-list"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></div>
@@ -3334,7 +3361,12 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" id="exc-tab-open" onclick="setExcView('open')">Open</button>
               <button class="btn btn-outline btn-sm" id="exc-tab-resolved" onclick="setExcView('resolved')">Resolved <span id="exc-resolved-ct" style="font-size:10px;margin-left:2px">0</span></button>
               <button class="btn btn-r btn-sm" onclick="clearAllExceptions()" style="font-size:11.5px">Clear all</button>
-              <button class="btn btn-outline btn-sm" onclick="exportExc()">Export CSV</button>
+              <div class="ov-menu-wrap">
+                    <button class="ov-menu-btn" onclick="toggleOvMenu('ov-ws-exc',event)" aria-label="More actions">⋯</button>
+                    <div class="ov-menu-drop" id="ov-ws-exc">
+                      <div class="ov-menu-item" onclick="document.getElementById('ov-ws-exc').classList.remove('open');exportExc()"><span class="ov-menu-item-icon">↓</span>Export CSV</div>
+                    </div>
+                  </div>
             </div>
           </div>
         </div>
@@ -4078,6 +4110,54 @@ function excEmptyGoReconcile(){
     var tab=document.getElementById('ca-tab-recon');
     if(typeof setCaTab==='function'){setCaTab('recon',tab);}
   },80);
+}
+
+
+
+// ── Item 9: Overflow menu toggle ──────────────────────────────────
+function toggleOvMenu(id, evt){
+  if(evt&&evt.stopPropagation)evt.stopPropagation();
+  // Close any other open menus first
+  document.querySelectorAll('.ov-menu-drop.open').forEach(function(d){
+    if(d.id!==id)d.classList.remove('open');
+  });
+  var d=document.getElementById(id);
+  if(d)d.classList.toggle('open');
+}
+// Close overflow menus on outside click
+document.addEventListener('click',function(e){
+  if(!e.target||(e.target.closest&&e.target.closest('.ov-menu-wrap')))return;
+  document.querySelectorAll('.ov-menu-drop.open').forEach(function(d){d.classList.remove('open');});
+},true);
+
+// ── Item 2: KPI strip "Show more" toggle ─────────────────────────────
+function toggleKpiMore(){
+  var sec=document.getElementById('kpi-strip-secondary');
+  var lbl=document.getElementById('kpi-more-toggle-label');
+  var arr=document.getElementById('kpi-more-toggle-arrow');
+  if(!sec)return;
+  var hidden=sec.style.display==='none'||!sec.style.display;
+  sec.style.display=hidden?'flex':'none';
+  if(lbl)lbl.textContent=hidden?'Show less':'Show more';
+  if(arr)arr.textContent=hidden?'▲':'▼';
+  try{if(hidden){addAudit&&addAudit('KPI more expanded','secondary metrics shown');}}catch(e){}
+}
+// ── Item 2: Update kpi-ready-export based on approved-but-not-exported RES count ──
+function updateReadyToExportKpi(){
+  try{
+    var el=document.getElementById('kpi-ready-export');
+    var sub=document.getElementById('kpi-ready-export-sub');
+    if(!el||typeof RES==='undefined')return;
+    var ready=RES.filter(function(r){
+      if(r.exported)return false;
+      return r.fromAlloc===true||r.approved===true||r.st==='Exact'||r.st==='Subset exact'||r.fromExc;
+    });
+    el.textContent=ready.length;
+    if(sub){
+      var totalAmt=ready.reduce(function(s,r){return s+(r.pd||0);},0);
+      sub.textContent = ready.length===0 ? 'Nothing pending' : (typeof $fk==='function'?'$'+$fk(totalAmt):'') + ' approved';
+    }
+  }catch(e){console.warn('[updateReadyToExportKpi]',e);}
 }
 
 function clearAllExceptions(){
@@ -5049,6 +5129,8 @@ function updTop(){
   const spn=document.getElementById('settings-plan-name');if(spn)spn.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
   const spn2=document.getElementById('settings-plan-name2');if(spn2)spn2.textContent=(PLANS[USER_PLAN]?.name||'Demo')+' plan';
 
+
+  try{updateReadyToExportKpi();}catch(e){}
 }
 
 // ── Dashboard ──
@@ -5162,16 +5244,17 @@ function updWorkflow(){
     
     var currentStage='import', label='Waiting for import';
     if(!hasPay && !hasInv && openExc===0){ currentStage='import'; label='Waiting for import'; }
-    else if(pendingReview>0){ currentStage='review'; label=pendingReview+' match'+(pendingReview===1?'':'es')+' awaiting review'; }
+    // New order: triage exceptions FIRST, then review matches, then reconcile, then export
     else if(openExc>0){ currentStage='attention'; label=openExc+' item'+(openExc===1?'':'s')+' need attention'; }
+    else if(pendingReview>0){ currentStage='review'; label=pendingReview+' match'+(pendingReview===1?'':'es')+' awaiting review'; }
     else if(approvedRows.length>0 && !allReconciled){ currentStage='reconcile'; label=unreconciled+' to reconcile'; }
     else if(allReconciled && !exportedAll){ currentStage='export'; label=approvedRows.length+' reconciled — ready to export'; }
-    else if(exportedAll){ currentStage='reconcile'; label='All exported · workflow complete'; }
+    else if(exportedAll){ currentStage='export'; label='All exported · workflow complete'; }
     else if(hasPay && hasInv && !hasMatches){ currentStage='match'; label='Ready for Auto Match'; }
     else if(hasPay||hasInv){ currentStage='match'; label='Ready for Auto Match'; }
     
     // Apply done/current/next classes
-    var stageOrder=['import','match','review','attention','export','reconcile'];
+    var stageOrder=['import','match','attention','review','reconcile','export'];
     var currentIdx=stageOrder.indexOf(currentStage);
     steps.forEach(function(el){
       var s=el.getAttribute('data-stage');
@@ -5376,6 +5459,8 @@ function updDash(){
       ${top?`<div class="ai-suggestion"><span class="ai-suggestion-icon">🔴</span>Top exception: <strong>${top[0]}</strong> — ${top[1]} case${top[1]!==1?'s':''}</div>`:''}
     </div>`;
   try{updWorkflow();}catch(e){}
+
+  try{updateReadyToExportKpi();}catch(e){}
 }
 
 // ── Reporting ──
@@ -6103,38 +6188,89 @@ function rExc(){
   if(ec)ec.textContent=shown.length+' exception'+(shown.length!==1?'s':'');
   if(!EXC.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>';return;}
   if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">🎉</div><div class="empty-t">All exceptions resolved</div><div class="empty-s">Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp(&apos;cash-app&apos;);setTimeout(function(){setCaTab(&apos;recon&apos;,document.getElementById(&apos;ca-tab-recon&apos;));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>';return;}
-  tb.innerHTML=EXC.map((ex,idx)=>{
-    if(ex.s==='Resolved'||ex.s==='Resolved — rejected')return'';
-    if(tval&&ex.type!==tval)return'';
+  // Item 5: Group exceptions by category
+  // Map exception type → category
+  function _excCategory(ex){
+    var t=ex.type||'';
+    // Unknown customer takes priority — payment we couldn't attribute to anyone
+    if(!ex.a && !ex.c)return 'unknown';
+    if(t==='Short pay')return 'shortpay';
+    if(t==='Unmatched'||t==='Missing PO')return 'missing';
+    if(t==='Duplicate')return 'duplicate';
+    if(t==='Unapplied payment')return 'unapplied';
+    if(t==='Bank fee')return 'bankfee';
+    return 'manual';
+  }
+  var _GROUPS = [
+    {key:'shortpay', label:'Short Pays', icon:'💸', desc:'Customer paid less than invoiced'},
+    {key:'missing',  label:'Missing Invoice', icon:'❓', desc:'No matching invoice or PO found'},
+    {key:'duplicate',label:'Duplicate Risk', icon:'⚠️', desc:'Potential duplicate payments'},
+    {key:'unapplied',label:'Cash on Account', icon:'💰', desc:'Unapplied payments awaiting allocation'},
+    {key:'bankfee',  label:'Bank Fees', icon:'🏦', desc:'Variance from bank charges'},
+    {key:'unknown',  label:'Unknown Customer', icon:'🆔', desc:'Payments without customer identification'},
+    {key:'manual',   label:'Manual Review', icon:'🔍', desc:'Other items requiring review'}
+  ];
+  // Bucket EXC entries (preserving original indices)
+  var buckets={};
+  _GROUPS.forEach(function(g){buckets[g.key]=[];});
+  EXC.forEach(function(ex,idx){
+    if(ex.s==='Resolved'||ex.s==='Resolved — rejected')return;
+    if(tval&&ex.type!==tval)return;
     if(typeof _excSearchQuery!=='undefined'&&_excSearchQuery){
       var _a=String(ex.a||'').toLowerCase();
       var _c=String(ex.c||'').toLowerCase();
-      if(_a.indexOf(_excSearchQuery)<0&&_c.indexOf(_excSearchQuery)<0)return'';
+      if(_a.indexOf(_excSearchQuery)<0&&_c.indexOf(_excSearchQuery)<0)return;
     }
-    const isPending=ex.s==='Pending follow-up';
-    return`<tr id="exc-row-${idx}">
-      <td class="td-mono" style="font-weight:600;color:var(--t3)">${ex.id}</td>
-      <td class="td-mono">${ex.a}</td><td>${ex.c}</td>
-      <td class="td-amt">${$f(ex.amt)}</td>
-      <td class="td-mono">${ex.ref||'—'}</td>
-      <td>${badge(ex.type)}</td>
-      <td style="color:var(--t2);max-width:180px;white-space:normal;font-size:12px;line-height:1.4">${ex.detail||'—'}</td>
-      <td><input type="text" class="ed" style="width:100px;font-size:11.5px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Note…" oninput="EXC[${idx}].notes=this.value;saveToStorage()"></td>
-      <td>
-        <select class="ed" style="font-size:11.5px;width:120px" data-idx="${idx}" onchange="(function(s){var d=s.value;s.selectedIndex=0;resolveException(parseInt(s.dataset.idx),d);})(this)">
-          <option value="">— Select action —</option>
-          <option ${ex.dec==='Apply to invoice'?'selected':''}>Apply to invoice</option>
-          <option ${ex.dec==='Cash on Account'?'selected':''}>Cash on Account</option>
-          <option ${ex.dec==='Write off'?'selected':''}>Write off</option>
-          <option ${ex.dec==='Bank fee'?'selected':''}>Bank fee</option>
-          <option ${ex.dec==='Chase customer'?'selected':''}>Chase customer</option>
-          <option ${ex.dec==='Duplicate — reject'?'selected':''}>Duplicate — reject</option>
-        </select>
-      </td>
-      <td><span class="badge ${isPending?'badge-am':(!ex.s||ex.s==='Open')?'badge-am':'badge-p'}">${ex.s||'Open'}</span></td>
-      <td></td>
-    </tr>`;
-  }).join('');
+    var cat=_excCategory(ex);
+    buckets[cat].push({ex:ex, idx:idx});
+  });
+  // Build HTML: section header row + data rows
+  var rowsHtml='';
+  _GROUPS.forEach(function(g){
+    var items=buckets[g.key];
+    if(!items.length)return;
+    var total=items.reduce(function(s,it){return s+(it.ex.amt||0);},0);
+    // Section header row
+    rowsHtml+='<tr class="exc-group-header" data-group-key="'+g.key+'" style="background:var(--surface1);border-top:1px solid var(--bdr)">'+
+      '<td colspan="11" style="padding:10px 14px">'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<span style="font-size:14px">'+g.icon+'</span>'+
+          '<span style="font-size:13px;font-weight:700;color:var(--t1)">'+g.label+'</span>'+
+          '<span style="font-size:11.5px;color:var(--t3);font-weight:500">'+items.length+' item'+(items.length===1?'':'s')+' · $'+$f(total)+'</span>'+
+          '<span style="flex:1"></span>'+
+          '<span style="font-size:11px;color:var(--t3)">'+g.desc+'</span>'+
+        '</div>'+
+      '</td>'+
+    '</tr>';
+    // Data rows
+    items.forEach(function(it){
+      var ex=it.ex, idx=it.idx;
+      var isPending=ex.s==='Pending follow-up';
+      rowsHtml+='<tr id="exc-row-'+idx+'">'+
+        '<td class="td-mono" style="font-weight:600;color:var(--t3)">'+ex.id+'</td>'+
+        '<td class="td-mono">'+(ex.a||'—')+'</td><td>'+(ex.c||'—')+'</td>'+
+        '<td class="td-amt">'+$f(ex.amt)+'</td>'+
+        '<td class="td-mono">'+(ex.ref||'—')+'</td>'+
+        '<td>'+badge(ex.type)+'</td>'+
+        '<td style="color:var(--t2);max-width:180px;white-space:normal;font-size:12px;line-height:1.4">'+(ex.detail||'—')+'</td>'+
+        '<td><input type="text" class="ed" style="width:100px;font-size:11.5px" value="'+(ex.notes||'').replace(/"/g,'&quot;')+'" placeholder="Note…" oninput="EXC['+idx+'].notes=this.value;saveToStorage()"></td>'+
+        '<td>'+
+          '<select class="ed" style="font-size:11.5px;width:120px" data-idx="'+idx+'" onchange="(function(s){var d=s.value;s.selectedIndex=0;resolveException(parseInt(s.dataset.idx),d);})(this)">'+
+            '<option value="">— Select action —</option>'+
+            '<option '+(ex.dec==='Apply to invoice'?'selected':'')+'>Apply to invoice</option>'+
+            '<option '+(ex.dec==='Cash on Account'?'selected':'')+'>Cash on Account</option>'+
+            '<option '+(ex.dec==='Write off'?'selected':'')+'>Write off</option>'+
+            '<option '+(ex.dec==='Bank fee'?'selected':'')+'>Bank fee</option>'+
+            '<option '+(ex.dec==='Chase customer'?'selected':'')+'>Chase customer</option>'+
+            '<option '+(ex.dec==='Duplicate — reject'?'selected':'')+'>Duplicate — reject</option>'+
+          '</select>'+
+        '</td>'+
+        '<td><span class="badge '+(isPending?'badge-am':(!ex.s||ex.s==='Open')?'badge-am':'badge-p')+'">'+(ex.s||'Open')+'</span></td>'+
+        '<td></td>'+
+      '</tr>';
+    });
+  });
+  tb.innerHTML=rowsHtml;
 }
 
 function rPost(){
