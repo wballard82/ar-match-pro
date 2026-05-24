@@ -134,9 +134,15 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
   padding: 16px; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
   background:
-    radial-gradient(ellipse 140% 80% at 65% 35%, rgba(59,130,246,.14) 0%, transparent 55%),
-    radial-gradient(ellipse 80% 60% at 8% 85%, rgba(16,185,129,.09) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(139,92,246,.07) 0%, transparent 45%),
+    /* ARMP primary teal — top right, the brand signature */
+    radial-gradient(ellipse 130% 75% at 75% 30%, rgba(20,168,216,.18) 0%, transparent 55%),
+    /* ARMP green/teal accent — bottom left */
+    radial-gradient(ellipse 90% 65% at 10% 88%, rgba(18,184,134,.13) 0%, transparent 52%),
+    /* ARMP Pro blue — top left, subtle depth */
+    radial-gradient(ellipse 60% 50% at 15% 15%, rgba(22,141,226,.08) 0%, transparent 48%),
+    /* Subtle ARMP gradient overlay for premium feel */
+    linear-gradient(135deg, rgba(20,168,216,.04) 0%, rgba(18,184,134,.04) 100%),
+    /* Dark navy base for readability */
     var(--bg);
 }
 
@@ -2486,7 +2492,7 @@ body.app-active #app {
           <div class="armp-setup-step-label">Upload Bank File</div>
           <div class="armp-setup-step-sub">Remittance data — BAI2, MUFG, YayPay, CSV, or PDF</div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-1" onclick="armpSetupClickStep(1)">Upload</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-1" onclick="armpSetupClickStep(1)">Upload Bank File</button>
       </div>
       <div class="armp-setup-step" id="armp-setup-step-2" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">2</span><span class="armp-setup-step-check">✓</span></div>
@@ -2494,7 +2500,7 @@ body.app-active #app {
           <div class="armp-setup-step-label">Upload Invoice File</div>
           <div class="armp-setup-step-sub">Aging report — XLSX or CSV</div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload Invoice File</button>
       </div>
       <div class="armp-setup-step" id="armp-setup-step-3" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
@@ -2502,7 +2508,7 @@ body.app-active #app {
           <div class="armp-setup-step-label">Run Auto Match</div>
           <div class="armp-setup-step-sub">Match payments to invoices automatically</div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Run</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Run Auto Match</button>
       </div>
       <!-- Success state (hidden until all 3 complete) -->
       <div id="armp-setup-done" style="display:none;text-align:center;padding:18px 0 8px">
