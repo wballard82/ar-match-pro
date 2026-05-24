@@ -9,7 +9,7 @@
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 <title>AR Match Pro</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTRBOEQ4Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMTJCODg2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZmZmZmYiPkFSPC90ZXh0Pjwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
@@ -130,6 +130,8 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
    ═══════════════════════════════════════════════════════════ */
 #login-screen {
   position: fixed; inset: 0; z-index: 200; overflow: auto;
+  min-height: 100vh; min-height: 100dvh;
+  padding: 16px; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
   background:
     radial-gradient(ellipse 140% 80% at 65% 35%, rgba(59,130,246,.14) 0%, transparent 55%),
@@ -140,11 +142,15 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
 
 
 .login-wrap {
-  display: flex; width: 920px; max-width: 96vw; min-height: 580px;
-  background: var(--surface); border-radius: 24px;
+  display: flex; width: min(1280px, 96vw); min-height: min(720px, 92vh);
+  background: var(--surface); border-radius: 20px;
   border: 1px solid var(--bdr2); box-shadow: var(--shadow-xl);
-  overflow: hidden; margin: 24px auto;
+  overflow: hidden; margin: auto;
 }
+@media (max-width: 880px) {
+  .login-wrap { width: 96vw; min-height: 92vh; border-radius: 14px; flex-direction: column; }
+}
+
 
 .login-left {
   flex: 1; padding: 52px 44px;
@@ -2433,6 +2439,14 @@ body.app-active #app {
   .armp-banner-step-divider { display: none; }
   .armp-banner-step { width: 100%; }
 }
+
+/* Item 2: Continuous pulse on wf-cta when next action is ready */
+.wf-cta.armp-flash {
+  animation: armpFlashPulse 1.6s ease-in-out infinite;
+}
+.wf-cta.armp-flash:hover {
+  animation: none;
+}
 </style>
 </head>
 <body>
@@ -2780,11 +2794,11 @@ body.app-active #app {
   <!-- TOP NAV -->
   <nav class="topnav">
     <div class="tn-logo" style="padding:0;display:flex;align-items:center;gap:9px;padding-left:2px">
-      <div style="position:relative;width:30px;height:30px;flex-shrink:0;border-radius:8px;background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.15));display:flex;align-items:center;justify-content:center">
-        <span style="font-size:13px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AR</span>
+      <div style="position:relative;width:30px;height:30px;flex-shrink:0;border-radius:8px;background:linear-gradient(135deg,rgba(20,168,216,.18),rgba(18,184,134,.18));display:flex;align-items:center;justify-content:center">
+        <span style="font-size:13px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,#14A8D8,#12B886);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AR</span>
       </div>
       <div style="line-height:1.15">
-        <div style="font-size:13.5px;font-weight:800;color:var(--t1);letter-spacing:-.3px">AR<span style="color:#60a5fa">Match</span></div>
+        <div style="font-size:13.5px;font-weight:800;color:var(--t1);letter-spacing:-.3px">AR<span style="color:#168DE2">Match</span></div>
         <div style="font-size:9px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase">Pro</div>
       </div>
     </div>
@@ -3200,7 +3214,7 @@ body.app-active #app {
             <div style="display:flex;gap:8px;align-items:center">
               <button class="btn btn-outline btn-sm" onclick="openImport('inv')">+ Invoices</button>
               
-              <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
+              <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button><button class="btn btn-p btn-sm" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px">⚡ Auto match</button>
               
             </div>
           </div>
@@ -3574,7 +3588,7 @@ body.app-active #app {
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
             <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-p btn-sm" id="recon-approve-all-btn" onclick="approveAllReconciled()" style="display:none">✓ Approve All Reconciled</button>
+              
               <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
@@ -4128,6 +4142,55 @@ body.app-active #app {
           <div class="panel-sub">Account · Role · Matching engine · Appearance · Plans &amp; Pricing</div>
         </div>
         <div class="panel-body" style="max-width:1400px;margin:0 auto;width:100%;padding-left:20px;padding-right:20px">
+          <!-- Item 5: Timezone selector for auto theme -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Timezone</div>
+                <div class="card-sub">Used to determine day/night theme automatically</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <select id="s-timezone" class="ed" style="min-width:280px;font-size:13px" onchange="armpSetTimezone(this.value)">
+                  <option value="">— Use browser default —</option>
+                  <option value="America/Los_Angeles">Pacific Time — America/Los_Angeles</option>
+                  <option value="America/Denver">Mountain Time — America/Denver</option>
+                  <option value="America/Chicago">Central Time — America/Chicago</option>
+                  <option value="America/New_York">Eastern Time — America/New_York</option>
+                  <option value="America/Phoenix">Arizona — America/Phoenix</option>
+                  <option value="America/Anchorage">Alaska — America/Anchorage</option>
+                  <option value="Pacific/Honolulu">Hawaii — Pacific/Honolulu</option>
+                  <option value="America/Toronto">Toronto — America/Toronto</option>
+                  <option value="America/Mexico_City">Mexico City — America/Mexico_City</option>
+                  <option value="America/Sao_Paulo">São Paulo — America/Sao_Paulo</option>
+                  <option value="Europe/London">London — Europe/London</option>
+                  <option value="Europe/Paris">Paris — Europe/Paris</option>
+                  <option value="Europe/Berlin">Berlin — Europe/Berlin</option>
+                  <option value="Europe/Madrid">Madrid — Europe/Madrid</option>
+                  <option value="Europe/Amsterdam">Amsterdam — Europe/Amsterdam</option>
+                  <option value="Europe/Stockholm">Stockholm — Europe/Stockholm</option>
+                  <option value="Europe/Moscow">Moscow — Europe/Moscow</option>
+                  <option value="Asia/Dubai">Dubai — Asia/Dubai</option>
+                  <option value="Asia/Mumbai">Mumbai — Asia/Kolkata</option>
+                  <option value="Asia/Singapore">Singapore — Asia/Singapore</option>
+                  <option value="Asia/Hong_Kong">Hong Kong — Asia/Hong_Kong</option>
+                  <option value="Asia/Shanghai">Shanghai — Asia/Shanghai</option>
+                  <option value="Asia/Tokyo">Tokyo — Asia/Tokyo</option>
+                  <option value="Asia/Seoul">Seoul — Asia/Seoul</option>
+                  <option value="Australia/Sydney">Sydney — Australia/Sydney</option>
+                  <option value="Australia/Melbourne">Melbourne — Australia/Melbourne</option>
+                  <option value="Pacific/Auckland">Auckland — Pacific/Auckland</option>
+                </select>
+                <div style="font-size:11.5px;color:var(--t3);line-height:1.45;flex:1;min-width:200px">
+                  <span id="s-timezone-current"></span>
+                  <div style="margin-top:3px">Theme auto-switches: light 7am–7pm · dark otherwise. Manual override always wins.</div>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="armpClearManualTheme()" title="Clear manual theme override">Reset to auto theme</button>
+              </div>
+            </div>
+          </div>
+
 
           <!-- Account -->
           <div class="settings-section">
@@ -5386,6 +5449,13 @@ function sp(id){
       }, 80);
     }
   }catch(e){console.warn('[sp setup hook]',e);}
+
+  // Item 5: Refresh timezone label when settings opens
+  try{
+    if(id==='settings' && typeof armpRefreshTimezoneLabel==='function'){
+      setTimeout(armpRefreshTimezoneLabel, 80);
+    }
+  }catch(e){}
 }
 
 // ── Dark mode ──
@@ -5413,6 +5483,94 @@ function _armpGetUserHour(){
   }catch(e){console.warn('[autoTheme] timezone error',e);}
   return new Date().getHours();
 }
+
+// ── Item 1: Force dark theme while login screen is visible ─────────
+(function _armpForceLoginDarkTheme(){
+  function check(){
+    try{
+      var ls = document.getElementById('login-screen');
+      if(!ls) return;
+      var visible = ls.style.display !== 'none' && !document.body.classList.contains('app-active');
+      if(visible){
+        // Force dark theme on the html element while login is shown
+        document.documentElement.dataset.theme = 'dark';
+        document.documentElement.setAttribute('data-login-dark','1');
+      } else if(document.documentElement.hasAttribute('data-login-dark')){
+        // Login dismissed — re-apply user's preferred/auto theme
+        document.documentElement.removeAttribute('data-login-dark');
+        try{
+          if(typeof _armpApplyAutoTheme==='function') _armpApplyAutoTheme();
+        }catch(e){}
+      }
+    }catch(e){}
+  }
+  // Run immediately + on body class change
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', check);
+  } else {
+    check();
+  }
+  // Re-check after a beat in case launchApp ran early
+  setTimeout(check, 50);
+  setTimeout(check, 300);
+})();
+
+
+// ── Item 5: Timezone selector helpers ───────────────────────────────
+function armpSetTimezone(tz){
+  try{
+    if(tz){
+      localStorage.setItem('armp_user_tz', tz);
+    } else {
+      localStorage.removeItem('armp_user_tz');
+    }
+    armpRefreshTimezoneLabel();
+    // Re-apply auto theme based on new timezone (unless manual override is set)
+    if(typeof _armpApplyAutoTheme==='function') _armpApplyAutoTheme();
+    if(typeof toast==='function') toast(tz ? 'Timezone set to '+tz : 'Using browser default timezone');
+  }catch(e){console.warn('[armpSetTimezone]',e);}
+}
+function armpRefreshTimezoneLabel(){
+  try{
+    var sel = document.getElementById('s-timezone');
+    var lbl = document.getElementById('s-timezone-current');
+    if(!lbl) return;
+    var tz = localStorage.getItem('armp_user_tz') || '';
+    if(sel) sel.value = tz;
+    var nowHour;
+    if(tz){
+      var fmt = new Intl.DateTimeFormat('en-US',{hour:'numeric',hour12:false,timeZone:tz});
+      var parts = fmt.formatToParts(new Date());
+      var h = parts.find(function(p){return p.type==='hour';});
+      nowHour = h ? parseInt(h.value,10) : new Date().getHours();
+    } else {
+      nowHour = new Date().getHours();
+    }
+    var ampm = nowHour===0 ? '12 AM' : nowHour<12 ? nowHour+' AM' : nowHour===12 ? '12 PM' : (nowHour-12)+' PM';
+    var isDay = (nowHour>=7 && nowHour<19);
+    lbl.innerHTML = '<strong style="color:var(--t1)">Current local time:</strong> ~'+ampm+' · <strong style="color:'+(isDay?'#168DE2':'#14A8D8')+'">'+(isDay?'☀ Day':'🌙 Night')+' theme</strong>';
+  }catch(e){console.warn('[armpRefreshTimezoneLabel]',e);}
+}
+function armpClearManualTheme(){
+  try{
+    localStorage.removeItem('armp_theme_manual');
+    if(typeof _armpApplyAutoTheme==='function') _armpApplyAutoTheme();
+    if(typeof toast==='function') toast('Theme reset to auto (based on time of day)');
+    armpRefreshTimezoneLabel();
+  }catch(e){console.warn('[armpClearManualTheme]',e);}
+}
+// Initialize timezone label when settings panel opens
+(function _armpInitTimezone(){
+  function init(){
+    armpRefreshTimezoneLabel();
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 100);
+  }
+})();
+
 function _armpApplyAutoTheme(){
   try{
     // Respect manual override
@@ -5787,6 +5945,24 @@ function updWorkflow(){
         if(_prevCtaLabel && _prevCtaLabel !== cfg.label && typeof armpPulseWfCta === 'function'){
           armpPulseWfCta();
         }
+        // Item 2: Continuously flash CTA when stage has actionable items waiting
+        try{
+          var isReady = false;
+          // "Ready" states are when there's a clear next action with no blockers:
+          // - attention: there are open exceptions to resolve
+          // - review: matches awaiting approval (no exceptions left)
+          // - reconcile: items to reconcile
+          // - export: ready to export
+          if(currentStage==='attention' && openExc>0) isReady = true;
+          else if(currentStage==='review' && pendingReview>0 && openExc===0) isReady = true;
+          else if(currentStage==='reconcile' && approvedRows.length>0 && !allReconciled) isReady = true;
+          else if(currentStage==='export' && allReconciled && !exportedAll) isReady = true;
+          else if(currentStage==='match' && hasPay && hasInv && !hasMatches) isReady = true;
+          if(cta){
+            if(isReady) cta.classList.add('armp-flash');
+            else cta.classList.remove('armp-flash');
+          }
+        }catch(e){console.warn('[wf-cta flash]',e);}
         cta.style.display='inline-flex';
         cta.setAttribute('data-action',cfg.action||'');
       } else {
@@ -6495,8 +6671,23 @@ function _doResetAll(){
     try{localStorage.removeItem('armp_'+k);}catch(e){}
     try{localStorage.removeItem(k);}catch(e){}
   });
-  addAudit('Full reset','All data cleared');
+  // NEW-3: Reset triggers Let's Get Started flow again
+  try{
+    localStorage.removeItem('armp_setup_seen');
+    localStorage.removeItem('armp_banner_dismissed');
+  }catch(e){}
+  addAudit('Full reset','All data cleared — setup flow re-enabled');
   toast('✓ All data reset');
+  // Re-open the Let's Get Started modal after a beat
+  try{
+    setTimeout(function(){
+      if(typeof sp==='function')sp('cash-app');
+      setTimeout(function(){
+        if(typeof armpOpenSetupModal==='function')armpOpenSetupModal();
+        if(typeof armpShowBannerIfNeeded==='function')armpShowBannerIfNeeded();
+      }, 200);
+    }, 300);
+  }catch(e){console.warn('[reset→setup modal]',e);}
 }
 function saveSettings(){cfgSaveTolerance();cfgSave();toast('Settings saved');}
 function filterDash(t){if(t==='exceptions')sp('exceptions');else sp('cash-app');}
@@ -6815,7 +7006,16 @@ function rExc(){
 }
 
 function rPost(){
-  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
+  // NEW-5: Filter out payments without account/customer unless deliberately flagged as Duplicate-Reject or Chase Customer
+  const ap=RES.filter(r=>{
+    var statusOk = (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
+    if(!statusOk) return false;
+    var hasAcctOrCust = !!(r.a||r.c);
+    if(hasAcctOrCust) return true;
+    // No account/customer — only include if disposition is Duplicate-Reject or Chase Customer
+    var dec = r.dec || '';
+    return (dec==='Duplicate — reject' || dec==='Chase customer');
+  });
   const tb=document.getElementById('post-tb');if(!tb)return;
   // Compute readiness counts
   var nReady=0, nReview=0, nExported=0;
@@ -6957,7 +7157,15 @@ function exportPost(){
   var _activeProfile=(typeof CFG_EXPORT_PROFILE!=='undefined'&&typeof CFG_EXPORT_PROFILES!=='undefined')?((CFG_EXPORT_PROFILES[CFG_EXPORT_PROFILE]||{}).label||CFG_EXPORT_PROFILE):'Generic CSV';
   addAudit('Export posted','Profile: '+_activeProfile);
   if(IS_DEMO){showUpgrade('Posting Export','Available on Starter, Pro, and Team plans.');return;}
-  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
+  // NEW-5: Filter out payments without account/customer unless flagged as Duplicate-Reject or Chase Customer
+  const ap=RES.filter(r=>{
+    var statusOk = (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
+    if(!statusOk) return false;
+    var hasAcctOrCust = !!(r.a||r.c);
+    if(hasAcctOrCust) return true;
+    var dec = r.dec || '';
+    return (dec==='Duplicate — reject' || dec==='Chase customer');
+  });
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
   const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Cash on Account':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
@@ -8442,6 +8650,16 @@ function revertResultGroup(idxs){
   try{addAudit('Allocations reverted',n+' invoice'+(n===1?'':'s'));}catch(e){}
   if(typeof toast==='function')toast('Reverted '+n+' allocation'+(n===1?'':'s'));
   renderWsReview();
+  // Item 3: After reverting, navigate user to Needs Attention so they can re-triage
+  try{
+    setTimeout(function(){
+      if(typeof sp==='function')sp('cash-app');
+      setTimeout(function(){
+        var excTab = document.getElementById('ca-tab-exc');
+        if(excTab && typeof setCaTab==='function') setCaTab('exc', excTab);
+      }, 80);
+    }, 250);
+  }catch(e){console.warn('[revert→exc nav]',e);}
 }
 // Legacy alias - approve a single RES entry by index
 function approveResultItem(idx){
