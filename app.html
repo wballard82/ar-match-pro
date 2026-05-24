@@ -9,7 +9,7 @@
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 <title>AR Match Pro</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTRBOEQ4Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMTJCODg2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZmYiPkFSPC90ZXh0Pjwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
@@ -34,11 +34,13 @@
   --t3: #4D6480;
   --t4: #2E3F56;
 
-  /* ── Brand ── */
-  --p:   #3B82F6;
-  --pd:  #93C5FD;
-  --ps:  #1D4ED8;
-  --pg:  rgba(59,130,246,.1);
+  /* ── Brand (ARMP) ── */
+  --p:   #14A8D8;
+  --pd:  #168DE2;
+  --ps:  #12B886;
+  --pg:  rgba(20,168,216,.10);
+  --armp-grad: linear-gradient(135deg, #14A8D8 0%, #12B886 100%);
+  --armp-grad-hover: linear-gradient(135deg, #168DE2 0%, #0FA975 100%);
   --p-glow: 0 0 20px rgba(59,130,246,.25);
 
   /* ── Semantic ── */
@@ -100,9 +102,9 @@
   --am-t:  #92400E;
   --pu-t:  #5B21B6;
   --cy-t:  #0C4A6E;
-  --pd:    #1E40AF;
-  --p:     #1D4ED8;
-  --ps:    #1E3A8A;
+  --pd:    #168DE2;
+  --p:     #14A8D8;
+  --ps:    #12B886;
   --g-glow: rgba(16,185,129,.15);
   --glass:  rgba(0,0,0,.015);
   --glass2: rgba(0,0,0,.03);
@@ -548,7 +550,8 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
   font-size:13px; font-weight:600; cursor:pointer; border:none;
   transition:all .18s; white-space:nowrap; line-height:1;
 }
-.btn-p { background:var(--p); color:#fff; }
+.btn-p { background:var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%)); color:#fff; }
+.btn-p:hover { background:var(--armp-grad-hover, linear-gradient(135deg, #168DE2 0%, #0FA975 100%)); filter:brightness(1.05); }
 .btn-p:hover { background:var(--ps); box-shadow:0 4px 14px rgba(59,130,246,.4); transform:translateY(-1px); }
 .btn-g { background:var(--g); color:#fff; }
 .btn-g:hover { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 4px 14px rgba(16,185,129,.35); }
@@ -2138,11 +2141,17 @@ body.app-active #app {
 .wf-arrow { color:var(--bdr); font-size:13px; margin:0 2px; user-select:none; }
 .wf-status { margin-left:auto; font-size:12px; color:var(--t2); display:flex; align-items:center; gap:6px; }
 .wf-cta {
-  margin-left:auto; padding:6px 14px; background:var(--p); color:#fff;
+  margin-left:auto; padding:6px 14px;
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+  color:#fff;
   border:none; border-radius:8px; font-size:12.5px; font-weight:600;
   cursor:pointer; display:inline-flex; align-items:center; gap:6px;
   transition:all 120ms ease;
-  box-shadow:0 1px 3px rgba(59,130,246,.3);
+  box-shadow:0 1px 3px rgba(20,168,216,.30);
+}
+.wf-cta:hover {
+  filter: brightness(1.08);
+  box-shadow:0 2px 8px rgba(20,168,216,.40);
 }
 .wf-cta:hover { background:var(--pd); transform:translateY(-1px); box-shadow:0 2px 6px rgba(59,130,246,.4); }
 .wf-cta:active { transform:translateY(0); }
@@ -2236,6 +2245,116 @@ body.app-active #app {
 }
 .ov-menu-item:hover { background:var(--surface2); }
 .ov-menu-item-icon { color:var(--t3); font-size:13px; }
+
+/* ── Items 2+4: Guided onboarding banner ─────────────────────────── */
+.armp-guided-banner {
+  margin: 16px 20px 8px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(20,168,216,.08) 0%, rgba(18,184,134,.08) 100%);
+  border: 1px solid rgba(20,168,216,.18);
+  overflow: hidden;
+  position: relative;
+}
+.armp-guided-banner::before {
+  content: ''; position: absolute; top:0; left:0; right:0; height: 2px;
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+}
+.armp-guided-banner-inner {
+  padding: 16px 20px;
+}
+.armp-guided-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13.5px; font-weight: 700; color: var(--t1);
+  margin-bottom: 14px; letter-spacing: -0.2px;
+}
+.armp-guided-icon {
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:6px;
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+  color:#fff;font-size:13px;font-weight:900;
+}
+.armp-guided-dismiss {
+  margin-left:auto; background:transparent; border:none; cursor:pointer;
+  font-size:18px; color:var(--t3); padding:0 6px; line-height:1;
+  transition: color .15s;
+}
+.armp-guided-dismiss:hover { color: var(--t1); }
+.armp-guided-steps {
+  display: flex; align-items: center; gap: 0;
+}
+.armp-step {
+  flex:1; min-width:0; display:flex; align-items:center; gap:12px;
+  padding: 10px 14px; border-radius: 10px;
+  transition: background .25s, transform .25s;
+}
+.armp-step[data-state="done"]    { background: rgba(18,184,134,.06); }
+.armp-step[data-state="active"]  { background: rgba(20,168,216,.08); }
+.armp-step-divider {
+  flex-shrink:0; width:24px; height:1px;
+  background: linear-gradient(90deg, transparent, var(--bdr), transparent);
+}
+.armp-step-circle {
+  flex-shrink:0; width:30px; height:30px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size: 12.5px; font-weight: 800;
+  background: var(--surface2); color: var(--t3);
+  border: 1.5px solid var(--bdr);
+  transition: all .25s;
+}
+.armp-step[data-state="active"] .armp-step-circle {
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+  color: #fff; border-color: transparent;
+}
+.armp-step[data-state="done"] .armp-step-circle {
+  background: #12B886; color: #fff; border-color: transparent;
+}
+.armp-step-num { display: inline; }
+.armp-step-check { display: none; font-size: 15px; }
+.armp-step[data-state="done"] .armp-step-num { display: none; }
+.armp-step[data-state="done"] .armp-step-check { display: inline; }
+.armp-step-text { flex:1; min-width:0; line-height:1.25; }
+.armp-step-label {
+  font-size: 13px; font-weight: 700; color: var(--t1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.armp-step[data-state="pending"] .armp-step-label { color: var(--t3); font-weight: 600; }
+.armp-step-sub {
+  font-size: 11px; color: var(--t3); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.armp-step-cta {
+  flex-shrink:0;
+  padding: 6px 14px; border-radius: 7px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 700; line-height: 1;
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+  color: #fff;
+  transition: filter .15s, transform .15s;
+}
+.armp-step-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.armp-step[data-state="pending"] .armp-step-cta {
+  background: var(--surface2);
+  color: var(--t3);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.armp-step[data-state="done"] .armp-step-cta {
+  display: none;
+}
+/* Subtle 1s pulse on the active CTA when state transitions */
+@keyframes armpPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(20,168,216,.45); }
+  50%  { box-shadow: 0 0 0 8px rgba(20,168,216,0); }
+  100% { box-shadow: 0 0 0 0 rgba(20,168,216,0); }
+}
+.armp-pulse {
+  animation: armpPulse 1s ease-out 1;
+}
+/* Responsive: stack on small screens */
+@media (max-width: 880px) {
+  .armp-guided-steps { flex-direction: column; align-items: stretch; }
+  .armp-step-divider { display: none; }
+  .armp-step { width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -2275,8 +2394,19 @@ body.app-active #app {
         </div>
         <div class="login-fi lfi6">🔒</div>
         <div class="login-split-logo">
-          <div class="login-split-ar">AR</div>
-          <div class="login-split-mp">Match Pro</div>
+          <svg width="68" height="68" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;display:block;border-radius:14px;box-shadow:0 8px 32px rgba(20,168,216,.35)">
+            <defs>
+              <linearGradient id="armpLoginG" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#14A8D8"/>
+                <stop offset="100%" stop-color="#12B886"/>
+              </linearGradient>
+            </defs>
+            <rect width="32" height="32" rx="7" fill="url(#armpLoginG)"/>
+            <text x="16" y="22" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="900" fill="#ffffff" letter-spacing="-0.3">AR</text>
+          </svg>
+          <div class="login-split-mp" style="display:flex;flex-direction:column;line-height:1.1;margin-left:14px">
+            <span style="font-size:34px;font-weight:900;color:#ffffff;letter-spacing:-1px">AR Match <span style="color:#168DE2">Pro</span></span>
+          </div>
         </div>
       </div>
       <div class="login-tagline">Remittances · Cash Application · AR Automation</div>
@@ -2531,13 +2661,20 @@ body.app-active #app {
 
   <!-- TOP NAV -->
   <nav class="topnav">
-    <div class="tn-logo" style="padding:0;display:flex;align-items:center;gap:9px;padding-left:2px">
-      <div style="position:relative;width:30px;height:30px;flex-shrink:0;border-radius:8px;background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.15));display:flex;align-items:center;justify-content:center">
-        <span style="font-size:13px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AR</span>
-      </div>
+    <div class="tn-logo armp-logo" style="padding:0;display:flex;align-items:center;gap:10px;padding-left:2px">
+      <svg width="30" height="30" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;display:block;border-radius:7px">
+        <defs>
+          <linearGradient id="armpTnG" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#14A8D8"/>
+            <stop offset="100%" stop-color="#12B886"/>
+          </linearGradient>
+        </defs>
+        <rect width="32" height="32" rx="7" fill="url(#armpTnG)"/>
+        <text x="16" y="22" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="900" fill="#ffffff" letter-spacing="-0.3">AR</text>
+      </svg>
       <div style="line-height:1.15">
-        <div style="font-size:13.5px;font-weight:800;color:var(--t1);letter-spacing:-.3px">AR<span style="color:#60a5fa">Match</span></div>
-        <div style="font-size:9px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase">Pro</div>
+        <div style="font-size:14px;font-weight:800;letter-spacing:-.3px"><span style="color:var(--t1)">AR Match</span> <span style="color:#168DE2">Pro</span></div>
+        <div style="font-size:9px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase">Cash Application</div>
       </div>
     </div>
 
@@ -2693,10 +2830,6 @@ body.app-active #app {
         
       <div class="sb-group">
         <div class="sb-group-label">Reports</div>
-        <div class="sb-item" id="sbi-cfo" onclick="if(checkFeature('cfo'))sp('cfo')">
-          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12l3-4 3 2 3-5 3 3"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
-          CFO Summary
-        </div>
         <div class="sb-item" id="sbi-posting" onclick="sp('posting')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
           Posting Export
@@ -2704,6 +2837,10 @@ body.app-active #app {
         <div class="sb-item" id="sbi-reporting" onclick="sp('reporting')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 14V8M6 14V5M10 14V2M14 14V8"/></svg>
           Reports
+        </div>
+        <div class="sb-item" id="sbi-cfo" onclick="if(checkFeature('cfo'))sp('cfo')">
+          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12l3-4 3 2 3-5 3 3"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+          CFO Summary
         </div>
 </div>
       <div class="sb-group">
@@ -3364,6 +3501,45 @@ body.app-active #app {
           </div>
         </div>
         <div class="panel-body" style="padding:0">
+          <!-- ── Guided Setup Banner (Items 2+4) ───────────────────────── -->
+          <div id="armp-guided-banner" class="armp-guided-banner" style="display:none">
+            <div class="armp-guided-banner-inner">
+              <div class="armp-guided-title">
+                <span class="armp-guided-icon">→</span>
+                <span>Get started in 3 steps</span>
+                <button class="armp-guided-dismiss" onclick="armpDismissGuided()" aria-label="Dismiss" title="Dismiss">×</button>
+              </div>
+              <div class="armp-guided-steps">
+                <div class="armp-step" id="armp-step-bank" data-state="active">
+                  <div class="armp-step-circle"><span class="armp-step-num">1</span><span class="armp-step-check">✓</span></div>
+                  <div class="armp-step-text">
+                    <div class="armp-step-label">Upload bank file</div>
+                    <div class="armp-step-sub" id="armp-step-bank-sub">Remittance data (MUFG, BAI2, YayPay, CSV)</div>
+                  </div>
+                  <button class="armp-step-cta" id="armp-step-bank-cta" onclick="openImportBank()">Upload</button>
+                </div>
+                <div class="armp-step-divider"></div>
+                <div class="armp-step" id="armp-step-inv" data-state="pending">
+                  <div class="armp-step-circle"><span class="armp-step-num">2</span><span class="armp-step-check">✓</span></div>
+                  <div class="armp-step-text">
+                    <div class="armp-step-label">Upload invoice file</div>
+                    <div class="armp-step-sub" id="armp-step-inv-sub">Aging report (XLSX, CSV)</div>
+                  </div>
+                  <button class="armp-step-cta" id="armp-step-inv-cta" onclick="openImport('inv')">Upload</button>
+                </div>
+                <div class="armp-step-divider"></div>
+                <div class="armp-step" id="armp-step-match" data-state="pending">
+                  <div class="armp-step-circle"><span class="armp-step-num">3</span><span class="armp-step-check">✓</span></div>
+                  <div class="armp-step-text">
+                    <div class="armp-step-label">Run Auto Match</div>
+                    <div class="armp-step-sub" id="armp-step-match-sub">Match payments to invoices</div>
+                  </div>
+                  <button class="armp-step-cta" id="armp-step-match-cta" onclick="runMatch()">Run</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           
           <div style="padding:10px 14px;background:var(--surface1);border-bottom:1px solid var(--bdr);display:flex;gap:10px;align-items:center">
             <input id="exc-search-input" type="search" placeholder="Search by account number or customer name…"
@@ -3529,6 +3705,106 @@ body.app-active #app {
 
       <!-- ════════════════ REPORTS ════════════════ -->
       <!-- ════════════════ CFO SUMMARY ════════════════ -->
+      <div class="panel" id="p-reporting">
+        <div class="panel-header">
+          <div class="panel-header-row">
+            <div>
+              <div class="panel-title">Reports</div>
+              <div class="panel-sub"></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Format</span>
+              <div class="fmt-pills">
+                <button class="fmt-pill active" onclick="selRptFmt(this,'csv')">CSV</button>
+                <button class="fmt-pill" onclick="selRptFmt(this,'excel')">Excel</button>
+                <button class="fmt-pill" onclick="selRptFmt(this,'pdf')">PDF</button>
+              </div>
+              <button class="btn btn-p btn-sm" onclick="exportReporting(_rptFmt||'csv')" style="margin-left:8px">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <!-- Exception aging KPIs -->
+          <div class="rpt-hero">
+            <div class="rpt-kpi-card">
+              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#EF4444,#B91C1C)">⏰</div>
+              <div class="rpt-kpi-label">Exception Aging (Open)</div>
+              <div class="rpt-kpi-val" id="rpt-exc-age">—</div>
+              <div class="rpt-kpi-sub">Open exceptions outstanding</div>
+              <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-exc-age-bar" style="background:var(--r)"></div></div>
+            </div>
+            <div class="rpt-kpi-card">
+              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#F59E0B,#B45309)">🏷</div>
+              <div class="rpt-kpi-label">Top Issue Type</div>
+              <div class="rpt-kpi-val" id="rpt-top-issue" style="font-size:18px">—</div>
+              <div class="rpt-kpi-sub" id="rpt-top-issue-desc">No exceptions detected</div>
+            </div>
+            <div class="rpt-kpi-card">
+              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#10B981,#059669)">💰</div>
+              <div class="rpt-kpi-label">Cash Matched (Session)</div>
+              <div class="rpt-kpi-val" id="rpt-matched-today" style="color:var(--g-t)">$0</div>
+              <div class="rpt-kpi-sub">From current match results</div>
+            </div>
+          </div>
+
+          <!-- Main KPI grid -->
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px">
+            <div class="rpt-kpi-card">
+              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#10B981,#059669)">💚</div>
+              <div class="rpt-kpi-label">Cash Matched</div>
+              <div class="rpt-kpi-val" id="rpt-matched">$0</div>
+              <div class="rpt-kpi-sub" id="rpt-matched-s">0 transactions</div>
+              <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-matched-bar"></div></div>
+            </div>
+            <div class="rpt-kpi-card">
+              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8)">📊</div>
+              <div class="rpt-kpi-label">Match Rate</div>
+              <div class="rpt-kpi-val" id="rpt-rate">—</div>
+              <div class="rpt-kpi-sub" id="rpt-rate-s">Auto-Match Rate</div>
+              <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-rate-bar" style="background:var(--p)"></div></div>
+            </div>
+            <div class="rpt-kpi-card">
+              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706)">⚠️</div>
+              <div class="rpt-kpi-label">Unapplied Cash</div>
+              <div class="rpt-kpi-val" id="rpt-unapplied">$0</div>
+              <div class="rpt-kpi-sub" id="rpt-unapplied-s">Pending decision</div>
+              <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-unapplied-bar" style="background:var(--am)"></div></div>
+            </div>
+            <div class="rpt-kpi-card">
+              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9)">🔢</div>
+              <div class="rpt-kpi-label">Short Pays</div>
+              <div class="rpt-kpi-val" id="rpt-shortpay">0</div>
+              <div class="rpt-kpi-sub" id="rpt-shortpay-s">Invoice underpayments</div>
+            </div>
+            <div class="rpt-kpi-card">
+              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#EF4444,#B91C1C)">🚨</div>
+              <div class="rpt-kpi-label">Total Exceptions</div>
+              <div class="rpt-kpi-val" id="rpt-exc">0</div>
+              <div class="rpt-kpi-sub">Require action</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="card">
+              <div class="card-header"><div class="card-title">Match Results Breakdown</div></div>
+              <div class="card-body" id="rpt-breakdown">
+                <div class="empty" style="padding:20px"><div class="empty-t">Auto match to see breakdown</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Top Exception Types</div></div>
+              <div class="card-body" id="rpt-exc-breakdown">
+                <div class="empty" style="padding:20px"><div class="empty-t">No exception data</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- p-reporting -->
+
+
       <div class="panel" id="p-cfo">
         <div class="panel-header">
           <div class="panel-header-row">
@@ -3737,106 +4013,6 @@ body.app-active #app {
         </div>
       </div><!-- cfo-content-wrap -->
       </div><!-- panel-body+panel -->
-
-      <div class="panel" id="p-reporting">
-        <div class="panel-header">
-          <div class="panel-header-row">
-            <div>
-              <div class="panel-title">Reports</div>
-              <div class="panel-sub"></div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Format</span>
-              <div class="fmt-pills">
-                <button class="fmt-pill active" onclick="selRptFmt(this,'csv')">CSV</button>
-                <button class="fmt-pill" onclick="selRptFmt(this,'excel')">Excel</button>
-                <button class="fmt-pill" onclick="selRptFmt(this,'pdf')">PDF</button>
-              </div>
-              <button class="btn btn-p btn-sm" onclick="exportReporting(_rptFmt||'csv')" style="margin-left:8px">
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                Download
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="panel-body">
-          <!-- Exception aging KPIs -->
-          <div class="rpt-hero">
-            <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#EF4444,#B91C1C)">⏰</div>
-              <div class="rpt-kpi-label">Exception Aging (Open)</div>
-              <div class="rpt-kpi-val" id="rpt-exc-age">—</div>
-              <div class="rpt-kpi-sub">Open exceptions outstanding</div>
-              <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-exc-age-bar" style="background:var(--r)"></div></div>
-            </div>
-            <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#F59E0B,#B45309)">🏷</div>
-              <div class="rpt-kpi-label">Top Issue Type</div>
-              <div class="rpt-kpi-val" id="rpt-top-issue" style="font-size:18px">—</div>
-              <div class="rpt-kpi-sub" id="rpt-top-issue-desc">No exceptions detected</div>
-            </div>
-            <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#10B981,#059669)">💰</div>
-              <div class="rpt-kpi-label">Cash Matched (Session)</div>
-              <div class="rpt-kpi-val" id="rpt-matched-today" style="color:var(--g-t)">$0</div>
-              <div class="rpt-kpi-sub">From current match results</div>
-            </div>
-          </div>
-
-          <!-- Main KPI grid -->
-          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px">
-            <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#10B981,#059669)">💚</div>
-              <div class="rpt-kpi-label">Cash Matched</div>
-              <div class="rpt-kpi-val" id="rpt-matched">$0</div>
-              <div class="rpt-kpi-sub" id="rpt-matched-s">0 transactions</div>
-              <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-matched-bar"></div></div>
-            </div>
-            <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8)">📊</div>
-              <div class="rpt-kpi-label">Match Rate</div>
-              <div class="rpt-kpi-val" id="rpt-rate">—</div>
-              <div class="rpt-kpi-sub" id="rpt-rate-s">Auto-Match Rate</div>
-              <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-rate-bar" style="background:var(--p)"></div></div>
-            </div>
-            <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706)">⚠️</div>
-              <div class="rpt-kpi-label">Unapplied Cash</div>
-              <div class="rpt-kpi-val" id="rpt-unapplied">$0</div>
-              <div class="rpt-kpi-sub" id="rpt-unapplied-s">Pending decision</div>
-              <div class="rpt-kpi-bar"><div class="rpt-kpi-fill" id="rpt-unapplied-bar" style="background:var(--am)"></div></div>
-            </div>
-            <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9)">🔢</div>
-              <div class="rpt-kpi-label">Short Pays</div>
-              <div class="rpt-kpi-val" id="rpt-shortpay">0</div>
-              <div class="rpt-kpi-sub" id="rpt-shortpay-s">Invoice underpayments</div>
-            </div>
-            <div class="rpt-kpi-card">
-              <div class="rpt-kpi-icon" style="background:linear-gradient(135deg,#EF4444,#B91C1C)">🚨</div>
-              <div class="rpt-kpi-label">Total Exceptions</div>
-              <div class="rpt-kpi-val" id="rpt-exc">0</div>
-              <div class="rpt-kpi-sub">Require action</div>
-            </div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-            <div class="card">
-              <div class="card-header"><div class="card-title">Match Results Breakdown</div></div>
-              <div class="card-body" id="rpt-breakdown">
-                <div class="empty" style="padding:20px"><div class="empty-t">Auto match to see breakdown</div></div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-header"><div class="card-title">Top Exception Types</div></div>
-              <div class="card-body" id="rpt-exc-breakdown">
-                <div class="empty" style="padding:20px"><div class="empty-t">No exception data</div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div><!-- p-reporting -->
-
 
       <div class="panel" id="p-settings">
         <div class="panel-header">
@@ -5092,6 +5268,8 @@ function sp(id){
   if(pid==='settings'){try{cfgRenderAll();}catch(e){}}
   if(pid==='cash-app'){engRefreshSel();renderPayQueue();}
   if(pid==='audit')initAuditTbl();
+
+  try{armpUpdateGuidedBanner();}catch(e){}
 }
 
 // ── Dark mode ──
@@ -5184,6 +5362,8 @@ function updTop(){
 
 
   try{updateReadyToExportKpi();}catch(e){}
+
+  try{armpUpdateGuidedBanner();}catch(e){}
 }
 
 // ── Dashboard ──
@@ -5270,6 +5450,85 @@ function naUpdateChipCounts(){
 }
 
 // ── Workflow status logic ───────────────────────────────────────────
+
+// ── Items 2+4: Guided workflow banner state management ─────────────
+function armpUpdateGuidedBanner(){
+  try{
+    var banner = document.getElementById('armp-guided-banner');
+    if(!banner) return;
+    // Hide if user permanently dismissed
+    if(localStorage.getItem('armp_guided_dismissed') === 'true'){
+      banner.style.display = 'none';
+      return;
+    }
+    var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
+    var hasInv = (typeof INV!=='undefined') && INV.length > 0;
+    var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
+    // If all 3 stages complete, hide automatically
+    if(hasPay && hasInv && hasMatched){
+      banner.style.display = 'none';
+      return;
+    }
+    banner.style.display = 'block';
+    // Update each step state
+    var stepBank = document.getElementById('armp-step-bank');
+    var stepInv  = document.getElementById('armp-step-inv');
+    var stepMatch = document.getElementById('armp-step-match');
+    if(!stepBank || !stepInv || !stepMatch) return;
+    // Step 1: Bank file
+    var newBankState = hasPay ? 'done' : 'active';
+    var prevBankState = stepBank.getAttribute('data-state');
+    stepBank.setAttribute('data-state', newBankState);
+    // Step 2: Invoice file — active only when bank is done
+    var newInvState = hasInv ? 'done' : (hasPay ? 'active' : 'pending');
+    var prevInvState = stepInv.getAttribute('data-state');
+    stepInv.setAttribute('data-state', newInvState);
+    // Step 3: Auto Match — active only when both bank + inv are done
+    var newMatchState = hasMatched ? 'done' : (hasPay && hasInv ? 'active' : 'pending');
+    var prevMatchState = stepMatch.getAttribute('data-state');
+    stepMatch.setAttribute('data-state', newMatchState);
+    // Pulse animation on transitions to "active"
+    if(prevBankState !== newBankState && newBankState === 'active'){
+      armpPulseStep('armp-step-bank-cta');
+    }
+    if(prevInvState !== newInvState && newInvState === 'active'){
+      armpPulseStep('armp-step-inv-cta');
+    }
+    if(prevMatchState !== newMatchState && newMatchState === 'active'){
+      armpPulseStep('armp-step-match-cta');
+    }
+    // Subtitle updates
+    var bsub = document.getElementById('armp-step-bank-sub');
+    if(bsub) bsub.textContent = hasPay ? PAY.length+' payments imported' : 'Remittance data (MUFG, BAI2, YayPay, CSV)';
+    var isub = document.getElementById('armp-step-inv-sub');
+    if(isub) isub.textContent = hasInv ? INV.length.toLocaleString()+' invoices imported' : 'Aging report (XLSX, CSV)';
+    var msub = document.getElementById('armp-step-match-sub');
+    if(msub) msub.textContent = hasMatched ? RES.length+' matches · '+(typeof EXC!=='undefined'?EXC.length:0)+' exceptions' : 'Match payments to invoices';
+  } catch(e){ console.warn('[armpUpdateGuidedBanner]', e); }
+}
+function armpPulseStep(elId){
+  var el = document.getElementById(elId);
+  if(!el) return;
+  el.classList.remove('armp-pulse');
+  void el.offsetWidth; // reflow to restart animation
+  el.classList.add('armp-pulse');
+  setTimeout(function(){ if(el) el.classList.remove('armp-pulse'); }, 1100);
+}
+function armpDismissGuided(){
+  try{ localStorage.setItem('armp_guided_dismissed','true'); }catch(e){}
+  var b = document.getElementById('armp-guided-banner');
+  if(b) b.style.display = 'none';
+}
+// Pulse the workflow strip CTA when it changes
+function armpPulseWfCta(){
+  var c = document.getElementById('wf-cta');
+  if(!c) return;
+  c.classList.remove('armp-pulse');
+  void c.offsetWidth;
+  c.classList.add('armp-pulse');
+  setTimeout(function(){ if(c) c.classList.remove('armp-pulse'); }, 1100);
+}
+
 function updWorkflow(){
   try{
     var strip = document.getElementById('wf-strip');
@@ -5332,7 +5591,11 @@ function updWorkflow(){
       };
       var cfg=ctaMap[currentStage]||{show:false};
       if(cfg.show){
+        var _prevCtaLabel = ctaLabel.textContent;
         ctaLabel.textContent=cfg.label;
+        if(_prevCtaLabel && _prevCtaLabel !== cfg.label && typeof armpPulseWfCta === 'function'){
+          armpPulseWfCta();
+        }
         cta.style.display='inline-flex';
         cta.setAttribute('data-action',cfg.action||'');
       } else {
@@ -5340,6 +5603,8 @@ function updWorkflow(){
       }
     }
   }catch(e){console.warn('[wf]',e);}
+
+  try{armpUpdateGuidedBanner();}catch(e){}
 }
 function wfCtaClick(){
   var cta=document.getElementById('wf-cta');
