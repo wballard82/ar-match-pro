@@ -9,7 +9,7 @@
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 <title>AR Match Pro</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTRBOEQ4Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMTJCODg2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZmYiPkFSPC90ZXh0Pjwvc3ZnPg==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
@@ -2246,114 +2246,192 @@ body.app-active #app {
 .ov-menu-item:hover { background:var(--surface2); }
 .ov-menu-item-icon { color:var(--t3); font-size:13px; }
 
-/* ── Items 2+4: Guided onboarding banner ─────────────────────────── */
-.armp-guided-banner {
-  margin: 16px 20px 8px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(20,168,216,.08) 0%, rgba(18,184,134,.08) 100%);
-  border: 1px solid rgba(20,168,216,.18);
-  overflow: hidden;
-  position: relative;
+/* ─── ARMP Setup Modal + Inline Banner ─────────────────────────────── */
+.armp-setup-step {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 14px; border-radius: 12px;
+  margin-bottom: 10px;
+  background: var(--surface1);
+  border: 1px solid var(--bdr);
+  transition: all .25s ease;
 }
-.armp-guided-banner::before {
-  content: ''; position: absolute; top:0; left:0; right:0; height: 2px;
-  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+.armp-setup-step[data-state="active"] {
+  background: rgba(20,168,216,.06);
+  border-color: rgba(20,168,216,.25);
 }
-.armp-guided-banner-inner {
-  padding: 16px 20px;
+.armp-setup-step[data-state="done"] {
+  background: rgba(18,184,134,.05);
+  border-color: rgba(18,184,134,.25);
 }
-.armp-guided-title {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 13.5px; font-weight: 700; color: var(--t1);
-  margin-bottom: 14px; letter-spacing: -0.2px;
-}
-.armp-guided-icon {
-  display:inline-flex;align-items:center;justify-content:center;
-  width:22px;height:22px;border-radius:6px;
-  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
-  color:#fff;font-size:13px;font-weight:900;
-}
-.armp-guided-dismiss {
-  margin-left:auto; background:transparent; border:none; cursor:pointer;
-  font-size:18px; color:var(--t3); padding:0 6px; line-height:1;
-  transition: color .15s;
-}
-.armp-guided-dismiss:hover { color: var(--t1); }
-.armp-guided-steps {
-  display: flex; align-items: center; gap: 0;
-}
-.armp-step {
-  flex:1; min-width:0; display:flex; align-items:center; gap:12px;
-  padding: 10px 14px; border-radius: 10px;
-  transition: background .25s, transform .25s;
-}
-.armp-step[data-state="done"]    { background: rgba(18,184,134,.06); }
-.armp-step[data-state="active"]  { background: rgba(20,168,216,.08); }
-.armp-step-divider {
-  flex-shrink:0; width:24px; height:1px;
-  background: linear-gradient(90deg, transparent, var(--bdr), transparent);
-}
-.armp-step-circle {
-  flex-shrink:0; width:30px; height:30px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size: 12.5px; font-weight: 800;
+.armp-setup-step-circle {
+  flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800;
   background: var(--surface2); color: var(--t3);
   border: 1.5px solid var(--bdr);
   transition: all .25s;
 }
-.armp-step[data-state="active"] .armp-step-circle {
+.armp-setup-step[data-state="active"] .armp-setup-step-circle {
   background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
   color: #fff; border-color: transparent;
+  box-shadow: 0 2px 8px rgba(20,168,216,.30);
 }
-.armp-step[data-state="done"] .armp-step-circle {
+.armp-setup-step[data-state="done"] .armp-setup-step-circle {
   background: #12B886; color: #fff; border-color: transparent;
 }
-.armp-step-num { display: inline; }
-.armp-step-check { display: none; font-size: 15px; }
-.armp-step[data-state="done"] .armp-step-num { display: none; }
-.armp-step[data-state="done"] .armp-step-check { display: inline; }
-.armp-step-text { flex:1; min-width:0; line-height:1.25; }
-.armp-step-label {
-  font-size: 13px; font-weight: 700; color: var(--t1);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.armp-setup-step-num { display: inline; }
+.armp-setup-step-check { display: none; font-size: 17px; }
+.armp-setup-step[data-state="done"] .armp-setup-step-num { display: none; }
+.armp-setup-step[data-state="done"] .armp-setup-step-check { display: inline; }
+.armp-setup-step-text { flex: 1; min-width: 0; line-height: 1.3; }
+.armp-setup-step-label {
+  font-size: 14px; font-weight: 700; color: var(--t1);
+  margin-bottom: 2px;
 }
-.armp-step[data-state="pending"] .armp-step-label { color: var(--t3); font-weight: 600; }
-.armp-step-sub {
-  font-size: 11px; color: var(--t3); margin-top: 1px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.armp-setup-step[data-state="pending"] .armp-setup-step-label { color: var(--t3); font-weight: 600; }
+.armp-setup-step-sub {
+  font-size: 11.5px; color: var(--t3); line-height: 1.4;
 }
-.armp-step-cta {
-  flex-shrink:0;
-  padding: 6px 14px; border-radius: 7px; border: none; cursor: pointer;
-  font-size: 12px; font-weight: 700; line-height: 1;
+.armp-setup-step-cta {
+  flex-shrink: 0;
+  padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 12.5px; font-weight: 700; line-height: 1;
   background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
   color: #fff;
-  transition: filter .15s, transform .15s;
+  transition: filter .15s, transform .12s;
 }
-.armp-step-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
-.armp-step[data-state="pending"] .armp-step-cta {
-  background: var(--surface2);
-  color: var(--t3);
-  cursor: not-allowed;
-  pointer-events: none;
+.armp-setup-step-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.armp-setup-step[data-state="pending"] .armp-setup-step-cta {
+  background: var(--surface2); color: var(--t3);
+  cursor: not-allowed; pointer-events: none;
 }
-.armp-step[data-state="done"] .armp-step-cta {
-  display: none;
+.armp-setup-step[data-state="done"] .armp-setup-step-cta { display: none; }
+
+/* ─── Flashing pulse for "click here" indication ─── */
+@keyframes armpFlashPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(20,168,216,.55); transform: scale(1); }
+  50%  { box-shadow: 0 0 0 10px rgba(20,168,216,0);  transform: scale(1.04); }
+  100% { box-shadow: 0 0 0 0 rgba(20,168,216,0);    transform: scale(1); }
 }
-/* Subtle 1s pulse on the active CTA when state transitions */
-@keyframes armpPulse {
+.armp-setup-step[data-state="active"] .armp-setup-step-cta {
+  animation: armpFlashPulse 1.6s ease-in-out infinite;
+}
+/* Subtle 1s pulse on workflow CTA when state transitions */
+@keyframes armpCtaPulse {
   0%   { box-shadow: 0 0 0 0 rgba(20,168,216,.45); }
   50%  { box-shadow: 0 0 0 8px rgba(20,168,216,0); }
   100% { box-shadow: 0 0 0 0 rgba(20,168,216,0); }
 }
-.armp-pulse {
-  animation: armpPulse 1s ease-out 1;
+.armp-pulse { animation: armpCtaPulse 1s ease-out 1; }
+
+/* ─── Inline workflow banner inside Cash Application ─── */
+.armp-banner {
+  margin: 16px 20px 8px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(20,168,216,.06) 0%, rgba(18,184,134,.06) 100%);
+  border: 1px solid rgba(20,168,216,.16);
+  overflow: hidden; position: relative;
 }
-/* Responsive: stack on small screens */
+.armp-banner::before {
+  content: ''; position: absolute; top:0; left:0; right:0; height: 2px;
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+}
+.armp-banner-inner { padding: 14px 18px; }
+.armp-banner-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; font-weight: 700; color: var(--t1);
+  margin-bottom: 12px; letter-spacing: -0.2px;
+}
+.armp-banner-dismiss {
+  margin-left: auto; background: transparent; border: none; cursor: pointer;
+  font-size: 16px; color: var(--t3); padding: 0 6px; line-height: 1;
+}
+.armp-banner-dismiss:hover { color: var(--t1); }
+.armp-banner-steps {
+  display: flex; align-items: center; gap: 0;
+}
+.armp-banner-step {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 9px;
+  transition: background .22s;
+}
+.armp-banner-step[data-state="active"] { background: rgba(20,168,216,.08); }
+.armp-banner-step[data-state="done"]   { background: rgba(18,184,134,.05); }
+.armp-banner-step-divider {
+  flex-shrink: 0; width: 24px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--bdr), transparent);
+}
+.armp-banner-step-circle {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11.5px; font-weight: 800;
+  background: var(--surface2); color: var(--t3);
+  border: 1.5px solid var(--bdr);
+}
+.armp-banner-step[data-state="active"] .armp-banner-step-circle {
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+  color: #fff; border-color: transparent;
+}
+.armp-banner-step[data-state="done"] .armp-banner-step-circle {
+  background: #12B886; color: #fff; border-color: transparent;
+}
+.armp-banner-step .armp-banner-num { display: inline; }
+.armp-banner-step .armp-banner-check { display: none; }
+.armp-banner-step[data-state="done"] .armp-banner-num { display: none; }
+.armp-banner-step[data-state="done"] .armp-banner-check { display: inline; }
+.armp-banner-step-text { flex: 1; min-width: 0; line-height: 1.25; }
+.armp-banner-step-label {
+  font-size: 12.5px; font-weight: 700; color: var(--t1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.armp-banner-step[data-state="pending"] .armp-banner-step-label { color: var(--t3); font-weight: 600; }
+.armp-banner-step-cta {
+  flex-shrink: 0;
+  padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 11.5px; font-weight: 700; line-height: 1;
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+  color: #fff;
+  transition: filter .15s;
+}
+.armp-banner-step-cta:hover { filter: brightness(1.08); }
+.armp-banner-step[data-state="pending"] .armp-banner-step-cta {
+  background: var(--surface2); color: var(--t3); cursor: not-allowed; pointer-events: none;
+}
+.armp-banner-step[data-state="done"] .armp-banner-step-cta { display: none; }
+.armp-banner-step[data-state="active"] .armp-banner-step-cta {
+  animation: armpFlashPulse 1.6s ease-in-out infinite;
+}
+
+/* ─── Per-tab workflow guidance strip (Item 5) ─── */
+.armp-tab-guidance {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; margin: 10px 14px 0;
+  border-radius: 8px;
+  background: rgba(20,168,216,.04);
+  border: 1px solid rgba(20,168,216,.14);
+  font-size: 12px; line-height: 1.4;
+}
+.armp-tab-guidance-icon {
+  flex-shrink: 0;
+  width: 18px; height: 18px; border-radius: 5px;
+  background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
+  color: #fff; font-size: 11px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+}
+.armp-tab-guidance-text { flex: 1; color: var(--t2); }
+.armp-tab-guidance-text strong { color: var(--t1); font-weight: 700; }
+.armp-tab-guidance-next {
+  flex-shrink: 0;
+  color: #168DE2; font-weight: 700; font-size: 11.5px;
+  text-decoration: none; cursor: pointer;
+}
+.armp-tab-guidance-next:hover { text-decoration: underline; }
+
+/* Responsive: stack banner on small screens */
 @media (max-width: 880px) {
-  .armp-guided-steps { flex-direction: column; align-items: stretch; }
-  .armp-step-divider { display: none; }
-  .armp-step { width: 100%; }
+  .armp-banner-steps { flex-direction: column; align-items: stretch; }
+  .armp-banner-step-divider { display: none; }
+  .armp-banner-step { width: 100%; }
 }
 </style>
 </head>
@@ -2375,6 +2453,57 @@ body.app-active #app {
   </div>
 </div>
 
+
+<!-- ─── ARMP "Let's Get Started" first-time setup modal ─── -->
+<div class="mo-overlay" id="armp-setup-modal">
+  <div class="mo-box" style="max-width:540px">
+    <div class="mo-header">
+      <div class="mo-title" style="background:var(--armp-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;letter-spacing:-0.4px">Let's Get Started</div>
+      <div class="mo-close" onclick="armpCloseSetupModal()" aria-label="Close">×</div>
+    </div>
+    <div class="mo-body" style="padding:8px 24px 20px">
+      <div style="font-size:13.5px;color:var(--t2);margin-bottom:18px;line-height:1.55">
+        Welcome to AR Match Pro. Complete these 3 steps to start matching payments.
+      </div>
+      <!-- Steps list -->
+      <div class="armp-setup-step" id="armp-setup-step-1" data-state="active">
+        <div class="armp-setup-step-circle"><span class="armp-setup-step-num">1</span><span class="armp-setup-step-check">✓</span></div>
+        <div class="armp-setup-step-text">
+          <div class="armp-setup-step-label">Upload Bank File</div>
+          <div class="armp-setup-step-sub">Remittance data — BAI2, MUFG, YayPay, CSV, or PDF</div>
+        </div>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-1" onclick="armpSetupClickStep(1)">Upload</button>
+      </div>
+      <div class="armp-setup-step" id="armp-setup-step-2" data-state="pending">
+        <div class="armp-setup-step-circle"><span class="armp-setup-step-num">2</span><span class="armp-setup-step-check">✓</span></div>
+        <div class="armp-setup-step-text">
+          <div class="armp-setup-step-label">Upload Invoice File</div>
+          <div class="armp-setup-step-sub">Aging report — XLSX or CSV</div>
+        </div>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload</button>
+      </div>
+      <div class="armp-setup-step" id="armp-setup-step-3" data-state="pending">
+        <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
+        <div class="armp-setup-step-text">
+          <div class="armp-setup-step-label">Run Auto Match</div>
+          <div class="armp-setup-step-sub">Match payments to invoices automatically</div>
+        </div>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Run</button>
+      </div>
+      <!-- Success state (hidden until all 3 complete) -->
+      <div id="armp-setup-done" style="display:none;text-align:center;padding:18px 0 8px">
+        <div style="font-size:32px;margin-bottom:8px">✓</div>
+        <div style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:6px">All set!</div>
+        <div style="font-size:12.5px;color:var(--t3)">Your workflow is running. Review matches in the next step.</div>
+      </div>
+    </div>
+    <div class="mo-footer">
+      <button class="btn btn-outline btn-sm" onclick="armpCloseSetupModal()" id="armp-setup-skip-btn">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- ══════════════════════════════════════════
      LOGIN SCREEN
      ══════════════════════════════════════════ -->
@@ -2394,19 +2523,8 @@ body.app-active #app {
         </div>
         <div class="login-fi lfi6">🔒</div>
         <div class="login-split-logo">
-          <svg width="68" height="68" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;display:block;border-radius:14px;box-shadow:0 8px 32px rgba(20,168,216,.35)">
-            <defs>
-              <linearGradient id="armpLoginG" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#14A8D8"/>
-                <stop offset="100%" stop-color="#12B886"/>
-              </linearGradient>
-            </defs>
-            <rect width="32" height="32" rx="7" fill="url(#armpLoginG)"/>
-            <text x="16" y="22" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="900" fill="#ffffff" letter-spacing="-0.3">AR</text>
-          </svg>
-          <div class="login-split-mp" style="display:flex;flex-direction:column;line-height:1.1;margin-left:14px">
-            <span style="font-size:34px;font-weight:900;color:#ffffff;letter-spacing:-1px">AR Match <span style="color:#168DE2">Pro</span></span>
-          </div>
+          <div class="login-split-ar">AR</div>
+          <div class="login-split-mp">Match Pro</div>
         </div>
       </div>
       <div class="login-tagline">Remittances · Cash Application · AR Automation</div>
@@ -2661,20 +2779,13 @@ body.app-active #app {
 
   <!-- TOP NAV -->
   <nav class="topnav">
-    <div class="tn-logo armp-logo" style="padding:0;display:flex;align-items:center;gap:10px;padding-left:2px">
-      <svg width="30" height="30" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;display:block;border-radius:7px">
-        <defs>
-          <linearGradient id="armpTnG" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#14A8D8"/>
-            <stop offset="100%" stop-color="#12B886"/>
-          </linearGradient>
-        </defs>
-        <rect width="32" height="32" rx="7" fill="url(#armpTnG)"/>
-        <text x="16" y="22" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="900" fill="#ffffff" letter-spacing="-0.3">AR</text>
-      </svg>
+    <div class="tn-logo" style="padding:0;display:flex;align-items:center;gap:9px;padding-left:2px">
+      <div style="position:relative;width:30px;height:30px;flex-shrink:0;border-radius:8px;background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.15));display:flex;align-items:center;justify-content:center">
+        <span style="font-size:13px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AR</span>
+      </div>
       <div style="line-height:1.15">
-        <div style="font-size:14px;font-weight:800;letter-spacing:-.3px"><span style="color:var(--t1)">AR Match</span> <span style="color:#168DE2">Pro</span></div>
-        <div style="font-size:9px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase">Cash Application</div>
+        <div style="font-size:13.5px;font-weight:800;color:var(--t1);letter-spacing:-.3px">AR<span style="color:#60a5fa">Match</span></div>
+        <div style="font-size:9px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase">Pro</div>
       </div>
     </div>
 
@@ -3501,40 +3612,37 @@ body.app-active #app {
           </div>
         </div>
         <div class="panel-body" style="padding:0">
-          <!-- ── Guided Setup Banner (Items 2+4) ───────────────────────── -->
-          <div id="armp-guided-banner" class="armp-guided-banner" style="display:none">
-            <div class="armp-guided-banner-inner">
-              <div class="armp-guided-title">
-                <span class="armp-guided-icon">→</span>
-                <span>Get started in 3 steps</span>
-                <button class="armp-guided-dismiss" onclick="armpDismissGuided()" aria-label="Dismiss" title="Dismiss">×</button>
+          <!-- ── Inline workflow banner (Items 2+5) ────────────────────── -->
+          <div id="armp-banner" class="armp-banner" style="display:none">
+            <div class="armp-banner-inner">
+              <div class="armp-banner-title">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:var(--armp-grad);color:#fff;font-size:11px;font-weight:900">→</span>
+                <span>Workflow setup</span>
+                <button class="armp-banner-dismiss" onclick="armpDismissBanner()" aria-label="Dismiss" title="Dismiss">×</button>
               </div>
-              <div class="armp-guided-steps">
-                <div class="armp-step" id="armp-step-bank" data-state="active">
-                  <div class="armp-step-circle"><span class="armp-step-num">1</span><span class="armp-step-check">✓</span></div>
-                  <div class="armp-step-text">
-                    <div class="armp-step-label">Upload bank file</div>
-                    <div class="armp-step-sub" id="armp-step-bank-sub">Remittance data (MUFG, BAI2, YayPay, CSV)</div>
+              <div class="armp-banner-steps">
+                <div class="armp-banner-step" id="armp-banner-step-1" data-state="active">
+                  <div class="armp-banner-step-circle"><span class="armp-banner-num">1</span><span class="armp-banner-check">✓</span></div>
+                  <div class="armp-banner-step-text">
+                    <div class="armp-banner-step-label">Upload Bank File</div>
                   </div>
-                  <button class="armp-step-cta" id="armp-step-bank-cta" onclick="openImportBank()">Upload</button>
+                  <button class="armp-banner-step-cta" onclick="openImportBank()">Upload</button>
                 </div>
-                <div class="armp-step-divider"></div>
-                <div class="armp-step" id="armp-step-inv" data-state="pending">
-                  <div class="armp-step-circle"><span class="armp-step-num">2</span><span class="armp-step-check">✓</span></div>
-                  <div class="armp-step-text">
-                    <div class="armp-step-label">Upload invoice file</div>
-                    <div class="armp-step-sub" id="armp-step-inv-sub">Aging report (XLSX, CSV)</div>
+                <div class="armp-banner-step-divider"></div>
+                <div class="armp-banner-step" id="armp-banner-step-2" data-state="pending">
+                  <div class="armp-banner-step-circle"><span class="armp-banner-num">2</span><span class="armp-banner-check">✓</span></div>
+                  <div class="armp-banner-step-text">
+                    <div class="armp-banner-step-label">Upload Invoice File</div>
                   </div>
-                  <button class="armp-step-cta" id="armp-step-inv-cta" onclick="openImport('inv')">Upload</button>
+                  <button class="armp-banner-step-cta" onclick="openImport('inv')">Upload</button>
                 </div>
-                <div class="armp-step-divider"></div>
-                <div class="armp-step" id="armp-step-match" data-state="pending">
-                  <div class="armp-step-circle"><span class="armp-step-num">3</span><span class="armp-step-check">✓</span></div>
-                  <div class="armp-step-text">
-                    <div class="armp-step-label">Run Auto Match</div>
-                    <div class="armp-step-sub" id="armp-step-match-sub">Match payments to invoices</div>
+                <div class="armp-banner-step-divider"></div>
+                <div class="armp-banner-step" id="armp-banner-step-3" data-state="pending">
+                  <div class="armp-banner-step-circle"><span class="armp-banner-num">3</span><span class="armp-banner-check">✓</span></div>
+                  <div class="armp-banner-step-text">
+                    <div class="armp-banner-step-label">Run Auto Match</div>
                   </div>
-                  <button class="armp-step-cta" id="armp-step-match-cta" onclick="runMatch()">Run</button>
+                  <button class="armp-banner-step-cta" onclick="runMatch()">Run</button>
                 </div>
               </div>
             </div>
@@ -5269,7 +5377,15 @@ function sp(id){
   if(pid==='cash-app'){engRefreshSel();renderPayQueue();}
   if(pid==='audit')initAuditTbl();
 
-  try{armpUpdateGuidedBanner();}catch(e){}
+  // Item 1: First-time setup modal on Cash Application click
+  try{
+    if(id==='cash-app'){
+      setTimeout(function(){
+        if(typeof armpMaybeShowSetupOnCashApp==='function') armpMaybeShowSetupOnCashApp();
+        if(typeof armpShowBannerIfNeeded==='function') armpShowBannerIfNeeded();
+      }, 80);
+    }
+  }catch(e){console.warn('[sp setup hook]',e);}
 }
 
 // ── Dark mode ──
@@ -5363,7 +5479,7 @@ function updTop(){
 
   try{updateReadyToExportKpi();}catch(e){}
 
-  try{armpUpdateGuidedBanner();}catch(e){}
+  try{armpUpdateAll();}catch(e){}
 }
 
 // ── Dashboard ──
@@ -5451,75 +5567,150 @@ function naUpdateChipCounts(){
 
 // ── Workflow status logic ───────────────────────────────────────────
 
-// ── Items 2+4: Guided workflow banner state management ─────────────
-function armpUpdateGuidedBanner(){
+// ─── ARMP Setup Modal + Inline Banner state management ─────────────
+function armpUpdateSetupState(){
   try{
-    var banner = document.getElementById('armp-guided-banner');
+    var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
+    var hasInv = (typeof INV!=='undefined') && INV.length > 0;
+    var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
+    // Step 1 state
+    var s1 = document.getElementById('armp-setup-step-1');
+    var s2 = document.getElementById('armp-setup-step-2');
+    var s3 = document.getElementById('armp-setup-step-3');
+    if(s1) s1.setAttribute('data-state', hasPay ? 'done' : 'active');
+    if(s2) s2.setAttribute('data-state', hasInv ? 'done' : (hasPay ? 'active' : 'pending'));
+    if(s3) s3.setAttribute('data-state', hasMatched ? 'done' : (hasPay && hasInv ? 'active' : 'pending'));
+    // Update subtitles to show counts when complete
+    if(s1){
+      var subEl = s1.querySelector('.armp-setup-step-sub');
+      if(subEl) subEl.textContent = hasPay
+        ? PAY.length + ' payment' + (PAY.length===1?'':'s') + ' imported'
+        : 'Remittance data — BAI2, MUFG, YayPay, CSV, or PDF';
+    }
+    if(s2){
+      var subEl2 = s2.querySelector('.armp-setup-step-sub');
+      if(subEl2) subEl2.textContent = hasInv
+        ? INV.length.toLocaleString() + ' invoice' + (INV.length===1?'':'s') + ' imported'
+        : 'Aging report — XLSX or CSV';
+    }
+    if(s3){
+      var subEl3 = s3.querySelector('.armp-setup-step-sub');
+      if(subEl3) subEl3.textContent = hasMatched
+        ? RES.length + ' match' + (RES.length===1?'':'es')
+        : 'Match payments to invoices automatically';
+    }
+    // If all 3 done, show success and auto-close after a beat
+    var doneEl = document.getElementById('armp-setup-done');
+    var modal = document.getElementById('armp-setup-modal');
+    if(hasPay && hasInv && hasMatched){
+      if(doneEl) doneEl.style.display = 'block';
+      [s1, s2, s3].forEach(function(el){ if(el) el.style.display = 'none'; });
+      var skipBtn = document.getElementById('armp-setup-skip-btn');
+      if(skipBtn) skipBtn.textContent = 'Close';
+      // Auto-close after 1.6s if modal still open
+      if(modal && modal.classList.contains('open')){
+        setTimeout(function(){ armpCloseSetupModal(); }, 1600);
+      }
+    }
+  }catch(e){ console.warn('[armpUpdateSetupState]', e); }
+}
+function armpOpenSetupModal(){
+  var modal = document.getElementById('armp-setup-modal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  modal.classList.add('open');
+  armpUpdateSetupState();
+}
+function armpCloseSetupModal(){
+  var modal = document.getElementById('armp-setup-modal');
+  if(!modal) return;
+  modal.classList.remove('open');
+  modal.style.display = 'none';
+  // Set permanent dismissal flag
+  try{ localStorage.setItem('armp_setup_seen','true'); }catch(e){}
+  // Show inline banner as workflow guidance
+  setTimeout(function(){ armpShowBannerIfNeeded(); }, 200);
+}
+function armpSetupClickStep(n){
+  try{
+    if(n===1){
+      if(typeof openImportBank==='function') openImportBank();
+    } else if(n===2){
+      if(typeof openImport==='function') openImport('inv');
+    } else if(n===3){
+      // Close the setup modal first so progress overlay is visible
+      armpCloseSetupModal();
+      setTimeout(function(){ if(typeof runMatch==='function') runMatch(); }, 100);
+    }
+  }catch(e){ console.warn('[armpSetupClickStep]', e); }
+}
+function armpMaybeShowSetupOnCashApp(){
+  // Only show once — flag persists across sessions
+  try{
+    if(localStorage.getItem('armp_setup_seen') === 'true') return;
+    // Don't show if user already has data (skip if they're a returning user with state)
+    var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
+    var hasInv = (typeof INV!=='undefined') && INV.length > 0;
+    if(hasPay && hasInv) return;
+    armpOpenSetupModal();
+  }catch(e){ console.warn('[armpMaybeShowSetupOnCashApp]', e); }
+}
+
+// ─── Inline workflow banner state management ──────────────────────
+function armpUpdateBanner(){
+  try{
+    var banner = document.getElementById('armp-banner');
     if(!banner) return;
-    // Hide if user permanently dismissed
-    if(localStorage.getItem('armp_guided_dismissed') === 'true'){
+    if(localStorage.getItem('armp_banner_dismissed') === 'true'){
       banner.style.display = 'none';
       return;
     }
     var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
     var hasInv = (typeof INV!=='undefined') && INV.length > 0;
     var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
-    // If all 3 stages complete, hide automatically
+    // Hide banner once all 3 stages complete
+    if(hasPay && hasInv && hasMatched){
+      banner.style.display = 'none';
+      return;
+    }
+    // Step states
+    var s1 = document.getElementById('armp-banner-step-1');
+    var s2 = document.getElementById('armp-banner-step-2');
+    var s3 = document.getElementById('armp-banner-step-3');
+    if(s1) s1.setAttribute('data-state', hasPay ? 'done' : 'active');
+    if(s2) s2.setAttribute('data-state', hasInv ? 'done' : (hasPay ? 'active' : 'pending'));
+    if(s3) s3.setAttribute('data-state', hasMatched ? 'done' : (hasPay && hasInv ? 'active' : 'pending'));
+  }catch(e){ console.warn('[armpUpdateBanner]', e); }
+}
+function armpShowBannerIfNeeded(){
+  // Banner shows on Cash Application when setup is incomplete and user hasn't dismissed
+  try{
+    var banner = document.getElementById('armp-banner');
+    if(!banner) return;
+    if(localStorage.getItem('armp_banner_dismissed') === 'true'){
+      banner.style.display = 'none';
+      return;
+    }
+    var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
+    var hasInv = (typeof INV!=='undefined') && INV.length > 0;
+    var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
     if(hasPay && hasInv && hasMatched){
       banner.style.display = 'none';
       return;
     }
     banner.style.display = 'block';
-    // Update each step state
-    var stepBank = document.getElementById('armp-step-bank');
-    var stepInv  = document.getElementById('armp-step-inv');
-    var stepMatch = document.getElementById('armp-step-match');
-    if(!stepBank || !stepInv || !stepMatch) return;
-    // Step 1: Bank file
-    var newBankState = hasPay ? 'done' : 'active';
-    var prevBankState = stepBank.getAttribute('data-state');
-    stepBank.setAttribute('data-state', newBankState);
-    // Step 2: Invoice file — active only when bank is done
-    var newInvState = hasInv ? 'done' : (hasPay ? 'active' : 'pending');
-    var prevInvState = stepInv.getAttribute('data-state');
-    stepInv.setAttribute('data-state', newInvState);
-    // Step 3: Auto Match — active only when both bank + inv are done
-    var newMatchState = hasMatched ? 'done' : (hasPay && hasInv ? 'active' : 'pending');
-    var prevMatchState = stepMatch.getAttribute('data-state');
-    stepMatch.setAttribute('data-state', newMatchState);
-    // Pulse animation on transitions to "active"
-    if(prevBankState !== newBankState && newBankState === 'active'){
-      armpPulseStep('armp-step-bank-cta');
-    }
-    if(prevInvState !== newInvState && newInvState === 'active'){
-      armpPulseStep('armp-step-inv-cta');
-    }
-    if(prevMatchState !== newMatchState && newMatchState === 'active'){
-      armpPulseStep('armp-step-match-cta');
-    }
-    // Subtitle updates
-    var bsub = document.getElementById('armp-step-bank-sub');
-    if(bsub) bsub.textContent = hasPay ? PAY.length+' payments imported' : 'Remittance data (MUFG, BAI2, YayPay, CSV)';
-    var isub = document.getElementById('armp-step-inv-sub');
-    if(isub) isub.textContent = hasInv ? INV.length.toLocaleString()+' invoices imported' : 'Aging report (XLSX, CSV)';
-    var msub = document.getElementById('armp-step-match-sub');
-    if(msub) msub.textContent = hasMatched ? RES.length+' matches · '+(typeof EXC!=='undefined'?EXC.length:0)+' exceptions' : 'Match payments to invoices';
-  } catch(e){ console.warn('[armpUpdateGuidedBanner]', e); }
+    armpUpdateBanner();
+  }catch(e){ console.warn('[armpShowBannerIfNeeded]', e); }
 }
-function armpPulseStep(elId){
-  var el = document.getElementById(elId);
-  if(!el) return;
-  el.classList.remove('armp-pulse');
-  void el.offsetWidth; // reflow to restart animation
-  el.classList.add('armp-pulse');
-  setTimeout(function(){ if(el) el.classList.remove('armp-pulse'); }, 1100);
-}
-function armpDismissGuided(){
-  try{ localStorage.setItem('armp_guided_dismissed','true'); }catch(e){}
-  var b = document.getElementById('armp-guided-banner');
+function armpDismissBanner(){
+  try{ localStorage.setItem('armp_banner_dismissed','true'); }catch(e){}
+  var b = document.getElementById('armp-banner');
   if(b) b.style.display = 'none';
 }
-// Pulse the workflow strip CTA when it changes
+function armpUpdateAll(){
+  try{ armpUpdateSetupState(); }catch(e){}
+  try{ armpUpdateBanner(); }catch(e){}
+}
 function armpPulseWfCta(){
   var c = document.getElementById('wf-cta');
   if(!c) return;
@@ -5604,7 +5795,7 @@ function updWorkflow(){
     }
   }catch(e){console.warn('[wf]',e);}
 
-  try{armpUpdateGuidedBanner();}catch(e){}
+  try{armpUpdateAll();}catch(e){}
 }
 function wfCtaClick(){
   var cta=document.getElementById('wf-cta');
