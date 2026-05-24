@@ -2315,9 +2315,9 @@ body.app-active #app {
 
 /* ─── Flashing pulse for "click here" indication ─── */
 @keyframes armpFlashPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(20,168,216,.55); transform: scale(1); }
-  50%  { box-shadow: 0 0 0 10px rgba(20,168,216,0);  transform: scale(1.04); }
-  100% { box-shadow: 0 0 0 0 rgba(20,168,216,0);    transform: scale(1); }
+  0%   { box-shadow: 0 0 0 0 rgba(20,168,216,.75), 0 0 0 0 rgba(18,184,134,.35); transform: scale(1); filter: brightness(1); }
+  50%  { box-shadow: 0 0 0 14px rgba(20,168,216,0), 0 0 22px 4px rgba(18,184,134,.18); transform: scale(1.05); filter: brightness(1.08); }
+  100% { box-shadow: 0 0 0 0 rgba(20,168,216,0), 0 0 0 0 rgba(18,184,134,0);     transform: scale(1); filter: brightness(1); }
 }
 .armp-setup-step[data-state="active"] .armp-setup-step-cta {
   animation: armpFlashPulse 1.6s ease-in-out infinite;
@@ -3015,7 +3015,7 @@ body.app-active #app {
             <div id="wl-urgent-list">
               <div class="wl-empty-state">
                 <div class="wl-empty-icon">✅</div>
-                <div class="wl-empty-title">No urgent items</div>
+                <div class="wl-empty-title">All payments processed without issue</div>
                 <div class="wl-empty-sub">Auto match to detect exceptions and short pays.</div>
               </div>
             </div>
@@ -3588,7 +3588,7 @@ body.app-active #app {
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
             <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
             <div style="display:flex;gap:8px">
-              
+              <button class="btn btn-outline btn-sm" id="armp-send-unrec-btn" onclick="armpSendUnreconciledToNA()" style="display:none;font-size:11.5px"></button>
               <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
@@ -3790,6 +3790,8 @@ body.app-active #app {
           </div>
         </div>
         <div class="panel-body" style="padding:0">
+          <div id="armp-export-blocker" class="armp-export-blocker" style="display:none;padding:10px 14px;margin:10px 20px 0;border-radius:8px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.22)"></div>
+
           <div style="padding:10px 20px;border-bottom:1px solid var(--bdr);display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface2)">
             <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Format</span>
             <div class="fmt-pills">
@@ -4142,54 +4144,6 @@ body.app-active #app {
           <div class="panel-sub">Account · Role · Matching engine · Appearance · Plans &amp; Pricing</div>
         </div>
         <div class="panel-body" style="max-width:1400px;margin:0 auto;width:100%;padding-left:20px;padding-right:20px">
-          <!-- Item 5: Timezone selector for auto theme -->
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-header">
-              <div>
-                <div class="card-title">Timezone</div>
-                <div class="card-sub">Used to determine day/night theme automatically</div>
-              </div>
-            </div>
-            <div class="card-body">
-              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-                <select id="s-timezone" class="ed" style="min-width:280px;font-size:13px" onchange="armpSetTimezone(this.value)">
-                  <option value="">— Use browser default —</option>
-                  <option value="America/Los_Angeles">Pacific Time — America/Los_Angeles</option>
-                  <option value="America/Denver">Mountain Time — America/Denver</option>
-                  <option value="America/Chicago">Central Time — America/Chicago</option>
-                  <option value="America/New_York">Eastern Time — America/New_York</option>
-                  <option value="America/Phoenix">Arizona — America/Phoenix</option>
-                  <option value="America/Anchorage">Alaska — America/Anchorage</option>
-                  <option value="Pacific/Honolulu">Hawaii — Pacific/Honolulu</option>
-                  <option value="America/Toronto">Toronto — America/Toronto</option>
-                  <option value="America/Mexico_City">Mexico City — America/Mexico_City</option>
-                  <option value="America/Sao_Paulo">São Paulo — America/Sao_Paulo</option>
-                  <option value="Europe/London">London — Europe/London</option>
-                  <option value="Europe/Paris">Paris — Europe/Paris</option>
-                  <option value="Europe/Berlin">Berlin — Europe/Berlin</option>
-                  <option value="Europe/Madrid">Madrid — Europe/Madrid</option>
-                  <option value="Europe/Amsterdam">Amsterdam — Europe/Amsterdam</option>
-                  <option value="Europe/Stockholm">Stockholm — Europe/Stockholm</option>
-                  <option value="Europe/Moscow">Moscow — Europe/Moscow</option>
-                  <option value="Asia/Dubai">Dubai — Asia/Dubai</option>
-                  <option value="Asia/Mumbai">Mumbai — Asia/Kolkata</option>
-                  <option value="Asia/Singapore">Singapore — Asia/Singapore</option>
-                  <option value="Asia/Hong_Kong">Hong Kong — Asia/Hong_Kong</option>
-                  <option value="Asia/Shanghai">Shanghai — Asia/Shanghai</option>
-                  <option value="Asia/Tokyo">Tokyo — Asia/Tokyo</option>
-                  <option value="Asia/Seoul">Seoul — Asia/Seoul</option>
-                  <option value="Australia/Sydney">Sydney — Australia/Sydney</option>
-                  <option value="Australia/Melbourne">Melbourne — Australia/Melbourne</option>
-                  <option value="Pacific/Auckland">Auckland — Pacific/Auckland</option>
-                </select>
-                <div style="font-size:11.5px;color:var(--t3);line-height:1.45;flex:1;min-width:200px">
-                  <span id="s-timezone-current"></span>
-                  <div style="margin-top:3px">Theme auto-switches: light 7am–7pm · dark otherwise. Manual override always wins.</div>
-                </div>
-                <button class="btn btn-outline btn-sm" onclick="armpClearManualTheme()" title="Clear manual theme override">Reset to auto theme</button>
-              </div>
-            </div>
-          </div>
 
 
           <!-- Account -->
@@ -4217,6 +4171,39 @@ body.app-active #app {
 <option value="cfo">CFO</option>
 <option value="finance">Finance</option>
         </select>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-label">Timezone</div><div class="settings-desc">Auto-switch light/dark theme based on local time of day · <span id="s-timezone-current" style="opacity:.85"></span></div></div>
+              <select class="sel" id="s-timezone" onchange="armpSetTimezone(this.value)" style="font-size:12.5px;min-width:240px">
+                <option value="">— Use browser default —</option>
+                <option value="America/Los_Angeles">Pacific — America/Los_Angeles</option>
+                <option value="America/Denver">Mountain — America/Denver</option>
+                <option value="America/Chicago">Central — America/Chicago</option>
+                <option value="America/New_York">Eastern — America/New_York</option>
+                <option value="America/Phoenix">Arizona — America/Phoenix</option>
+                <option value="America/Anchorage">Alaska — America/Anchorage</option>
+                <option value="Pacific/Honolulu">Hawaii — Pacific/Honolulu</option>
+                <option value="America/Toronto">Toronto — America/Toronto</option>
+                <option value="America/Mexico_City">Mexico City — America/Mexico_City</option>
+                <option value="America/Sao_Paulo">São Paulo — America/Sao_Paulo</option>
+                <option value="Europe/London">London — Europe/London</option>
+                <option value="Europe/Paris">Paris — Europe/Paris</option>
+                <option value="Europe/Berlin">Berlin — Europe/Berlin</option>
+                <option value="Europe/Madrid">Madrid — Europe/Madrid</option>
+                <option value="Europe/Amsterdam">Amsterdam — Europe/Amsterdam</option>
+                <option value="Europe/Stockholm">Stockholm — Europe/Stockholm</option>
+                <option value="Europe/Moscow">Moscow — Europe/Moscow</option>
+                <option value="Asia/Dubai">Dubai — Asia/Dubai</option>
+                <option value="Asia/Kolkata">Mumbai — Asia/Kolkata</option>
+                <option value="Asia/Singapore">Singapore — Asia/Singapore</option>
+                <option value="Asia/Hong_Kong">Hong Kong — Asia/Hong_Kong</option>
+                <option value="Asia/Shanghai">Shanghai — Asia/Shanghai</option>
+                <option value="Asia/Tokyo">Tokyo — Asia/Tokyo</option>
+                <option value="Asia/Seoul">Seoul — Asia/Seoul</option>
+                <option value="Australia/Sydney">Sydney — Australia/Sydney</option>
+                <option value="Australia/Melbourne">Melbourne — Australia/Melbourne</option>
+                <option value="Pacific/Auckland">Auckland — Pacific/Auckland</option>
+              </select>
             </div>
 
           </div>
@@ -4904,6 +4891,8 @@ function renderWsRecon(){
     var allRec = matched.length>0 && reconciledCt===matched.length;
     btn.style.display = allRec ? 'inline-flex' : 'none';
   }
+
+  try{armpRefreshSendUnreconciledBtn();}catch(e){}
 }
 
 // ── Item 7: reconcile live-update (no table re-render during typing) ──────
@@ -5878,6 +5867,153 @@ function armpPulseWfCta(){
   setTimeout(function(){ if(c) c.classList.remove('armp-pulse'); }, 1100);
 }
 
+
+// ── Item 4: Posting Export approval requirement ────────────────────
+function armpComputeExportBlockers(){
+  var reasons = [];
+  try{
+    var hasPay = (typeof PAY!=='undefined') && PAY.length>0;
+    var hasMatched = (typeof RES!=='undefined') && RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc||r.fromExc;}).length>0;
+    if(!hasPay) reasons.push('Import bank file and invoices first.');
+    if(!hasMatched) reasons.push('Run Auto Match to generate allocations.');
+    // Open exceptions
+    var openExc = (typeof EXC!=='undefined')?EXC.filter(function(e){return !e.s || e.s==='Open';}).length:0;
+    if(openExc>0) reasons.push('Resolve remaining Needs Attention items before export ('+openExc+' open).');
+    // Pending review — RES that haven't been approved yet (no fromAlloc)
+    var pendingReview = (typeof RES!=='undefined')?RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact')&&!r.fromAlloc&&!r.approved&&!r.fromExc;}).length:0;
+    if(pendingReview>0) reasons.push('Approve pending matches in Review ('+pendingReview+' awaiting approval).');
+    // Unreconciled matched items (have variance, not reconciled)
+    var unreconciled = 0;
+    if(typeof RES!=='undefined'){
+      RES.forEach(function(r){
+        var isMatched = (r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc);
+        if(!isMatched) return;
+        // Has variance and not yet reconciled (no resolution applied)
+        var vr = parseFloat(r.vr||0);
+        if(vr!==0 && !r.reconciled && !(r.writeOff||r.bankFee)) unreconciled++;
+      });
+    }
+    if(unreconciled>0) reasons.push('Approve reconciliation before export ('+unreconciled+' unreconciled).');
+  }catch(e){console.warn('[armpComputeExportBlockers]',e);}
+  return {blocked: reasons.length>0, reasons: reasons};
+}
+function armpRefreshExportBlocker(){
+  try{
+    var blocker = armpComputeExportBlockers();
+    var btn = document.getElementById('post-export-lock-btn');
+    var banner = document.getElementById('armp-export-blocker');
+    if(!btn) return;
+    if(blocker.blocked){
+      btn.disabled = true;
+      btn.style.opacity = '0.55';
+      btn.style.cursor = 'not-allowed';
+      btn.title = blocker.reasons.join(' · ');
+      if(banner){
+        banner.style.display = 'block';
+        banner.innerHTML =
+          '<div style="display:flex;align-items:flex-start;gap:10px">'+
+          '<span style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:var(--am-bg,rgba(245,158,11,.18));color:var(--am-t,#92400E);font-size:12px;font-weight:900">!</span>'+
+          '<div style="flex:1;line-height:1.5">'+
+            '<div style="font-size:12.5px;font-weight:700;color:var(--t1);margin-bottom:4px">Export blocked — '+blocker.reasons.length+' item'+(blocker.reasons.length===1?'':'s')+' to resolve</div>'+
+            '<ul style="margin:0;padding-left:18px;font-size:11.5px;color:var(--t2)">'+
+              blocker.reasons.map(function(r){return '<li>'+r+'</li>';}).join('')+
+            '</ul>'+
+          '</div>'+
+          '</div>';
+      }
+    } else {
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.cursor = '';
+      btn.title = 'Export approved rows and lock';
+      if(banner){banner.style.display='none';banner.innerHTML='';}
+    }
+  }catch(e){console.warn('[armpRefreshExportBlocker]',e);}
+}
+
+
+// ── Item 8: Push unreconciled Reconcile items to Needs Attention ─────
+function armpSendUnreconciledToNA(){
+  try{
+    if(typeof RES==='undefined' || typeof EXC==='undefined') return;
+    var moved = 0;
+    RES.forEach(function(r){
+      var isMatched = (r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc);
+      if(!isMatched) return;
+      var vr = parseFloat(r.vr||0);
+      if(vr===0) return; // nothing to reconcile
+      if(r.reconciled || r.writeOff || r.bankFee) return; // already resolved
+      if(r._sentToNA) return; // already pushed
+      // Check there isn't already an open EXC for this payment+invoice combo
+      var dupKey = (r.d||'')+'|'+(r.i||'');
+      var exists = EXC.some(function(e){return !e.s||e.s==='Open' ? ((e.d||'')+'|'+(e.i||''))===dupKey : false;});
+      if(exists){ r._sentToNA = true; return; }
+      EXC.push({
+        id: 'EXC-RC-'+Date.now()+'-'+Math.floor(Math.random()*1000),
+        a: r.a||'', c: r.c||'',
+        amt: parseFloat(r.pd||0),
+        i: r.i||'', po: r.po||'', so: r.so||'',
+        n: 'Variance unresolved · '+(vr>0?'over by ':'short by ')+'$'+Math.abs(vr).toFixed(2),
+        d: r.d||'',
+        type: vr<0?'Short pay':'Overpay',
+        cat: 'shortpay',
+        s: 'Open', dec: '',
+        rdate: new Date().toISOString().split('T')[0],
+        fromReconcile: true,
+        srcResIdx: RES.indexOf(r)
+      });
+      r._sentToNA = true;
+      moved++;
+    });
+    if(moved>0){
+      try{saveToStorage();}catch(e){}
+      try{updDash();updTop();updWorkflow();}catch(e){}
+      try{if(typeof renderWsExc==='function')renderWsExc();}catch(e){}
+      try{if(typeof renderWsRecon==='function')renderWsRecon();}catch(e){}
+      try{addAudit('Sent to Needs Attention', moved+' unreconciled item'+(moved===1?'':'s'));}catch(e){}
+      if(typeof toast==='function')toast('Sent '+moved+' unreconciled item'+(moved===1?'':'s')+' to Needs Attention');
+      // Navigate to Needs Attention
+      setTimeout(function(){
+        if(typeof sp==='function')sp('cash-app');
+        setTimeout(function(){
+          var excTab = document.getElementById('ca-tab-exc');
+          if(excTab && typeof setCaTab==='function') setCaTab('exc', excTab);
+        }, 80);
+      }, 250);
+    } else {
+      if(typeof toast==='function')toast('No unreconciled items to send','info');
+    }
+  }catch(e){console.warn('[armpSendUnreconciledToNA]',e);}
+}
+// Helper: count unreconciled items for UI display
+function armpCountUnreconciled(){
+  try{
+    if(typeof RES==='undefined') return 0;
+    return RES.filter(function(r){
+      var isMatched = (r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc);
+      if(!isMatched) return false;
+      var vr = parseFloat(r.vr||0);
+      if(vr===0) return false;
+      if(r.reconciled||r.writeOff||r.bankFee) return false;
+      return true;
+    }).length;
+  }catch(e){return 0;}
+}
+// Update button label dynamically
+function armpRefreshSendUnreconciledBtn(){
+  try{
+    var btn = document.getElementById('armp-send-unrec-btn');
+    if(!btn) return;
+    var ct = armpCountUnreconciled();
+    if(ct>0){
+      btn.style.display = 'inline-flex';
+      btn.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8h10M8 3l5 5-5 5"/></svg> Send '+ct+' unreconciled to Needs Attention';
+    } else {
+      btn.style.display = 'none';
+    }
+  }catch(e){}
+}
+
 function updWorkflow(){
   try{
     var strip = document.getElementById('wf-strip');
@@ -5935,7 +6071,7 @@ function updWorkflow(){
         'match':{label:'Run Auto Match',show:hasPay&&hasInv,action:'match'},
         'review':{label:'Review matches',show:true,action:'review'},
         'attention':{label:'Resolve exceptions',show:true,action:'attention'},
-        'reconcile':{label: exportedAll?'Workflow complete':'Reconcile', show: !exportedAll, action:'reconcile'},
+        'reconcile':{label: exportedAll?'Workflow complete':'Approve Reconciliation', show: !exportedAll, action:'reconcile'},
         'export':{label: allReconciled?'Approve All & Export':'Export to ERP', show:true, action: allReconciled?'approve_all':'export'}
       };
       var cfg=ctaMap[currentStage]||{show:false};
@@ -5972,6 +6108,8 @@ function updWorkflow(){
   }catch(e){console.warn('[wf]',e);}
 
   try{armpUpdateAll();}catch(e){}
+
+  try{armpRefreshExportBlocker();}catch(e){}
 }
 function wfCtaClick(){
   var cta=document.getElementById('wf-cta');
@@ -6029,7 +6167,16 @@ function approveAllReviewItems(){
 
 
 // ── Item 8: Export & Lock / Unlock & Edit toggle ──────────────────────
-function exportPostAndLock(){
+function exportPostAndLock(){  // Item 4: Guard — block export when there are unresolved items
+  try{
+    var _blk = (typeof armpComputeExportBlockers==='function')?armpComputeExportBlockers():{blocked:false,reasons:[]};
+    if(_blk.blocked){
+      if(typeof toast==='function')toast('Export blocked: '+_blk.reasons[0],'warn');
+      try{armpRefreshExportBlocker();}catch(e){}
+      return;
+    }
+  }catch(e){}
+
   var btn=document.getElementById('post-export-lock-btn');
   var lbl=document.getElementById('post-export-lock-label');
   var anyLocked=(typeof RES!=='undefined')&&RES.some(function(r){return r.exported===true;});
@@ -7064,6 +7211,8 @@ function rPost(){
   }).join('');
 
   try{updatePostExportLockButton();}catch(e){}
+
+  try{armpRefreshExportBlocker();}catch(e){}
 }
 
 function getRemStatus(p,idx){
@@ -8642,6 +8791,38 @@ function revertResultGroup(idxs){
       n++;
     }
   });
+  // Item 5: Create an EXC entry per reverted payment so it surfaces in Needs Attention
+  try{
+    // Group removed RES by payment transaction so we get ONE EXC per payment, not per invoice
+    var byPay = {};
+    removed.forEach(function(r){
+      var key = (r.d && r.d.length) ? 'tx:'+r.d : 'cu:'+(r.c||'')+':'+(r.a||'')+':'+(r.pd||'');
+      if(!byPay[key]){
+        byPay[key] = {a:r.a||'', c:r.c||'', d:r.d||'', amt:0, invs:[], rdate:r.rdate||''};
+      }
+      byPay[key].amt += parseFloat(r.pd||0);
+      if(r.i) byPay[key].invs.push(r.i);
+    });
+    Object.keys(byPay).forEach(function(key){
+      var p = byPay[key];
+      var excEntry = {
+        id: 'EXC-RV-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+        a: p.a, c: p.c,
+        amt: p.amt,
+        i: p.invs.join(', '),
+        po: '', so: '',
+        n: 'Reopened from Review — re-triage required'+(p.invs.length?' · was applied to: '+p.invs.join(', '):''),
+        d: p.d,
+        type: 'Manual Review',
+        cat: 'manual',
+        s: 'Open',
+        dec: '',
+        rdate: p.rdate || new Date().toISOString().split('T')[0],
+        reopened: true
+      };
+      EXC.push(excEntry);
+    });
+  }catch(e){console.warn('[revert EXC create]',e);}
   try{saveToStorage();}catch(e){}
   try{if(typeof rPost==='function')rPost();}catch(e){}
   try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
@@ -10847,7 +11028,7 @@ function buildWorklist(){
     if(unapplied.length) items.push({cls:'warn',icon:'💰',title:unapplied.length+' unapplied payment'+(unapplied.length>1?'s':''),sub:'Cash received with no remittance reference',amt:$fk(unapplied.reduce(function(s,e){return s+e.amt;},0)),action:'Apply',fn:"wlGoExc()"});
     urgentList.innerHTML=items.map(function(item){ return '<div class="wl-item '+item.cls+'" onclick="'+item.fn+'"><div class="wl-item-icon">'+item.icon+'</div><div class="wl-item-body"><div class="wl-item-title">'+item.title+'</div><div class="wl-item-sub">'+item.sub+'</div></div><div class="wl-item-amount">'+item.amt+'</div><div class="wl-item-cta">'+item.action+' →</div></div>'; }).join('');
   } else if(urgentList){
-    urgentList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'No urgent items')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments processed without issues.':'Import data and auto match to detect exceptions.')+'</div></div>';
+    urgentList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">✅</div><div class="wl-empty-title">'+(EXC.length===0&&PAY.length>0?'No exceptions — clean run':'All payments processed without issue')+'</div><div class="wl-empty-sub">'+(PAY.length>0?'All payments processed without issues.':'Import data and auto match to detect exceptions.')+'</div></div>';
   }
 
   // Payments to allocate
