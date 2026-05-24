@@ -135,15 +135,13 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
   display: flex; align-items: center; justify-content: center;
   background:
     /* ARMP primary teal — top right, the brand signature */
-    radial-gradient(ellipse 130% 75% at 75% 30%, rgba(20,168,216,.18) 0%, transparent 55%),
+    radial-gradient(ellipse 130% 75% at 75% 30%, rgba(20,168,216,.30) 0%, transparent 55%),
     /* ARMP green/teal accent — bottom left */
-    radial-gradient(ellipse 90% 65% at 10% 88%, rgba(18,184,134,.13) 0%, transparent 52%),
+    radial-gradient(ellipse 90% 65% at 10% 88%, rgba(18,184,134,.22) 0%, transparent 52%),
     /* ARMP Pro blue — top left, subtle depth */
-    radial-gradient(ellipse 60% 50% at 15% 15%, rgba(22,141,226,.08) 0%, transparent 48%),
-    /* Subtle ARMP gradient overlay for premium feel */
-    linear-gradient(135deg, rgba(20,168,216,.04) 0%, rgba(18,184,134,.04) 100%),
-    /* Dark navy base for readability */
-    var(--bg);
+    radial-gradient(ellipse 60% 50% at 15% 15%, rgba(22,141,226,.14) 0%, transparent 48%),
+    /* ARMP gradient DARK BASE — the page background itself uses ARMP colors */
+    linear-gradient(135deg, #06384c 0%, #074a3b 50%, #053848 100%);
 }
 
 
@@ -6569,6 +6567,14 @@ function launchApp(user){
   try{initAuditTbl();}catch(e){console.warn('initAuditTbl:',e);}
   addAudit('Login','User: '+(user.name||CURRENT_USER));
   try{cfgInit();}catch(e){console.warn('cfgInit:',e);}
+
+  // Fix: Reset setup-modal seen flag on each fresh login so onboarding shows on next
+  // Cash Application click. Within the same session, dismissing still sets the flag,
+  // so it won't pop up repeatedly. Only fresh login (or Reset All Data) restores it.
+  try{
+    localStorage.removeItem('armp_setup_seen');
+    localStorage.removeItem('armp_banner_dismissed');
+  }catch(e){}
 
   setTimeout(navToWorklist, 0);
 }
