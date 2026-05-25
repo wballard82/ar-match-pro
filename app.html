@@ -2523,6 +2523,84 @@ body.app-active #app {
 .recon-tbl tbody tr:hover {
   background: rgba(20,168,216,.04);
 }
+
+/* Match explainability pills (v18) */
+.armp-match-explain {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  line-height: 1.2;
+  margin-top: 4px;
+}
+.armp-match-conf {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 10.5px;
+  font-family: var(--mono);
+  border: 1px solid currentColor;
+}
+.armp-match-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--t2);
+  font-size: 10.5px;
+  font-weight: 600;
+  border: 1px solid var(--bdr);
+  white-space: nowrap;
+}
+.armp-match-pill.armp-match-invoice { color: var(--p); border-color: rgba(20,168,216,.3); background: rgba(20,168,216,.06); }
+.armp-match-pill.armp-match-po { color: var(--pu-t); border-color: rgba(139,92,246,.3); background: rgba(139,92,246,.06); }
+.armp-match-pill.armp-match-amount { color: var(--g-t); border-color: rgba(18,184,134,.3); background: rgba(18,184,134,.06); }
+.armp-match-pill.armp-match-customerAccount,
+.armp-match-pill.armp-match-customerName { color: var(--pd); border-color: rgba(22,141,226,.3); background: rgba(22,141,226,.06); }
+.armp-match-pill.armp-match-multiInvoice { color: var(--am-t); border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.06); }
+.armp-match-pill.armp-match-more { color: var(--t3); }
+.armp-match-pill.armp-match-variance { color: var(--r-t); border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.06); }
+
+/* Audit activity log (v18) */
+.armp-activity-log {
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--bdr);
+  border-radius: 8px;
+}
+.armp-activity-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bdr);
+  font-size: 12px;
+  align-items: center;
+}
+.armp-activity-row:last-child { border-bottom: none; }
+.armp-activity-row:nth-child(even) { background: var(--surface2); }
+.armp-activity-action {
+  font-weight: 700;
+  color: var(--t1);
+  white-space: nowrap;
+}
+.armp-activity-detail {
+  color: var(--t2);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.armp-activity-when {
+  color: var(--t3);
+  font-size: 11px;
+  font-family: var(--mono);
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -4414,6 +4492,59 @@ body.app-active #app {
             </div>
           </div>
 
+
+          <!-- ═══ System Configuration (v18) — minimal, additive ═══ -->
+          <div class="settings-section" id="armp-syscfg-section">
+            <div class="settings-section-title">⚙️ System Configuration</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:10px">
+              Field mappings, matching rules, and export profiles. Defaults work out of the box —
+              extend per customer organization without code changes.
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Active customer profile</div>
+                <div class="settings-desc">Save and switch between configurations for different organizations</div>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <select class="sel" id="armp-profile-select" onchange="armpHandleProfileSwitch(this.value)" style="font-size:12.5px;min-width:180px">
+                </select>
+                <button class="btn btn-outline btn-xs" onclick="armpHandleProfileSave()" title="Save current config as a named profile">Save as…</button>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">ERP export format</div>
+                <div class="settings-desc">Format used when exporting the posting file</div>
+              </div>
+              <select class="sel" id="armp-export-profile-select" onchange="armpHandleExportProfileChange(this.value)" style="font-size:12.5px;min-width:180px">
+              </select>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Configuration JSON</div>
+                <div class="settings-desc">View, export, or import the full configuration</div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-outline btn-xs" onclick="armpOpenCfgViewer()">View / edit</button>
+                <button class="btn btn-outline btn-xs" onclick="armpDownloadCfg()">Export</button>
+                <button class="btn btn-outline btn-xs" onclick="document.getElementById('armp-cfg-import-file').click()">Import</button>
+                <input type="file" id="armp-cfg-import-file" accept="application/json,.json" style="display:none" onchange="armpHandleCfgImport(event)">
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ Recent Activity (v18) — compact audit log ═══ -->
+          <div class="settings-section" id="armp-activity-section">
+            <div class="settings-section-title">📋 Recent Activity</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:10px">
+              Last 50 actions across imports, approvals, exports, and reconciliation.
+            </div>
+            <div id="armp-activity-host"></div>
+            <div style="margin-top:10px;display:flex;gap:6px">
+              <button class="btn btn-outline btn-xs" onclick="armpRefreshActivityPanel()">Refresh</button>
+            </div>
+          </div>
+
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:16px;border-top:1px solid var(--bdr)">
             <button class="btn btn-ghost" onclick="clearAllData()" style="color:var(--r-t)">Clear all data</button>
             <div style="display:flex;gap:8px">
@@ -5115,6 +5246,7 @@ function reconLiveUpdate(idx, field, valStr){
     stBadge.innerHTML = dotHtml + (tied?'Reconciled':'Open');
   }
 }
+function _armpReconCommitStamp(r){ if(!r) return; try{ if(r.writeOff>0) armpAuditStamp(r, "writeoff"); if(r.bankFee>0) armpAuditStamp(r, "bankfee"); }catch(e){} }
 function reconCommit(idx){
   // Called on input blur/Enter — persist + update workflow + summary
   try{if(typeof saveToStorage==='function')saveToStorage();}catch(e){}
@@ -5180,6 +5312,600 @@ function _legacyClearAllExceptions(){
 
 // ── Data ──
 let INV=[],PAY=[],RES=[],EXC=[],REM_ADVICE=[],IMP_TYPE='inv',IMP_BANK_MODE=false;
+// ═══════════════════════════════════════════════════════════════════════════
+// ARMP CONFIGURATION LAYER (v18) — JSON-backed system config
+// 
+// Lightweight, additive. Existing hardcoded paths still work; this layer
+// provides a single source of truth for mappings/matching/export, persists
+// to localStorage, and can be exported/imported for multi-customer support.
+// ═══════════════════════════════════════════════════════════════════════════
+const ARMP_CFG_DEFAULTS = Object.freeze({
+  version: 1,
+  organization: 'default',
+  // Field mappings — extend these to support new file headers without code changes
+  fieldMappings: {
+    invoice: {
+      invoiceNumber: ['Invoice', 'Invoice #', 'Invoice Number', 'Document', 'Doc #', 'Document Number'],
+      customerName: ['Customer', 'Customer Name', 'Account Name', 'Sold To', 'Bill To'],
+      customerAccount: ['Account', 'Customer ID', 'Account Number', 'Customer #', 'AcctNo'],
+      amount: ['Amount', 'Open Amount', 'Balance', 'Net Amount', 'Invoice Amount', 'Outstanding'],
+      poNumber: ['PO', 'PO #', 'Purchase Order', 'PO Number', 'Customer PO'],
+      salesOrder: ['SO', 'SO #', 'Sales Order', 'Sales Order #'],
+      invoiceDate: ['Invoice Date', 'Doc Date', 'Date', 'Document Date'],
+      dueDate: ['Due Date', 'Due', 'Net Due Date'],
+      currency: ['Currency', 'Curr', 'CCY']
+    },
+    bank: {
+      reference: ['Reference', 'ACH Detail', 'Memo', 'Description', 'Detail', 'Originator Info', 'Bank Reference'],
+      amount: ['Amount', 'Credit', 'Payment Amount', 'Receipt'],
+      payerName: ['Payer', 'Remitter', 'Originator', 'From'],
+      payerAccount: ['Payer Account', 'Remitter Account', 'Originator ID'],
+      transactionDate: ['Date', 'Posting Date', 'Effective Date', 'Value Date'],
+      transactionId: ['Transaction ID', 'Trans Ref', 'Wire Ref', 'Bank Trans ID']
+    }
+  },
+  // Matching engine config
+  matching: {
+    priorities: ['invoiceNumber', 'poNumber', 'exactAmount', 'customerAccount', 'customerName', 'remittanceReference'],
+    tolerances: {
+      amountAbsolute: 0.01,
+      amountPercent: 0,
+      fuzzyCustomerName: 0.85
+    },
+    // Confidence weights — must sum to <=100. Sum of triggered weights = match confidence.
+    confidenceWeights: {
+      invoiceExact: 50,
+      poExact: 25,
+      amountExact: 20,
+      customerAccount: 15,
+      customerName: 10,
+      remittanceReference: 15,
+      multiInvoiceTotal: 30
+    },
+    minimumConfidence: 50  // below this → exception
+  },
+  // Currency handling
+  currency: {
+    default: 'USD',
+    locale: 'en-US',
+    symbol: '$'
+  },
+  // Exception routing — which exception types go where
+  routing: {
+    shortPay: 'needsAttention',
+    overpay: 'needsAttention',
+    duplicate: 'needsAttention',
+    unmatchedPayment: 'needsAttention',
+    bankFee: 'reconcile',
+    writeOff: 'reconcile',
+    cashOnAccount: 'review'
+  },
+  // ERP export profiles — column mappings per format
+  exportProfiles: {
+    csv: {
+      name: 'Generic CSV',
+      format: 'csv',
+      delimiter: ',',
+      columns: [
+        { header: 'Posting Date', source: 'rdate' },
+        { header: 'Customer Account', source: 'a' },
+        { header: 'Customer', source: 'c' },
+        { header: 'Invoice', source: 'i' },
+        { header: 'PO', source: 'po' },
+        { header: 'Payment Amount', source: 'pd', type: 'number' },
+        { header: 'Variance', source: 'vr', type: 'number' },
+        { header: 'Write-off', source: 'writeOff', type: 'number' },
+        { header: 'Bank Fee', source: 'bankFee', type: 'number' },
+        { header: 'Status', source: 'st' }
+      ]
+    },
+    sap: {
+      name: 'SAP F-28 Import',
+      format: 'csv',
+      delimiter: '|',
+      columns: [
+        { header: 'COMPANY_CODE', value: 'US01' },
+        { header: 'DOC_DATE', source: 'rdate', format: 'YYYYMMDD' },
+        { header: 'POSTING_DATE', source: 'rdate', format: 'YYYYMMDD' },
+        { header: 'CUSTOMER_NO', source: 'a' },
+        { header: 'REFERENCE', source: 'i' },
+        { header: 'PO_REF', source: 'po' },
+        { header: 'AMOUNT', source: 'pd', type: 'number' },
+        { header: 'CURRENCY', value: 'USD' },
+        { header: 'PAYMENT_METHOD', value: 'WIRE' }
+      ]
+    },
+    netsuite: {
+      name: 'NetSuite Cash Receipt',
+      format: 'csv',
+      delimiter: ',',
+      columns: [
+        { header: 'External ID', source: 'i' },
+        { header: 'Customer', source: 'a' },
+        { header: 'Customer Name', source: 'c' },
+        { header: 'Applied Date', source: 'rdate' },
+        { header: 'Payment', source: 'pd', type: 'number' },
+        { header: 'Memo', source: 'po' },
+        { header: 'Currency', value: 'USD' }
+      ]
+    },
+    dynamics: {
+      name: 'Dynamics 365 F&O',
+      format: 'csv',
+      delimiter: ',',
+      columns: [
+        { header: 'CustAccount', source: 'a' },
+        { header: 'CustomerName', source: 'c' },
+        { header: 'TransactionDate', source: 'rdate' },
+        { header: 'PaymentReference', source: 'i' },
+        { header: 'PurchaseOrder', source: 'po' },
+        { header: 'AmountCur', source: 'pd', type: 'number' },
+        { header: 'CurrencyCode', value: 'USD' }
+      ]
+    }
+  },
+  activeExportProfile: 'csv',
+  // Performance settings
+  performance: {
+    chunkSize: 100,
+    chunkThreshold: 500,
+    filterDebounceMs: 200
+  }
+});
+// Live config (mutable). Initialized to deep-clone of defaults; loadConfig() overwrites on app boot.
+let ARMP_CFG = JSON.parse(JSON.stringify(ARMP_CFG_DEFAULTS));
+function _armpCfgDeepMerge(target, source){
+  if(!source || typeof source !== 'object') return target;
+  for(var k in source){
+    if(Object.prototype.hasOwnProperty.call(source, k)){
+      var sv = source[k];
+      if(sv && typeof sv === 'object' && !Array.isArray(sv) && target[k] && typeof target[k] === 'object' && !Array.isArray(target[k])){
+        _armpCfgDeepMerge(target[k], sv);
+      } else {
+        target[k] = sv;
+      }
+    }
+  }
+  return target;
+}
+function armpCfgLoad(){
+  try{
+    var raw = localStorage.getItem('armp_config');
+    if(!raw) return false;
+    var stored = JSON.parse(raw);
+    // Deep-merge stored into a fresh defaults clone so new defaults are present
+    var merged = JSON.parse(JSON.stringify(ARMP_CFG_DEFAULTS));
+    _armpCfgDeepMerge(merged, stored);
+    ARMP_CFG = merged;
+    return true;
+  }catch(e){ console.warn('[armpCfgLoad]', e); return false; }
+}
+function armpCfgSave(){
+  try{ localStorage.setItem('armp_config', JSON.stringify(ARMP_CFG)); return true; }
+  catch(e){ console.warn('[armpCfgSave]', e); return false; }
+}
+function armpCfgReset(){
+  ARMP_CFG = JSON.parse(JSON.stringify(ARMP_CFG_DEFAULTS));
+  armpCfgSave();
+}
+function armpCfgGet(path, fallback){
+  try{
+    var parts = (path||'').split('.');
+    var v = ARMP_CFG;
+    for(var i=0;i<parts.length;i++){
+      if(v == null) return fallback;
+      v = v[parts[i]];
+    }
+    return v === undefined ? fallback : v;
+  }catch(e){ return fallback; }
+}
+function armpCfgSet(path, value){
+  try{
+    var parts = (path||'').split('.');
+    var obj = ARMP_CFG;
+    for(var i=0;i<parts.length-1;i++){
+      if(obj[parts[i]] == null) obj[parts[i]] = {};
+      obj = obj[parts[i]];
+    }
+    obj[parts[parts.length-1]] = value;
+    armpCfgSave();
+    return true;
+  }catch(e){ console.warn('[armpCfgSet]',e); return false; }
+}
+function armpCfgExport(){
+  return JSON.stringify(ARMP_CFG, null, 2);
+}
+function armpCfgImport(json){
+  try{
+    var parsed = (typeof json === 'string') ? JSON.parse(json) : json;
+    var merged = JSON.parse(JSON.stringify(ARMP_CFG_DEFAULTS));
+    _armpCfgDeepMerge(merged, parsed);
+    ARMP_CFG = merged;
+    armpCfgSave();
+    return { ok: true };
+  }catch(e){ return { ok: false, error: String(e) }; }
+}
+// Profile system (multi-customer): config can be saved/recalled by named profile
+function armpProfilesList(){
+  try{
+    var raw = localStorage.getItem('armp_profiles');
+    if(!raw) return { default: { name: 'Default', savedAt: null } };
+    var obj = JSON.parse(raw);
+    if(!obj || typeof obj !== 'object') return { default: { name: 'Default', savedAt: null } };
+    return obj;
+  }catch(e){ return { default: { name: 'Default', savedAt: null } }; }
+}
+function armpProfileActive(){
+  try{ return localStorage.getItem('armp_active_profile') || 'default'; }catch(e){ return 'default'; }
+}
+function armpProfileSave(profileId, displayName){
+  try{
+    var profiles = armpProfilesList();
+    profiles[profileId] = {
+      name: displayName || profileId,
+      savedAt: new Date().toISOString(),
+      config: ARMP_CFG
+    };
+    localStorage.setItem('armp_profiles', JSON.stringify(profiles));
+    localStorage.setItem('armp_active_profile', profileId);
+    return true;
+  }catch(e){ console.warn('[armpProfileSave]',e); return false; }
+}
+function armpProfileLoad(profileId){
+  try{
+    var profiles = armpProfilesList();
+    if(!profiles[profileId] || !profiles[profileId].config){
+      // Default profile = current defaults
+      armpCfgReset();
+      localStorage.setItem('armp_active_profile', profileId);
+      return true;
+    }
+    armpCfgImport(profiles[profileId].config);
+    localStorage.setItem('armp_active_profile', profileId);
+    return true;
+  }catch(e){ console.warn('[armpProfileLoad]',e); return false; }
+}
+function armpProfileDelete(profileId){
+  if(profileId === 'default') return false;
+  try{
+    var profiles = armpProfilesList();
+    delete profiles[profileId];
+    localStorage.setItem('armp_profiles', JSON.stringify(profiles));
+    if(armpProfileActive() === profileId){
+      localStorage.setItem('armp_active_profile', 'default');
+      armpCfgReset();
+    }
+    return true;
+  }catch(e){ return false; }
+}
+// Boot: load any saved config on script init
+try{ armpCfgLoad(); }catch(e){}
+// ═══════════════════════════════════════════════════════════════════════════
+// MATCHING EXPLAINABILITY (v18) — Compute confidence + reasons per RES entry
+// ═══════════════════════════════════════════════════════════════════════════
+function armpAnnotateMatch(r, payment){
+  if(!r || typeof r !== 'object') return;
+  // Don't overwrite if already annotated (allows manual overrides)
+  if(r.matchReasons && r.confidence !== undefined) return;
+  var w = armpCfgGet('matching.confidenceWeights', {});
+  var reasons = [];
+  var confidence = 0;
+  var tol = armpCfgGet('matching.tolerances.amountAbsolute', 0.01);
+  // Exact invoice number match
+  if(r.i && r.st === 'Exact' && r.m && /Direct invoice|Multi-invoice/i.test(r.m||'')){
+    confidence += (w.invoiceExact || 50);
+    reasons.push({ type: 'invoice', label: 'Invoice #', value: r.i, w: w.invoiceExact || 50 });
+  }
+  // PO match (when PO is populated and st is Exact)
+  if(r.po && r.st === 'Exact'){
+    confidence += (w.poExact || 25);
+    reasons.push({ type: 'po', label: 'PO #', value: r.po, w: w.poExact || 25 });
+  }
+  // Exact amount match (variance ≈ 0)
+  if(Math.abs(r.vr || 0) <= tol){
+    confidence += (w.amountExact || 20);
+    reasons.push({ type: 'amount', label: 'Exact amount', value: '$' + (r.pd || 0).toFixed(2), w: w.amountExact || 20 });
+  } else if(Math.abs(r.vr || 0) > tol){
+    // Variance present but matched — partial confidence loss
+    reasons.push({ type: 'variance', label: (r.vr < 0 ? 'Short pay ' : 'Overpay ') + '$' + Math.abs(r.vr).toFixed(2), value: '', w: -10 });
+    confidence -= 10;
+  }
+  // Customer account match
+  if(r.a){
+    confidence += (w.customerAccount || 15);
+    reasons.push({ type: 'customerAccount', label: 'Customer account', value: r.a, w: w.customerAccount || 15 });
+  } else if(r.c){
+    confidence += (w.customerName || 10);
+    reasons.push({ type: 'customerName', label: 'Customer name', value: r.c, w: w.customerName || 10 });
+  }
+  // Multi-invoice total match
+  if(r.m && /multi-invoice/i.test(r.m)){
+    confidence += (w.multiInvoiceTotal || 30);
+    reasons.push({ type: 'multiInvoice', label: 'Multi-invoice total', value: '', w: w.multiInvoiceTotal || 30 });
+  }
+  // Amount-only match (no invoice ref)
+  if(r.st === 'Amount match'){
+    reasons.push({ type: 'amount', label: 'Amount-only', value: '$' + (r.pd || 0).toFixed(2), w: w.amountExact || 20 });
+    confidence = Math.min(confidence, 60); // cap amount-only matches at 60%
+  }
+  // Clamp to 0..100
+  if(confidence > 100) confidence = 100;
+  if(confidence < 0) confidence = 0;
+  r.matchReasons = reasons;
+  r.confidence = Math.round(confidence);
+}
+// Render compact explanation pills HTML for a RES entry. Returns string.
+function armpRenderMatchPills(r, opts){
+  opts = opts || {};
+  if(!r || !r.matchReasons || !r.matchReasons.length){
+    return '';
+  }
+  var conf = r.confidence != null ? r.confidence : 0;
+  var confColor = conf >= 85 ? 'var(--g-t)' : conf >= 60 ? 'var(--am-t)' : 'var(--r-t)';
+  var confBg = conf >= 85 ? 'rgba(18,184,134,.10)' : conf >= 60 ? 'rgba(245,158,11,.10)' : 'rgba(239,68,68,.10)';
+  var tooltip = r.matchReasons.map(function(rs){
+    return '• ' + rs.label + (rs.value ? ': ' + rs.value : '') + ' (' + (rs.w > 0 ? '+' : '') + rs.w + '%)';
+  }).join('\n');
+  var html = '<div class="armp-match-explain" title="' + _escapeAttr(tooltip) + '">' +
+    '<span class="armp-match-conf" style="color:' + confColor + ';background:' + confBg + '">' + conf + '%</span>';
+  // Show up to 3 reason pills, the rest collapsed into "+N"
+  var shown = r.matchReasons.filter(function(rs){ return rs.w > 0; }).slice(0, 3);
+  shown.forEach(function(rs){
+    html += '<span class="armp-match-pill armp-match-' + rs.type + '">✓ ' + _escapeHtml(rs.label) + '</span>';
+  });
+  var hiddenCt = r.matchReasons.filter(function(rs){ return rs.w > 0; }).length - shown.length;
+  if(hiddenCt > 0){
+    html += '<span class="armp-match-pill armp-match-more">+' + hiddenCt + '</span>';
+  }
+  html += '</div>';
+  return html;
+}
+// Annotate ALL existing RES entries (used after Auto Match completes)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUDIT HISTORY (v18) — Augment existing addAudit with structured fields
+// ═══════════════════════════════════════════════════════════════════════════
+function armpCurrentUser(){
+  try{ return (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? CURRENT_USER : 'system'; }
+  catch(e){ return 'system'; }
+}
+function armpAuditStamp(target, action){
+  if(!target || typeof target !== 'object') return;
+  var who = armpCurrentUser();
+  var at = new Date().toISOString();
+  switch(action){
+    case 'approve':
+      target.approvedBy = who;
+      target.approvedAt = at;
+      break;
+    case 'reopen':
+      target.reopenedBy = who;
+      target.reopenedAt = at;
+      break;
+    case 'export':
+      target.exportedBy = who;
+      target.exportedAt = at;
+      break;
+    case 'writeoff':
+      target.writeOffBy = who;
+      target.writeOffAt = at;
+      break;
+    case 'bankfee':
+      target.bankFeeBy = who;
+      target.bankFeeAt = at;
+      break;
+    case 'resolve':
+      target.resolvedBy = who;
+      target.resolvedAt = at;
+      break;
+  }
+}
+// Format a single audit history blurb for tooltip / inline display
+function armpAuditHistoryFor(r){
+  if(!r) return '';
+  var parts = [];
+  function fmt(ts){
+    if(!ts) return '';
+    try{ var d = new Date(ts); return d.toLocaleString(); }catch(e){ return ts; }
+  }
+  if(r.approvedBy) parts.push('Approved by ' + r.approvedBy + ' at ' + fmt(r.approvedAt));
+  if(r.reopenedBy) parts.push('Reopened by ' + r.reopenedBy + ' at ' + fmt(r.reopenedAt));
+  if(r.writeOffBy) parts.push('Wrote off by ' + r.writeOffBy + ' at ' + fmt(r.writeOffAt));
+  if(r.bankFeeBy) parts.push('Bank fee by ' + r.bankFeeBy + ' at ' + fmt(r.bankFeeAt));
+  if(r.exportedBy) parts.push('Exported by ' + r.exportedBy + ' at ' + fmt(r.exportedAt));
+  if(r.resolvedBy) parts.push('Resolved by ' + r.resolvedBy + ' at ' + fmt(r.resolvedAt));
+  return parts.join(' · ');
+}
+// Get the AUDIT array (already exists as global). Return last N entries.
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ERP EXPORT PROFILES (v18) — Config-driven exports for CSV/SAP/NetSuite/Dynamics
+// ═══════════════════════════════════════════════════════════════════════════
+function armpFormatExportValue(row, col){
+  // Get raw value
+  var v;
+  if(col.value !== undefined) v = col.value;
+  else if(col.source) v = row[col.source];
+  else v = '';
+  if(v == null) v = '';
+  // Type coercion
+  if(col.type === 'number'){
+    var n = parseFloat(v);
+    if(isNaN(n)) n = 0;
+    v = n.toFixed(2);
+  }
+  // Date formatting
+  if(col.format === 'YYYYMMDD' && v){
+    try{ var d = new Date(v); if(!isNaN(d.getTime())) v = d.toISOString().slice(0,10).replace(/-/g,''); }catch(e){}
+  }
+  return String(v);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PERFORMANCE HELPERS (v18) — Indexed lookups, debounce, chunk rendering
+// ═══════════════════════════════════════════════════════════════════════════
+function armpBuildIndexes(invArr){
+  var byAcct = new Map();
+  var byInvoice = new Map();
+  var byPO = new Map();
+  var byCustName = new Map();
+  if(!Array.isArray(invArr)) return { byAcct: byAcct, byInvoice: byInvoice, byPO: byPO, byCustName: byCustName };
+  for(var i=0; i<invArr.length; i++){
+    var v = invArr[i];
+    if(!v) continue;
+    if(v.a){
+      if(!byAcct.has(v.a)) byAcct.set(v.a, []);
+      byAcct.get(v.a).push(v);
+    }
+    if(v.i){
+      if(!byInvoice.has(v.i)) byInvoice.set(v.i, []);
+      byInvoice.get(v.i).push(v);
+    }
+    if(v.po){
+      if(!byPO.has(v.po)) byPO.set(v.po, []);
+      byPO.get(v.po).push(v);
+    }
+    if(v.c){
+      var nk = String(v.c).toLowerCase().trim();
+      if(!byCustName.has(nk)) byCustName.set(nk, []);
+      byCustName.get(nk).push(v);
+    }
+  }
+  return { byAcct: byAcct, byInvoice: byInvoice, byPO: byPO, byCustName: byCustName };
+}
+function armpDebounce(fn, ms){
+  var t = null;
+  return function(){
+    var args = arguments, ctx = this;
+    if(t) clearTimeout(t);
+    t = setTimeout(function(){ fn.apply(ctx, args); t = null; }, ms || 200);
+  };
+}
+// Chunked render — call renderFn(slice, isLast) for each chunk via rAF.
+// Avoids long single-frame stalls on large lists.
+function armpChunkRender(items, renderFn, chunkSize, onComplete){
+  chunkSize = chunkSize || armpCfgGet('performance.chunkSize', 100);
+  if(!Array.isArray(items) || !items.length){
+    if(onComplete) onComplete();
+    return;
+  }
+  var i = 0;
+  function step(){
+    var end = Math.min(i + chunkSize, items.length);
+    var slice = items.slice(i, end);
+    var isLast = (end >= items.length);
+    try{ renderFn(slice, isLast, i); }catch(e){ console.warn('[armpChunkRender]', e); }
+    i = end;
+    if(isLast){
+      if(onComplete) onComplete();
+    } else {
+      (window.requestAnimationFrame || window.setTimeout)(step, 0);
+    }
+  }
+  step();
+}
+// Stash current indexes globally so reused across functions in a frame
+var ARMP_INV_INDEXES = null;
+function armpEnsureIndexes(force){
+  if(force || !ARMP_INV_INDEXES){
+    try{
+      ARMP_INV_INDEXES = armpBuildIndexes(typeof INV !== 'undefined' ? INV : []);
+    }catch(e){ ARMP_INV_INDEXES = null; }
+  }
+  return ARMP_INV_INDEXES;
+}
+function armpInvalidateIndexes(){ ARMP_INV_INDEXES = null; }
+
+function armpBuildExport(rows, profileKey){
+  profileKey = profileKey || armpCfgGet('activeExportProfile', 'csv');
+  var profile = armpCfgGet('exportProfiles.' + profileKey, null);
+  if(!profile) profile = armpCfgGet('exportProfiles.csv', null);
+  if(!profile) return { content: '', filename: 'export.csv', mime: 'text/csv' };
+  var delim = profile.delimiter || ',';
+  var cols = profile.columns || [];
+  // Helper: CSV-quote if value contains delimiter, quote, or newline
+  function quote(v){
+    var s = String(v == null ? '' : v);
+    if(s.indexOf(delim) >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0){
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+  var header = cols.map(function(c){ return quote(c.header || c.source || ''); }).join(delim);
+  var body = rows.map(function(r){
+    return cols.map(function(c){ return quote(armpFormatExportValue(r, c)); }).join(delim);
+  }).join('\n');
+  var ts = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  var filename = (profile.name || 'export').toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + ts + '.csv';
+  return {
+    content: header + '\n' + body,
+    filename: filename,
+    mime: 'text/csv'
+  };
+}
+function armpDownloadExport(rows, profileKey){
+  try{
+    var blob = armpBuildExport(rows, profileKey);
+    var b = new Blob([blob.content], { type: blob.mime });
+    var url = URL.createObjectURL(b);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = blob.filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 100);
+    return blob.filename;
+  }catch(e){ console.warn('[armpDownloadExport]', e); return null; }
+}
+// Build a row-set from current RES that's eligible for export (matches rPost filter)
+function armpExportableRows(){
+  if(typeof RES === 'undefined') return [];
+  return RES.filter(function(r){
+    var st = r.st;
+    var isMatched = st==='Exact'||st==='Subset exact'||st==='Resolved'||r.fromAlloc||r.fromExc||r.approved;
+    if(!isMatched) return false;
+    if(r.dec === 'Duplicate — reject') return false;
+    if(r.dec === 'Chase customer' && !r.a && !r.c) return false;
+    return true;
+  });
+}
+function armpListExportProfiles(){
+  var profiles = armpCfgGet('exportProfiles', {});
+  return Object.keys(profiles).map(function(k){
+    return { key: k, name: (profiles[k] && profiles[k].name) || k };
+  });
+}
+
+function armpRecentActivity(n){
+  try{
+    if(typeof AUDIT === 'undefined' || !Array.isArray(AUDIT)) return [];
+    return AUDIT.slice(-(n||50)).reverse();
+  }catch(e){ return []; }
+}
+function armpRenderRecentActivity(){
+  try{
+    var list = armpRecentActivity(50);
+    if(!list.length) return '<div style="font-size:12px;color:var(--t3);padding:14px;text-align:center">No recent activity</div>';
+    return '<div class="armp-activity-log">' + list.map(function(a){
+      var when = '';
+      try{ when = new Date(a.ts || a.time || Date.now()).toLocaleString(); }catch(e){ when = String(a.ts||''); }
+      return '<div class="armp-activity-row">' +
+        '<div class="armp-activity-action">' + _escapeHtml(a.action || a.act || '—') + '</div>' +
+        '<div class="armp-activity-detail">' + _escapeHtml(a.detail || a.d || '') + '</div>' +
+        '<div class="armp-activity-when">' + _escapeHtml(when) + '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  }catch(e){ return ''; }
+}
+
+function armpAnnotateAllResults(){
+  try{
+    if(typeof RES === 'undefined') return;
+    RES.forEach(function(r){ armpAnnotateMatch(r); });
+  }catch(e){ console.warn('[armpAnnotateAllResults]', e); }
+}
+
+
 const IH=['Customer','Account','Invoice #','PO #','Sales Order','Amount','Type','Invoice Date','Due Date','Document #','Status'];
 const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action','Decision','Status'];
 
@@ -5834,9 +6560,22 @@ function _matchReasons(r){
   return reasons;
 }
 function _matchReasonsHtml(r){
-  var rs=_matchReasons(r);
-  if(!rs.length)return '';
-  return '<div class="match-reasons">'+rs.map(function(t){return '<span class="match-reason">'+t+'</span>';}).join('')+'</div>';
+  // v18: Use new armpRenderMatchPills (confidence + reason pills).
+  // Falls back to legacy _matchReasons if armp helpers not available or r not annotated.
+  try{
+    if(typeof armpAnnotateMatch === 'function' && r && !r.matchReasons){
+      armpAnnotateMatch(r);
+    }
+    if(typeof armpRenderMatchPills === 'function' && r && r.matchReasons && r.matchReasons.length){
+      return armpRenderMatchPills(r);
+    }
+  }catch(e){ console.warn('[_matchReasonsHtml v18 fallback]', e); }
+  // Legacy fallback
+  try{
+    var rs=_matchReasons(r);
+    if(!rs.length)return '';
+    return '<div class="match-reasons">'+rs.map(function(t){return '<span class="match-reason">'+t+'</span>';}).join('')+'</div>';
+  }catch(e){ return ''; }
 }
 
 // ── Needs Attention filter chips ─────────────────────────────────────
@@ -6423,7 +7162,7 @@ function exportPostAndLock(){  // Item 4: Guard — block export when there are 
     var exportable=(typeof RES!=='undefined')?RES.filter(function(r){
       return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc;
     }):[];
-    exportable.forEach(function(r){r.exported=true;});
+    exportable.forEach(function(r){r.exported=true; try{ armpAuditStamp(r, "export"); }catch(e){}});
     try{saveToStorage();}catch(e){}
     try{if(typeof rPost==='function')rPost();}catch(e){}
     try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
@@ -9081,7 +9820,7 @@ function approveResultGroup(idxs){
   var n=0;
   idxs.sort(function(a,b){return b-a;}).forEach(function(i){
     var r=RES[i];
-    if(r){r.approved=true;r.fromAlloc=true;n++;}
+    if(r){r.approved=true;r.fromAlloc=true;try{armpAuditStamp(r,"approve");}catch(e){}n++;}
   });
   try{saveToStorage();}catch(e){}
   try{if(typeof rPost==='function')rPost();}catch(e){}
@@ -9137,7 +9876,7 @@ function revertResultGroup(idxs){
         rdate: p.rdate || new Date().toISOString().split('T')[0],
         reopened: true
       };
-      EXC.push(excEntry);
+      try{ armpAuditStamp(excEntry, "reopen"); }catch(e){} EXC.push(excEntry);
     });
   }catch(e){console.warn('[revert EXC create]',e);}
   try{saveToStorage();}catch(e){}
@@ -9597,6 +10336,7 @@ async function runMatch(){
   },120);
   addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions');
   toast(`✓ Matching done · ${RES.length} results · ${EXC.length} exceptions`);
+  try{ armpAnnotateAllResults(); }catch(e){}
 }
 
 procGrp.ea=0;
@@ -11821,6 +12561,177 @@ function cleanupLoginAndOverlays(){
   var mp=document.getElementById('match-progress');
   if(mp){ mp.style.display='none'; mp.classList.remove('show'); }
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS UI HANDLERS (v18) — Profile + export profile + config viewer + activity
+// ═══════════════════════════════════════════════════════════════════════════
+function armpRefreshProfileSelect(){
+  try{
+    var sel = document.getElementById('armp-profile-select');
+    if(!sel) return;
+    var profiles = armpProfilesList();
+    var active = armpProfileActive();
+    sel.innerHTML = Object.keys(profiles).map(function(k){
+      var name = profiles[k].name || k;
+      return '<option value="' + _escapeAttr(k) + '"' + (k===active?' selected':'') + '>' + _escapeHtml(name) + '</option>';
+    }).join('');
+  }catch(e){ console.warn('[armpRefreshProfileSelect]',e); }
+}
+function armpRefreshExportProfileSelect(){
+  try{
+    var sel = document.getElementById('armp-export-profile-select');
+    if(!sel) return;
+    var list = armpListExportProfiles();
+    var active = armpCfgGet('activeExportProfile','csv');
+    sel.innerHTML = list.map(function(p){
+      return '<option value="' + _escapeAttr(p.key) + '"' + (p.key===active?' selected':'') + '>' + _escapeHtml(p.name) + '</option>';
+    }).join('');
+  }catch(e){ console.warn('[armpRefreshExportProfileSelect]',e); }
+}
+function armpHandleProfileSwitch(key){
+  if(!key) return;
+  armpProfileLoad(key);
+  if(typeof toast==='function') toast('Switched to profile: ' + (armpProfilesList()[key].name || key));
+  // Refresh UI bits that depend on config
+  try{ armpRefreshExportProfileSelect(); }catch(e){}
+  try{ armpRefreshActivityPanel(); }catch(e){}
+}
+function armpHandleProfileSave(){
+  try{
+    if(typeof showPromptModal === 'function'){
+      showPromptModal('Save profile', 'Profile name (letters, numbers, spaces only)', '', function(name){
+        if(!name) return;
+        var key = String(name).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || ('profile_' + Date.now());
+        armpProfileSave(key, String(name));
+        armpRefreshProfileSelect();
+        if(typeof toast==='function') toast('Saved profile: ' + name);
+      });
+      return;
+    }
+    var name = window.prompt('Profile name', '');
+    if(!name) return;
+    var key = String(name).toLowerCase().replace(/[^a-z0-9]+/g,'_') || ('profile_' + Date.now());
+    armpProfileSave(key, String(name));
+    armpRefreshProfileSelect();
+    if(typeof toast==='function') toast('Saved profile: ' + name);
+  }catch(e){ console.warn('[armpHandleProfileSave]',e); }
+}
+function armpHandleExportProfileChange(key){
+  if(!key) return;
+  armpCfgSet('activeExportProfile', key);
+  if(typeof toast==='function') toast('Export format: ' + (armpCfgGet('exportProfiles.'+key+'.name', key)));
+}
+function armpOpenCfgViewer(){
+  try{
+    var json = armpCfgExport();
+    // Use a lightweight modal — fallback to alert in worst case
+    var overlay = document.createElement('div');
+    overlay.id = 'armp-cfg-viewer-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML =
+      '<div style="background:var(--surface);border:1px solid var(--bdr);border-radius:12px;width:min(820px,96vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden">' +
+        '<div style="padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">' +
+          '<div style="font-size:14px;font-weight:800;color:var(--t1)">System Configuration</div>' +
+          '<button class="btn btn-ghost btn-xs" onclick="armpCloseCfgViewer()" style="font-size:18px;padding:0 8px">×</button>' +
+        '</div>' +
+        '<textarea id="armp-cfg-viewer-text" style="flex:1;min-height:420px;padding:14px;border:none;outline:none;font-family:var(--mono);font-size:12px;background:var(--surface2);color:var(--t1);resize:none">' + _escapeHtml(json) + '</textarea>' +
+        '<div style="padding:12px 18px;border-top:1px solid var(--bdr);display:flex;gap:8px;justify-content:space-between;align-items:center">' +
+          '<div style="font-size:11.5px;color:var(--t3)">Edit JSON above, then Save. Or Reset to defaults.</div>' +
+          '<div style="display:flex;gap:8px">' +
+            '<button class="btn btn-outline btn-sm" onclick="armpResetCfgFromViewer()">Reset to defaults</button>' +
+            '<button class="btn btn-p btn-sm" onclick="armpSaveCfgFromViewer()">Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }catch(e){ console.warn('[armpOpenCfgViewer]',e); }
+}
+function armpCloseCfgViewer(){
+  var ov = document.getElementById('armp-cfg-viewer-overlay');
+  if(ov) ov.remove();
+}
+function armpSaveCfgFromViewer(){
+  try{
+    var ta = document.getElementById('armp-cfg-viewer-text');
+    if(!ta) return;
+    var res = armpCfgImport(ta.value);
+    if(res.ok){
+      armpRefreshExportProfileSelect();
+      armpRefreshProfileSelect();
+      if(typeof toast==='function') toast('Configuration saved');
+      armpCloseCfgViewer();
+    } else {
+      if(typeof toast==='function') toast('Invalid JSON: ' + (res.error||''), 'error');
+    }
+  }catch(e){ console.warn('[armpSaveCfgFromViewer]',e); }
+}
+function armpResetCfgFromViewer(){
+  armpCfgReset();
+  armpRefreshExportProfileSelect();
+  armpRefreshProfileSelect();
+  if(typeof toast==='function') toast('Configuration reset to defaults');
+  armpCloseCfgViewer();
+}
+function armpDownloadCfg(){
+  try{
+    var content = armpCfgExport();
+    var b = new Blob([content], { type: 'application/json' });
+    var url = URL.createObjectURL(b);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'armp-config-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 100);
+    if(typeof toast==='function') toast('Configuration exported');
+  }catch(e){ console.warn('[armpDownloadCfg]',e); }
+}
+function armpHandleCfgImport(event){
+  var file = event && event.target && event.target.files && event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var res = armpCfgImport(e.target.result);
+    if(res.ok){
+      armpRefreshExportProfileSelect();
+      armpRefreshProfileSelect();
+      if(typeof toast==='function') toast('Configuration imported');
+    } else {
+      if(typeof toast==='function') toast('Import failed: ' + (res.error||''), 'error');
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be re-selected
+  event.target.value = '';
+}
+function armpRefreshActivityPanel(){
+  try{
+    var host = document.getElementById('armp-activity-host');
+    if(!host) return;
+    host.innerHTML = armpRenderRecentActivity();
+  }catch(e){ console.warn('[armpRefreshActivityPanel]',e); }
+}
+// Bind handlers when settings panel becomes visible
+function armpInitSettingsPanel(){
+  try{
+    armpRefreshProfileSelect();
+    armpRefreshExportProfileSelect();
+    armpRefreshActivityPanel();
+  }catch(e){}
+}
+// Hook into sp() so settings panel refreshes on display
+(function(){
+  var origSp = window.sp;
+  if(typeof origSp !== 'function') return;
+  window.sp = function(id){
+    var r = origSp.apply(this, arguments);
+    if(id === 'settings'){
+      setTimeout(armpInitSettingsPanel, 50);
+    }
+    return r;
+  };
+})();
 
 launchApp = function(user){
   if(launchApp._running){console.error('launchApp re-entry blocked');return;}
