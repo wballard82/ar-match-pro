@@ -5903,10 +5903,15 @@ function armpUpdateSetupState(){
     var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
     var hasInv = (typeof INV!=='undefined') && INV.length > 0;
     var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
-    // Step 1 state
+    // Step elements
     var s1 = document.getElementById('armp-setup-step-1');
     var s2 = document.getElementById('armp-setup-step-2');
     var s3 = document.getElementById('armp-setup-step-3');
+    // FIX (v16 follow-up): ALWAYS show step rows. They're the primary actionable UI.
+    // The "All set!" banner should only appear as a transient confirmation after
+    // user actively completes step 3 in the current modal session — never as a
+    // permanent fixture when data was pre-loaded.
+    [s1, s2, s3].forEach(function(el){ if(el) el.style.display = ''; });
     if(s1) s1.setAttribute('data-state', hasPay ? 'done' : 'active');
     if(s2) s2.setAttribute('data-state', hasInv ? 'done' : (hasPay ? 'active' : 'pending'));
     if(s3) s3.setAttribute('data-state', hasMatched ? 'done' : (hasPay && hasInv ? 'active' : 'pending'));
@@ -5929,24 +5934,41 @@ function armpUpdateSetupState(){
         ? RES.length + ' match' + (RES.length===1?'':'es')
         : 'Match payments to invoices automatically';
     }
-    // If all 3 done, show success and auto-close after a beat
     var doneEl = document.getElementById('armp-setup-done');
     var modal = document.getElementById('armp-setup-modal');
-    if(hasPay && hasInv && hasMatched){
+    // Show "All set!" banner only as transient post-completion (in-memory flag set by armpSetupClickStep)
+    if(hasPay && hasInv && hasMatched && window._armpSetupJustCompleted === true){
       if(doneEl) doneEl.style.display = 'block';
-      [s1, s2, s3].forEach(function(el){ if(el) el.style.display = 'none'; });
       var skipBtn = document.getElementById('armp-setup-skip-btn');
       if(skipBtn) skipBtn.textContent = 'Close';
-      // Auto-close after 1.6s if modal still open
+      // Auto-close after 1.6s
       if(modal && modal.classList.contains('open')){
-        setTimeout(function(){ armpCloseSetupModal(); }, 1600);
+        setTimeout(function(){
+          armpCloseSetupModal();
+          window._armpSetupJustCompleted = false;
+        }, 1600);
       }
+    } else {
+      // Default: hide success banner so step rows are the primary UI
+      if(doneEl) doneEl.style.display = 'none';
+      var skipBtn2 = document.getElementById('armp-setup-skip-btn');
+      if(skipBtn2) skipBtn2.textContent = 'Skip for now';
     }
   }catch(e){ console.warn('[armpUpdateSetupState]', e); }
 }
 function armpOpenSetupModal(){
   var modal = document.getElementById('armp-setup-modal');
   if(!modal) return;
+  // FIX (v16 follow-up): defensively reset step row visibility before showing state.
+  // Prevents stale display:none from a prior render leaving the modal in "All set!" state.
+  ['armp-setup-step-1','armp-setup-step-2','armp-setup-step-3'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = '';
+  });
+  var doneEl = document.getElementById('armp-setup-done');
+  if(doneEl) doneEl.style.display = 'none';
+  // Reset transient flag — a fresh modal open is not a "just completed" event
+  window._armpSetupJustCompleted = false;
   modal.style.display = 'flex';
   modal.classList.add('open');
   armpUpdateSetupState();
@@ -5968,6 +5990,8 @@ function armpSetupClickStep(n){
     } else if(n===2){
       if(typeof openImport==='function') openImport('inv');
     } else if(n===3){
+      // Flag for transient "All set!" if armpUpdateSetupState runs while still visible
+      window._armpSetupJustCompleted = true;
       // Close the setup modal first so progress overlay is visible
       armpCloseSetupModal();
       setTimeout(function(){ if(typeof runMatch==='function') runMatch(); }, 100);
@@ -5975,13 +5999,20 @@ function armpSetupClickStep(n){
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
 }
 function armpMaybeShowSetupOnCashApp(){
-  // Only show once — flag persists across sessions
+  // Show modal only when user is genuinely in onboarding (no data yet, hasn't dismissed)
   try{
     if(localStorage.getItem('armp_setup_seen') === 'true') return;
-    // Don't show if user already has data (skip if they're a returning user with state)
+    // FIX (v16 follow-up): if user has ANY meaningful state, they're past onboarding.
+    // Skip the modal AND mark seen so it doesn't reopen unprompted.
     var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
     var hasInv = (typeof INV!=='undefined') && INV.length > 0;
-    if(hasPay && hasInv) return;
+    var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
+    if(hasPay || hasInv || hasMatched){
+      try{ localStorage.setItem('armp_setup_seen','true'); }catch(e){}
+      // Still show the inline banner if helpful (for partial completion)
+      setTimeout(function(){ if(typeof armpShowBannerIfNeeded==='function') armpShowBannerIfNeeded(); }, 100);
+      return;
+    }
     armpOpenSetupModal();
   }catch(e){ console.warn('[armpMaybeShowSetupOnCashApp]', e); }
 }
