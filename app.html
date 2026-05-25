@@ -2451,6 +2451,78 @@ body.app-active #app {
 .wf-cta.armp-flash:hover {
   animation: none;
 }
+
+/* Item 5 (v16): Approve All button flashes when Needs Attention is fully resolved */
+#review-approve-all-btn.armp-flash {
+  animation: armpFlashPulse 1.6s ease-in-out infinite;
+}
+#review-approve-all-btn.armp-flash:hover {
+  animation: none;
+}
+
+/* Item 6 (v16): Reconcile table sticky headers + sort/filter ─────── */
+.recon-tbl-wrap {
+  max-height: calc(100vh - 320px);
+  overflow: auto;
+  border: 1px solid var(--bdr);
+  border-radius: 10px;
+}
+.recon-tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+}
+.recon-tbl thead th {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--surface2);
+  color: var(--t2);
+  font-weight: 700;
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--bdr);
+  user-select: none;
+  white-space: nowrap;
+}
+.recon-tbl thead tr.recon-filter-row th {
+  top: 36px;  /* directly below main header row */
+  padding: 5px 6px;
+  background: var(--surface);
+}
+.recon-tbl thead th.recon-sortable {
+  cursor: pointer;
+}
+.recon-tbl thead th.recon-sortable:hover {
+  color: var(--t1);
+  background: var(--surface);
+}
+.recon-tbl thead th .recon-sort-arrow {
+  font-size: 10px; margin-left: 4px; opacity: .5;
+}
+.recon-tbl thead th.recon-sort-asc .recon-sort-arrow::after { content: '▲'; opacity:1; color:#14A8D8; }
+.recon-tbl thead th.recon-sort-desc .recon-sort-arrow::after { content: '▼'; opacity:1; color:#14A8D8; }
+.recon-tbl thead th .recon-filter-input {
+  width: 100%; min-width: 60px;
+  padding: 4px 6px;
+  border: 1px solid var(--bdr);
+  border-radius: 5px;
+  background: var(--surface2);
+  color: var(--t1);
+  font-size: 11.5px;
+  outline: none;
+  box-sizing: border-box;
+}
+.recon-tbl thead th .recon-filter-input:focus {
+  border-color: #14A8D8;
+}
+.recon-tbl tbody td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--bdr);
+  color: var(--t1);
+}
+.recon-tbl tbody tr:hover {
+  background: rgba(20,168,216,.04);
+}
 </style>
 </head>
 <body>
@@ -2481,7 +2553,7 @@ body.app-active #app {
     </div>
     <div class="mo-body" style="padding:8px 24px 20px">
       <div style="font-size:13.5px;color:var(--t2);margin-bottom:18px;line-height:1.55">
-        Welcome to AR Match Pro. Complete these 3 steps to start matching payments.
+        Complete these 3 steps to start matching payments.
       </div>
       <!-- Steps list -->
       <div class="armp-setup-step" id="armp-setup-step-1" data-state="active">
@@ -4832,6 +4904,82 @@ function renderWsReview(){
 }
 
 // ── Premium reconcile ──
+
+// ── Item 6 (v16): Reconcile table sort + filter state ───────────────
+var _reconSort = { key: null, dir: 0 };  // dir: 1=asc, -1=desc, 0=none
+var _reconFilters = {};
+
+function reconSetSort(key){
+  if(_reconSort.key === key){
+    // cycle: asc → desc → none
+    if(_reconSort.dir === 1) _reconSort.dir = -1;
+    else if(_reconSort.dir === -1){ _reconSort.dir = 0; _reconSort.key = null; }
+    else _reconSort.dir = 1;
+  } else {
+    _reconSort.key = key;
+    _reconSort.dir = 1;
+  }
+  if(typeof renderWsRecon === 'function') renderWsRecon();
+}
+function reconSetFilter(key, val){
+  if(val == null || val === '') delete _reconFilters[key];
+  else _reconFilters[key] = String(val).toLowerCase();
+  // Debounced re-render to keep typing smooth
+  if(window._reconFilterTimer) clearTimeout(window._reconFilterTimer);
+  window._reconFilterTimer = setTimeout(function(){
+    if(typeof renderWsRecon === 'function') renderWsRecon();
+  }, 200);
+}
+function _reconFieldVal(row, key){
+  switch(key){
+    case 'c': return (row.c || row.a || '').toLowerCase();
+    case 'i': return (row.i || '').toLowerCase();
+    case 'po': return (row.po || row.txId || '').toLowerCase();
+    case 'pay': return parseFloat(row.oa || row.pd || row.amt || 0);
+    case 'app': return parseFloat(row.pd || 0);
+    case 'vr': return parseFloat(row.vr || 0);
+    case 'wo': return parseFloat(row.writeOff || 0);
+    case 'bf': return parseFloat(row.bankFee || 0);
+    case 'nv': {
+      var v = row.vr || 0, w = row.writeOff || 0, b = row.bankFee || 0;
+      return v < 0 ? (v + w + b) : (v > 0 ? (v - w - b) : -(w + b));
+    }
+    case 'st': {
+      var v2 = row.vr || 0, w2 = row.writeOff || 0, b2 = row.bankFee || 0;
+      var n = v2 < 0 ? (v2 + w2 + b2) : (v2 > 0 ? (v2 - w2 - b2) : -(w2 + b2));
+      return Math.abs(n) < 0.01 ? 'reconciled' : 'open';
+    }
+    default: return '';
+  }
+}
+function _reconApplyFilters(rows){
+  var keys = Object.keys(_reconFilters);
+  if(!keys.length) return rows;
+  return rows.filter(function(r){
+    for(var i=0;i<keys.length;i++){
+      var k = keys[i], q = _reconFilters[k];
+      var val = String(_reconFieldVal(r, k)).toLowerCase();
+      if(val.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+}
+function _reconApplySort(rows){
+  if(!_reconSort.key || _reconSort.dir === 0) return rows;
+  var key = _reconSort.key, dir = _reconSort.dir;
+  return rows.slice().sort(function(a, b){
+    var va = _reconFieldVal(a, key), vb = _reconFieldVal(b, key);
+    // numeric vs string compare
+    if(typeof va === 'number' && typeof vb === 'number'){
+      return (va - vb) * dir;
+    }
+    va = String(va); vb = String(vb);
+    if(va < vb) return -1 * dir;
+    if(va > vb) return 1 * dir;
+    return 0;
+  });
+}
+
 function renderWsRecon(){
   const list=document.getElementById('recon-list');const summary=document.getElementById('recon-summary');if(!list)return;
   const matched=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc);
@@ -4839,7 +4987,9 @@ function renderWsRecon(){
   const totalPay=PAY.reduce((s,p)=>s+p.amt,0);
   const totalMatched=matched.reduce((s,r)=>s+r.pd,0);
   const reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
-  const reconciledCt=matched.filter(function(r){var v=r.vr||0,w=r.writeOff||0,b=r.bankFee||0;return Math.abs(v-w-b)<0.01;}).length;
+  const reconciledCt=matched.filter(function(r){var v=r.vr||0,w=r.writeOff||0,b=r.bankFee||0;// Item 7 (v16): adjustments reduce magnitude of variance (offset, not double-subtract)
+      var _net = v < 0 ? (v + w + b) : (v > 0 ? (v - w - b) : -(w + b));
+      return Math.abs(_net)<0.01;}).length;
   if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${reconciledCt}</strong> of <strong style="color:var(--t1)">${matched.length}</strong> reconciled · ${$fk(totalMatched)} of ${$fk(totalPay)} · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}%</span>`;
   if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import bank file and auto match to reconcile.</div></div>';return;}
   
@@ -4848,18 +4998,49 @@ function renderWsRecon(){
   // This prevents losing keystrokes mid-typing.
   var inputStyle='width:88px;text-align:right;padding:4px 8px;border:1.5px solid var(--bdr);border-radius:6px;background:var(--surface2);color:var(--t1);font-family:var(--mono);font-size:12.5px;outline:none';
   
-  list.innerHTML=`<table class="tbl recon-tbl" style="width:100%">
-    <thead><tr>
-      <th>Customer</th><th>Invoice #</th><th>PO #</th>
-      <th style="text-align:right">Payment</th><th style="text-align:right">Applied</th>
-      <th style="text-align:right">Variance</th>
-      <th style="text-align:right">Write-off</th><th style="text-align:right">Bank Fee</th>
-      <th style="text-align:right">Net Var</th><th>Status</th>
-    </tr></thead><tbody>`+
-    matched.map(function(r){
+  // Apply filters + sort to both lists, then render
+  var fMatched = _reconApplyFilters(matched);
+  var fUnmatched = _reconApplyFilters(unmatched);
+  var sortedMatched = _reconApplySort(fMatched);
+  var sortedUnmatched = _reconApplySort(fUnmatched);
+  function sortCls(key){
+    if(_reconSort.key===key){
+      if(_reconSort.dir===1) return 'recon-sort-asc';
+      if(_reconSort.dir===-1) return 'recon-sort-desc';
+    }
+    return '';
+  }
+  list.innerHTML='<div class="recon-tbl-wrap"><table class="recon-tbl">'+
+    '<thead>'+
+      '<tr>'+
+        '<th class="recon-sortable '+sortCls('c')+'" onclick="reconSetSort(\'c\')">Customer<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('i')+'" onclick="reconSetSort(\'i\')">Invoice #<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('po')+'" onclick="reconSetSort(\'po\')">PO #<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('pay')+'" style="text-align:right" onclick="reconSetSort(\'pay\')">Payment<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('app')+'" style="text-align:right" onclick="reconSetSort(\'app\')">Applied<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('vr')+'" style="text-align:right" onclick="reconSetSort(\'vr\')">Variance<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('wo')+'" style="text-align:right" onclick="reconSetSort(\'wo\')">Write-off<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('bf')+'" style="text-align:right" onclick="reconSetSort(\'bf\')">Bank Fee<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('nv')+'" style="text-align:right" onclick="reconSetSort(\'nv\')">Net Var<span class="recon-sort-arrow"></span></th>'+
+        '<th class="recon-sortable '+sortCls('st')+'" onclick="reconSetSort(\'st\')">Status<span class="recon-sort-arrow"></span></th>'+
+      '</tr>'+
+      // Filter row
+      '<tr class="recon-filter-row">'+
+        '<th><input class="recon-filter-input" type="text" placeholder="Filter…" value="'+(_reconFilters.c||'')+'" oninput="reconSetFilter(\'c\',this.value)"></th>'+
+        '<th><input class="recon-filter-input" type="text" placeholder="Filter…" value="'+(_reconFilters.i||'')+'" oninput="reconSetFilter(\'i\',this.value)"></th>'+
+        '<th><input class="recon-filter-input" type="text" placeholder="Filter…" value="'+(_reconFilters.po||'')+'" oninput="reconSetFilter(\'po\',this.value)"></th>'+
+        '<th></th><th></th>'+  // payment/applied no filter (numeric)
+        '<th><input class="recon-filter-input" type="text" placeholder="#" value="'+(_reconFilters.vr||'')+'" oninput="reconSetFilter(\'vr\',this.value)"></th>'+
+        '<th></th><th></th>'+  // wo/bf inputs are edit fields, no separate filter
+        '<th></th>'+  // netvar no filter (computed)
+        '<th><input class="recon-filter-input" type="text" placeholder="open / reconciled" value="'+(_reconFilters.st||'')+'" oninput="reconSetFilter(\'st\',this.value)"></th>'+
+      '</tr>'+
+    '</thead><tbody>'+
+    sortedMatched.map(function(r){
       var idx=RES.indexOf(r);
       var vr=r.vr||0;var wo=r.writeOff||0;var bf=r.bankFee||0;
-      var netVar=vr-wo-bf;
+      // Item 7 (v16): adjustments reduce variance magnitude (offset toward 0, not double-subtract)
+      var netVar = vr < 0 ? (vr + wo + bf) : (vr > 0 ? (vr - wo - bf) : -(wo + bf));
       var tied=Math.abs(netVar)<0.01;
       // Item 7: onchange triggers full re-render (only on blur/Enter)
       // oninput updates RES[idx] AND the Net Var span only (no re-render)
@@ -4879,7 +5060,7 @@ function renderWsRecon(){
         '<td><span class="ws-badge recon-status '+(tied?'ws-badge-ready':'ws-badge-pending')+'" data-recon-status="'+idx+'"><span class="ws-dot"></span>'+(tied?'Reconciled':'Open')+'</span></td>'+
       '</tr>';
     }).join('')+
-    unmatched.map(function(p){return '<tr style="background:rgba(245,158,11,.03)">'+
+    sortedUnmatched.map(function(p){return '<tr style="background:rgba(245,158,11,.03)">'+
       '<td style="font-weight:600">'+(p.c||p.a||'Unknown')+'</td>'+
       '<td class="td-mono">—</td><td class="td-mono">'+(p.po||p.txId||'—')+'</td>'+
       '<td class="td-amt" style="color:var(--am-t)">'+$f(p.amt)+'</td>'+
@@ -4887,7 +5068,7 @@ function renderWsRecon(){
       '<td class="td-amt" style="color:var(--am-t)">'+$f(p.amt)+'</td>'+
       '<td><span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Unreconciled</span></td>'+
     '</tr>';}).join('')+
-    '</tbody></table>';
+    '</tbody></table></div>';
 
   // Item 4: update Approve All button visibility at render time
   var btn=document.getElementById('recon-approve-all-btn');
@@ -4916,7 +5097,8 @@ function reconLiveUpdate(idx, field, valStr){
   });
   // Recalculate Net Var span
   var vr = r.vr||0, wo = r.writeOff||0, bf = r.bankFee||0;
-  var netVar = vr - wo - bf;
+  // Item 7 (v16): adjustments reduce variance magnitude (offset toward 0, not double-subtract)
+  var netVar = vr < 0 ? (vr + wo + bf) : (vr > 0 ? (vr - wo - bf) : -(wo + bf));
   var tied = Math.abs(netVar) < 0.01;
   var nvCell = document.querySelector('td.recon-netvar[data-recon-netvar="'+idx+'"]');
   if(nvCell){
@@ -5453,14 +5635,20 @@ function sp(id){
 
 // ── Dark mode ──
 function toggleDark(){
-  // Item 14: any manual click marks user as having overridden auto-theme
-  try{localStorage.setItem('armp_theme_manual','true');}catch(e){}
-  const html=document.documentElement;
-  const dark=html.dataset.theme==='dark';
-  html.dataset.theme=dark?'light':'dark';
-  try{localStorage.setItem('armp_theme',dark?'light':'dark');}catch(e){}
-  const moon=document.getElementById('dm-moon'),sun=document.getElementById('dm-sun');if(moon)moon.style.display=dark?'block':'none';if(sun)sun.style.display=dark?'none':'block';
-  const sdm=document.getElementById('s-dm');if(sdm)sdm.checked=!dark;
+  // Item 1 (v16): Manual theme toggle. Stores user's explicit choice in armp_theme_manual.
+  var cur = document.documentElement.dataset.theme || 'light';
+  var next = (cur === 'dark') ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try{ localStorage.setItem('armp_theme_manual', next); }catch(e){}
+  // Update any toggle button label
+  try{
+    var btn = document.getElementById('btn-theme-toggle') || document.getElementById('theme-toggle');
+    if(btn){
+      var lbl = btn.querySelector('.theme-label');
+      if(lbl) lbl.textContent = next==='dark' ? '☀ Light' : '🌙 Dark';
+    }
+  }catch(e){}
+  try{if(typeof toast==='function')toast('Theme: '+next, 'info');}catch(e){}
 }
 
 // ── Item 14: Auto theme by user time of day ──────────────────────────
@@ -5565,30 +5753,21 @@ function armpClearManualTheme(){
 })();
 
 function _armpApplyAutoTheme(){
+  // Item 1 (v16): Default theme is LIGHT. Manual toggle wins.
+  // The previous time-of-day auto-switch is disabled — timezone selector in Settings
+  // remains for reference but doesn't auto-switch theme any more.
   try{
-    // Respect manual override
-    if(localStorage.getItem('armp_theme_manual')==='true'){
-      // Still apply the user's last manual choice
-      var saved=localStorage.getItem('armp_theme');
-      if(saved){
-        document.documentElement.dataset.theme=saved;
-        var moon=document.getElementById('dm-moon'),sun=document.getElementById('dm-sun');
-        if(moon)moon.style.display=saved==='dark'?'block':'none';
-        if(sun)sun.style.display=saved==='dark'?'none':'block';
-        var sdm=document.getElementById('s-dm');if(sdm)sdm.checked=saved!=='dark';
-      }
-      return;
+    var manual = localStorage.getItem('armp_theme_manual');
+    var theme;
+    if(manual === 'dark' || manual === 'light'){
+      // User has manually toggled — preserve their choice
+      theme = manual;
+    } else {
+      // Default for everyone else: light
+      theme = 'light';
     }
-    var hour=_armpGetUserHour();
-    var isDay=(hour>=7 && hour<19);
-    var target=isDay?'light':'dark';
-    document.documentElement.dataset.theme=target;
-    try{localStorage.setItem('armp_theme',target);}catch(e){}
-    var moon=document.getElementById('dm-moon'),sun=document.getElementById('dm-sun');
-    if(moon)moon.style.display=target==='dark'?'block':'none';
-    if(sun)sun.style.display=target==='dark'?'none':'block';
-    var sdm=document.getElementById('s-dm');if(sdm)sdm.checked=target!=='dark';
-  }catch(e){console.warn('[applyAutoTheme]',e);}
+    document.documentElement.dataset.theme = theme;
+  }catch(e){console.warn('[applyTheme]',e);}
 }
 // Apply on page load
 if(document.readyState==='loading'){
@@ -6102,6 +6281,16 @@ function updWorkflow(){
             if(isReady) cta.classList.add('armp-flash');
             else cta.classList.remove('armp-flash');
           }
+          // Item 5 (v16): Flash the "Approve All" button when Needs Attention is clear
+          // and there are pending review items. This guides user to next action.
+          var approveAllBtn = document.getElementById('review-approve-all-btn');
+          if(approveAllBtn){
+            if(openExc===0 && pendingReview>0){
+              approveAllBtn.classList.add('armp-flash');
+            } else {
+              approveAllBtn.classList.remove('armp-flash');
+            }
+          }
         }catch(e){console.warn('[wf-cta flash]',e);}
         cta.style.display='inline-flex';
         cta.setAttribute('data-action',cfg.action||'');
@@ -6575,6 +6764,9 @@ function launchApp(user){
     localStorage.removeItem('armp_setup_seen');
     localStorage.removeItem('armp_banner_dismissed');
   }catch(e){}
+
+  // Item 1 (v16): Apply theme — default light, or user's manual override if set
+  try{ _armpApplyAutoTheme(); }catch(e){}
 
   setTimeout(navToWorklist, 0);
 }
@@ -7448,12 +7640,40 @@ function _excActionLabels(action){
 }
 
 function excActionOpen(idx, action){
+  // Items 3+4 (v16): clear typeahead state on open so the modal starts BLANK.
+  // No pre-populated customer/account, no auto-loaded invoices.
+  try{
+    _excActionCust = null;
+    _excActionInv = null;
+    _excActionInvList = [];
+    // Also clear the source EXC entry's a/c so the modal doesn't auto-populate them
+    // (excActionOpen reads from EXC[idx] to render the typeahead "current selection")
+    setTimeout(function(){
+      // Clear search input fields after modal renders
+      var custIn = document.getElementById('_excA-cust');
+      if(custIn) custIn.value = '';
+      var invIn = document.getElementById('_excA-inv');
+      if(invIn) invIn.value = '';
+      // Hide suggestion dropdowns
+      var custDrop = document.getElementById('_excA-cust-drop');
+      if(custDrop){ custDrop.innerHTML = ''; custDrop.style.display = 'none'; }
+      var invDrop = document.getElementById('_excA-inv-drop');
+      if(invDrop){ invDrop.innerHTML = ''; invDrop.style.display = 'none'; }
+      // Hide "Selected: ..." status lines
+      var custStatus = document.getElementById('_excA-cust-status');
+      if(custStatus){ custStatus.textContent = ''; custStatus.style.display = 'none'; }
+      var invStatus = document.getElementById('_excA-inv-status');
+      if(invStatus){ invStatus.textContent = ''; invStatus.style.display = 'none'; }
+    }, 30);
+  }catch(e){console.warn('[excActionOpen clear]',e);}
+
   console.log('[excActionOpen] idx=',idx,'action=',action);
   var ex = EXC[idx];
   if(!ex){toast('Exception not found','warn');return;}
   var lbl = _excActionLabels(action);
-  // Initialize context. Pre-fill customer if exception has one.
-  _excActionCtx = {idx:idx, action:action, custAcct:ex.a||'', custName:ex.c||'', invI:''};
+  // Items 3+4 (v16): Do NOT pre-fill customer/account. User must type to search.
+  // (Previously this carried over ex.a/ex.c — that's now disallowed by brief.)
+  _excActionCtx = {idx:idx, action:action, custAcct:'', custName:'', invI:''};
   
   showModal(lbl.title,
     '<div style="font-size:13px;color:var(--t2);margin-bottom:14px">'+
@@ -7467,13 +7687,14 @@ function excActionOpen(idx, action){
       '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer (account # or name)</div>'+
       '<div style="position:relative">'+
         '<input type="text" id="_excA-cust" autocomplete="off" placeholder="Type account number or customer name…" '+
-          'value="'+_escapeAttr(ex.a?(ex.a+(ex.c?' — '+ex.c:'')):(ex.c||''))+'" '+
+          'value="" '+  /* v16 (Items 3+4): start blank, no pre-fill */
           'oninput="_excActionCustSearch(this.value)" '+
-          'onfocus="_excActionCustSearch(this.value)" '+
+          'onfocus="if(this.value)_excActionCustSearch(this.value)" '+
           'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
         '<div id="_excA-cust-drop" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:30;max-height:200px;overflow-y:auto;margin-top:3px;display:none"></div>'+
       '</div>'+
-      '<div id="_excA-cust-status" style="font-size:11px;color:var(--t3);margin-top:3px;'+(ex.a?'':'display:none')+'">'+(ex.a?'Selected: '+_escapeHtml(ex.a)+(ex.c?' — '+_escapeHtml(ex.c):''):'')+'</div>'+
+      // v16: status starts hidden — user must explicitly select customer
+      '<div id="_excA-cust-status" style="font-size:11px;color:var(--t3);margin-top:3px;display:none"></div>'+
     '</div>'+
     
     // Invoice typeahead
@@ -7482,7 +7703,7 @@ function excActionOpen(idx, action){
       '<div style="position:relative">'+
         '<input type="text" id="_excA-inv" autocomplete="off" placeholder="Type invoice number or click to browse…" '+
           'oninput="_excActionInvSearch(this.value)" '+
-          'onfocus="_excActionInvSearch(this.value)" '+
+          'onfocus="if(this.value)_excActionInvSearch(this.value)" '+
           'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
         '<div id="_excA-inv-drop" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:30;max-height:200px;overflow-y:auto;margin-top:3px;display:none"></div>'+
       '</div>'+
@@ -7545,6 +7766,16 @@ function _excActionGetCustList(){
 }
 
 function _excActionCustSearch(q){
+  // v16: empty query → no suggestions (Items 3+4)
+  try{
+    var _q = (arguments[0]||'').trim();
+    if(!_q){
+      var drop = document.getElementById('_excA-cust-drop');
+      if(drop){ drop.innerHTML = ''; drop.style.display = 'none'; }
+      return;
+    }
+  }catch(e){}
+
   var drop=document.getElementById('_excA-cust-drop');
   if(!drop)return;
   var query=String(q||'').trim().toLowerCase();
@@ -7596,6 +7827,16 @@ function _excActionPickCust(a, c){
 }
 
 function _excActionInvSearch(q){
+  // v16: empty query → no suggestions (Items 3+4)
+  try{
+    var _q = (arguments[0]||'').trim();
+    if(!_q){
+      var drop = document.getElementById('_excA-inv-drop');
+      if(drop){ drop.innerHTML = ''; drop.style.display = 'none'; }
+      return;
+    }
+  }catch(e){}
+
   var drop=document.getElementById('_excA-inv-drop');
   if(!drop)return;
   if(!_excActionCtx||(!_excActionCtx.custAcct&&!_excActionCtx.custName)){
