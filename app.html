@@ -7680,19 +7680,31 @@ function excActionOpen(idx, action){
     // Also clear the source EXC entry's a/c so the modal doesn't auto-populate them
     // (excActionOpen reads from EXC[idx] to render the typeahead "current selection")
     setTimeout(function(){
-      // Clear search input fields after modal renders
+      // Items 1+2 (v17): respect the conditional pre-fill above.
+      // If we have a confidently-matched customer, populate the cust input + status.
+      // Otherwise blank everything. Invoice field is ALWAYS blank on open (user must type).
       var custIn = document.getElementById('_excA-cust');
-      if(custIn) custIn.value = '';
+      var custStatus = document.getElementById('_excA-cust-status');
+      if(_excActionCtx && _excActionCtx.custAcct){
+        // Pre-fill with matched customer
+        var label = _excActionCtx.custAcct + (_excActionCtx.custName ? ' — ' + _excActionCtx.custName : '');
+        if(custIn) custIn.value = label;
+        if(custStatus){
+          custStatus.textContent = 'Auto-matched: ' + label + ' (you can clear or overwrite)';
+          custStatus.style.display = '';
+        }
+      } else {
+        // No confident match — start blank
+        if(custIn) custIn.value = '';
+        if(custStatus){ custStatus.textContent = ''; custStatus.style.display = 'none'; }
+      }
+      // Always clear invoice field + dropdowns + inv status (user must type to search)
       var invIn = document.getElementById('_excA-inv');
       if(invIn) invIn.value = '';
-      // Hide suggestion dropdowns
       var custDrop = document.getElementById('_excA-cust-drop');
       if(custDrop){ custDrop.innerHTML = ''; custDrop.style.display = 'none'; }
       var invDrop = document.getElementById('_excA-inv-drop');
       if(invDrop){ invDrop.innerHTML = ''; invDrop.style.display = 'none'; }
-      // Hide "Selected: ..." status lines
-      var custStatus = document.getElementById('_excA-cust-status');
-      if(custStatus){ custStatus.textContent = ''; custStatus.style.display = 'none'; }
       var invStatus = document.getElementById('_excA-inv-status');
       if(invStatus){ invStatus.textContent = ''; invStatus.style.display = 'none'; }
     }, 30);
@@ -7702,9 +7714,29 @@ function excActionOpen(idx, action){
   var ex = EXC[idx];
   if(!ex){toast('Exception not found','warn');return;}
   var lbl = _excActionLabels(action);
-  // Items 3+4 (v16): Do NOT pre-fill customer/account. User must type to search.
-  // (Previously this carried over ex.a/ex.c — that's now disallowed by brief.)
-  _excActionCtx = {idx:idx, action:action, custAcct:'', custName:'', invI:''};
+  // Items 1+2 (v17): Conditional pre-fill.
+  // Pre-fill ONLY when the exception has a confidently-matched customer:
+  //   ex.a (account number) is populated AND that account exists in the INV master.
+  // Otherwise leave the field blank so the user types to search.
+  // This prevents stale/incorrect carry-over of customer guesses while preserving
+  // the convenience of pre-fill when the bank file/auto-match correctly identified the customer.
+  var _hasConfidentCust = !!(ex && ex.a && typeof INV!=='undefined' && INV.some(function(v){return v.a===ex.a;}));
+  var _matchedName = '';
+  if(_hasConfidentCust){
+    // Resolve customer name from INV if not on the exception itself
+    _matchedName = ex.c || '';
+    if(!_matchedName){
+      var _invHit = INV.find(function(v){return v.a===ex.a;});
+      if(_invHit) _matchedName = _invHit.c || '';
+    }
+  }
+  _excActionCtx = {
+    idx: idx,
+    action: action,
+    custAcct: _hasConfidentCust ? ex.a : '',
+    custName: _hasConfidentCust ? _matchedName : '',
+    invI: ''
+  };
   
   showModal(lbl.title,
     '<div style="font-size:13px;color:var(--t2);margin-bottom:14px">'+
@@ -7718,7 +7750,8 @@ function excActionOpen(idx, action){
       '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Customer (account # or name)</div>'+
       '<div style="position:relative">'+
         '<input type="text" id="_excA-cust" autocomplete="off" placeholder="Type account number or customer name…" '+
-          'value="" '+  /* v16 (Items 3+4): start blank, no pre-fill */
+          /* v17 (Items 1+2): conditional pre-fill from confidently-matched ctx (set above) */
+          'value="'+_escapeAttr(_excActionCtx.custAcct ? (_excActionCtx.custAcct + (_excActionCtx.custName ? ' — ' + _excActionCtx.custName : '')) : '')+'" '+
           'oninput="_excActionCustSearch(this.value)" '+
           'onfocus="if(this.value)_excActionCustSearch(this.value)" '+
           'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
