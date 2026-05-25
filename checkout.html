@@ -7,14 +7,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--p:#0EA5E9;--g:#10B981;--navy:#07111F;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace}
+:root{--p:#14A8D8;--g:#10B981;--navy:#07111F;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace}
 body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;-webkit-font-smoothing:antialiased}
 .wrap{width:100%;max-width:520px}
 .card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);overflow:hidden;margin-bottom:14px}
 .card-top{background:var(--navy);padding:20px 24px;display:flex;align-items:center;gap:12px}
-.bmark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:12px;font-weight:700}
+.bmark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:12px;font-weight:700}
 .bname{font-size:15px;font-weight:800;color:#fff}.bname span{color:var(--p)}
-.plan-badge{margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,var(--p),var(--g));color:#fff}
+.plan-badge{margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,var(--p),#12B886);color:#fff}
 .card-body{padding:24px}
 .plan-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px;margin-bottom:20px}
 .plan-name{font-size:17px;font-weight:800;color:#0F172A;margin-bottom:4px}
@@ -37,9 +37,9 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
 /* Manual form */
 .field-label{font-size:11.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
 .field-input{width:100%;padding:10px 13px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:14px;font-family:var(--font);outline:none;color:#0F172A;margin-bottom:12px;transition:.15s}
-.field-input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(14,165,233,.1)}
+.field-input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(20,168,216,.1)}
 .err{font-size:12.5px;color:#991B1B;background:#FEF2F2;padding:8px 12px;border-radius:7px;margin-bottom:12px;display:none}
-.submit-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--p),#0284C7);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.submit-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3)}
 .success{text-align:center;padding:32px;display:none}
 .back-link{font-size:13px;color:#94A3B8;text-align:center}
 .back-link a{color:var(--p)}
@@ -93,7 +93,7 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
 
     <!-- Success: invoice request confirmation -->
     <div class="success" id="co-success">
-      <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;font-size:26px;margin:0 auto 18px">✓</div>
+      <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;font-size:26px;margin:0 auto 18px">✓</div>
       <div style="font-size:22px;font-weight:800;color:#0F172A;margin-bottom:8px">Request received!</div>
       <div style="font-size:14px;color:#64748B;line-height:1.7;margin-bottom:24px" id="co-success-msg">We will be in touch within 1 business day to activate your account.</div>
       <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px;margin-bottom:20px;text-align:left">
@@ -101,10 +101,10 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
         <div style="display:flex;flex-direction:column;gap:9px">
           <div style="display:flex;gap:10px;font-size:13.5px;color:#334155"><span style="color:var(--g);font-weight:700;flex-shrink:0">1.</span>You'll receive a confirmation email at the address you provided.</div>
           <div style="display:flex;gap:10px;font-size:13.5px;color:#334155"><span style="color:var(--g);font-weight:700;flex-shrink:0">2.</span>Our team will reach out within 1 business day to finalize your account setup.</div>
-          <div style="display:flex;gap:10px;font-size:13.5px;color:#334155"><span style="color:var(--g);font-weight:700;flex-shrink:0">3.</span>Once confirmed, you'll have full access — import invoices, run matching, and export your first posting file in minutes.</div>
+          <div style="display:flex;gap:10px;font-size:13.5px;color:#334155"><span style="color:var(--g);font-weight:700;flex-shrink:0">3.</span>Once confirmed, you'll have full access — upload your bank and invoice files, run Auto Match, and export your first Posting Export in minutes.</div>
         </div>
       </div>
-      <a href="app.html" style="display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--p),#0284C7);color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:15px;text-align:center;margin-bottom:10px">Open AR Match Pro →</a>
+      <a href="app.html" style="display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:15px;text-align:center;margin-bottom:10px">Open AR Match Pro →</a>
       <div style="font-size:12.5px;color:#94A3B8;text-align:center">Questions? <a href="mailto:info@armatchpro.com" style="color:var(--p)">info@armatchpro.com</a></div>
     </div>
   </div>

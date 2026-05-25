@@ -8,9 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --p:#0EA5E9;--pd:#0284C7;--g:#10B981;--navy:#07111F;--navy2:#0F172A;--ink:#0F172A;--muted:#64748B;
+  --p:#14A8D8;--pd:#168DE2;--g:#10B981;--navy:#07111F;--navy2:#0F172A;--ink:#0F172A;--muted:#64748B;
   --bg:#F8FAFC;--line:#E2E8F0;--soft:#EFF6FF;--greenSoft:#ECFDF5;--red:#EF4444;--amber:#F59E0B;
-  --shadow:0 24px 70px rgba(15,23,42,.12);--shadow2:0 12px 40px rgba(14,165,233,.18);
+  --shadow:0 24px 70px rgba(15,23,42,.12);--shadow2:0 12px 40px rgba(20,168,216,.18);
   --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -22,28 +22,28 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1
 a{text-decoration:none;color:inherit}
 button,input{font-family:inherit}
 .container{max-width:1200px;margin:0 auto;padding:0 24px}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(14,165,233,.09);color:#075985;font-size:13px;font-weight:800;border:1px solid rgba(14,165,233,.16)}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(20,168,216,.09);color:#075985;font-size:13px;font-weight:800;border:1px solid rgba(20,168,216,.16)}
 
 /* HEADER */
 .site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.84);backdrop-filter:blur(18px);border-bottom:1px solid rgba(226,232,240,.9)}
 .nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:-.4px;color:var(--ink)}
-.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:13px;font-weight:900;box-shadow:0 10px 24px rgba(14,165,233,.28);flex-shrink:0}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:13px;font-weight:900;box-shadow:0 10px 24px rgba(20,168,216,.28);flex-shrink:0}
 .brand-name span{color:var(--p)}
 .nav-links{display:flex;align-items:center;gap:28px;font-size:14px;font-weight:700;color:#475569}
 .nav-links a:hover{color:var(--pd)}
 .nav-actions{display:flex;align-items:center;gap:10px}
 .btn{border:0;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:900;cursor:pointer;transition:.18s ease;display:inline-flex;align-items:center;gap:8px;line-height:1}
-.btn-primary{background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;box-shadow:0 10px 22px rgba(14,165,233,.24)}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 16px 32px rgba(14,165,233,.32)}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;box-shadow:0 10px 22px rgba(20,168,216,.24)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 16px 32px rgba(20,168,216,.32)}
 .btn-dark{background:var(--navy2);color:#fff}
 .btn-dark:hover{background:#1E293B}
 .btn-light{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
 .btn-light:hover{border-color:var(--p);color:var(--pd)}
-.btn-ghost{background:linear-gradient(135deg,#7DD3FC,#34D399);color:#06101E;border:0;box-shadow:0 8px 18px rgba(14,165,233,.16)}
-.btn-ghost:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(14,165,233,.24)}
-.btn-demo{background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border:0;box-shadow:0 8px 20px rgba(14,165,233,.3)}
-.btn-demo:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(14,165,233,.4)}
+.btn-ghost{background:linear-gradient(135deg,#7DD3FC,#34D399);color:#06101E;border:0;box-shadow:0 8px 18px rgba(20,168,216,.16)}
+.btn-ghost:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(20,168,216,.24)}
+.btn-demo{background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:0;box-shadow:0 8px 20px rgba(20,168,216,.3)}
+.btn-demo:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(20,168,216,.4)}
 
 /* LEAD CAPTURE MODAL */
 .lead-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
@@ -51,16 +51,16 @@ button,input{font-family:inherit}
 .lead-modal{background:#fff;border-radius:20px;width:460px;max-width:95vw;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.22);animation:modalIn .3s cubic-bezier(.34,1.56,.64,1)}
 @keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:none}}
 .lead-header{background:linear-gradient(135deg,#0F172A,#1E3A5F);padding:28px 28px 24px;text-align:center}
-.lead-header-mark{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;color:#fff;font-size:16px;font-weight:900;font-family:var(--mono);margin:0 auto 14px;box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.lead-header-mark{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;color:#fff;font-size:16px;font-weight:900;font-family:var(--mono);margin:0 auto 14px;box-shadow:0 8px 20px rgba(20,168,216,.3)}
 .lead-header h3{font-size:20px;font-weight:800;color:#fff;margin-bottom:6px;letter-spacing:-.3px}
 .lead-header p{font-size:13px;color:rgba(255,255,255,.55);line-height:1.5}
 .lead-body{padding:24px 28px 28px}
 .lead-label{font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;margin-top:12px}
 .lead-label:first-of-type{margin-top:0}
 .lead-input{width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:var(--font);outline:none;color:var(--ink);transition:border .15s,box-shadow .15s}
-.lead-input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(14,165,233,.1)}
-.lead-submit{width:100%;margin-top:18px;padding:13px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:0;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);transition:all .18s;box-shadow:0 8px 20px rgba(14,165,233,.25)}
-.lead-submit:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(14,165,233,.35)}
+.lead-input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(20,168,216,.1)}
+.lead-submit{width:100%;margin-top:18px;padding:13px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:0;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);transition:all .18s;box-shadow:0 8px 20px rgba(20,168,216,.25)}
+.lead-submit:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(20,168,216,.35)}
 .lead-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .lead-privacy{font-size:11.5px;color:#94A3B8;text-align:center;margin-top:12px;line-height:1.5}
 .lead-close{position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;line-height:1;transition:color .15s}
@@ -72,7 +72,7 @@ button,input{font-family:inherit}
 .lead-err{font-size:12px;color:#991B1B;background:#FEF2F2;border:1px solid rgba(239,68,68,.2);padding:8px 12px;border-radius:6px;margin-top:10px;display:none}
 
 /* HERO */
-.hero{position:relative;overflow:hidden;background:radial-gradient(900px 520px at 70% 20%,rgba(14,165,233,.22),transparent 60%),linear-gradient(135deg,#06101E 0%,#0F172A 55%,#07111F 100%);color:#fff}
+.hero{position:relative;overflow:hidden;background:radial-gradient(900px 520px at 70% 20%,rgba(20,168,216,.22),transparent 60%),linear-gradient(135deg,#06101E 0%,#0F172A 55%,#07111F 100%);color:#fff}
 .hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.13) 1px,transparent 1px);background-size:24px 24px;opacity:.16}
 .hero-wrap{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;min-height:780px;padding:72px 24px}
 .privacy-hero{display:inline-flex;align-items:center;gap:7px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#6EE7B7;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;margin-bottom:18px}
@@ -83,9 +83,9 @@ button,input{font-family:inherit}
 .hero-note{margin-top:18px;font-size:13px;color:rgba(255,255,255,.4)}
 
 /* HERO LOGO */
-.hero-logo{position:relative;width:520px;height:520px;margin-left:auto;filter:drop-shadow(0 30px 70px rgba(14,165,233,.22))}
+.hero-logo{position:relative;width:520px;height:520px;margin-left:auto;filter:drop-shadow(0 30px 70px rgba(20,168,216,.22))}
 .hero-canvas{position:absolute;inset:0;width:100%;height:100%}
-.orbit-ring{position:absolute;inset:42px;border-radius:50%;border:1px solid rgba(125,211,252,.22);box-shadow:inset 0 0 70px rgba(14,165,233,.12);animation:spinSlow 28s linear infinite}
+.orbit-ring{position:absolute;inset:42px;border-radius:50%;border:1px solid rgba(125,211,252,.22);box-shadow:inset 0 0 70px rgba(20,168,216,.12);animation:spinSlow 28s linear infinite}
 .orbit-ring::before,.orbit-ring::after{content:"";position:absolute;inset:44px;border-radius:50%;border:1px dashed rgba(16,185,129,.24)}
 .orbit-ring::after{inset:88px;border-style:solid;border-color:rgba(255,255,255,.09)}
 @keyframes spinSlow{to{transform:rotate(360deg)}}
@@ -95,10 +95,10 @@ button,input{font-family:inherit}
   border:1.5px solid rgba(255,255,255,.32);
   display:grid;place-items:center;font-size:28px;
   backdrop-filter:blur(14px);
-  box-shadow:0 14px 36px rgba(0,0,0,.32),0 0 28px rgba(14,165,233,.22),inset 0 1px 0 rgba(255,255,255,.22);
+  box-shadow:0 14px 36px rgba(0,0,0,.32),0 0 28px rgba(20,168,216,.22),inset 0 1px 0 rgba(255,255,255,.22);
   transition:.2s;animation:fiFloat 3.2s ease-in-out infinite;
 }
-.finance-icon:hover{transform:scale(1.12) translateY(-3px);background:rgba(255,255,255,.24);box-shadow:0 18px 44px rgba(0,0,0,.36),0 0 36px rgba(14,165,233,.3),inset 0 1px 0 rgba(255,255,255,.3)}
+.finance-icon:hover{transform:scale(1.12) translateY(-3px);background:rgba(255,255,255,.24);box-shadow:0 18px 44px rgba(0,0,0,.36),0 0 36px rgba(20,168,216,.3),inset 0 1px 0 rgba(255,255,255,.3)}
 .fi1{top:28px;left:236px;animation-delay:0s}.fi2{top:118px;right:44px;animation-delay:.55s}.fi3{right:68px;bottom:120px;animation-delay:1.1s}
 .fi4{left:78px;bottom:100px;animation-delay:1.65s}.fi5{left:42px;top:138px;animation-delay:2.2s}.fi6{bottom:22px;left:236px;animation-delay:2.75s}
 @keyframes fiFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(1.04)}}
@@ -133,9 +133,9 @@ button,input{font-family:inherit}
 .app-window{background:#F1F5F9;border-radius:20px;overflow:hidden}
 /* Real app topbar */
 .app-topbar{height:52px;background:#0F172A;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.05)}
-.app-logo-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-size:10px;font-weight:900;font-family:var(--mono)}
+.app-logo-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#14A8D8,#12B886);display:grid;place-items:center;color:#fff;font-size:10px;font-weight:900;font-family:var(--mono)}
 .app-logo-txt{font-size:13.5px;font-weight:800;color:#fff;letter-spacing:-.3px}
-.app-logo-txt span{color:#0EA5E9}
+.app-logo-txt span{color:#14A8D8}
 .app-stats{display:flex;gap:0;margin:0 auto}
 .app-stat{display:flex;flex-direction:column;align-items:center;padding:0 14px;border-right:1px solid rgba(255,255,255,.06)}
 .app-stat:last-child{border-right:none}
@@ -144,14 +144,14 @@ button,input{font-family:inherit}
 .app-stat-lbl{font-size:9.5px;color:rgba(255,255,255,.3);margin-top:2px}
 .app-topbar-btns{display:flex;gap:6px;margin-left:auto;align-items:center}
 .app-btn{padding:5px 11px;border-radius:5px;font-size:11px;font-weight:700;cursor:default;border:1.5px solid rgba(255,255,255,.2);color:rgba(255,255,255,.75);background:transparent}
-.app-btn.primary{background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border:none}
+.app-btn.primary{background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border:none}
 /* Real app body */
 .app-body{display:grid;grid-template-columns:200px 1fr;min-height:440px}
 .app-sidebar{background:#fff;border-right:1px solid #E2E8F0;padding:14px 8px}
 .app-sidebar-sec{margin-bottom:14px}
 .app-sidebar-lbl{font-size:9px;font-weight:800;color:#94A3B8;letter-spacing:.9px;text-transform:uppercase;padding:0 8px;margin-bottom:5px}
 .app-nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;font-size:12px;color:#64748B;margin-bottom:1px}
-.app-nav-item.active{background:rgba(14,165,233,.08);color:#0284C7;font-weight:600}
+.app-nav-item.active{background:rgba(20,168,216,.08);color:#168DE2;font-weight:600}
 .app-nav-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
 .app-main{padding:18px;background:#F1F5F9}
 /* KPI row matching real app */
@@ -161,7 +161,7 @@ button,input{font-family:inherit}
 .app-kpi-body{padding:13px 14px}
 .app-kpi-lbl{font-size:9.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px}
 .app-kpi-val{font-size:22px;font-weight:800;font-family:var(--mono);letter-spacing:-1.5px;line-height:1;margin-top:6px}
-.app-kpi-val.tl{color:#0284C7}.app-kpi-val.gn{color:#10B981}.app-kpi-val.rd{color:#EF4444}.app-kpi-val.am{color:#F59E0B}
+.app-kpi-val.tl{color:#168DE2}.app-kpi-val.gn{color:#10B981}.app-kpi-val.rd{color:#EF4444}.app-kpi-val.am{color:#F59E0B}
 .app-kpi-sub{font-size:10px;color:#94A3B8;margin-top:4px}
 /* Match result table */
 .app-table-card{background:#fff;border:1px solid #E2E8F0;border-radius:9px;overflow:hidden}
@@ -171,14 +171,14 @@ button,input{font-family:inherit}
 .app-tr{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;padding:9px 12px;border-bottom:1px solid #F1F5F9;font-size:11.5px;align-items:center;color:#0F172A}
 .app-tr:last-child{border-bottom:none}
 .app-tr:hover{background:#F0F9FF}
-.app-mono{font-family:var(--mono);font-size:11px;color:#0284C7;font-weight:600}
+.app-mono{font-family:var(--mono);font-size:11px;color:#168DE2;font-weight:600}
 .app-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
 .app-badge::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0}
 .app-badge.g{background:#ECFDF5;color:#065F46}.app-badge.am{background:#FFFBEB;color:#92400E}.app-badge.b{background:#EFF6FF;color:#1D4ED8}
 
 /* CFO */
 .cfo{background:#07111F;color:#fff;position:relative;overflow:hidden}
-.cfo::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 380px at 75% 25%,rgba(14,165,233,.22),transparent 65%)}
+.cfo::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 380px at 75% 25%,rgba(20,168,216,.22),transparent 65%)}
 .cfo .container{position:relative}
 .cfo-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:center}
 .cfo h2{font-size:48px;letter-spacing:-2px;line-height:1.05;margin:14px 0;font-weight:900}
@@ -200,8 +200,8 @@ button,input{font-family:inherit}
 .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
 .price-card{background:#fff;border:1.5px solid var(--line);border-radius:24px;padding:30px;position:relative;box-shadow:0 10px 30px rgba(15,23,42,.05);transition:.2s}
 .price-card:hover{box-shadow:0 20px 50px rgba(15,23,42,.1)}
-.price-card.popular{border:2px solid var(--p);box-shadow:0 24px 55px rgba(14,165,233,.16);transform:translateY(-10px)}
-.popular-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--p),var(--g));color:#fff;font-size:12px;font-weight:900;padding:7px 15px;border-radius:999px;white-space:nowrap;box-shadow:0 8px 18px rgba(14,165,233,.25)}
+.price-card.popular{border:2px solid var(--p);box-shadow:0 24px 55px rgba(20,168,216,.16);transform:translateY(-10px)}
+.popular-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--p),#12B886);color:#fff;font-size:12px;font-weight:900;padding:7px 15px;border-radius:999px;white-space:nowrap;box-shadow:0 8px 18px rgba(20,168,216,.25)}
 .plan-name{font-size:22px;font-weight:900;margin-bottom:8px}
 .plan-desc{color:var(--muted);font-size:14px;min-height:48px;line-height:1.55}
 .price{font-size:44px;font-weight:900;letter-spacing:-1.6px;margin-top:20px;transition:all .3s}
@@ -235,7 +235,7 @@ button,input{font-family:inherit}
 .footer ul{list-style:none;padding:0;margin:0}
 .footer a{display:block;margin:9px 0;color:rgba(255,255,255,.55);font-size:14px;transition:.15s}
 .footer a:hover{color:#fff}
-.footer-col-head{font-size:12px;font-weight:900;margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em;background:linear-gradient(135deg,#0EA5E9,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.footer-col-head{font-size:12px;font-weight:900;margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em;background:linear-gradient(135deg,#14A8D8,#12B886);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .footer-brand-desc{margin-top:14px;max-width:300px;font-size:14px;line-height:1.6;color:rgba(255,255,255,.5)}
 .socials{display:flex;gap:9px;margin-top:16px}
 .socials a{width:34px;height:34px;border:1px solid rgba(255,255,255,.14);border-radius:50%;display:grid;place-items:center;margin:0;font-size:13px;font-weight:700;transition:.15s}
@@ -578,9 +578,9 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
       <!-- AR Match Pro column -->
       <div style="background:linear-gradient(135deg,var(--navy),#0F1F3A);border-radius:16px;padding:32px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--p),var(--g))"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--p),#12B886)"></div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-          <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">AR</div>
+          <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">AR</div>
           <div style="font-size:16px;font-weight:800;color:#fff">AR Match Pro</div>
           <div style="margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.3);border-radius:20px;color:#34D399">Ready today</div>
         </div>
@@ -614,7 +614,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
     <!-- CTA row -->
     <div class="diff-cta-row" style="text-align:center">
-      <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(14,165,233,.3);margin-right:12px">▶ Try free demo</button>
+      <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);margin-right:12px">▶ Try free demo</button>
       <button onclick="window.open('https://calendly.com/armatchpro','_blank')" style="padding:15px 32px;background:#fff;color:var(--navy);border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font)">📅 Book a 30-Minute Demo</button>
     </div>
   </div>
@@ -626,18 +626,18 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div style="text-align:center;margin-bottom:52px">
       <div class="eyebrow">CFO Reporting</div>
       <h2 style="font-size:clamp(26px,4vw,40px);font-weight:800;color:var(--navy);letter-spacing:-.5px;margin:12px 0 12px">The dashboard your CFO<br>actually wants to see</h2>
-      <p style="font-size:16px;color:#64748B;max-width:520px;margin:0 auto;line-height:1.65">Real-time metrics calculated from your match results — updated every time you run matching. No manual reporting. No spreadsheets.</p>
+      <p style="font-size:16px;color:#64748B;max-width:520px;margin:0 auto;line-height:1.65">Real-time metrics calculated from your match results — updated every time you run Auto Match. No manual reporting. No spreadsheets.</p>
     </div>
     <div class="cfo-top-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
       <div style="background:linear-gradient(135deg,#07111F,#0F172A);border-radius:14px;padding:22px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10B981,#0EA5E9)"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#12B886,#14A8D8)"></div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Cash Matched</div>
         <div style="font-size:36px;font-weight:800;color:#34D399;font-family:'Inter',sans-serif;font-feature-settings:normal;letter-spacing:-2px;line-height:1;margin-bottom:6px">$55,000</div>
         <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Ready for posting export</div>
       </div>
       <div style="background:linear-gradient(135deg,#07111F,#0F172A);border-radius:14px;padding:22px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#0EA5E9,#8B5CF6)"></div>
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Automation Rate</div>
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#14A8D8,#8B5CF6)"></div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Auto-Match Rate</div>
         <div style="font-size:36px;font-weight:800;color:#7DD3FC;font-family:'Inter',sans-serif;font-feature-settings:normal;letter-spacing:-2px;line-height:1;margin-bottom:6px">82%</div>
         <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Manual review reduced</div>
       </div>
@@ -670,20 +670,20 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:11px;color:#64748B;margin-top:4px;font-weight:600">Unapplied Cash %</div>
       </div>
     </div>
-    <div style="background:linear-gradient(135deg,rgba(14,165,233,.06),rgba(16,185,129,.04));border:1px solid rgba(14,165,233,.15);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div style="background:linear-gradient(135deg,rgba(20,168,216,.06),rgba(16,185,129,.04));border:1px solid rgba(20,168,216,.15);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <div style="font-size:20px">📊</div>
       <div style="flex:1;min-width:200px">
         <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px">All metrics calculated live from your match results</div>
-        <div style="font-size:13px;color:#64748B">Updated every time you run matching. Export a PDF for your CFO anytime.</div>
+        <div style="font-size:13px;color:#64748B">Updated every time you run Auto Match. Export a PDF for your CFO anytime.</div>
       </div>
-      <button onclick="openLeadModal()" style="padding:10px 20px;background:linear-gradient(135deg,var(--p),#0284C7);color:#fff;border:none;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">See it live →</button>
+      <button onclick="openLeadModal()" style="padding:10px 20px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border:none;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">See it live →</button>
     </div>
   </div>
 </section>
 
 <section id="video-section" style="background:linear-gradient(180deg,#07111F 0%,#050D18 100%);padding:72px 0 60px;text-align:center">
     <div class="container" style="max-width:900px">
-      <div class="eyebrow" style="color:#7DD3FC;border-color:rgba(125,211,252,.25);background:rgba(14,165,233,.1);margin-bottom:16px;display:inline-flex">▶ Product Overview</div>
+      <div class="eyebrow" style="color:#7DD3FC;border-color:rgba(125,211,252,.25);background:rgba(20,168,216,.1);margin-bottom:16px;display:inline-flex">▶ Product Overview</div>
       <h2 style="font-size:clamp(28px,4vw,42px);font-weight:800;color:#fff;letter-spacing:-.5px;margin:12px 0 12px;line-height:1.2">See AR Match Pro in action</h2>
       <p style="font-size:15px;color:#7DD3FC;font-weight:600;margin-bottom:8px">"Match remittance to invoices in minutes — no ERP integration required."</p>
       <p style="font-size:15px;color:rgba(255,255,255,.45);max-width:460px;margin:0 auto 28px;line-height:1.65">Watch how AR Match Pro automates remittance matching — from problem to results. With narration.</p>
@@ -702,7 +702,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 <section class="section" style="background:var(--navy);padding:72px 0">
     <div class="container" style="max-width:900px">
       <div style="text-align:center;margin-bottom:40px">
-        <div class="eyebrow" style="color:#7DD3FC;border-color:rgba(125,211,252,.25);background:rgba(14,165,233,.1)">The transformation</div>
+        <div class="eyebrow" style="color:#7DD3FC;border-color:rgba(125,211,252,.25);background:rgba(20,168,216,.1)">The transformation</div>
         <h2 style="color:#fff;font-size:clamp(26px,4vw,38px);letter-spacing:-.5px;margin:12px 0 10px">From manual chaos to <span style="color:#34D399">automated clarity</span></h2>
         <p style="color:rgba(255,255,255,.45);font-size:15px">See exactly what changes when your team stops matching invoices by hand.</p>
       </div>
@@ -731,7 +731,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
       <div style="text-align:center">
         <p style="color:rgba(255,255,255,.4);font-size:14px;margin-bottom:20px">See it match a real $40,000 multi-invoice payment in under 60 seconds.</p>
-        <button onclick="openLeadModal()" style="display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(14,165,233,.3);transition:all .18s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">▶ Try Free Demo</button>
+        <button onclick="openLeadModal()" style="display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);transition:all .18s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">▶ Try Free Demo</button>
         <div style="font-size:12px;color:rgba(255,255,255,.25);margin-top:10px">No login required · Takes 60 seconds</div>
       </div>
     </div>
@@ -794,7 +794,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <h3>You're all set!</h3>
       <p>Thanks <span id="lead-success-name"></span>! We'll be in touch at <span id="lead-success-email" style="font-weight:700;color:var(--ink)"></span>.<br>Loading your demo now…</p>
       <div style="width:100%;height:4px;background:#E2E8F0;border-radius:2px;overflow:hidden">
-        <div id="lead-progress" style="height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:2px;width:0%;transition:width .1s linear"></div>
+        <div id="lead-progress" style="height:100%;background:linear-gradient(90deg,var(--p),#12B886);border-radius:2px;width:0%;transition:width .1s linear"></div>
       </div>
     </div>
   </div>
@@ -820,7 +820,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="pricing-cards-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:32px">
 
       <!-- Starter -->
-      <div style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;display:flex;flex-direction:column;transition:.2s" onmouseover="this.style.borderColor='rgba(14,165,233,.5)';this.style.background='rgba(14,165,233,.06)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.background='rgba(255,255,255,.05)'">
+      <div style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;display:flex;flex-direction:column;transition:.2s" onmouseover="this.style.borderColor='rgba(20,168,216,.5)';this.style.background='rgba(20,168,216,.06)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.background='rgba(255,255,255,.05)'">
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Starter</div>
         <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:16px">SMB accounting &amp; AR teams · 1–2 users</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
@@ -846,8 +846,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
 
       <!-- Pro (highlighted) -->
-      <div style="background:linear-gradient(160deg,rgba(14,165,233,.18),rgba(14,165,233,.08));border:2px solid #0EA5E9;border-radius:20px;padding:32px;display:flex;flex-direction:column;position:relative;box-shadow:0 0 60px rgba(14,165,233,.2)">
-        <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;font-size:11px;font-weight:800;padding:5px 16px;border-radius:30px;white-space:nowrap;letter-spacing:.04em">MOST POPULAR</div>
+      <div style="background:linear-gradient(160deg,rgba(20,168,216,.18),rgba(20,168,216,.08));border:2px solid #14A8D8;border-radius:20px;padding:32px;display:flex;flex-direction:column;position:relative;box-shadow:0 0 60px rgba(20,168,216,.2)">
+        <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;font-size:11px;font-weight:800;padding:5px 16px;border-radius:30px;white-space:nowrap;letter-spacing:.04em">MOST POPULAR</div>
         <div style="font-size:11px;font-weight:700;color:#7DD3FC;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Pro</div>
         <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px">Growing AR teams · mid-market finance</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
@@ -855,7 +855,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
         <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Billed as $16,788/year</div>
-        <div style="height:1px;background:rgba(14,165,233,.25);margin-bottom:20px"></div>
+        <div style="height:1px;background:rgba(20,168,216,.25);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Starter, plus:</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Unlimited rows processed</div>
@@ -871,7 +871,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multiple bank accounts</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Priority support</div>
         </div>
-        <button onclick="goCheckout('pro')" style="width:100%;padding:15px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(14,165,233,.4);transition:.18s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 36px rgba(14,165,233,.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 28px rgba(14,165,233,.4)'">Get Pro</button>
+        <button onclick="goCheckout('pro')" style="width:100%;padding:15px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(20,168,216,.4);transition:.18s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 36px rgba(20,168,216,.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 28px rgba(20,168,216,.4)'">Get Pro</button>
       </div>
 
       <!-- Team / Custom -->
@@ -913,7 +913,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">🌐 Secure browser-based workflow</div>
       </div>
       <div class="pricing-bottom-btns" style="display:flex;gap:12px">
-        <button onclick="openLeadModal()" style="padding:12px 22px;background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 20px rgba(14,165,233,.3)">▶ Try free demo</button>
+        <button onclick="openLeadModal()" style="padding:12px 22px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 20px rgba(20,168,216,.3)">▶ Try free demo</button>
       </div>
     </div>
   </div>
@@ -1053,7 +1053,7 @@ function initQualifyChat(){
 function addBotQMsg(txt){
   const msgs=document.getElementById('chat-msgs');if(!msgs)return;
   const div=document.createElement('div');div.className='chat-msg bot';
-  div.innerHTML=`<div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--g));display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">🤖</div><div class="chat-bubble">${txt}</div>`;
+  div.innerHTML=`<div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--p),#12B886);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">🤖</div><div class="chat-bubble">${txt}</div>`;
   msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
 }
 function addUserQMsg(txt){
@@ -1091,13 +1091,13 @@ function qfPick(val,nextState){
       let msg,cta;
       if(isEnterprise&&isBig){
         msg=`Perfect fit for Pro or Team. SAP/NetSuite with high volume is exactly what we built for — multi-invoice allocation, PO matching, F-28 export. I'd love to show you a live demo.`;
-        cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#0284C7);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
+        cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else if(isPainful||isBig){
         msg=`Sounds like AR Match Pro would solve your biggest pain points. The live demo takes 5 minutes — no signup, real matching with sample data.`;
-        cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#0284C7);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
+        cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else {
         msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter from $799/month or Pro at $1,599/month. Try the demo first, no commitment.`;
-        cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,#0EA5E9,#10B981);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Start free demo</a>`;
+        cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Start free demo</a>`;
       }
       addBotQMsg(msg+'<br>'+cta);
       setTimeout(()=>{
@@ -1134,15 +1134,15 @@ let w,h,dpr;
 function resize(){const r=canvas.getBoundingClientRect();dpr=window.devicePixelRatio||1;w=r.width;h=r.height;canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
 resize();window.addEventListener('resize',resize);
 const nodes=[];
-for(let i=0;i<36;i++){const a=Math.random()*Math.PI*2,rad=125+Math.random()*120;nodes.push({a,rad,s:1.2+Math.random()*2.2,sp:.0015+Math.random()*.0025,c:i%4===0?'#10B981':'#0EA5E9'})}
+for(let i=0;i<36;i++){const a=Math.random()*Math.PI*2,rad=125+Math.random()*120;nodes.push({a,rad,s:1.2+Math.random()*2.2,sp:.0015+Math.random()*.0025,c:i%4===0?'#10B981':'#14A8D8'})}
 let t=0;
 function draw(){
   t+=1;ctx.clearRect(0,0,w,h);const cx=w/2,cy=h/2;
   const grd=ctx.createRadialGradient(cx,cy,20,cx,cy,250);
-  grd.addColorStop(0,'rgba(14,165,233,.13)');grd.addColorStop(.45,'rgba(16,185,129,.06)');grd.addColorStop(1,'rgba(14,165,233,0)');
+  grd.addColorStop(0,'rgba(20,168,216,.13)');grd.addColorStop(.45,'rgba(16,185,129,.06)');grd.addColorStop(1,'rgba(20,168,216,0)');
   ctx.fillStyle=grd;ctx.beginPath();ctx.arc(cx,cy,250,0,Math.PI*2);ctx.fill();
   const pts=nodes.map(n=>{n.a+=n.sp;return{x:cx+Math.cos(n.a+t*.0008)*n.rad,y:cy+Math.sin(n.a+t*.0008)*n.rad,s:n.s,c:n.c}});
-  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<82){ctx.strokeStyle=`rgba(14,165,233,${.11*(1-dist/82)})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke()}}
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<82){ctx.strokeStyle=`rgba(20,168,216,${.11*(1-dist/82)})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke()}}
   pts.forEach((p,i)=>{ctx.globalAlpha=.72;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);ctx.fill();if(i%7===0){ctx.strokeStyle='rgba(16,185,129,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(p.x,p.y,p.s+6+Math.sin(t*.04+i)*2,0,Math.PI*2);ctx.stroke()}});
   ctx.globalAlpha=1;requestAnimationFrame(draw);
 }
@@ -1383,13 +1383,13 @@ function toggleFaq(el){
 <!-- ══ SUPPORT CHAT WIDGET ══ -->
 <!-- SUPPORT CHAT START -->
 <div id="lp-chat-widget" style="position:fixed;bottom:20px;right:20px;z-index:9000;font-family:'Inter',sans-serif">
-  <button id="lp-chat-fab" onclick="toggleLpChat()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);border:none;cursor:pointer;box-shadow:0 6px 20px rgba(14,165,233,.4);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;position:relative" aria-label="Support chat">
+  <button id="lp-chat-fab" onclick="toggleLpChat()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#14A8D8,#12B886);border:none;cursor:pointer;box-shadow:0 6px 20px rgba(20,168,216,.4);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;position:relative" aria-label="Support chat">
     💬
     <div style="position:absolute;top:2px;right:2px;width:10px;height:10px;background:#10B981;border:2px solid #fff;border-radius:50%"></div>
   </button>
   <div id="lp-chat-panel" style="display:none;position:absolute;bottom:64px;right:0;width:320px;max-width:calc(100vw - 32px);background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.18);border:1px solid #E2E8F0;overflow:hidden;flex-direction:column">
     <div style="background:#07111F;padding:14px 16px;display:flex;align-items:center;gap:10px">
-      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-size:14px;flex-shrink:0">🤖</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#14A8D8,#12B886);display:grid;place-items:center;color:#fff;font-size:14px;flex-shrink:0">🤖</div>
       <div>
         <div style="font-size:14px;font-weight:700;color:#fff">AR Match Pro Support</div>
         <div style="font-size:11px;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;background:#10B981;border-radius:50%;display:inline-block"></span>Online</div>
@@ -1398,7 +1398,7 @@ function toggleFaq(el){
     </div>
     <div id="lp-chat-msgs" style="height:260px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;gap:8px;align-items:flex-end">
-        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-size:10px;flex-shrink:0">🤖</div>
+        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#14A8D8,#12B886);display:grid;place-items:center;color:#fff;font-size:10px;flex-shrink:0">🤖</div>
         <div style="background:#F1F5F9;padding:9px 13px;border-radius:4px 14px 14px 14px;font-size:13px;color:#0F172A;line-height:1.5;max-width:240px">Hi! Pick a question below and I'll answer instantly.</div>
       </div>
     </div>
@@ -1416,7 +1416,7 @@ function toggleFaq(el){
 </div>
 <style>
 .lp-chat-btn{background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:500;color:#0F172A;cursor:pointer;text-align:left;transition:.13s;font-family:'Inter',sans-serif}
-.lp-chat-btn:hover{border-color:#0EA5E9;color:#0EA5E9;background:#EFF6FF}
+.lp-chat-btn:hover{border-color:#14A8D8;color:#14A8D8;background:#EFF6FF}
 </style>
 
 <script>
@@ -1440,14 +1440,14 @@ function lpChatAsk(q){
   const msgs=document.getElementById('lp-chat-msgs');
   const uDiv=document.createElement('div');
   uDiv.style.cssText='display:flex;justify-content:flex-end';
-  uDiv.innerHTML='<div style="background:linear-gradient(135deg,#0EA5E9,#0284C7);padding:9px 13px;border-radius:14px 4px 14px 14px;font-size:13px;color:#fff;max-width:240px;line-height:1.5">'+q+'</div>';
+  uDiv.innerHTML='<div style="background:linear-gradient(135deg,#14A8D8,#168DE2);padding:9px 13px;border-radius:14px 4px 14px 14px;font-size:13px;color:#fff;max-width:240px;line-height:1.5">'+q+'</div>';
   msgs.appendChild(uDiv);
   msgs.scrollTop=msgs.scrollHeight;
   setTimeout(()=>{
     const ans=LP_FAQ[q]||"Great question! Email us at info@armatchpro.com and we'll respond within 1 business day.";
     const bDiv=document.createElement('div');
     bDiv.style.cssText='display:flex;gap:8px;align-items:flex-end';
-    bDiv.innerHTML='<div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-size:10px;flex-shrink:0">🤖</div><div style="background:#F1F5F9;padding:9px 13px;border-radius:4px 14px 14px 14px;font-size:13px;color:#0F172A;line-height:1.5;max-width:240px">'+ans+'</div>';
+    bDiv.innerHTML='<div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#14A8D8,#12B886);display:grid;place-items:center;color:#fff;font-size:10px;flex-shrink:0">🤖</div><div style="background:#F1F5F9;padding:9px 13px;border-radius:4px 14px 14px 14px;font-size:13px;color:#0F172A;line-height:1.5;max-width:240px">'+ans+'</div>';
     msgs.appendChild(bDiv);
     msgs.scrollTop=msgs.scrollHeight;
   },500);
@@ -1492,7 +1492,7 @@ document.addEventListener('keydown',function(e){
   <div style="background:#fff;border-radius:18px;max-width:680px;margin:0 auto;padding:40px;position:relative;font-family:'Inter',sans-serif">
     <button onclick="closeInfoModal('modal-about')" style="position:absolute;top:16px;right:20px;background:none;border:none;font-size:24px;cursor:pointer;color:#94A3B8;line-height:1">×</button>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-      <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#0EA5E9,#10B981);display:grid;place-items:center;color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;flex-shrink:0">AR</div>
+      <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#14A8D8,#12B886);display:grid;place-items:center;color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;flex-shrink:0">AR</div>
       <h2 style="font-size:22px;font-weight:800;color:#07111F;margin:0">About AR Match Pro</h2>
     </div>
     <p style="font-size:15px;color:#334155;line-height:1.75;margin-bottom:16px">AR Match Pro is a browser-based remittance matching tool built for Accounting and AR teams. We help companies match customer payments to invoices in minutes — without ERP integration, IT involvement, or lengthy implementation timelines.</p>
@@ -1510,7 +1510,7 @@ document.addEventListener('keydown',function(e){
       <li>CFO Summary and Reports dashboard: cash matched, match rate, unapplied risk, short pays</li>
     </ul>
     <h3 style="font-size:16px;font-weight:700;color:#07111F;margin:24px 0 10px">Contact</h3>
-    <p style="font-size:14px;color:#475569">Email: <a href="mailto:info@armatchpro.com" style="color:#0EA5E9">info@armatchpro.com</a><br>Book a demo: <a href="https://calendly.com/armatchpro" target="_blank" style="color:#0EA5E9">calendly.com/armatchpro</a></p>
+    <p style="font-size:14px;color:#475569">Email: <a href="mailto:info@armatchpro.com" style="color:#14A8D8">info@armatchpro.com</a><br>Book a demo: <a href="https://calendly.com/armatchpro" target="_blank" style="color:#14A8D8">calendly.com/armatchpro</a></p>
     <div style="margin-top:28px;padding-top:20px;border-top:1px solid #E2E8F0;font-size:12px;color:#94A3B8">© 2026 AR Match Pro. All rights reserved.</div>
   </div>
 </div>
@@ -1527,7 +1527,7 @@ document.addEventListener('keydown',function(e){
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">2. Description of Service</h3>
       <p style="margin-bottom:16px">AR Match Pro is a browser-based remittance matching tool that processes invoice and payment data locally on your device. No data is uploaded to our servers during the matching process.</p>
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">3. User Accounts</h3>
-      <p style="margin-bottom:16px">You are responsible for maintaining the confidentiality of your login credentials. You agree to notify us immediately of any unauthorized use of your account at <a href="mailto:info@armatchpro.com" style="color:#0EA5E9">info@armatchpro.com</a>.</p>
+      <p style="margin-bottom:16px">You are responsible for maintaining the confidentiality of your login credentials. You agree to notify us immediately of any unauthorized use of your account at <a href="mailto:info@armatchpro.com" style="color:#14A8D8">info@armatchpro.com</a>.</p>
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">4. Subscription and Payment</h3>
       <p style="margin-bottom:16px">Paid plans are billed monthly. You may cancel at any time. Refunds are not provided for partial billing periods. Pricing is subject to change with 30 days notice.</p>
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">5. Intellectual Property</h3>
@@ -1535,7 +1535,7 @@ document.addEventListener('keydown',function(e){
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">6. Limitation of Liability</h3>
       <p style="margin-bottom:16px">AR Match Pro is provided "as is." We are not liable for any indirect, incidental, or consequential damages arising from your use of the Service.</p>
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">7. Contact</h3>
-      <p>Questions about these Terms? Email <a href="mailto:info@armatchpro.com" style="color:#0EA5E9">info@armatchpro.com</a>.</p>
+      <p>Questions about these Terms? Email <a href="mailto:info@armatchpro.com" style="color:#14A8D8">info@armatchpro.com</a>.</p>
     </div>
     <div style="margin-top:28px;padding-top:20px;border-top:1px solid #E2E8F0;font-size:12px;color:#94A3B8">© 2026 AR Match Pro. All rights reserved.</div>
   </div>
@@ -1557,9 +1557,9 @@ document.addEventListener('keydown',function(e){
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">4. Third-Party Services</h3>
       <p style="margin-bottom:16px">We use Stripe for payment processing (governed by Stripe's privacy policy) and Formspree for form submissions. We use Google Fonts for typography. No advertising networks or analytics trackers are used on this site.</p>
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">5. Your Rights</h3>
-      <p style="margin-bottom:16px">You have the right to access, correct, or delete any personal information we hold about you. To exercise these rights, email <a href="mailto:info@armatchpro.com" style="color:#0EA5E9">info@armatchpro.com</a>.</p>
+      <p style="margin-bottom:16px">You have the right to access, correct, or delete any personal information we hold about you. To exercise these rights, email <a href="mailto:info@armatchpro.com" style="color:#14A8D8">info@armatchpro.com</a>.</p>
       <h3 style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 8px">6. Contact</h3>
-      <p>Privacy questions? Email <a href="mailto:info@armatchpro.com" style="color:#0EA5E9">info@armatchpro.com</a>.</p>
+      <p>Privacy questions? Email <a href="mailto:info@armatchpro.com" style="color:#14A8D8">info@armatchpro.com</a>.</p>
     </div>
     <div style="margin-top:28px;padding-top:20px;border-top:1px solid #E2E8F0;font-size:12px;color:#94A3B8">© 2026 AR Match Pro. All rights reserved.</div>
   </div>

@@ -8,21 +8,21 @@
 <style>
 :root{
   --ink:#06101C;--bg:#07111F;--surface:#0D1B2E;--card:#111F32;--line:#1A2D42;--line2:#243548;
-  --p:#0EA5E9;--pd:#0284C7;--g:#10B981;--gd:#059669;--am:#F59E0B;--r:#EF4444;--pu:#8B5CF6;
+  --p:#14A8D8;--pd:#168DE2;--g:#10B981;--gd:#059669;--am:#F59E0B;--r:#EF4444;--pu:#8B5CF6;
   --t1:#F1F5F9;--t2:#94A3B8;--t3:#475569;
   --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
-  --glow-p:rgba(14,165,233,.18);--glow-g:rgba(16,185,129,.18);
+  --glow-p:rgba(20,168,216,.18);--glow-g:rgba(16,185,129,.18);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(14,165,233,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(20,168,216,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(20,168,216,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
 
 /* ── HEADER ── */
 .hdr{position:fixed;top:0;left:0;right:0;z-index:100;height:58px;background:rgba(7,17,31,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:16px}
 .hdr-logo{display:flex;align-items:center;gap:9px;text-decoration:none}
-.hdr-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--p),var(--g));display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;box-shadow:0 4px 12px var(--glow-p)}
+.hdr-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;box-shadow:0 4px 12px var(--glow-p)}
 .hdr-name{font-family:var(--font);font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.2px}
 .hdr-name span{color:var(--p)}
 .hdr-badge{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(16,185,129,.14);color:#34D399;border:1px solid rgba(16,185,129,.22)}
@@ -32,7 +32,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
 /* ── HERO ── */
 .hero{padding:100px 24px 48px;text-align:center;position:relative;z-index:1}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--p);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);padding:5px 14px;border-radius:999px;margin-bottom:20px;letter-spacing:.04em;text-transform:uppercase}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--p);background:rgba(20,168,216,.1);border:1px solid rgba(20,168,216,.2);padding:5px 14px;border-radius:999px;margin-bottom:20px;letter-spacing:.04em;text-transform:uppercase}
 .hero h1{font-family:var(--font);font-size:clamp(28px,5vw,52px);font-weight:800;color:var(--t1);letter-spacing:-2px;line-height:1.05;margin-bottom:14px}
 .hero h1 em{font-style:normal;background:linear-gradient(135deg,#7DD3FC,#34D399);-webkit-background-clip:text;color:transparent}
 .hero-sub{font-size:16px;color:var(--t2);max-width:540px;margin:0 auto 28px;line-height:1.65}
@@ -58,14 +58,14 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .btn-lg{padding:15px 28px;font-size:15px;border-radius:12px}
 .btn-sm{padding:7px 14px;font-size:12.5px}
 /* Open Full App CTA */
-.open-app-btn{display:inline-flex;align-items:center;gap:9px;padding:18px 36px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:800;cursor:pointer;font-family:var(--font);box-shadow:0 12px 32px var(--glow-p),0 0 0 1px rgba(14,165,233,.18);transition:all .2s;text-decoration:none;letter-spacing:-.2px}
+.open-app-btn{display:inline-flex;align-items:center;gap:9px;padding:18px 36px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:800;cursor:pointer;font-family:var(--font);box-shadow:0 12px 32px var(--glow-p),0 0 0 1px rgba(20,168,216,.18);transition:all .2s;text-decoration:none;letter-spacing:-.2px}
 .open-app-btn:hover{transform:translateY(-3px);box-shadow:0 20px 48px var(--glow-p)}
 
 /* ── DEMO CONTAINER ── */
 .demo-wrap{max-width:1060px;margin:0 auto;padding:0 16px 60px;position:relative;z-index:1}
 
 /* ── OPEN APP CARD ── */
-.open-app-card{background:linear-gradient(135deg,rgba(14,165,233,.1),rgba(16,185,129,.06));border:1px solid rgba(14,165,233,.2);border-radius:20px;padding:40px 32px;text-align:center;margin-bottom:24px}
+.open-app-card{background:linear-gradient(135deg,rgba(20,168,216,.1),rgba(16,185,129,.06));border:1px solid rgba(20,168,216,.2);border-radius:20px;padding:40px 32px;text-align:center;margin-bottom:24px}
 .open-app-card-icon{font-size:44px;margin-bottom:16px}
 .open-app-card h2{font-size:22px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.3px}
 .open-app-card p{font-size:14px;color:var(--t2);margin-bottom:24px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.6}
@@ -102,7 +102,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .data-tbl th{background:var(--card);padding:9px 13px;text-align:left;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--line);white-space:nowrap}
 .data-tbl td{padding:10px 13px;border-bottom:1px solid var(--line);color:var(--t1);vertical-align:middle}
 .data-tbl tr:last-child td{border-bottom:none}
-.data-tbl tr:hover td{background:rgba(14,165,233,.04)}
+.data-tbl tr:hover td{background:rgba(20,168,216,.04)}
 .mono{font-family:var(--mono);font-size:12px;color:var(--p)}
 .amt{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--t1)}
 .amt.pos{color:var(--g)}
@@ -111,7 +111,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .badge{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
 .badge::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0}
 .badge-exact{background:rgba(16,185,129,.15);color:#34D399}
-.badge-multi{background:rgba(14,165,233,.15);color:#7DD3FC}
+.badge-multi{background:rgba(20,168,216,.15);color:#7DD3FC}
 .badge-close{background:rgba(245,158,11,.15);color:#FCD34D}
 .badge-short{background:rgba(239,68,68,.15);color:#F87171}
 
@@ -123,7 +123,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .prog-title{font-family:var(--font);font-size:20px;font-weight:700;color:var(--t1);margin-bottom:6px}
 .prog-msg{font-size:13px;color:var(--t2);margin-bottom:20px;min-height:20px;transition:all .3s}
 .prog-bar-wrap{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:18px;max-width:480px;margin-left:auto;margin-right:auto}
-.prog-bar{height:100%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:3px;width:0%;transition:width .4s ease}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--p),#12B886);border-radius:3px;width:0%;transition:width .4s ease}
 .prog-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:320px;margin:0 auto}
 .prog-stat{background:var(--card);border-radius:10px;padding:13px}
 .prog-stat-val{font-size:28px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1}
@@ -170,10 +170,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .insight-desc{font-size:12px;color:var(--t3);line-height:1.5}
 
 /* ── WHY TAG ── */
-.why-tip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--p);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);border-radius:6px;padding:2px 8px;cursor:default;white-space:nowrap}
+.why-tip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--p);background:rgba(20,168,216,.1);border:1px solid rgba(20,168,216,.2);border-radius:6px;padding:2px 8px;cursor:default;white-space:nowrap}
 
 /* ── ROI BANNER ── */
-.roi-banner{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(14,165,233,.08));border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:18px;margin-bottom:16px;animation:fadeUp .6s ease both;animation-delay:.3s;flex-wrap:wrap}
+.roi-banner{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(20,168,216,.08));border:1px solid rgba(16,185,129,.25);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:18px;margin-bottom:16px;animation:fadeUp .6s ease both;animation-delay:.3s;flex-wrap:wrap}
 .roi-icon{font-size:32px;flex-shrink:0}
 .roi-txt h3{font-size:17px;font-weight:800;color:var(--t1);margin-bottom:3px}
 .roi-txt p{font-size:13px;color:var(--t2)}
@@ -220,7 +220,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <div style="font-size:48px;margin-bottom:18px">🔒</div>
     <h2 style="font-size:22px;font-weight:800;color:#F1F5F9;margin-bottom:10px;letter-spacing:-.3px">Demo access required</h2>
     <p style="font-size:14.5px;color:#94A3B8;line-height:1.65;margin-bottom:24px">Please complete the short request form on the landing page first. Access is granted immediately after submission.</p>
-    <a href="index.html" style="display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 8px 22px rgba(14,165,233,.3)">← Back to landing page</a>
+    <a href="index.html" style="display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 8px 22px rgba(20,168,216,.3)">← Back to landing page</a>
     <div style="margin-top:18px;font-size:12.5px;color:#475569">Your files are processed securely. No ERP connection required.</div>
   </div>
 </div>
@@ -232,7 +232,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <h2 style="font-size:22px;font-weight:800;color:#F1F5F9;margin-bottom:10px;letter-spacing:-.3px">Your demo has expired</h2>
     <p style="font-size:14.5px;color:#94A3B8;line-height:1.65;margin-bottom:24px">Your 7-day AR Match Pro demo has ended. Upgrade to a paid plan to continue using the full app.</p>
     <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
-      <a href="index.html#pricing" style="width:100%;max-width:260px;display:block;padding:13px 20px;background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;text-align:center">🚀 Upgrade Now</a>
+      <a href="index.html#pricing" style="width:100%;max-width:260px;display:block;padding:13px 20px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;text-align:center">🚀 Upgrade Now</a>
       <a href="https://calendly.com/armatchpro" target="_blank" style="width:100%;max-width:260px;display:block;padding:12px 20px;background:transparent;color:#94A3B8;border:1.5px solid #1A2D42;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;text-align:center">📅 Book a Demo</a>
       <a href="index.html" style="font-size:13px;color:#475569;text-decoration:none;margin-top:4px">← Return to Home</a>
     </div>
@@ -350,7 +350,7 @@ var _isDemoUser = false;
     </div>
     <div class="step" id="step-3">
       <div class="step-num"><span>3</span></div>
-      <div><div class="step-label">Matching</div><div class="step-txt">Engine running</div></div>
+      <div><div class="step-label">Auto Match</div><div class="step-txt">Engine running</div></div>
     </div>
     <div class="step" id="step-4">
       <div class="step-num"><span>4</span></div>
@@ -410,7 +410,7 @@ var _isDemoUser = false;
     <div style="text-align:center;padding:16px 0 8px">
       <button class="btn btn-primary btn-lg" onclick="runMatchingDemo()" id="run-btn">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="4,2 14,8 4,14"/></svg>
-        Run Matching Engine
+        Run Auto Match
       </button>
       <div style="font-size:12px;color:var(--t3);margin-top:8px">Watch the engine allocate $40,000 across 2 invoices automatically</div>
     </div>
@@ -419,7 +419,7 @@ var _isDemoUser = false;
   <!-- PROGRESS OVERLAY -->
   <div id="progress-overlay">
     <div class="prog-spin">⚙</div>
-    <div class="prog-title">Matching in progress…</div>
+    <div class="prog-title">Auto Match running…</div>
     <div class="prog-msg" id="prog-msg">Analyzing invoice and payment relationships…</div>
     <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar"></div></div>
     <div class="prog-stats">
