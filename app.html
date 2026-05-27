@@ -2862,6 +2862,7 @@ body.app-active #app {
         </div>
       </div>
       <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--t3)">🔒 Local-first · no data uploaded &nbsp;·&nbsp; <a href="mailto:info@armatchpro.com" style="color:var(--pd)">Contact us</a></div>
+      <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--t4);font-style:italic">All prices are starting prices. Customized add-ons may increase pricing.</div>
     </div>
   </div>
 </div>
@@ -2894,6 +2895,7 @@ body.app-active #app {
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('team')">Select</button>
         </div>
       </div>
+      <div style="margin-top:14px;font-size:11px;color:var(--t4);text-align:center;font-style:italic">All prices are starting prices. Customized add-ons may increase pricing. <a href="mailto:info@armatchpro.com" style="color:var(--pd)">Contact us</a> for a custom quote.</div>
     </div>
   </div>
 </div>
@@ -5334,6 +5336,56 @@ function _legacyClearAllExceptions(){
 let INV=[],PAY=[],RES=[],EXC=[],REM_ADVICE=[],IMP_TYPE='inv',IMP_BANK_MODE=false;
 // Delivery Report data: [{trackingNo, deliveryNo, invoiceNo, salesOrder, poNo, custAcct, custName, dateRange, amount, rawRow}]
 let DELIV=[];
+
+// ═══════════════════════════════════════════════════════════
+// PERFORMANCE: Indexed lookup Maps — rebuilt on every import
+// O(1) access for invoice#, PO, SO, customer acct, tracking, delivery
+// ═══════════════════════════════════════════════════════════
+var _INV_IDX = {
+  byInv:  null,  // Map<norm_invNo, InvRow>
+  byPO:   null,  // Map<norm_po,    InvRow[]>
+  bySO:   null,  // Map<norm_so,    InvRow[]>
+  byAcct: null,  // Map<acct,       InvRow[]>
+  byName: null,  // Map<normName,   InvRow[]>
+  byTrk:  null,  // Map<trk,        InvRow>
+  byDel:  null,  // Map<del,        InvRow>
+};
+
+function _buildInvIndexes(){
+  var byInv  = new Map();
+  var byPO   = new Map();
+  var bySO   = new Map();
+  var byAcct = new Map();
+  var byName = new Map();
+  var byTrk  = new Map();
+  var byDel  = new Map();
+  for(var _ii=0;_ii<INV.length;_ii++){
+    var _v=INV[_ii];
+    // Invoice # index (primary key)
+    if(_v.i){ var _ni=norm(_v.i); if(!byInv.has(_ni))byInv.set(_ni,_v); }
+    // PO # index (one-to-many)
+    if(_v.po){ var _np=norm(_v.po); if(!byPO.has(_np))byPO.set(_np,[]); byPO.get(_np).push(_v); }
+    // SO # index
+    if(_v.so){ var _ns=norm(_v.so); if(!bySO.has(_ns))bySO.set(_ns,[]); bySO.get(_ns).push(_v); }
+    // Customer account index
+    if(_v.a){ if(!byAcct.has(_v.a))byAcct.set(_v.a,[]); byAcct.get(_v.a).push(_v); }
+    // Customer name index (normalized)
+    if(_v.c){ var _nc=String(_v.c).toUpperCase().trim(); if(!byName.has(_nc))byName.set(_nc,[]); byName.get(_nc).push(_v); }
+    // Tracking # index
+    if(_v.t){ var _nt=String(_v.t).trim(); if(!byTrk.has(_nt))byTrk.set(_nt,_v); }
+    // Delivery # index
+    if(_v.dl){ var _nd=String(_v.dl).trim(); if(!byDel.has(_nd))byDel.set(_nd,_v); }
+  }
+  _INV_IDX={byInv:byInv,byPO:byPO,bySO:bySO,byAcct:byAcct,byName:byName,byTrk:byTrk,byDel:byDel};
+}
+
+// Call this after INV is populated (import, sample load, etc.)
+function _invalidateInvIndexes(){ _INV_IDX={byInv:null,byPO:null,bySO:null,byAcct:null,byName:null,byTrk:null,byDel:null}; }
+function _ensureInvIndexes(){ if(!_INV_IDX.byInv){ _buildInvIndexes(); } }
+
+// Chunk size for large-file async processing
+var PERF_CHUNK = 500; // rows per chunk in import loops
+var PERF_MATCH_CHUNK = 200; // payments per chunk in runMatch
 // ═══════════════════════════════════════════════════════════════════════════
 // ARMP CONFIGURATION LAYER (v18) — JSON-backed system config
 // 
@@ -10335,110 +10387,187 @@ async function runMatch(){
   }
   const overlay=document.getElementById('match-progress');if(overlay){overlay.style.display='';overlay.classList.add('show');}setStatus('running');
   await new Promise(r=>setTimeout(r,100));
-  const msgs=['Normalizing references…','Running invoice # pass…','Running PO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
+  const msgs=['Building lookup indexes…','Running invoice # pass…','Running PO/SO group matching…','Running subset-sum allocation…','Detecting exceptions…','Finalizing results…'];
   let mi=0;
   const upd=(pct,mc,ec)=>{var _mb=document.getElementById('mp-bar');if(_mb)_mb.style.width=pct+'%';var _mm=document.getElementById('mp-matched');if(_mm)_mm.textContent=mc;var _me=document.getElementById('mp-exc');if(_me)_me.textContent=ec;var _ms=document.getElementById('mp-msg');if(_ms)_ms.textContent=msgs[Math.min(mi++,msgs.length-1)]+' ('+pct+'%)';var _mp=document.getElementById('mp-pct');if(_mp)_mp.textContent=pct+'%';};
-  await new Promise(r=>setTimeout(r,200));upd(15,0,0);
-  await new Promise(r=>setTimeout(r,200));
+  await new Promise(r=>setTimeout(r,100));upd(5,0,0);
+
+  // ── Build/refresh lookup indexes ──
+  _buildInvIndexes();
+  await new Promise(r=>setTimeout(r,60));upd(15,0,0);
+
   RES=[];EXC=[];INV.forEach(v=>v.s='');
-  const tol=(typeof cfgGetTol==='function')?cfgGetTol():(parseFloat(document.getElementById('s-tol')?.value)||1);let ec=1;
-  for(let pi=0;pi<PAY.length;pi++){
-    const p=PAY[pi];upd(20+Math.round(pi/PAY.length*65),RES.length,EXC.length);
-    if(pi%2===0)await new Promise(r=>setTimeout(r,60));
-    if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Cash on Account or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
-    if(!p.a&&!p.c&&!p.i&&!p.po){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c||'',amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account, customer, or reference — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
-    const ni=norm(p.i),np=norm(p.po),ns=norm(p.so);
-    const useInv=document.getElementById('s-inv')?.checked!==false;
-    const usePO=document.getElementById('s-po')?.checked!==false;
-    const useSO=document.getElementById('s-so')?.checked!==false;
-    // ── PRIORITY: Multi-invoice match (Celestica/Micron pattern) — tries to match all invoice refs in notes ──
-    try{
-      var _miRefs=(typeof _extractInvoiceRefs==='function')?_extractInvoiceRefs(p):[];
-      if(_miRefs.length>=2){
-        var _miFound=[];
-        _miRefs.forEach(function(ref){
-          var hit=INV.find(function(v){return v.i===ref||(v.i&&String(v.i).replace(/^0+/,'')===String(ref).replace(/^0+/,''));});
-          if(hit&&!_miFound.find(function(x){return x.i===hit.i;}))_miFound.push(hit);
-        });
-        if(_miFound.length>=2){
-          var _miSum=_miFound.reduce(function(s,v){return s+v.amt;},0);
-          var _miDiff=p.amt-_miSum;
-          if(Math.abs(_miDiff)<=tol){
-            _miFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_miFound.length+'-invoice payment (refs from notes)',fromAlloc:false});});
-            continue;
-          }
-          if(Math.abs(_miDiff)<=50&&_miSum>0){
-            _miFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_miFound.length+'-invoice + $'+(Math.abs(_miDiff)).toFixed(2)+' variance',fromAlloc:false});});
-            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||(_miFound[0]&&_miFound[0].a)||'',c:p.c||(_miFound[0]&&_miFound[0].c)||'',amt:Math.abs(_miDiff),ref:_miFound.map(function(v){return v.i;}).join(', '),type:'Bank fee',detail:'Payment $'+$f(p.amt)+' covers '+_miFound.length+' invoices ($'+$f(_miSum)+') — $'+$f(Math.abs(_miDiff))+' variance. Likely bank fee or write-off.',action:_miDiff<0?'Bank fee':'Write-off',dec:'',s:'Open'});
-            continue;
-          }
-        }
-      }
-    }catch(_miErr){console.warn('Multi-invoice priority match error:',_miErr);}
-    if(ni&&useInv){
-      const h=INV.find(v=>norm(v.i)===ni&&(v.a===p.a||(v.c||'').toLowerCase().trim()===(p.c||'').toLowerCase().trim()));
-      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});continue;}
+  const tol=(typeof cfgGetTol==='function')?cfgGetTol():(parseFloat(document.getElementById('s-tol')?.value)||1);
+  let ec=1;
+  const useInv=document.getElementById('s-inv')?.checked!==false;
+  const usePO =document.getElementById('s-po')?.checked!==false;
+  const useSO =document.getElementById('s-so')?.checked!==false;
+
+  // Retrieve fresh index references
+  const _idx = _INV_IDX;
+
+  // Helper: PO/SO group match (unchanged, operates on pre-filtered array)
+  function _groupMatch(g,p,tl,label,_ec){
+    if(!g||!g.length)return false;
+    var total=g.reduce((s,v)=>s+v.amt,0);
+    var vr=p.amt-total;
+    if(Math.abs(vr)<=tl){g.forEach(v=>{v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:label+' group',n:g.length+'-invoice '+label+' group'});});_groupMatch.ea=0;return true;}
+    if(g.length>1&&hasFeat('multi')){
+      // subset-sum on the pre-filtered group
+      for(var _gi=0;_gi<g.length;_gi++){var sub=g.filter((_,_i)=>_i!==_gi);var st2=sub.reduce((s,v)=>s+v.amt,0),vr2=p.amt-st2;if(Math.abs(vr2)<=tl){sub.forEach(v=>{v.s='Subset exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Subset exact',m:label+' subset',n:'Subset of '+g.length+' invoices'});});_groupMatch.ea=0;return true;}}
     }
-    if(np&&usePO&&hasFeat('multi')){const g=INV.filter(v=>norm(v.po)===np&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'PO',ec)){ec+=procGrp.ea;continue};}}
-    if(ns&&useSO&&hasFeat('so')){const g=INV.filter(v=>norm(v.so)===ns&&v.a===p.a&&!v.s);if(g.length){if(procGrp(g,p,tol,'SO',ec)){ec+=procGrp.ea;continue};}}
-    // Tracking # match (from delivery report)
-    if(p.trackingNo&&hasFeat('trk')){
-      const trk=String(p.trackingNo).trim();
-      const h=INV.find(function(v){return v.t&&String(v.t).trim()===trk&&!v.s;});
-      if(h){const vr=p.amt-h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h.s=st;RES.push({c:h.c,a:h.a,i:h.i,po:h.po,so:h.so,d:h.d,oa:h.amt,pd:p.amt,vr,st,m:'Tracking # match',n:'Tracking: '+trk,trackingNo:trk});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:trk,type:st,detail:'Tracking # match '+trk+' — variance '+$f(vr),action:'Review variance',dec:'',s:'Open'});continue;}
-    }
-    // Delivery # match (from delivery report)
-    if(p.deliveryNo&&hasFeat('del')){
-      const dl=String(p.deliveryNo).trim();
-      const h2=INV.find(function(v){return v.dl&&String(v.dl).trim()===dl&&!v.s;});
-      if(h2){const vr=p.amt-h2.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';h2.s=st;RES.push({c:h2.c,a:h2.a,i:h2.i,po:h2.po,so:h2.so,d:h2.d,oa:h2.amt,pd:p.amt,vr,st,m:'Delivery # match',n:'Delivery: '+dl,deliveryNo:dl});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:dl,type:st,detail:'Delivery # match '+dl+' — variance '+$f(vr),action:'Review variance',dec:'',s:'Open'});continue;}
-    }
-    const am=INV.filter(v=>v.a===p.a&&Math.abs(v.amt-p.amt)<=tol&&!v.s);
-    if(am.length===1){am[0].s='Amount match';RES.push({c:am[0].c,a:am[0].a,i:am[0].i,po:am[0].po,so:am[0].so,d:am[0].d,oa:am[0].amt,pd:p.amt,vr:p.amt-am[0].amt,st:'Amount match',m:'Amount match',n:'Customer + amount'});continue;}
-    // ── FALLBACK: customer-name subset-sum match (Medline/Cummins/Micron pattern) ──
-    try{
-      if(typeof _findInvoicesForPayment==='function'){
-        var _fbFound=_findInvoicesForPayment(p);
-        if(_fbFound&&_fbFound.length){
-          var _fbSum=_fbFound.reduce(function(s,v){return s+v.amt;},0);
-          var _fbDiff=p.amt-_fbSum;
-          // Exact
-          if(Math.abs(_fbDiff)<=tol){
-            _fbFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_fbFound.length+'-invoice subset-sum'});});
-            continue;
-          }
-          // With small variance — bank fee
-          if(Math.abs(_fbDiff)<=50&&_fbSum>0){
-            _fbFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_fbFound.length+'-invoice + $'+(Math.abs(_fbDiff)).toFixed(2)+' variance'});});
-            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||_fbFound[0].a||'',c:p.c||_fbFound[0].c||'',amt:Math.abs(_fbDiff),ref:_fbFound.map(function(v){return v.i;}).join(', '),type:'Bank fee',detail:'Payment $'+$f(p.amt)+' covers '+_fbFound.length+' invoices ($'+$f(_fbSum)+') — $'+$f(Math.abs(_fbDiff))+' variance.',action:_fbDiff<0?'Bank fee':'Write-off',dec:'',s:'Open'});
-            continue;
-          }
-        }
-      }
-    }catch(_fbErr){console.warn('Customer subset-sum fallback error:',_fbErr);}
-    // Duplicate check
-    const dupChk=PAY.filter((q,qi)=>qi!==pi&&Math.abs(q.amt-p.amt)<0.01&&(q.txId===p.txId||q.i===p.i)&&q.payDate===p.payDate);
-    const excType=dupChk.length?'Duplicate':'Unmatched';
-    EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:excType,detail:dupChk.length?`Possible duplicate — ${dupChk.length} matching payment(s) found`:'No matching invoice, PO, or SO found',action:dupChk.length?'Review for duplicate posting':'Contact customer for invoice reference',dec:'',s:'Open'});
+    return false;
   }
-  upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,400));
-  if(overlay){overlay.classList.remove('show');overlay.style.display='none';setTimeout(function(){if(overlay)overlay.style.display='';},50);}setStatus('ready');rAll();updDash();updTop();saveToStorage();
-  if(typeof renderWsExcPremium==='function')renderWsExcPremium();
-  if(typeof renderWsReview==='function')renderWsReview();
-  // Item 16: After Auto Match — land on Needs Attention if exceptions exist; else Review
-  try{
-    if(typeof sp==='function'){sp('cash-app');}
-  }catch(e){}
-  setTimeout(function(){
-    if(EXC.length>0){
-      if(typeof setCaTab==='function')setCaTab('exc',document.getElementById('ca-tab-exc'));
-    } else if(RES.length>0){
-      if(typeof setCaTab==='function')setCaTab('review',document.getElementById('ca-tab-review'));
+  _groupMatch.ea=0;
+
+  // Process payments in chunks — yields to browser between each chunk to prevent freeze
+  const CHUNK=PERF_MATCH_CHUNK;
+  async function processChunk(start){
+    var end=Math.min(start+CHUNK,PAY.length);
+    var pct=20+Math.round(start/PAY.length*70);
+    upd(pct,RES.length,EXC.length);
+    await new Promise(r=>setTimeout(r,0)); // yield to browser
+
+    for(var pi=start;pi<end;pi++){
+      const p=PAY[pi];
+      if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Cash on Account or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
+      if(!p.a&&!p.c&&!p.i&&!p.po){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c||'',amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account, customer, or reference — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
+
+      const ni=norm(p.i),np=norm(p.po),ns=norm(p.so);
+      var matched=false;
+
+      // PRIORITY 0: Multi-invoice refs from notes
+      try{
+        var _miRefs=(typeof _extractInvoiceRefs==='function')?_extractInvoiceRefs(p):[];
+        if(_miRefs.length>=2){
+          var _miFound=[];
+          _miRefs.forEach(function(ref){
+            var _nref=norm(ref);
+            var hit=_idx.byInv&&_idx.byInv.get(_nref);
+            if(hit&&!_miFound.find(function(x){return x.i===hit.i;}))_miFound.push(hit);
+          });
+          if(_miFound.length>=2){
+            var _miSum=_miFound.reduce(function(s,v){return s+v.amt;},0);
+            var _miDiff=p.amt-_miSum;
+            if(Math.abs(_miDiff)<=tol){
+              _miFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_miFound.length+'-invoice (refs from notes)',fromAlloc:false});});
+              matched=true;
+            } else if(Math.abs(_miDiff)<=50&&_miSum>0){
+              _miFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_miFound.length+'-invoice + $'+(Math.abs(_miDiff)).toFixed(2)+' variance',fromAlloc:false});});
+              EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||(_miFound[0]&&_miFound[0].a)||'',c:p.c||(_miFound[0]&&_miFound[0].c)||'',amt:Math.abs(_miDiff),ref:_miFound.map(function(v){return v.i;}).join(', '),type:'Bank fee',detail:'Multi-invoice variance $'+$f(Math.abs(_miDiff)),action:_miDiff<0?'Bank fee':'Write-off',dec:'',s:'Open'});
+              matched=true;
+            }
+          }
+        }
+      }catch(_miErr){}
+      if(matched)continue;
+
+      // PRIORITY 1: Exact invoice # — O(1) Map lookup
+      if(ni&&useInv){
+        var _h=_idx.byInv&&_idx.byInv.get(ni);
+        if(_h&&(_h.a===p.a||((_h.c||'').toLowerCase().trim()===((p.c||'').toLowerCase().trim())))){
+          const vr=p.amt-_h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';
+          _h.s=st;RES.push({c:_h.c,a:_h.a,i:_h.i,po:_h.po,so:_h.so,d:_h.d,oa:_h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});
+          if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(_h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});
+          matched=true;
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY 2: PO group — O(1) Map lookup, then group match
+      if(np&&usePO&&hasFeat('multi')){
+        var _gpo=_idx.byPO&&_idx.byPO.get(np);
+        if(_gpo&&_gpo.length){
+          var _gpoFilt=_gpo.filter(v=>v.a===p.a&&!v.s);
+          if(_gpoFilt.length&&_groupMatch(_gpoFilt,p,tol,'PO',ec)){matched=true;}
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY 3: SO group — O(1) Map lookup
+      if(ns&&useSO&&hasFeat('so')){
+        var _gso=_idx.bySO&&_idx.bySO.get(ns);
+        if(_gso&&_gso.length){
+          var _gsoFilt=_gso.filter(v=>v.a===p.a&&!v.s);
+          if(_gsoFilt.length&&_groupMatch(_gsoFilt,p,tol,'SO',ec)){matched=true;}
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY 4: Tracking # — O(1) Map lookup
+      if(p.trackingNo&&hasFeat('trk')){
+        var _trk=String(p.trackingNo).trim();
+        var _th=_idx.byTrk&&_idx.byTrk.get(_trk);
+        if(_th&&!_th.s){const vr=p.amt-_th.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';_th.s=st;RES.push({c:_th.c,a:_th.a,i:_th.i,po:_th.po,so:_th.so,d:_th.d,oa:_th.amt,pd:p.amt,vr,st,m:'Tracking # match',n:'Tracking: '+_trk,trackingNo:_trk});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_trk,type:st,detail:'Tracking # match '+_trk+' — variance '+$f(vr),action:'Review variance',dec:'',s:'Open'});matched=true;}
+      }
+      if(matched)continue;
+
+      // PRIORITY 5: Delivery # — O(1) Map lookup
+      if(p.deliveryNo&&hasFeat('del')){
+        var _dl=String(p.deliveryNo).trim();
+        var _dh=_idx.byDel&&_idx.byDel.get(_dl);
+        if(_dh&&!_dh.s){const vr=p.amt-_dh.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';_dh.s=st;RES.push({c:_dh.c,a:_dh.a,i:_dh.i,po:_dh.po,so:_dh.so,d:_dh.d,oa:_dh.amt,pd:p.amt,vr,st,m:'Delivery # match',n:'Delivery: '+_dl,deliveryNo:_dl});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_dl,type:st,detail:'Delivery # match '+_dl+' — variance '+$f(vr),action:'Review variance',dec:'',s:'Open'});matched=true;}
+      }
+      if(matched)continue;
+
+      // PRIORITY 6: Customer account + amount — O(1) Map lookup
+      if(p.a){
+        var _acctList=_idx.byAcct&&_idx.byAcct.get(p.a);
+        if(_acctList){
+          var _am=_acctList.filter(v=>Math.abs(v.amt-p.amt)<=tol&&!v.s);
+          if(_am.length===1){_am[0].s='Amount match';RES.push({c:_am[0].c,a:_am[0].a,i:_am[0].i,po:_am[0].po,so:_am[0].so,d:_am[0].d,oa:_am[0].amt,pd:p.amt,vr:p.amt-_am[0].amt,st:'Amount match',m:'Amount match',n:'Customer + amount'});matched=true;}
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY 7: Customer-name subset-sum fallback
+      try{
+        if(typeof _findInvoicesForPayment==='function'){
+          var _fbFound=_findInvoicesForPayment(p);
+          if(_fbFound&&_fbFound.length){
+            var _fbSum=_fbFound.reduce(function(s,v){return s+v.amt;},0);
+            var _fbDiff=p.amt-_fbSum;
+            if(Math.abs(_fbDiff)<=tol){_fbFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_fbFound.length+'-invoice subset-sum'});});matched=true;}
+            else if(Math.abs(_fbDiff)<=50&&_fbSum>0){_fbFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_fbFound.length+'-invoice + $'+(Math.abs(_fbDiff)).toFixed(2)+' variance'});});EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||_fbFound[0].a||'',c:p.c||_fbFound[0].c||'',amt:Math.abs(_fbDiff),ref:_fbFound.map(function(v){return v.i;}).join(', '),type:'Bank fee',detail:'Multi-invoice variance',action:_fbDiff<0?'Bank fee':'Write-off',dec:'',s:'Open'});matched=true;}
+          }
+        }
+      }catch(_fbErr){}
+      if(matched)continue;
+
+      // Exception: duplicate check or unmatched
+      const dupChk=PAY.filter((q,qi)=>qi!==pi&&Math.abs(q.amt-p.amt)<0.01&&(q.txId===p.txId||q.i===p.i)&&q.payDate===p.payDate);
+      const excType=dupChk.length?'Duplicate':'Unmatched';
+      EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:excType,detail:dupChk.length?`Possible duplicate — ${dupChk.length} matching payment(s) found`:'No matching invoice, PO, SO, Tracking, or Delivery found',action:dupChk.length?'Review for duplicate posting':'Contact customer for invoice reference',dec:'',s:'Open'});
+    }// end for
+
+    if(end<PAY.length){
+      // More chunks to process
+      return processChunk(end);
     }
-  },120);
-  addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions');
-  toast(`✓ Matching done · ${RES.length} results · ${EXC.length} exceptions`);
+    // All chunks done
+    upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,300));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,300));
+    if(overlay){overlay.classList.remove('show');overlay.style.display='none';setTimeout(function(){if(overlay)overlay.style.display='';},50);}
+    setStatus('ready');rAll();updDash();updTop();saveToStorage();
+    if(typeof renderWsExcPremium==='function')renderWsExcPremium();
+    if(typeof renderWsReview==='function')renderWsReview();
+    try{if(typeof sp==='function'){sp('cash-app');}}catch(e){}
+    setTimeout(function(){
+      try{
+        if(EXC.length>0){setCaTab('exc',document.getElementById('ca-tab-exc'));}
+        else if(RES.length>0){setCaTab('review',document.getElementById('ca-tab-review'));}
+      }catch(e){}
+      buildWorklist&&buildWorklist();
+      refreshFbl5n&&refreshFbl5n();
+      updReporting&&updReporting();
+    },600);
+    var autoMatch=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact').length;
+    var rate=PAY.length>0?(autoMatch/PAY.length*100).toFixed(1):0;
+    toast('✓ Matched '+autoMatch+'/'+PAY.length+' payments ('+rate+'% auto-match rate) · '+EXC.length+' exceptions');
+  }
+
+  await processChunk(0);
   try{ armpAnnotateAllResults(); }catch(e){}
+  addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions');
 }
 
 procGrp.ea=0;
@@ -10478,6 +10607,7 @@ function loadSampleInv(){
     {c:'Pinnacle Systems',a:'40058700',i:'5105001002',po:'4522100001',so:'2104500002',amt:11200,dt:'RV',dt2:'2025-11-01',due:'2025-12-01',d:'1000500002',s:''},
   ];
   rInv();updTop();setStatus('loaded');saveToStorage();
+  _buildInvIndexes();
   addAudit('Sample invoices loaded','15 rows');
   toast('15 invoices loaded (incl. 1 credit memo)');
 }
@@ -11018,6 +11148,8 @@ function processImport(){
   function pLine(l){if(delim==='\t')return l.split('\t').map(c=>c.trim().replace(/^"|"$/g,''));const res=[];let cur='',inQ=false;for(const c of l){if(c==='"')inQ=!inQ;else if(c===','&&!inQ){res.push(cur.trim());cur='';}else cur+=c;}res.push(cur.trim());return res;}
   const hdrs=pLine(lines[0]).map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,''));
   const rows=lines.slice(1).map(l=>pLine(l));
+  const isLarge = rows.length > 2000;
+  if(isLarge) showProgress('Parsing '+(IMP_TYPE==='inv'?'invoice':'remittance')+' data — '+rows.length.toLocaleString()+' rows…', 10);
   function col(...k){
     // Pass 1: exact match
     for(const k2 of k){const nk=k2.toLowerCase().replace(/[^a-z0-9]/g,'');const i=hdrs.findIndex(h=>h===nk);if(i>=0)return i;}
@@ -11122,7 +11254,10 @@ function processImport(){
       s:''
     }));
     try{_buildSearchText();}catch(e){}
-    rInv();setStatus('loaded');saveToStorage();addAudit('Invoices imported',INV.length+' rows');toast('Imported '+INV.length+' invoices');
+    _invalidateInvIndexes(); // force rebuild on next runMatch
+    _buildInvIndexes();      // eagerly build indexes now
+    rInv();setStatus('loaded');saveToStorage();addAudit('Invoices imported',INV.length+' rows');
+    if(INV.length>2000){toast('Imported '+INV.length+' invoices — large dataset, paginating display');}else{toast('Imported '+INV.length+' invoices');}
     // Populate Customer Open Items immediately after invoice import
     try{renderFbl5n('ca-open-items-body','','');}catch(e){}
     try{
@@ -11131,7 +11266,7 @@ function processImport(){
     }catch(e){}
     try{updDash();}catch(e){}
   }else if(IMP_TYPE==='del'){
-    // Delivery Report: parse, map to invoice rows
+    // Delivery Report: parse rows
     DELIV=rows.filter(r=>r.some(c=>c)).map(r=>({
       trackingNo: r[col('tracking','trackingnumber','trackingno','trackingnum','trackingref','trkno')]||'',
       deliveryNo: r[col('delivery','deliverynumber','deliveryno','deliverynum','deliveryref','delno','shipmentnumber','shipmentno','dn')]||'',
@@ -11144,41 +11279,60 @@ function processImport(){
       shipDate:   r[col('shipdate','shippingdate','shippedon','deliverydate','dateofdelivery')]||'',
       rawRow:     r.join(',')
     }));
-    // Match delivery records back to INV rows using priority: invoice# > SO# > PO# > custAcct > custName
+    // Ensure INV lookup indexes exist — O(1) access per delivery row
+    _ensureInvIndexes();
+    var _dIdx = _INV_IDX;
     var matchedDel=0;
-    DELIV.forEach(function(d){
-      var matched=null;
-      if(d.invoiceNo) matched=INV.find(function(v){return v.i&&v.i===d.invoiceNo;});
-      if(!matched&&d.salesOrder) matched=INV.find(function(v){return v.so&&v.so===d.salesOrder;});
-      if(!matched&&d.poNo) matched=INV.find(function(v){return v.po&&v.po===d.poNo;});
-      if(!matched&&d.custAcct) matched=INV.find(function(v){return v.a&&v.a===d.custAcct;});
-      if(!matched&&d.custName){
-        var dn=d.custName.toUpperCase().trim();
-        matched=INV.find(function(v){return v.c&&v.c.toUpperCase().trim()===dn;});
-      }
-      if(matched){
-        if(d.trackingNo) matched.t=d.trackingNo;
-        if(d.deliveryNo) matched.dl=d.deliveryNo;
-        if(d.shipDate&&!matched.shipDate) matched.shipDate=d.shipDate;
-        matchedDel++;
-      }
-    });
-    // Also try to match tracking/delivery to PAY rows (for remittance matching)
-    DELIV.forEach(function(d){
-      PAY.forEach(function(p){
-        if(d.trackingNo&&(!p.trackingNo)){
-          // Match by invoice ref or PO
-          if((d.invoiceNo&&p.i&&p.i===d.invoiceNo)||(d.poNo&&p.po&&p.po===d.poNo)){
-            p.trackingNo=d.trackingNo;
-            p.deliveryNo=p.deliveryNo||d.deliveryNo;
-          }
+    // Process delivery rows in PERF_CHUNK batches — keeps UI responsive for large delivery files
+    var _applyDelChunk=function(start){
+      var end=Math.min(start+PERF_CHUNK, DELIV.length);
+      showProgress('Matching delivery records '+start+'–'+end+' of '+DELIV.length+'…', Math.round(end/DELIV.length*80)+10);
+      for(var _di=start;_di<end;_di++){
+        var d=DELIV[_di];
+        var matched=null;
+        // Priority chain — all O(1) Map lookups
+        if(d.invoiceNo&&!matched) matched=_dIdx.byInv&&_dIdx.byInv.get(norm(d.invoiceNo))||null;
+        if(d.salesOrder&&!matched){ var _ds=_dIdx.bySO&&_dIdx.bySO.get(norm(d.salesOrder)); matched=_ds&&_ds[0]||null; }
+        if(d.poNo&&!matched){ var _dp=_dIdx.byPO&&_dIdx.byPO.get(norm(d.poNo)); matched=_dp&&_dp[0]||null; }
+        if(d.custAcct&&!matched){ var _da=_dIdx.byAcct&&_dIdx.byAcct.get(d.custAcct); matched=_da&&_da[0]||null; }
+        if(d.custName&&!matched){ var _dnn=String(d.custName).toUpperCase().trim(); var _dna=_dIdx.byName&&_dIdx.byName.get(_dnn); matched=_dna&&_dna[0]||null; }
+        if(matched){
+          if(d.trackingNo) matched.t=d.trackingNo;
+          if(d.deliveryNo) matched.dl=d.deliveryNo;
+          if(d.shipDate&&!matched.shipDate) matched.shipDate=d.shipDate;
+          matchedDel++;
         }
-      });
-    });
-    saveToStorage();
-    addAudit('Delivery report imported',DELIV.length+' rows · '+matchedDel+' matched to invoices');
-    try{renderFbl5n('ca-open-items-body','','');}catch(e){}
-    toast('Imported '+DELIV.length+' delivery records · '+matchedDel+' matched to invoice rows');
+      }
+      if(end<DELIV.length){
+        setTimeout(function(){ _applyDelChunk(end); }, 0);
+      } else {
+        // Final: match tracking/delivery to PAY rows using a Map (O(n+m) not O(n*m))
+        var _payMatchMap=new Map(); // invoiceNo|poNo → DELIV row
+        DELIV.forEach(function(dd){
+          if(dd.invoiceNo) _payMatchMap.set(dd.invoiceNo, dd);
+          if(dd.poNo&&!_payMatchMap.has(dd.poNo)) _payMatchMap.set(dd.poNo, dd);
+        });
+        PAY.forEach(function(p){
+          if(!p.trackingNo){
+            var _pdd=null;
+            if(p.i) _pdd=_payMatchMap.get(p.i)||null;
+            if(!_pdd&&p.po) _pdd=_payMatchMap.get(p.po)||null;
+            if(_pdd){ p.trackingNo=_pdd.trackingNo||''; p.deliveryNo=p.deliveryNo||_pdd.deliveryNo||''; }
+          }
+        });
+        // Rebuild indexes to include new t/dl fields
+        _buildInvIndexes();
+        saveToStorage();
+        addAudit('Delivery report imported', DELIV.length+' rows · '+matchedDel+' matched to invoices');
+        try{renderFbl5n('ca-open-items-body','','');}catch(e){}
+        hideProgress();
+        updTop();closeMo();
+        toast('Imported '+DELIV.length+' delivery records · '+matchedDel+' matched to invoice rows');
+      }
+    };
+    showProgress('Processing '+DELIV.length+' delivery rows…', 5);
+    setTimeout(function(){ _applyDelChunk(0); }, 30);
+    return; // async path — closeMo/updTop handled inside chunk handler
   }else{
     PAY=rows.filter(r=>r.some(c=>c)).map(r=>{
       const n=r[col(
@@ -11264,12 +11418,14 @@ function processImport(){
         n,coa:isCOA,dp:n.toLowerCase().includes('down')
       };
     });
-    rRem();setStatus('loaded');saveToStorage();addAudit('Remittances imported',PAY.length+' rows');toast('Imported '+PAY.length+' payment lines');
+    rRem();setStatus('loaded');saveToStorage();addAudit('Remittances imported',PAY.length+' rows');
     setTimeout(function(){if(typeof refreshBankAccountOptions==='function')refreshBankAccountOptions();},150);
   }
-  updTop();closeMo();toast('✅ Import complete — '+
-    (IMP_TYPE==='inv'?INV.length+' invoices':IMP_TYPE==='del'?DELIV.length+' delivery records':PAY.length+' payments')+
-    ' loaded. Click ⚡ Auto match to auto match.');
+  hideProgress();
+  updTop();closeMo();
+  toast('✅ '+
+    (IMP_TYPE==='inv'?INV.length.toLocaleString()+' invoices imported':IMP_TYPE==='del'?DELIV.length.toLocaleString()+' delivery records imported':PAY.length.toLocaleString()+' payment lines imported')+
+    ' — click ⚡ Auto match to match.');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -11742,7 +11898,6 @@ function _fbl5nLoadMore(tbodyId){_fbl5nRenderPage(tbodyId,_fbl5nOffset);}
 var _fbl5nColFields=['a','c','i','po','so','dt2','due','amt','s'];
 
 function _fbl5nApplyTextFilter(tbodyId, forceReset){
-  console.log('[fbl5nFilter] called, base=',_fbl5nBaseInvs?_fbl5nBaseInvs.length:0,'INV=',INV.length);
   var filterRow=document.getElementById('fbl5n-filter-row');
   var filters=[];
   if(filterRow){var inputs=filterRow.querySelectorAll('input.fbl5n-filter-inp');filters=Array.from(inputs).map(function(el){return el.value.trim().toLowerCase();});}
@@ -11750,7 +11905,6 @@ function _fbl5nApplyTextFilter(tbodyId, forceReset){
   // ── CRITICAL: lazy-init base to full INV if empty ──
   if((!_fbl5nBaseInvs||!_fbl5nBaseInvs.length)&&INV&&INV.length){
     _fbl5nBaseInvs=INV.slice();
-    console.log('[fbl5nFilter] lazy-initialized base from INV:',_fbl5nBaseInvs.length);
   }
   var src=(_fbl5nBaseInvs&&_fbl5nBaseInvs.length)?_fbl5nBaseInvs:(INV||[]).slice();
   var matched;
@@ -11768,13 +11922,12 @@ function _fbl5nApplyTextFilter(tbodyId, forceReset){
       return ok;
     });
   }
-  console.log('[fbl5nFilter] src=',src.length,'matched=',matched.length,'filters=',JSON.stringify(filters));
   _fbl5nFiltered=matched;
   _fbl5nOffset=0;
   var tbody=document.getElementById(tbodyId||'ca-open-items-body');
-  if(!tbody){console.warn('[fbl5nFilter] tbody not found');return;}
+  if(!tbody){return;}
   if(!matched.length){
-    tbody.innerHTML='<tr><td colspan="13"><div class="empty" style="padding:16px">'+
+    tbody.innerHTML='<tr><td colspan="15"><div class="empty" style="padding:16px">'+
       '<div class="empty-t">No open items found</div>'+
       '<div class="empty-s">Try account number, customer name, invoice #, PO, or sales order.</div>'+
     '</div></td></tr>';
@@ -11822,7 +11975,6 @@ function excOpenItemsSearch(q){
 // ── COI top-level search (Item 1) ────────────────────────────────────
 var _caOpenSearchTimer;
 function caOpenSearch(q){
-  console.log('[caOpenSearch] query=',JSON.stringify(q));
   clearTimeout(_caOpenSearchTimer);
   _caOpenSearchTimer=setTimeout(function(){
     var query=String(q||'').trim().toLowerCase();
@@ -11834,11 +11986,11 @@ function caOpenSearch(q){
     var matched;
     if(!query){matched=src;}
     else{
-      // Match account number OR customer name (case-insensitive substring)
       matched=src.filter(function(v){
         var a=String(v.a||'').toLowerCase();
         var c=String(v.c||'').toLowerCase();
-        return a.indexOf(query)>=0||c.indexOf(query)>=0;
+        var i=String(v.i||'').toLowerCase();
+        return a.indexOf(query)>=0||c.indexOf(query)>=0||i.indexOf(query)>=0;
       });
     }
     _fbl5nFiltered=matched;
@@ -11851,11 +12003,11 @@ function caOpenSearch(q){
     var tbody=document.getElementById('ca-open-items-body');
     if(!tbody)return;
     if(!matched.length){
-      tbody.innerHTML='<tr><td colspan="13"><div class="empty" style="padding:16px"><div class="empty-t">No open items found</div><div class="empty-s">Try account number or customer name.</div></div></td></tr>';
+      tbody.innerHTML='<tr><td colspan="15"><div class="empty" style="padding:16px"><div class="empty-t">No open items found</div><div class="empty-s">Try account number, customer name, or invoice #.</div></div></td></tr>';
       return;
     }
     if(typeof _fbl5nRenderPage==='function')_fbl5nRenderPage('ca-open-items-body',0);
-  },200);
+  },180);
 }
 
 function filterFbl5n(){
@@ -12444,7 +12596,8 @@ function showChangePlanModal(){
   showModal('Change Plan',
     '<div style="font-size:12px;color:var(--t3);margin-bottom:14px">Current plan: <strong style="color:var(--pd)">'+
     (PLANS_DEF.find(function(p){return p.key===cur;})||{name:cur}).name+'</strong> · Changes take effect at end of billing period.</div>'+
-    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px">'+cards+'</div>'
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px">'+cards+'</div>'+
+    '<div style="margin-top:12px;font-size:11px;color:var(--t4);text-align:center;font-style:italic">All prices are starting prices. Customized add-ons may increase pricing. <a href="mailto:info@armatchpro.com" style="color:var(--pd)">Contact us</a> for a custom quote.</div>'
   );
 }
 function simPlanChange(newPlan){
@@ -12970,7 +13123,10 @@ function invSortCol(ci, th){
   invColFilter(); // reapply column filters after sort
 }
 
+var _invColFilterTimer=null;
 function invColFilter(){
+  clearTimeout(_invColFilterTimer);
+  _invColFilterTimer=setTimeout(function(){
   var tbody = document.getElementById('inv-tb');
   if(!tbody) return;
   var globalQ = (document.getElementById('inv-search')||{}).value || '';
@@ -12982,11 +13138,12 @@ function invColFilter(){
   });
   var rows = tbody.querySelectorAll('tr');
   var visible = 0;
+  var gql=globalQ.toLowerCase();
   rows.forEach(function(tr){
     var cells = tr.querySelectorAll('td');
     if(!cells.length){ tr.style.display=''; return; }
     var rowText = (tr.innerText||tr.textContent||'').toLowerCase();
-    var showGlobal = !globalQ || rowText.includes(globalQ.toLowerCase());
+    var showGlobal = !globalQ || rowText.includes(gql);
     var showCols = filters.every(function(f){
       var cell = cells[f.col];
       if(!cell) return true;
@@ -12998,6 +13155,7 @@ function invColFilter(){
   });
   var ct = document.getElementById('inv-ct');
   if(ct) ct.textContent = (filters.length||globalQ ? visible+' of '+INV.length : INV.length) + ' rows';
+  }, INV.length > 2000 ? 250 : 100); // longer debounce for large datasets
 }
 
 function clearInvColFilters(){

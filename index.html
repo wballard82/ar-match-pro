@@ -826,7 +826,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Starter</div>
         <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:16px">SMB accounting &amp; AR teams · 1–2 users</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
-          <span id="price-starter" style="font-size:48px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'Inter',sans-serif;line-height:1">$799</span>
+          <span style="font-size:14px;font-weight:700;color:rgba(255,255,255,.45);margin-right:1px">Starting at</span>
+          <span id="price-starter" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'Inter',sans-serif;line-height:1">$799</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
         <div id="price-starter-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Annual · Month-to-month starting at $999/mo</div>
@@ -853,7 +854,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:11px;font-weight:700;color:#7DD3FC;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Pro</div>
         <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px">Growing AR teams · mid-market finance</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
-          <span id="price-pro" style="font-size:48px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'Inter',sans-serif;line-height:1">$1,399</span>
+          <span style="font-size:14px;font-weight:700;color:rgba(125,211,252,.6);margin-right:1px">Starting at</span>
+          <span id="price-pro" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'Inter',sans-serif;line-height:1">$1,399</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
         <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Annual · Month-to-month starting at $1,599/mo</div>
@@ -905,7 +907,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     </div>
 
     <!-- ROI line -->
-    <div style="text-align:center;margin-bottom:20px;font-size:14px;color:rgba(255,255,255,.4)">💡 If your team spends 10+ hours/week matching payments, <strong style="color:rgba(255,255,255,.65)">AR Match Pro pays for itself in days.</strong></div>
+    <div style="text-align:center;margin-bottom:12px;font-size:14px;color:rgba(255,255,255,.4)">💡 If your team spends 10+ hours/week matching payments, <strong style="color:rgba(255,255,255,.65)">AR Match Pro pays for itself in days.</strong></div>
+    <div style="text-align:center;margin-bottom:20px;font-size:12px;color:rgba(255,255,255,.28);font-style:italic">All prices shown are starting prices. Customized add-ons and volume tiers may increase pricing. Contact <a href="mailto:info@armatchpro.com" style="color:rgba(255,255,255,.4)">info@armatchpro.com</a> for a custom quote.</div>
 
     <!-- Bottom row -->
     <div class="pricing-bottom-row" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08)">
@@ -1118,9 +1121,9 @@ function setBilling(type){
   document.getElementById('price-starter').textContent = monthly ? '$999' : '$799';
   document.getElementById('price-pro').textContent = monthly ? '$1,599' : '$1,399';
   document.getElementById('price-team').textContent = monthly ? '$2,999' : '$2,699';
-  document.getElementById('price-starter-annual').textContent = monthly ? 'Month-to-month · no long-term commitment' : 'Annual · month-to-month starting at $999/mo';
-  document.getElementById('price-pro-annual').textContent = monthly ? 'Month-to-month · no long-term commitment' : 'Annual · month-to-month starting at $1,599/mo';
-  document.getElementById('price-team-annual').textContent = monthly ? 'Month-to-month · no long-term commitment' : 'Annual · month-to-month starting at $2,999/mo';
+  document.getElementById('price-starter-annual').textContent = monthly ? 'Month-to-month · starting at $999/mo · no long-term commitment' : 'Annual · month-to-month starting at $999/mo';
+  document.getElementById('price-pro-annual').textContent = monthly ? 'Month-to-month · starting at $1,599/mo · no long-term commitment' : 'Annual · month-to-month starting at $1,599/mo';
+  document.getElementById('price-team-annual').textContent = monthly ? 'Month-to-month · starting at $2,999/mo · no long-term commitment' : 'Annual · month-to-month starting at $2,999/mo';
 }
 setBilling('annual');
 function dismissCookie(){
