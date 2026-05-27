@@ -8351,7 +8351,7 @@ function openImport(t){
     if(title)title.textContent='Import Delivery Report';
     if(lbl)lbl.textContent='Delivery/tracking report — extracts Tracking #, Delivery #, and maps to invoice rows';
   } else {
-    if(title)title.textContent=t==='inv'?'Import Invoice Data':'Import Remittance Data';
+    if(title)title.textContent=t==='inv'?'Import Invoice Data':'Import Bank File';
     if(lbl)lbl.textContent=t==='inv'?'Invoice CSV — Customer, Account, Invoice, PO, SO, Amount, Doc Type, Date, Due, Document #':'Remittance CSV — Account, Customer, Amount, PO Ref, Invoice Ref, Method, Notes';
   }
   const ta=document.getElementById('mo-ta');if(ta)ta.value='';
@@ -13000,7 +13000,7 @@ function _confirmExcApplyToInv(idx,invRef){
   var ex=EXC[idx];if(!ex)return;
   ex.dec='Apply to invoice';ex.appliedToInv=invRef;
   finalizeExcResolution(idx,'Apply to invoice');
-  // Revert to exceptions tab
+  // Revert to Needs Attention tab
   setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');
   setTimeout(renderWsExcPremium,100);
 }
@@ -14339,7 +14339,7 @@ var HELP_CONTENT = {
       nav:"setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(renderWsExcPremium,50)",
       content:`
         <h3>What Are Exceptions?</h3>
-        <p>Exceptions are payments that could not be automatically matched. They appear in the Exceptions tab and on Today's Work dashboard.</p>
+        <p>Exceptions are payments that could not be automatically matched. They appear in the <strong>Needs Attention</strong> tab and on Today's Work dashboard.</p>
         <h3>Exception Types</h3>
         <table><thead><tr><th>Type</th><th>Cause</th><th>Action</th></tr></thead><tbody>
         <tr><td>Short Pay</td><td>Payment less than invoice amount</td><td>Write off difference or chase balance</td></tr>
