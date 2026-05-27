@@ -829,7 +829,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <span id="price-starter" style="font-size:48px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'Inter',sans-serif;line-height:1">$799</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-starter-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Billed as $8,388/year</div>
+        <div id="price-starter-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Annual · Month-to-month starting at $999/mo</div>
         <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Up to 5,000 rows/month</div>
@@ -853,10 +853,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:11px;font-weight:700;color:#7DD3FC;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Pro</div>
         <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px">Growing AR teams · mid-market finance</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
-          <span id="price-pro" style="font-size:48px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'Inter',sans-serif;line-height:1">$1,599</span>
+          <span id="price-pro" style="font-size:48px;font-weight:800;color:#fff;letter-spacing:-3px;font-family:'Inter',sans-serif;line-height:1">$1,399</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Billed as $16,788/year</div>
+        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Annual · Month-to-month starting at $1,599/mo</div>
         <div style="height:1px;background:rgba(20,168,216,.25);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Starter, plus:</div>
@@ -882,10 +882,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:16px">Multi-user teams · enterprise workflows</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
           <span style="font-size:15px;font-weight:700;color:rgba(255,255,255,.5);margin-right:2px">Starting at</span>
-          <span id="price-team" style="font-size:42px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$2,999</span>
+          <span id="price-team" style="font-size:42px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$2,699</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-team-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Billed as $32,388/year</div>
+        <div id="price-team-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Annual · Month-to-month starting at $2,999/mo</div>
         <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Pro, plus:</div>
@@ -1098,7 +1098,7 @@ function qfPick(val,nextState){
         msg=`Sounds like AR Match Pro would solve your biggest pain points. The live demo takes 5 minutes — no signup, real matching with sample data.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else {
-        msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter from $799/month or Pro at $1,599/month. Try the demo first, no commitment.`;
+        msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter from $799/month annual or Pro from $1,399/month annual. Try the demo first, no commitment.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Start free demo</a>`;
       }
       addBotQMsg(msg+'<br>'+cta);
@@ -1115,12 +1115,12 @@ function setBilling(type){
   document.getElementById('bill-monthly').style.color = monthly ? '#0F172A' : 'rgba(255,255,255,.55)';
   document.getElementById('bill-annual').style.background = monthly ? 'transparent' : '#fff';
   document.getElementById('bill-annual').style.color = monthly ? 'rgba(255,255,255,.55)' : '#0F172A';
-  document.getElementById('price-starter').textContent = monthly ? '$799' : '$699';
+  document.getElementById('price-starter').textContent = monthly ? '$999' : '$799';
   document.getElementById('price-pro').textContent = monthly ? '$1,599' : '$1,399';
   document.getElementById('price-team').textContent = monthly ? '$2,999' : '$2,699';
-  document.getElementById('price-starter-annual').textContent = monthly ? 'No long-term commitment' : 'Billed as $8,388/year';
-  document.getElementById('price-pro-annual').textContent = monthly ? 'No long-term commitment' : 'Billed as $16,788/year';
-  document.getElementById('price-team-annual').textContent = monthly ? 'No long-term commitment' : 'Billed as $32,388/year';
+  document.getElementById('price-starter-annual').textContent = monthly ? 'Month-to-month · no long-term commitment' : 'Annual · month-to-month starting at $999/mo';
+  document.getElementById('price-pro-annual').textContent = monthly ? 'Month-to-month · no long-term commitment' : 'Annual · month-to-month starting at $1,599/mo';
+  document.getElementById('price-team-annual').textContent = monthly ? 'Month-to-month · no long-term commitment' : 'Annual · month-to-month starting at $2,999/mo';
 }
 setBilling('annual');
 function dismissCookie(){
@@ -1427,9 +1427,9 @@ const LP_FAQ={
   "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP or NetSuite, import it into AR Match Pro, run the match, and export a posting-ready file back. No integration, no IT approval, no setup time.",
   "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
   "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
-  "Which plan?":"Starter ($799/mo) covers Invoice and PO matching for up to 5,000 rows/month — best for 1–2 user AR teams transitioning from spreadsheets. Pro ($1,599/mo) adds unlimited rows, multi-invoice allocation, AI-assisted matching, SAP/NetSuite exports, and CFO dashboards — the right choice for most accounting teams. Team ($2,999/mo) adds multi-user collaboration, role-based permissions, audit logs, and dedicated onboarding.",
-  "Book demo?":"Click 'Try Free Demo' on this page to start a 7-day Pro trial — full access, no credit card required. Or book a 30-minute live walkthrough at calendly.com/armatchpro — we'll match a real payment with you.",
-  "Pricing?":"Starter is $799/month (1–2 users, up to 5,000 rows, Invoice + PO matching, CSV export). Pro is $1,599/month (unlimited rows, multi-invoice allocation, AI matching, SAP F-28 + NetSuite export, CFO dashboards, reconcile workspace). Team is $2,999/month (multi-user, roles, audit logs, approval workflows, dedicated onboarding, SLA). Annual billing saves ~10%."
+  "Which plan?":"Starter (starting at $799/mo annual) covers Invoice and PO matching for up to 5,000 rows/month — best for 1–2 user AR teams transitioning from spreadsheets. Pro (starting at $1,399/mo annual) adds unlimited rows, multi-invoice allocation, AI-assisted matching, SAP/NetSuite exports, and CFO dashboards — the right choice for most accounting teams. Team / Custom (starting at $2,699/mo annual) adds multi-user collaboration, role-based permissions, audit logs, and dedicated onboarding.",
+  "Book demo?":"Click 'Try Free Demo' on this page to start a 7-day free trial — full access, no credit card required. Or email info@armatchpro.com to schedule a live walkthrough.",
+  "Pricing?":"Starter starts at $799/month annual (1–2 users, up to 5,000 rows, Invoice + PO matching, CSV export; month-to-month from $999/mo). Pro starts at $1,399/month annual (unlimited rows, multi-invoice allocation, AI matching, SAP F-28 + NetSuite export, CFO dashboards, reconcile workspace; month-to-month from $1,599/mo). Team / Custom starts at $2,699/month annual (multi-user, roles, audit logs, approval workflows, dedicated onboarding, SLA; month-to-month from $2,999/mo)."
 };
 let lpChatOpen=false;
 function toggleLpChat(){
