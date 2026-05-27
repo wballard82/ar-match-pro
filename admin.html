@@ -508,22 +508,28 @@ function renderSubscriptions(){
   const tbody=document.getElementById('subs-tbody');
   if(!tbody)return;
   if(!users.length){tbody.innerHTML='<tr><td colspan="10"><div class="em"><div class="em-icon">💳</div><div class="em-t">No paid subscriptions yet</div></div></td></tr>';return;}
-  const PRICING={starter:{annual:'$799/mo',monthly:'$999/mo'},pro:{annual:'$1,399/mo',monthly:'$1,599/mo'},team:{annual:'$2,699/mo',monthly:'$2,999/mo'}};
+  const PRICING={starter:{annual:'Starting at $799/mo',monthly:'Starting at $999/mo'},pro:{annual:'Starting at $1,399/mo',monthly:'Starting at $1,599/mo'},team:{annual:'Starting at $2,699/mo',monthly:'Starting at $2,999/mo'}};
   tbody.innerHTML=users.map(([email,u])=>{
     const planKey=u.plan||'starter';
-    const billing=u.billing||'—';
-    const priceRef=PRICING[planKey]?PRICING[planKey][billing==='annual'?'annual':'monthly']||'—':'—';
+    // Read billing record (new structure) with fallbacks
+    const billing=u.billing||{};
+    const cycle=billing.billingCycle||u.billing||'—';
+    const status=billing.subscriptionStatus||'active';
+    const stripeId=billing.stripeCustomerId||'—';
+    const priceRef=PRICING[planKey]?PRICING[planKey][billing.billingCycle==='annual'?'annual':'monthly']||'—':'—';
+    const statusColor=status==='active'?'#ECFDF5;color:#065F46':status==='past_due'?'#FEF3C7;color:#92400E':'#FEF2F2;color:#991B1B';
     return`<tr>
       <td style="font-weight:500">${u.name||'—'}</td>
       <td class="mono"><a href="mailto:${email}" style="color:var(--pd)">${email}</a></td>
       <td style="font-size:12.5px">${u.company||'—'}</td>
       <td><span class="badge b-${planKey}">${planKey.toUpperCase()}</span><div style="font-size:10.5px;color:var(--t3);margin-top:2px">${priceRef}</div></td>
-      <td style="font-size:11.5px">${billing}</td>
+      <td style="font-size:11.5px">${billing.billingCycle||'—'}</td>
       <td style="font-size:11.5px;color:var(--t2)">${u.erp||'—'}</td>
       <td style="font-size:11.5px;color:var(--t2)">${u.invoiceVolume||'—'}</td>
       <td class="mono" style="font-size:11.5px">${u.phone||'—'}</td>
       <td class="mono" style="font-size:11.5px">${u.created?new Date(u.created).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—'}</td>
-      <td><span class="badge" style="background:#ECFDF5;color:#065F46">${u.paymentStatus||'Active'}</span></td>
+      <td><span class="badge" style="background:#${statusColor}">${status}</span>
+        ${stripeId!=='—'?'<div class="mono" style="font-size:9.5px;color:var(--t3);margin-top:2px">'+stripeId+'</div>':''}</td>
     </tr>`;
   }).join('');
 }
@@ -665,8 +671,25 @@ function createUser(){
   if(pass.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return}
   if(!email.includes('@')){err.textContent='Invalid email.';err.style.display='block';return}
   const users=getUsers();if(users[email]){err.textContent='Account already exists.';err.style.display='block';return}
-  users[email]={name,pass:btoa(pass),avatar:'',plan,created:Date.now(),createdBy:'admin'};
+  const now=new Date().toISOString();
+  const billingStates={trial_active:'trial_active',trial_expired:'trial_expired',active:'active'};
+  users[email]={
+    name, pass:btoa(pass), avatar:'', plan,
+    role: plan==='demo'?'ar_specialist':'ar_specialist',
+    created: Date.now(), createdAt: now, createdBy:'admin',
+    billing: {
+      planId: plan,
+      billingCycle: 'annual',
+      subscriptionStatus: plan==='demo'?'trial_active':'active',
+      stripeCustomerId: null,     // [Backend-required]
+      stripeSubscriptionId: null, // [Backend-required]
+      trialStartDate: plan==='demo'?now:null,
+      trialEndDate: plan==='demo'?(new Date(Date.now()+7*86400000)).toISOString():null,
+      createdAt: now, updatedAt: now
+    }
+  };
   saveUsers(users);
+  _adminLog('User created', email+' — '+plan+' plan');
   ok.textContent='✓ Account created: '+name+' ('+email+') — '+plan+' plan.';ok.style.display='block';
   clearCreateForm();refreshStats();toast('Account created: '+email);
 }

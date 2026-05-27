@@ -7571,6 +7571,7 @@ function wfCtaClick(){
 
 // ── Item 7: Approve all visible Review entries at once ──
 function approveAllReviewItems(){
+  if(!RoleManager.canApprove()){ RoleManager.requireRole('manager','Approve All'); return; }
   if(typeof RES==='undefined'||!RES.length){
     if(typeof toast==='function')toast('Nothing to approve','warn');
     return;
@@ -7599,6 +7600,7 @@ function approveAllReviewItems(){
 
 // ── Item 8: Export & Lock / Unlock & Edit toggle ──────────────────────
 function exportPostAndLock(){  // Item 4: Guard — block export when there are unresolved items
+  if(!RoleManager.canExport()){ RoleManager.requireRole('manager','Export & Lock'); return; }
   try{
     var _blk = (typeof armpComputeExportBlockers==='function')?armpComputeExportBlockers():{blocked:false,reasons:[]};
     if(_blk.blocked){
@@ -7879,13 +7881,14 @@ var AuditManager = (function(){
 
   function record(action, ref, detail){
     var entry = {
-      ts:   new Date().toISOString(),
+      ts:        new Date().toISOString(),
       tsDisplay: new Date().toLocaleTimeString(),
-      user: _user(),
-      role: _role(),
-      action: action || 'Action',
-      ref:    ref    || '',
-      detail: detail || ''
+      user:      _user(),
+      role:      _role(),
+      tenantId:  (typeof StorageManager!=='undefined') ? StorageManager.getCurrentTenant() : '_unknown',
+      action:    action || 'Action',
+      ref:       ref    || '',
+      detail:    detail || ''
     };
     _records.unshift(entry);
     if(_records.length > MAX) _records = _records.slice(0, MAX);
@@ -8044,7 +8047,10 @@ function doRegister(){
       return;
     }catch(e){console.warn('demo uniqueness check failed',e);}
   }
-  const user={name,email,pass:btoa(pass),plan,avatar:'',role:'ar_specialist'};
+  const user={name,email,pass:btoa(pass),plan,avatar:'',role:'ar_specialist',
+    billing: BillingManager.createBillingRecord(plan, 'annual'),
+    created: new Date().toISOString()
+  };
   saveUser(email,user);
   CURRENT_USER=email;IS_DEMO=plan==='demo';
   localStorage.setItem('armp_session',email);
@@ -9047,8 +9053,9 @@ function csvDL(rows,fn){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/
 function exportExc(){if(!EXC.length){toast('No exceptions','warn');return;}csvDL([EH,...EXC.map(e=>[e.id,e.a,e.c,e.amt,e.ref,e.type,e.detail,e.action,e.dec,e.s])],'exceptions_'+new Date().toISOString().split('T')[0]+'.csv');toast('Exceptions exported');}
 function exportPost(){
   var _activeProfile=(typeof CFG_EXPORT_PROFILE!=='undefined'&&typeof CFG_EXPORT_PROFILES!=='undefined')?((CFG_EXPORT_PROFILES[CFG_EXPORT_PROFILE]||{}).label||CFG_EXPORT_PROFILE):'Generic CSV';
-  addAudit('Export posted','Profile: '+_activeProfile);
   if(IS_DEMO){showUpgrade('Posting Export','Available on Starter, Pro, and Team plans.');return;}
+  if(!RoleManager.canExport()){ RoleManager.requireRole('manager','Posting Export'); return; }
+  addAudit(AuditManager.ACTIONS.EXPORT,'Profile: '+_activeProfile);
   // NEW-5: Filter out payments without account/customer unless flagged as Duplicate-Reject or Chase Customer
   const ap=RES.filter(r=>{
     var statusOk = (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc);
@@ -12108,6 +12115,39 @@ var BillingManager = (function(){
     return _stripeInstance;
   }
 
+  // ── Billing record schema — attached to every user object ─────────────
+  // [Backend-required]: stripeCustomerId, stripeSubscriptionId, and
+  // subscriptionStatus are populated via Stripe webhook → serverless function.
+  // Frontend can read these fields but should NOT write them directly.
+  function createBillingRecord(plan, billingCycle, overrides){
+    var now = new Date().toISOString();
+    return Object.assign({
+      planId:               plan || 'demo',
+      billingCycle:         billingCycle || 'annual', // 'annual' | 'monthly'
+      subscriptionStatus:   plan === 'demo' ? STATES.TRIAL_ACTIVE : STATES.ACTIVE,
+      stripeCustomerId:     null,     // [Backend-required] set via Stripe webhook
+      stripeSubscriptionId: null,     // [Backend-required] set via Stripe webhook
+      trialStartDate:       plan === 'demo' ? now : null,
+      trialEndDate:         null,     // set by DemoManager on demo registration
+      currentPeriodStart:   now,
+      currentPeriodEnd:     null,     // [Backend-required] from Stripe
+      cancelAtPeriodEnd:    false,
+      createdAt:            now,
+      updatedAt:            now
+    }, overrides || {});
+  }
+
+  // Write billing record onto a user object (call when upgrading plan)
+  function updateUserBilling(email, fields){
+    try{
+      var users = typeof getUsers==='function' ? getUsers() : {};
+      if(!users[email]) return false;
+      users[email].billing = Object.assign(users[email].billing || {}, fields, { updatedAt: new Date().toISOString() });
+      localStorage.setItem('armp_users', JSON.stringify(users));
+      return true;
+    }catch(e){ return false; }
+  }
+
   // ── Determine current billing state for the logged-in user ────────────
   function getBillingState(user){
     user = user || _currentUser();
@@ -12117,9 +12157,11 @@ var BillingManager = (function(){
       if(user.demoExpiresAt && new Date(user.demoExpiresAt) < new Date()) return STATES.TRIAL_EXPIRED;
       return STATES.TRIAL_ACTIVE;
     }
-    if(user.suspended) return STATES.SUSPENDED;
-    if(user.billingState) return user.billingState; // [Backend-required] set via webhook
-    return STATES.ACTIVE; // assume active for paid plans without backend state
+    if(user.suspended || user.disabled) return STATES.SUSPENDED;
+    // [Backend-required]: subscriptionStatus from Stripe webhook is authoritative
+    var billingStatus = user.billing && user.billing.subscriptionStatus;
+    if(billingStatus && billingStatus !== STATES.ACTIVE) return billingStatus;
+    return STATES.ACTIVE; // assume active for paid plans without backend confirmation
   }
 
   function _currentUser(){
@@ -12131,14 +12173,12 @@ var BillingManager = (function(){
   }
 
   // ── Checkout redirect ──────────────────────────────────────────────────
-  // billing: 'annual' | 'monthly' (default: 'annual')
   function checkout(plan, billing){
     billing = billing || 'annual';
     var planPrices = PLAN_PRICE_MAP[plan];
     if(!planPrices){ window.open('https://armatchpro.com/#pricing','_blank'); return; }
     var priceId = planPrices[billing];
     if(!priceId || priceId.indexOf('PLACEHOLDER')>=0){
-      // Price not yet configured — redirect to pricing page
       window.open('https://armatchpro.com/#pricing','_blank');
       return;
     }
@@ -12166,18 +12206,21 @@ var BillingManager = (function(){
   function showBillingBanner(){
     var state = getBillingState();
     if(state === STATES.ACTIVE || state === STATES.TRIAL_ACTIVE) return;
-    var msg = {
-      [STATES.TRIAL_EXPIRED]: 'Your 7-day demo has ended. Upgrade to continue.',
-      [STATES.PAST_DUE]:      'Your payment is past due. Please update your billing.',
-      [STATES.CANCELED]:      'Your subscription is canceled. Renew to restore access.',
-      [STATES.SUSPENDED]:     'Your account has been suspended. Contact support.'
-    }[state];
+    var msgs = {};
+    msgs[STATES.TRIAL_EXPIRED] = 'Your 7-day demo has ended. Upgrade to continue.';
+    msgs[STATES.PAST_DUE]      = 'Your payment is past due. Please update your billing.';
+    msgs[STATES.CANCELED]      = 'Your subscription is canceled. Renew to restore access.';
+    msgs[STATES.SUSPENDED]     = 'Your account has been suspended. Contact support.';
+    var msg = msgs[state];
     if(msg && typeof toast==='function') toast(msg, 'warn');
   }
 
   return {
     STATES: STATES,
     PRICES: PRICES,
+    PLAN_PRICE_MAP: PLAN_PRICE_MAP,
+    createBillingRecord: createBillingRecord,
+    updateUserBilling: updateUserBilling,
     getBillingState: getBillingState,
     checkout: checkout,
     canAccess: canAccess,
@@ -12268,7 +12311,21 @@ window.addEventListener('load',()=>{
     try{
       if(sess===MASTER_ADMIN_EMAIL){CURRENT_USER=sess;IS_DEMO=false;launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});return;}
       const users=getUsers();
-      if(users[sess]){CURRENT_USER=sess;IS_DEMO=false;launchApp(users[sess]);}
+      const sessUser=users[sess];
+      if(sessUser){
+        CURRENT_USER=sess;
+        // Check if this is a demo user whose trial has expired — don't auto-restore to app
+        // if so; let launchApp handle the expired-demo modal
+        var billingState = BillingManager.getBillingState(sessUser);
+        if(billingState === BillingManager.STATES.SUSPENDED){
+          // Suspended accounts cannot restore session
+          localStorage.removeItem('armp_session');
+          showError && showError('Your account has been suspended. Contact info@armatchpro.com.');
+          return;
+        }
+        IS_DEMO = (sessUser.plan||'demo') === 'demo';
+        launchApp(sessUser);
+      }
       else localStorage.removeItem('armp_session');
     }catch(e){localStorage.removeItem('armp_session');}
   } else {
@@ -12331,6 +12388,94 @@ function loginShowPricing(){
 var USER_ROLE = 'specialist';
 // CFO Summary visible to CFO + ADMIN (admin is owner-only)
 var CFO_ROLES = ['cfo'];
+
+// ══════════════════════════════════════════════════════════
+// ROLE MANAGER — centralized RBAC enforcement
+// Roles: admin > cfo > manager > specialist > viewer
+// All permission checks route through here.
+// ══════════════════════════════════════════════════════════
+var RoleManager = (function(){
+  var ROLE_LEVELS = {
+    admin:      100,
+    cfo:         80,
+    controller:  70,
+    manager:     60,
+    specialist:  40,
+    finance:     35,
+    viewer:      10
+  };
+
+  function _currentRole(){
+    if(typeof IS_MASTER!=='undefined'&&IS_MASTER) return 'admin';
+    return (typeof USER_ROLE!=='undefined'&&USER_ROLE) ? USER_ROLE : 'viewer';
+  }
+  function _level(role){ return ROLE_LEVELS[role] || 0; }
+  function _currentLevel(){ return _level(_currentRole()); }
+
+  // ── Core permission checks ─────────────────────────────────────────────
+  function canExport(){
+    // Viewer and raw specialist cannot export; manager+ and admin can
+    // Admin can also restrict specialist export via user settings (future)
+    var r = _currentRole();
+    return r === 'admin' || r === 'cfo' || r === 'controller' || r === 'manager' || _currentLevel() >= 60;
+  }
+  function canApprove(){
+    var r = _currentRole();
+    return r === 'admin' || r === 'cfo' || r === 'controller' || r === 'manager' || _currentLevel() >= 60;
+  }
+  function canUpload(){
+    return _currentLevel() >= 40; // specialist and above
+  }
+  function canRunMatch(){
+    return _currentLevel() >= 40;
+  }
+  function canManageRoles(){
+    return _currentRole() === 'admin'; // admin ONLY
+  }
+  function canAssignCFO(){
+    return _currentRole() === 'admin'; // admin ONLY
+  }
+  function canSeeCFO(){
+    return _currentRole() === 'admin' || _currentRole() === 'cfo' || _currentRole() === 'controller';
+  }
+  function isViewer(){
+    return _currentLevel() <= 10;
+  }
+
+  // ── Guard helper — shows upgrade or access-denied toast ───────────────
+  function requireRole(minRole, actionLabel){
+    if(_currentLevel() >= _level(minRole)) return true;
+    var msg = isViewer()
+      ? (actionLabel||'This action') + ' is not available in read-only mode.'
+      : 'Your role (' + _currentRole() + ') cannot perform: ' + (actionLabel||'this action') + '. Contact your Company Admin.';
+    if(typeof toast === 'function') toast(msg, 'warn');
+    return false;
+  }
+
+  // ── Role display label ─────────────────────────────────────────────────
+  function displayLabel(role){
+    var labels = {
+      admin:'Company Admin', cfo:'CFO', controller:'Controller',
+      manager:'AR Manager', specialist:'AR Specialist', finance:'Finance', viewer:'Viewer'
+    };
+    return labels[role] || role || 'Unknown';
+  }
+
+  return {
+    ROLE_LEVELS: ROLE_LEVELS,
+    currentRole: _currentRole,
+    canExport: canExport,
+    canApprove: canApprove,
+    canUpload: canUpload,
+    canRunMatch: canRunMatch,
+    canManageRoles: canManageRoles,
+    canAssignCFO: canAssignCFO,
+    canSeeCFO: canSeeCFO,
+    isViewer: isViewer,
+    requireRole: requireRole,
+    displayLabel: displayLabel
+  };
+})();
 
 function saveUserRole(){
   var sel = document.getElementById('s-role');
