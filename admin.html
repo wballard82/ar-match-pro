@@ -629,13 +629,13 @@ function extendDemo(email){
   u[email].demoExtendedAt=new Date().toISOString();
   u[email].demoExtendedBy='admin';
   saveUsers(u);
-  // Also update the demo_emails_used record
+  // Update global demo email registry (same key DemoManager uses in app.html)
   try{
     const used=JSON.parse(localStorage.getItem('armp_demo_emails_used')||'{}');
-    if(used[email]){ used[email].expiresAt=newExp.toISOString(); used[email].extended=true; }
+    if(used[email]){ used[email].expiresAt=newExp.toISOString(); used[email].extended=true; used[email].extendedAt=new Date().toISOString(); }
     localStorage.setItem('armp_demo_emails_used',JSON.stringify(used));
   }catch(e){}
-  _adminLog('Demo extended',email+' → expires '+newExp.toLocaleDateString());
+  _adminLog('Demo extended +7 days', email+' → expires '+newExp.toLocaleDateString());
   renderUsers('');
   toast('Demo extended 7 days: '+email);
 }

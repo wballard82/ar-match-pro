@@ -5682,54 +5682,84 @@ try{ armpCfgLoad(); }catch(e){}
 // ═══════════════════════════════════════════════════════════════════════════
 function armpAnnotateMatch(r, payment){
   if(!r || typeof r !== 'object') return;
-  // Don't overwrite if already annotated (allows manual overrides)
   if(r.matchReasons && r.confidence !== undefined) return;
   var w = armpCfgGet('matching.confidenceWeights', {});
   var reasons = [];
   var confidence = 0;
   var tol = armpCfgGet('matching.tolerances.amountAbsolute', 0.01);
-  // Exact invoice number match
-  if(r.i && r.st === 'Exact' && r.m && /Direct invoice|Multi-invoice/i.test(r.m||'')){
-    confidence += (w.invoiceExact || 50);
-    reasons.push({ type: 'invoice', label: 'Invoice #', value: r.i, w: w.invoiceExact || 50 });
+  var m = r.m || '';
+  var st = r.st || '';
+
+  // ── Invoice # match ─────────────────────────────────────────────────────
+  if(r.i && (st==='Exact'||st==='Subset exact') && /Direct invoice|Multi-invoice/i.test(m)){
+    var wt = w.invoiceExact || 50;
+    confidence += wt;
+    reasons.push({type:'invoice', label:'Invoice #', value:r.i, w:wt});
   }
-  // PO match (when PO is populated and st is Exact)
-  if(r.po && r.st === 'Exact'){
-    confidence += (w.poExact || 25);
-    reasons.push({ type: 'po', label: 'PO #', value: r.po, w: w.poExact || 25 });
+  // ── Sales Order # match ─────────────────────────────────────────────────
+  if(r.so && /SO/i.test(m)){
+    var wt2 = w.soExact || 30;
+    confidence += wt2;
+    reasons.push({type:'so', label:'Sales Order #', value:r.so, w:wt2});
   }
-  // Exact amount match (variance ≈ 0)
-  if(Math.abs(r.vr || 0) <= tol){
-    confidence += (w.amountExact || 20);
-    reasons.push({ type: 'amount', label: 'Exact amount', value: '$' + (r.pd || 0).toFixed(2), w: w.amountExact || 20 });
-  } else if(Math.abs(r.vr || 0) > tol){
-    // Variance present but matched — partial confidence loss
-    reasons.push({ type: 'variance', label: (r.vr < 0 ? 'Short pay ' : 'Overpay ') + '$' + Math.abs(r.vr).toFixed(2), value: '', w: -10 });
+  // ── PO # match ──────────────────────────────────────────────────────────
+  if(r.po && /PO/i.test(m)){
+    var wt3 = w.poExact || 25;
+    confidence += wt3;
+    reasons.push({type:'po', label:'PO #', value:r.po, w:wt3});
+  }
+  // ── Tracking # match ────────────────────────────────────────────────────
+  if(r.trackingNo || /Tracking/i.test(m)){
+    var wt4 = w.trackingNo || 35;
+    confidence += wt4;
+    reasons.push({type:'tracking', label:'Tracking #', value:r.trackingNo||'', w:wt4});
+  }
+  // ── Delivery # match ────────────────────────────────────────────────────
+  if(r.deliveryNo || /Delivery/i.test(m)){
+    var wt5 = w.deliveryNo || 35;
+    confidence += wt5;
+    reasons.push({type:'delivery', label:'Delivery #', value:r.deliveryNo||'', w:wt5});
+  }
+  // ── Exact amount ────────────────────────────────────────────────────────
+  if(Math.abs(r.vr||0) <= tol){
+    var wt6 = w.amountExact || 20;
+    confidence += wt6;
+    reasons.push({type:'amount', label:'Exact amount', value:'$'+(r.pd||0).toFixed(2), w:wt6});
+  } else if(Math.abs(r.vr||0) > tol){
+    reasons.push({type:'variance', label:(r.vr<0?'Short pay ':'Overpay ')+'$'+Math.abs(r.vr||0).toFixed(2), value:'', w:-10});
     confidence -= 10;
   }
-  // Customer account match
+  // ── Customer account ────────────────────────────────────────────────────
   if(r.a){
-    confidence += (w.customerAccount || 15);
-    reasons.push({ type: 'customerAccount', label: 'Customer account', value: r.a, w: w.customerAccount || 15 });
+    var wt7 = w.customerAccount || 15;
+    confidence += wt7;
+    reasons.push({type:'customerAccount', label:'Customer account', value:r.a, w:wt7});
   } else if(r.c){
-    confidence += (w.customerName || 10);
-    reasons.push({ type: 'customerName', label: 'Customer name', value: r.c, w: w.customerName || 10 });
+    var wt8 = w.customerName || 10;
+    confidence += wt8;
+    reasons.push({type:'customerName', label:'Normalized customer name', value:r.c, w:wt8});
   }
-  // Multi-invoice total match
-  if(r.m && /multi-invoice/i.test(r.m)){
-    confidence += (w.multiInvoiceTotal || 30);
-    reasons.push({ type: 'multiInvoice', label: 'Multi-invoice total', value: '', w: w.multiInvoiceTotal || 30 });
+  // ── Multi-invoice total ─────────────────────────────────────────────────
+  if(/multi-invoice/i.test(m)){
+    var wt9 = w.multiInvoiceTotal || 30;
+    confidence += wt9;
+    reasons.push({type:'multiInvoice', label:'Multi-invoice total', value:'', w:wt9});
   }
-  // Amount-only match (no invoice ref)
-  if(r.st === 'Amount match'){
-    reasons.push({ type: 'amount', label: 'Amount-only', value: '$' + (r.pd || 0).toFixed(2), w: w.amountExact || 20 });
-    confidence = Math.min(confidence, 60); // cap amount-only matches at 60%
+  // ── Date range ──────────────────────────────────────────────────────────
+  if(r.matchDateRange){
+    var wt10 = 8;
+    confidence += wt10;
+    reasons.push({type:'dateRange', label:'Date range', value:r.matchDateRange, w:wt10});
   }
-  // Clamp to 0..100
-  if(confidence > 100) confidence = 100;
-  if(confidence < 0) confidence = 0;
+  // ── Amount-only (cap at 60%) ─────────────────────────────────────────────
+  if(st === 'Amount match'){
+    reasons.push({type:'amount', label:'Amount-only', value:'$'+(r.pd||0).toFixed(2), w:w.amountExact||20});
+    confidence = Math.min(confidence, 60);
+  }
+  // Clamp
+  confidence = Math.max(0, Math.min(100, Math.round(confidence)));
   r.matchReasons = reasons;
-  r.confidence = Math.round(confidence);
+  r.confidence = confidence;
 }
 // Render compact explanation pills HTML for a RES entry. Returns string.
 function armpRenderMatchPills(r, opts){
@@ -6035,106 +6065,116 @@ function sk(k){return 'armp_'+CURRENT_USER+'_'+k;}
 //                      ARMP_DEMO_{key} for cross-session demo tracking
 // ════════════════════════════════════════════════════════════════════════════
 var StorageManager = (function(){
-  var PREFIX      = 'ARMP_';
-  var SYS_PREFIX  = 'ARMP_SYS_';
-  var DEMO_PREFIX = 'ARMP_DEMO_';
+  // ── Key format: ARMP:{tenantId}:{userId}:{key} ─────────────────────────
+  // tenantId  = email domain (e.g. acmecorp.com) — migrates to UUID with backend
+  // userId    = lowercased email
+  // Isolation levels:
+  //   User-scoped:    ARMP:{tenant}:{user}:{key}   ← default, all user data
+  //   System-wide:    ARMP:SYS:{key}              ← users registry, global config
+  //   Demo tracking:  ARMP:DEMO:{email}:{key}      ← cross-session demo state
+  //   Legacy compat:  ARMP_{user}_{key}            ← read-only migration shim
 
-  // Get the current tenant ID (user email, lowercased)
+  function _safe(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9@._-]/gi,'_').replace(/__+/g,'_'); }
+
+  function getCurrentUser(){
+    try{ return (typeof CURRENT_USER!=='undefined'&&CURRENT_USER)?_safe(CURRENT_USER):'_anon'; }catch(e){ return '_anon'; }
+  }
   function getCurrentTenant(){
-    try{ return (typeof CURRENT_USER!=='undefined'&&CURRENT_USER)?CURRENT_USER.toLowerCase():'_anon'; }
-    catch(e){ return '_anon'; }
-  }
-
-  // Build a fully-namespaced key for the current user
-  function tenantKey(key){
-    return PREFIX + getCurrentTenant().replace(/[^a-z0-9@._-]/gi,'_') + '_' + key;
-  }
-
-  // Save data scoped to the current tenant
-  function saveTenantData(key, value){
     try{
-      var serialized = (typeof value === 'string') ? value : JSON.stringify(value);
-      localStorage.setItem(tenantKey(key), serialized);
+      var u=(typeof CURRENT_USER!=='undefined'&&CURRENT_USER)?CURRENT_USER:'';
+      if(!u)return '_anon';
+      var at=u.indexOf('@');
+      return at>0?_safe(u.slice(at+1)):_safe(u);
+    }catch(e){ return '_anon'; }
+  }
+  function makeStorageKey(key,userId,tenantId){
+    return 'ARMP:' + (tenantId||getCurrentTenant()) + ':' + (userId||getCurrentUser()) + ':' + (key||'');
+  }
+  function _sysKey(key){ return 'ARMP:SYS:' + key; }
+  function _demoKey(email,key){ return 'ARMP:DEMO:' + _safe(email) + ':' + key; }
+
+  // ── Tenant-scoped: current user ─────────────────────────────────────────
+  function saveTenantData(key,value){
+    try{
+      localStorage.setItem(makeStorageKey(key), typeof value==='string'?value:JSON.stringify(value));
       return true;
-    }catch(e){ console.warn('[StorageManager.saveTenantData]', key, e); return false; }
+    }catch(e){ return false; }
   }
-
-  // Get data scoped to the current tenant
-  function getTenantData(key, defaultVal){
+  function getTenantData(key,defaultVal){
     try{
-      var raw = localStorage.getItem(tenantKey(key));
-      if(raw===null||raw===undefined) return defaultVal!==undefined?defaultVal:null;
+      var raw=localStorage.getItem(makeStorageKey(key));
+      if(raw===null){ raw=localStorage.getItem('ARMP_'+getCurrentUser()+'_'+key); } // legacy
+      if(raw===null) return defaultVal!==undefined?defaultVal:null;
       try{ return JSON.parse(raw); }catch(e){ return raw; }
     }catch(e){ return defaultVal!==undefined?defaultVal:null; }
   }
-
-  // Remove data scoped to the current tenant
   function removeTenantData(key){
-    try{ localStorage.removeItem(tenantKey(key)); return true; }
-    catch(e){ return false; }
-  }
-
-  // Clear ALL data for the current tenant (transactional keys only — preserves system keys)
-  function clearTenantData(){
     try{
-      var tKey = tenantKey('');
-      var toRemove = [];
-      for(var i=0;i<localStorage.length;i++){
-        var k = localStorage.key(i);
-        if(k && k.indexOf(tKey)===0) toRemove.push(k);
-      }
-      toRemove.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
+      localStorage.removeItem(makeStorageKey(key));
+      localStorage.removeItem('ARMP_'+getCurrentUser()+'_'+key); // legacy
       return true;
     }catch(e){ return false; }
   }
-
-  // System-wide keys (shared across all tenants — users registry, demo tracking, etc.)
-  function saveSystem(key, value){
+  function clearCurrentUserData(){
     try{
-      localStorage.setItem(SYS_PREFIX+key, typeof value==='string'?value:JSON.stringify(value));
+      var pre=makeStorageKey(''); var leg='ARMP_'+getCurrentUser()+'_'; var rem=[];
+      for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&(k.indexOf(pre)===0||k.indexOf(leg)===0))rem.push(k); }
+      rem.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
       return true;
     }catch(e){ return false; }
   }
-  function getSystem(key, defaultVal){
+  function clearTenantAllData(){
     try{
-      var raw=localStorage.getItem(SYS_PREFIX+key);
+      var pre='ARMP:'+getCurrentTenant()+':'; var rem=[];
+      for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf(pre)===0)rem.push(k); }
+      rem.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+      return true;
+    }catch(e){ return false; }
+  }
+  function clearTenantData(){ return clearCurrentUserData(); }
+
+  // ── System-wide ──────────────────────────────────────────────────────────
+  function saveSystem(key,value){
+    try{ localStorage.setItem(_sysKey(key),typeof value==='string'?value:JSON.stringify(value)); return true; }catch(e){ return false; }
+  }
+  function getSystem(key,defaultVal){
+    try{
+      var raw=localStorage.getItem(_sysKey(key));
+      if(raw===null) raw=localStorage.getItem('armp_'+key); // legacy
       if(raw===null) return defaultVal!==undefined?defaultVal:null;
       try{ return JSON.parse(raw); }catch(e){ return raw; }
     }catch(e){ return defaultVal!==undefined?defaultVal:null; }
   }
   function removeSystem(key){
-    try{ localStorage.removeItem(SYS_PREFIX+key); return true; }catch(e){ return false; }
+    try{ localStorage.removeItem(_sysKey(key)); return true; }catch(e){ return false; }
   }
 
-  // Demo-specific keys (cross-session, cross-user, for tracking used demo emails)
-  function saveDemo(key, value){
-    try{
-      localStorage.setItem(DEMO_PREFIX+key, typeof value==='string'?value:JSON.stringify(value));
-      return true;
-    }catch(e){ return false; }
+  // ── Demo tracking ────────────────────────────────────────────────────────
+  function saveDemo(key,value){
+    var email=(typeof CURRENT_USER!=='undefined'&&CURRENT_USER)?CURRENT_USER:'_demo';
+    try{ localStorage.setItem(_demoKey(email,key),typeof value==='string'?value:JSON.stringify(value)); return true; }catch(e){ return false; }
   }
-  function getDemo(key, defaultVal){
+  function getDemo(key,defaultVal){
+    var email=(typeof CURRENT_USER!=='undefined'&&CURRENT_USER)?CURRENT_USER:'_demo';
     try{
-      var raw=localStorage.getItem(DEMO_PREFIX+key);
+      var raw=localStorage.getItem(_demoKey(email,key));
       if(raw===null) return defaultVal!==undefined?defaultVal:null;
       try{ return JSON.parse(raw); }catch(e){ return raw; }
     }catch(e){ return defaultVal!==undefined?defaultVal:null; }
   }
 
   return {
-    getCurrentTenant: getCurrentTenant,
-    tenantKey: tenantKey,
-    save: saveTenantData,
-    get: getTenantData,
-    remove: removeTenantData,
-    clearTenant: clearTenantData,
-    saveSystem: saveSystem,
-    getSystem: getSystem,
-    removeSystem: removeSystem,
-    saveDemo: saveDemo,
-    getDemo: getDemo
+    getCurrentUser:getCurrentUser, getCurrentTenant:getCurrentTenant,
+    makeStorageKey:makeStorageKey, tenantKey:makeStorageKey,
+    save:saveTenantData, get:getTenantData, remove:removeTenantData,
+    saveTenantData:saveTenantData, getTenantData:getTenantData, removeTenantData:removeTenantData,
+    clearTenantData:clearTenantData, clearCurrentUserData:clearCurrentUserData,
+    clearTenantAllData:clearTenantAllData,
+    saveSystem:saveSystem, getSystem:getSystem, removeSystem:removeSystem,
+    saveDemo:saveDemo, getDemo:getDemo
   };
 })();
+
 
 // ════════════════════════════════════════════════════════════════════════════
 // CUSTOMER CONFIGURATION LAYER  (Phase 5 — scalable config)
@@ -6805,7 +6845,7 @@ function _matchReasonsHtml(r){
 var _excSearchQuery = '';
 var _excSearchTimer;
 function excSearchHandler(q){
-  console.log('[excSearchHandler] query=',JSON.stringify(q));
+  
   clearTimeout(_excSearchTimer);
   _excSearchTimer=setTimeout(function(){
     _excSearchQuery=String(q||'').trim().toLowerCase();
@@ -7601,17 +7641,119 @@ function exportReporting(fmt){
 }
 
 // ── Audit trail ──
-const GLOBAL_AUDIT=[];
-function addAudit(action,ref){
-  GLOBAL_AUDIT.unshift({ts:new Date().toLocaleTimeString(),user:CURRENT_USER||'user',action,ref:ref||''});
-  initAuditTbl();
+// ══════════════════════════════════════════════════════════
+// AUDIT MANAGER — structured per-action audit trail
+// Records: action, user, role, timestamp, reference, detail
+// Persisted per-user via StorageManager (non-demo users only)
+// ══════════════════════════════════════════════════════════
+var AuditManager = (function(){
+  var _records = [];
+  var MAX = 500;
+
+  // Action type constants
+  var ACTIONS = {
+    LOGIN:'Login', LOGOUT:'Logout',
+    IMPORT_INV:'Invoice import', IMPORT_REM:'Remittance import', IMPORT_DEL:'Delivery report import',
+    AUTO_MATCH:'Auto match', APPROVAL:'Approval', REOPEN:'Reopen',
+    WRITE_OFF:'Write-off', BANK_FEE:'Bank fee', CASH_ON_ACCOUNT:'Cash on account',
+    RECONCILE:'Reconciliation', EXPORT:'Export',
+    ROLE_CHANGE:'Role changed', ROLE_BLOCKED:'Role change blocked',
+    PLAN_CHANGE:'Plan changed', DEMO_STARTED:'Demo started', DEMO_EXPIRED:'Demo expired',
+    RESET:'Data reset', SETTINGS:'Settings saved',
+    NOTE:'Note'
+  };
+
+  function _role(){
+    try{ return (typeof USER_ROLE!=='undefined'&&USER_ROLE)?USER_ROLE:(typeof IS_MASTER!=='undefined'&&IS_MASTER?'admin':'unknown'); }catch(e){ return 'unknown'; }
+  }
+  function _user(){
+    try{ return (typeof CURRENT_USER!=='undefined'&&CURRENT_USER)?CURRENT_USER:'system'; }catch(e){ return 'system'; }
+  }
+
+  function record(action, ref, detail){
+    var entry = {
+      ts:   new Date().toISOString(),
+      tsDisplay: new Date().toLocaleTimeString(),
+      user: _user(),
+      role: _role(),
+      action: action || 'Action',
+      ref:    ref    || '',
+      detail: detail || ''
+    };
+    _records.unshift(entry);
+    if(_records.length > MAX) _records = _records.slice(0, MAX);
+    // Persist for non-demo users
+    try{
+      if(typeof IS_DEMO==='undefined'||!IS_DEMO){
+        StorageManager.save('audit_trail', JSON.stringify(_records.slice(0,100)));
+      }
+    }catch(e){}
+    // Refresh audit table if visible
+    _refreshTable();
+    return entry;
+  }
+
+  function getRecords(){ return _records.slice(); }
+
+  function load(){
+    try{
+      var saved = StorageManager.get('audit_trail', null);
+      if(saved && Array.isArray(saved)) _records = saved;
+    }catch(e){}
+  }
+
+  function clear(){ _records = []; _refreshTable(); }
+
+  function _refreshTable(){
+    try{
+      var tbody = document.getElementById('audit-tbl-body');
+      if(!tbody) return;
+      if(!_records.length){
+        tbody.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No audit records</div></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = _records.slice(0,100).map(function(a){
+        return '<tr>'+
+          '<td class="td-mono" style="white-space:nowrap;color:var(--t3)">'+(a.tsDisplay||a.ts)+'</td>'+
+          '<td style="color:var(--p);font-weight:700;font-size:11.5px">'+(a.user||'—')+'</td>'+
+          '<td style="font-size:11px;color:var(--t3)">'+(a.role||'—')+'</td>'+
+          '<td style="color:var(--t2)">'+(a.action||'—')+'</td>'+
+          '<td class="td-mono" style="color:var(--t3);font-size:11.5px">'+(a.ref||(a.detail?a.detail.slice(0,60):''))+'</td>'+
+        '</tr>';
+      }).join('');
+    }catch(e){}
+  }
+
+  return { ACTIONS:ACTIONS, record:record, getRecords:getRecords, load:load, clear:clear };
+})();
+
+// ── Backward-compat: addAudit → AuditManager.record ──────────────────────
+const GLOBAL_AUDIT = { // proxy for legacy code that reads GLOBAL_AUDIT directly
+  get length(){ return AuditManager.getRecords().length; },
+  unshift: function(v){ /* handled by AuditManager.record */ },
+  slice: function(a,b){ return AuditManager.getRecords().slice(a,b); }
+};
+function addAudit(action,ref,detail){
+  AuditManager.record(action, ref, detail);
 }
 function initAuditTbl(){
-  const tbody=document.getElementById('audit-tbl-body');if(!tbody)return;
-  if(!GLOBAL_AUDIT.length){tbody.innerHTML='<tr><td colspan="4"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No audit records</div></div></td></tr>';return;}
-  tbody.innerHTML=GLOBAL_AUDIT.slice(0,100).map(a=>
-    `<tr><td class="td-mono">${a.ts}</td><td style="color:var(--p);font-weight:700">${a.user}</td><td style="color:var(--t2)">${a.action}</td><td class="td-mono" style="color:var(--t3)">${a.ref}</td></tr>`
-  ).join('');
+  // Delegates to AuditManager internal refresh
+  var tbody=document.getElementById('audit-tbl-body');
+  if(!tbody)return;
+  var records=AuditManager.getRecords();
+  if(!records.length){
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No audit records</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=records.slice(0,100).map(function(a){
+    return '<tr>'+
+      '<td class="td-mono" style="white-space:nowrap;color:var(--t3)">'+(a.tsDisplay||a.ts)+'</td>'+
+      '<td style="color:var(--p);font-weight:700;font-size:11.5px">'+(a.user||'—')+'</td>'+
+      '<td style="font-size:11px;color:var(--t3)">'+(a.role||'—')+'</td>'+
+      '<td style="color:var(--t2)">'+(a.action||'—')+'</td>'+
+      '<td class="td-mono" style="color:var(--t3);font-size:11.5px">'+(a.ref||'')+'</td>'+
+    '</tr>';
+  }).join('');
 }
 
 // ── Login ──
@@ -7668,30 +7810,29 @@ function doRegister(){
   const users=getUsers();
   if(users[email]){showError('An account with this email already exists.');return;}
   let plan=lic&&VALID_KEYS[lic]?VALID_KEYS[lic]:'demo';
-  // 7-day demo uniqueness: if requesting demo, check if this email already used a free trial
+  // 7-day demo uniqueness: one free trial per email ever
+  // [Backend-required]: server-side validation via Netlify function for strong enforcement
   if(plan==='demo'){
     try{
-      const usedDemos=JSON.parse(localStorage.getItem('armp_demo_emails_used')||'{}');
-      if(usedDemos[email]){
+      if(DemoManager.hasUsedDemo(email)){
         showError('This email has already used a free 7-day demo. Please purchase a plan to continue. Contact info@armatchpro.com for assistance.');
         return;
       }
-      // Register demo usage with start and expiry
-      const now=new Date();
-      const exp=new Date(now);exp.setDate(exp.getDate()+7);
-      usedDemos[email]={startedAt:now.toISOString(),expiresAt:exp.toISOString()};
-      localStorage.setItem('armp_demo_emails_used',JSON.stringify(usedDemos));
-      // Store demo expiry on the user record
-      const user={name,email,pass:btoa(pass),plan,avatar:'',demoStartedAt:now.toISOString(),demoExpiresAt:exp.toISOString(),role:'ar_specialist'};
+      const demoRecord = DemoManager.registerDemo(email);
+      const user={name,email,pass:btoa(pass),plan,avatar:'',
+        demoStartedAt: demoRecord ? demoRecord.startedAt : new Date().toISOString(),
+        demoExpiresAt: demoRecord ? demoRecord.expiresAt : null,
+        role:'ar_specialist'};
       saveUser(email,user);
-      // Store as lead for admin tracking
+      // Track as lead for admin
       try{
         const leads=JSON.parse(localStorage.getItem('armp_leads')||'[]');
-        leads.push({name,email,company:'',phone:'',erp:'',invoiceVolume:'',plan:'demo',source:'Self-registered demo',ts:now.toISOString(),signupAt:now.toISOString(),expiresAt:exp.toISOString(),demoExpiration:exp.toISOString(),demoStatus:'Demo Active'});
+        leads.push({name,email,company:'',phone:'',erp:'',invoiceVolume:'',plan:'demo',source:'Self-registered demo',ts:new Date().toISOString(),signupAt:user.demoStartedAt,expiresAt:user.demoExpiresAt,demoExpiration:user.demoExpiresAt,demoStatus:'Demo Active'});
         localStorage.setItem('armp_leads',JSON.stringify(leads));
       }catch(e){}
       CURRENT_USER=email;IS_DEMO=true;
       localStorage.setItem('armp_session',email);
+      AuditManager.record(AuditManager.ACTIONS.DEMO_STARTED, email, '7-day demo started');
       launchApp(user);
       return;
     }catch(e){console.warn('demo uniqueness check failed',e);}
@@ -7705,9 +7846,108 @@ function doRegister(){
 
 function doForgot(){toast('Password reset instructions sent if account exists.','');}
 
+// ══════════════════════════════════════════════════════════
+// DEMO MANAGER — 7-day free trial lifecycle
+// NOTE: Backend-required for bullet-proof enforcement.
+// Frontend enforcement via localStorage is best-effort.
+// A Netlify function or similar serverless handler should
+// validate email uniqueness server-side before issuing demos.
+// ══════════════════════════════════════════════════════════
+var DemoManager = (function(){
+  var DEMO_DURATION_DAYS = 7;
+  var USED_DEMOS_KEY = 'armp_demo_emails_used'; // ARMP:SYS: key (system-wide)
+
+  // Check if an email has ever used a demo [Backend-required for strong enforcement]
+  function hasUsedDemo(email){
+    try{
+      email = String(email||'').toLowerCase().trim();
+      var used = JSON.parse(localStorage.getItem(USED_DEMOS_KEY)||'{}');
+      return !!used[email];
+    }catch(e){ return false; }
+  }
+
+  // Register a new demo start for an email
+  function registerDemo(email){
+    try{
+      email = String(email||'').toLowerCase().trim();
+      var now = new Date();
+      var exp = new Date(now); exp.setDate(exp.getDate()+DEMO_DURATION_DAYS);
+      var used = JSON.parse(localStorage.getItem(USED_DEMOS_KEY)||'{}');
+      used[email] = {startedAt:now.toISOString(), expiresAt:exp.toISOString(), email:email};
+      localStorage.setItem(USED_DEMOS_KEY, JSON.stringify(used));
+      return {startedAt:now.toISOString(), expiresAt:exp.toISOString()};
+    }catch(e){ return null; }
+  }
+
+  // Get demo record for an email
+  function getDemoRecord(email){
+    try{
+      email = String(email||'').toLowerCase().trim();
+      var used = JSON.parse(localStorage.getItem(USED_DEMOS_KEY)||'{}');
+      return used[email] || null;
+    }catch(e){ return null; }
+  }
+
+  // Extend demo by N days (admin action)
+  function extendDemo(email, days){
+    try{
+      email = String(email||'').toLowerCase().trim();
+      days = days || DEMO_DURATION_DAYS;
+      var used = JSON.parse(localStorage.getItem(USED_DEMOS_KEY)||'{}');
+      var rec = used[email];
+      if(!rec){ rec = {startedAt:new Date().toISOString(), email:email}; }
+      var base = rec.expiresAt ? new Date(rec.expiresAt) : new Date();
+      if(base < new Date()) base = new Date(); // already expired — extend from now
+      base.setDate(base.getDate()+days);
+      rec.expiresAt = base.toISOString();
+      rec.extendedAt = new Date().toISOString();
+      rec.extendedBy = (typeof CURRENT_USER!=='undefined')?CURRENT_USER:'admin';
+      used[email] = rec;
+      localStorage.setItem(USED_DEMOS_KEY, JSON.stringify(used));
+      // Also update user record
+      try{
+        var users=JSON.parse(localStorage.getItem('armp_users')||'{}');
+        if(users[email]){ users[email].demoExpiresAt=rec.expiresAt; users[email].demoExtendedAt=rec.extendedAt; localStorage.setItem('armp_users',JSON.stringify(users)); }
+      }catch(e){}
+      return rec;
+    }catch(e){ return null; }
+  }
+
+  // Check if an active demo session is valid
+  function isDemoValid(user){
+    if(!user) return false;
+    if(user.isMaster) return true;
+    if((user.plan||'demo')!=='demo') return true; // paid plan
+    if(!user.demoExpiresAt) return true; // no expiry set (legacy)
+    return new Date(user.demoExpiresAt) > new Date();
+  }
+
+  // Get all demo users (for admin)
+  function getAllDemoUsers(){
+    try{
+      var users=JSON.parse(localStorage.getItem('armp_users')||'{}');
+      return Object.entries(users)
+        .filter(function(e){ return (e[1].plan||'demo')==='demo'; })
+        .map(function(e){
+          var rec = getDemoRecord(e[0]);
+          return Object.assign({},e[1],{email:e[0],_demoRecord:rec});
+        });
+    }catch(e){ return []; }
+  }
+
+  return {
+    DEMO_DURATION_DAYS: DEMO_DURATION_DAYS,
+    hasUsedDemo: hasUsedDemo,
+    registerDemo: registerDemo,
+    getDemoRecord: getDemoRecord,
+    extendDemo: extendDemo,
+    isDemoValid: isDemoValid,
+    getAllDemoUsers: getAllDemoUsers
+  };
+})();
+
 function demoLogin(){
   IS_DEMO=true;CURRENT_USER='demo@armatchpro.com';
-  // Read plan from demo access record — supports Pro trial from landing page
   var demoPlan='demo';
   var demoName='Demo User';
   try{
@@ -7715,7 +7955,6 @@ function demoLogin(){
     if(raw){
       var acc=JSON.parse(raw);
       if(acc&&(acc.enabled||acc.granted)){
-        // Check not expired
         if(!acc.expiresAt||new Date(acc.expiresAt)>new Date()){
           demoPlan=acc.plan||'demo';
           demoName=acc.firstName||acc.fullName||'Demo User';
@@ -7777,13 +8016,16 @@ function launchApp(user){
   // ── Initialize user-scoped state (AFTER CURRENT_USER/IS_DEMO are set) ──
   try{ _initUserFirstLoad(); }catch(e){}
   try{ _initUserHourlyRate(); }catch(e){}
-  // Load per-user dismissed notifications (prevents cross-account notification bleed)
+  // Load per-user audit trail (non-demo)
+  if(!IS_DEMO || IS_MASTER){ try{ AuditManager.load(); }catch(e){} }
+  // Load per-user dismissed notifications
   try{ _dismissedNotifs = JSON.parse(StorageManager.get('dismissed_notifs','{}')||'{}'); }catch(e){ _dismissedNotifs={}; }
 
-  // ── Check demo expiry ──
-  if((user.plan||'demo')==='demo'&&user.demoExpiresAt&&!user.isMaster){
-    const exp=new Date(user.demoExpiresAt);
-    if(exp<new Date()){
+  // ── Check demo validity via DemoManager ──
+  if((user.plan||'demo')==='demo'&&!user.isMaster){
+    if(!DemoManager.isDemoValid(user)){
+      const exp = user.demoExpiresAt ? new Date(user.demoExpiresAt) : new Date(0);
+      AuditManager.record(AuditManager.ACTIONS.DEMO_EXPIRED, user.email||CURRENT_USER);
       setTimeout(function(){
         showModal('Your 7-day free demo has ended',
           '<div style="text-align:center;padding:12px 0">'+
@@ -7926,7 +8168,7 @@ function showUpgrade(title,sub){
   }
 }
 function showModal(title,bodyHtml){
-  console.log('[showModal] title=',JSON.stringify(title));
+  
   var overlay=document.getElementById('exc-modal-overlay');
   var t=document.getElementById('exc-modal-title');
   var b=document.getElementById('exc-modal-body');
@@ -7957,7 +8199,7 @@ function closeModal(){
   }
 }
 function showConfirm(msg,onYes,yesLabel,yesClass){
-  console.log('[showConfirm]',msg.split('\n')[0]);
+  
   closeModal();
   yesLabel=yesLabel||'Confirm';yesClass=yesClass||'btn-r';
   // Stash the callback in a stable slot — inline onclick will read it
@@ -7982,7 +8224,7 @@ function showConfirm(msg,onYes,yesLabel,yesClass){
       }
     },50);
   } else {
-    console.log('[showConfirm] no modal infrastructure — using window.confirm');
+    
     var fn=window.__lastConfirmCb;window.__lastConfirmCb=null;
     if(window.confirm(msg)&&fn)fn();
   }
@@ -8646,7 +8888,7 @@ function revertException(idx){
 
 
 function excWriteOffModal(excIdx){
-  console.log('[excWriteOffModal] called with idx=',excIdx,'EXC.length=',EXC.length);
+  
   var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
   // Build account list from INV + PAY
   var acctMap={};
@@ -8764,7 +9006,7 @@ function excActionOpen(idx, action){
     }, 30);
   }catch(e){console.warn('[excActionOpen clear]',e);}
 
-  console.log('[excActionOpen] idx=',idx,'action=',action);
+  
   var ex = EXC[idx];
   if(!ex){toast('Exception not found','warn');return;}
   var lbl = _excActionLabels(action);
@@ -9123,7 +9365,7 @@ function _excActionApprove(){
 }
 
 function excApplyToInvModal(excIdx){
-  console.log('[excApplyToInvModal] called with idx=',excIdx,'EXC.length=',EXC.length);
+  
   var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
   var acctMap={};INV.forEach(function(v){if(v.a&&v.c)acctMap[v.a]=v.c;});
   PAY.forEach(function(p){if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
@@ -9177,7 +9419,7 @@ function _excApplyToInvConfirm(excIdx){
 }
 
 function excBankFeeModal(excIdx){
-  console.log('[excBankFeeModal] called with idx=',excIdx,'EXC.length=',EXC.length);
+  
   var ex=EXC[excIdx];if(!ex){toast('Exception not found (idx='+excIdx+')','warn');return;}
   var acctMap={};INV.forEach(function(v){if(v.a&&v.c)acctMap[v.a]=v.c;});
   PAY.forEach(function(p){if(p.a&&p.c&&!acctMap[p.a])acctMap[p.a]=p.c;});
@@ -9237,7 +9479,7 @@ function _excBankFeeConfirm(excIdx){
 }
 
 function resolveException(idx,dec){
-  console.log('[resolveException] idx=',idx,'dec=',JSON.stringify(dec),'EXC.length=',EXC.length);
+  
   const ex=EXC[idx];if(!ex){console.warn('[resolveException] EXC['+idx+'] not found');toast('Exception not found','warn');return;}
   if(!dec||dec==='— Select —'||dec==='— Select action —'||dec===''){return;}
   if(dec==='Apply to invoice'){
@@ -11604,13 +11846,133 @@ function processImport(){
 // ══════════════════════════════════════════════════════════
 // STRIPE + CHECKOUT
 // ══════════════════════════════════════════════════════════
-function goToCheckout(plan){
-  if(typeof _STRIPE!=='undefined'&&_STRIPE_PRICES&&_STRIPE_PRICES[plan]){
-    _STRIPE.redirectToCheckout({lineItems:[{price:_STRIPE_PRICES[plan],quantity:1}],mode:'subscription',successUrl:window.location.origin+'/app.html?checkout=success&plan='+plan,cancelUrl:window.location.origin+'/index.html#pricing'}).then(r=>{if(r.error)toast(r.error.message,'warn');});
-  }else{
-    window.open('https://armatchpro.com/#pricing','_blank');
+// BILLING MANAGER — Stripe scaffolding + billing state machine
+// Backend-required: Stripe webhooks, subscription management,
+//   and billing state persistence must run server-side.
+//   This frontend layer handles: checkout redirects, state display,
+//   plan enforcement, and UI gating only.
+// ══════════════════════════════════════════════════════════
+var BillingManager = (function(){
+  // ── Billing states ────────────────────────────────────────────────────
+  var STATES = {
+    TRIAL_ACTIVE:  'trial_active',   // 7-day free demo, still valid
+    TRIAL_EXPIRED: 'trial_expired',  // demo ended, no subscription
+    ACTIVE:        'active',         // paid subscription, current
+    PAST_DUE:      'past_due',       // payment failed, grace period [Backend-required]
+    CANCELED:      'canceled',       // subscription canceled, access ends at period end
+    SUSPENDED:     'suspended'       // admin-suspended or fraud hold
+  };
+
+  // ── Price IDs (Stripe) ── replace with real IDs when Stripe products created ──
+  var PRICES = {
+    starter_annual:   'price_1TTbjvK5o648Z7JzPkL4QyOu', // Starting at $799/mo
+    starter_monthly:  'price_STARTER_MONTHLY_PLACEHOLDER',// Starting at $999/mo
+    pro_annual:       'price_1TTbkdK5o648Z7JzuRmA4vVJ',  // Starting at $1,399/mo
+    pro_monthly:      'price_PRO_MONTHLY_PLACEHOLDER',    // Starting at $1,599/mo
+    team_annual:      'price_1TTblGK5o648Z7Jzg4vSZT01',  // Starting at $2,699/mo
+    team_monthly:     'price_TEAM_MONTHLY_PLACEHOLDER'    // Starting at $2,999/mo
+  };
+
+  // ── Plan label → Stripe price map ─────────────────────────────────────
+  var PLAN_PRICE_MAP = {
+    starter:  { annual: PRICES.starter_annual, monthly: PRICES.starter_monthly },
+    pro:      { annual: PRICES.pro_annual,     monthly: PRICES.pro_monthly     },
+    team:     { annual: PRICES.team_annual,    monthly: PRICES.team_monthly    }
+  };
+
+  // ── Stripe public key ──────────────────────────────────────────────────
+  var PK = 'pk_live_51KRoPCK5o648Z7JzyGJcNQ7YFaLRCQgBysNIcRc7wiIwjKRHaB6ts4STYACp4ZxCDxnQzt501NsHhCbeEangyoyf00Y4b57dwP';
+
+  var _stripeInstance = null;
+  function _stripe(){
+    if(!_stripeInstance){
+      try{ _stripeInstance = (typeof Stripe !== 'undefined') ? Stripe(PK) : null; }catch(e){}
+    }
+    return _stripeInstance;
   }
+
+  // ── Determine current billing state for the logged-in user ────────────
+  function getBillingState(user){
+    user = user || _currentUser();
+    if(!user) return STATES.TRIAL_EXPIRED;
+    var plan = user.plan || 'demo';
+    if(plan === 'demo'){
+      if(user.demoExpiresAt && new Date(user.demoExpiresAt) < new Date()) return STATES.TRIAL_EXPIRED;
+      return STATES.TRIAL_ACTIVE;
+    }
+    if(user.suspended) return STATES.SUSPENDED;
+    if(user.billingState) return user.billingState; // [Backend-required] set via webhook
+    return STATES.ACTIVE; // assume active for paid plans without backend state
+  }
+
+  function _currentUser(){
+    try{
+      if(typeof CURRENT_USER==='undefined'||!CURRENT_USER) return null;
+      var users = typeof getUsers==='function'?getUsers():{};
+      return users[CURRENT_USER] || null;
+    }catch(e){ return null; }
+  }
+
+  // ── Checkout redirect ──────────────────────────────────────────────────
+  // billing: 'annual' | 'monthly' (default: 'annual')
+  function checkout(plan, billing){
+    billing = billing || 'annual';
+    var planPrices = PLAN_PRICE_MAP[plan];
+    if(!planPrices){ window.open('https://armatchpro.com/#pricing','_blank'); return; }
+    var priceId = planPrices[billing];
+    if(!priceId || priceId.indexOf('PLACEHOLDER')>=0){
+      // Price not yet configured — redirect to pricing page
+      window.open('https://armatchpro.com/#pricing','_blank');
+      return;
+    }
+    var stripe = _stripe();
+    if(!stripe){ window.open('https://armatchpro.com/#pricing','_blank'); return; }
+    var email = (typeof CURRENT_USER!=='undefined'&&CURRENT_USER) ? CURRENT_USER : '';
+    stripe.redirectToCheckout({
+      lineItems:[{price:priceId, quantity:1}],
+      mode:'subscription',
+      customerEmail: email || undefined,
+      successUrl: window.location.origin+'/app.html?checkout=success&plan='+plan+'&billing='+billing,
+      cancelUrl:  window.location.origin+'/index.html#pricing'
+    }).then(function(r){ if(r&&r.error && typeof toast==='function') toast(r.error.message,'warn'); });
+  }
+
+  // ── Plan enforcement ───────────────────────────────────────────────────
+  function canAccess(feature){
+    var state = getBillingState();
+    if(state === STATES.SUSPENDED || state === STATES.TRIAL_EXPIRED) return false;
+    if(typeof hasFeat === 'function') return hasFeat(feature);
+    return false;
+  }
+
+  // ── Billing state banner (non-active states) ───────────────────────────
+  function showBillingBanner(){
+    var state = getBillingState();
+    if(state === STATES.ACTIVE || state === STATES.TRIAL_ACTIVE) return;
+    var msg = {
+      [STATES.TRIAL_EXPIRED]: 'Your 7-day demo has ended. Upgrade to continue.',
+      [STATES.PAST_DUE]:      'Your payment is past due. Please update your billing.',
+      [STATES.CANCELED]:      'Your subscription is canceled. Renew to restore access.',
+      [STATES.SUSPENDED]:     'Your account has been suspended. Contact support.'
+    }[state];
+    if(msg && typeof toast==='function') toast(msg, 'warn');
+  }
+
+  return {
+    STATES: STATES,
+    PRICES: PRICES,
+    getBillingState: getBillingState,
+    checkout: checkout,
+    canAccess: canAccess,
+    showBillingBanner: showBillingBanner
+  };
+})();
+
+// ── Backward-compat shim: goToCheckout → BillingManager.checkout ──────────
+function goToCheckout(plan, billing){
+  BillingManager.checkout(plan, billing||'annual');
 }
+function goCheckout(plan){ BillingManager.checkout(plan,'annual'); }
 
 // ══════════════════════════════════════════════════════════
 // DRAG AND DROP
@@ -11711,11 +12073,10 @@ window.addEventListener('load',()=>{
 </script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-// Stripe init (after SDK loads)
-try{
-  var _STRIPE=Stripe('pk_live_51KRoPCK5o648Z7JzyGJcNQ7YFaLRCQgBysNIcRc7wiIwjKRHaB6ts4STYACp4ZxCDxnQzt501NsHhCbeEangyoyf00Y4b57dwP');
-  var _STRIPE_PRICES={starter:'price_1TTbjvK5o648Z7JzPkL4QyOu',pro:'price_1TTbkdK5o648Z7JzuRmA4vVJ',team:'price_1TTblGK5o648Z7Jzg4vSZT01'};
-}catch(e){}
+// ── Stripe: BillingManager handles Stripe init lazily — no setup needed here ──
+// _STRIPE and _STRIPE_PRICES are preserved as aliases for any legacy references
+var _STRIPE = null; // initialized lazily by BillingManager._stripe() on first checkout
+var _STRIPE_PRICES = {}; // use BillingManager.PRICES instead
 
 // ═══════════════════════════════════════════════════════════
 // PHASE 6 — COMPLETE STANDALONE OVERRIDES
