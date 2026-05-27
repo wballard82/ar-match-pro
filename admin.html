@@ -191,6 +191,10 @@ tr:hover td{background:rgba(20,168,216,.03)}
         <div class="a-ni" onclick="sp('objections',this)">🛡 Objection scripts</div>
         <div class="a-ni" onclick="sp('demo-guide',this)">🎬 Demo playbook</div>
       </div>
+      <div class="a-sidebar-sec">
+        <div class="a-sl">Security</div>
+        <div class="a-ni" onclick="sp('admin-audit',this)">🔐 Admin audit log</div>
+      </div>
       <div class="a-footer">AR Match Pro Admin<br>© 2026 armatchpro.com</div>
     </div>
     <div class="a-main">
@@ -231,6 +235,15 @@ tr:hover td{background:rgba(20,168,216,.03)}
             <tbody id="subs-tbody"><tr><td colspan="10"><div class="em"><div class="em-icon">💳</div><div class="em-t">No paid subscriptions yet</div></div></td></tr></tbody>
           </table></div>
         </div>
+      </div>
+
+      <!-- ADMIN AUDIT LOG -->
+      <div id="panel-admin-audit" class="a-panel">
+        <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Admin Audit Log</div><div style="font-size:13px;color:var(--t3);margin-top:2px">All admin actions — plan changes, deletions, demo extensions, account activations</div></div>
+        <div class="card"><div class="tbl-wrap"><table>
+          <thead><tr><th>Timestamp</th><th>Action</th><th>Detail</th></tr></thead>
+          <tbody id="admin-audit-tbody"><tr><td colspan="3"><div class="em"><div class="em-icon">📋</div><div class="em-t">No admin actions yet</div></div></td></tr></tbody>
+        </table></div></div>
       </div>
 
       <!-- CREATE USER -->
@@ -525,6 +538,7 @@ function sp(id,el){
   if(id==='leads'){renderLeads();syncNetlifyLeads(true);}
   if(id==='keys')renderGenKeys();
   if(id==='overview')refreshStats();
+  if(id==='admin-audit')renderAdminAudit();
 }
 
 function refreshStats(){
@@ -559,20 +573,86 @@ function renderUsers(filter){
     <td style="font-size:11.5px;color:var(--t2)">${billingLabel}</td>
     <td style="font-size:11.5px;color:var(--t2)">${u.role||'—'}</td>
     <td class="mono" style="font-size:11.5px">${u.created?new Date(u.created).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—'}</td>
-    <td><div style="display:flex;gap:5px">
+    <td><div style="display:flex;gap:5px;flex-wrap:wrap">
       <select class="f-select" style="width:120px;padding:4px 8px;font-size:11.5px" onchange="changePlan('${email}',this.value)">
         <option ${(u.plan||'demo')==='demo'?'selected':''} value="demo">Demo</option>
         <option ${u.plan==='starter'?'selected':''} value="starter">Starter</option>
         <option ${u.plan==='pro'?'selected':''} value="pro">Pro</option>
         <option ${u.plan==='team'?'selected':''} value="team">Team</option>
       </select>
+      ${isDemo?`<button class="btn btn-outline btn-sm" onclick="extendDemo('${email}')" title="Extend demo by 7 days">+7d</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="toggleActive('${email}')" style="color:${u.disabled?'var(--g)':'#92400E'}">${u.disabled?'Activate':'Deactivate'}</button>
       <button class="btn btn-danger btn-sm" onclick="deleteUser('${email}')">Delete</button>
     </div></td>
   </tr>`;}).join('');
 }
 
-function changePlan(email,plan){const u=getUsers();if(u[email]){u[email].plan=plan;saveUsers(u);toast('Plan updated: '+email+' → '+plan);refreshStats()}}
-function deleteUser(email){if(!confirm('Delete '+email+'?'))return;const u=getUsers();delete u[email];saveUsers(u);renderUsers('');refreshStats();toast('Deleted: '+email)}
+function changePlan(email,plan){
+  const u=getUsers();
+  if(u[email]){
+    u[email].plan=plan;
+    u[email].planUpdatedAt=new Date().toISOString();
+    u[email].planUpdatedBy='admin';
+    saveUsers(u);
+    _adminLog('Plan changed',email+' → '+plan);
+    toast('Plan updated: '+email+' → '+plan);
+    refreshStats();
+    renderUsers('');
+  }
+}
+function deleteUser(email){
+  if(!confirm('Delete '+email+'?\n\nThis cannot be undone. All user data will be removed.'))return;
+  const u=getUsers();
+  delete u[email];
+  saveUsers(u);
+  _adminLog('User deleted',email);
+  renderUsers('');
+  refreshStats();
+  toast('Deleted: '+email);
+}
+function toggleActive(email){
+  const u=getUsers();
+  if(!u[email])return;
+  u[email].disabled=!u[email].disabled;
+  u[email].disabledAt=u[email].disabled?new Date().toISOString():null;
+  saveUsers(u);
+  _adminLog(u[email].disabled?'Account deactivated':'Account activated', email);
+  renderUsers('');
+  toast(u[email].disabled?'Account deactivated: '+email:'Account activated: '+email);
+}
+function extendDemo(email){
+  const u=getUsers();
+  if(!u[email])return;
+  const newExp=new Date();
+  newExp.setDate(newExp.getDate()+7);
+  u[email].demoExpiresAt=newExp.toISOString();
+  u[email].demoExtendedAt=new Date().toISOString();
+  u[email].demoExtendedBy='admin';
+  saveUsers(u);
+  // Also update the demo_emails_used record
+  try{
+    const used=JSON.parse(localStorage.getItem('armp_demo_emails_used')||'{}');
+    if(used[email]){ used[email].expiresAt=newExp.toISOString(); used[email].extended=true; }
+    localStorage.setItem('armp_demo_emails_used',JSON.stringify(used));
+  }catch(e){}
+  _adminLog('Demo extended',email+' → expires '+newExp.toLocaleDateString());
+  renderUsers('');
+  toast('Demo extended 7 days: '+email);
+}
+// Admin audit log
+var _adminAuditLog=JSON.parse(localStorage.getItem('armp_admin_audit')||'[]');
+function _adminLog(action, detail){
+  _adminAuditLog.unshift({ts:new Date().toISOString(),action,detail});
+  if(_adminAuditLog.length>500)_adminAuditLog=_adminAuditLog.slice(0,500);
+  try{localStorage.setItem('armp_admin_audit',JSON.stringify(_adminAuditLog));}catch(e){}
+}
+function renderAdminAudit(){
+  const tbody=document.getElementById('admin-audit-tbody');
+  if(!tbody)return;
+  const logs=JSON.parse(localStorage.getItem('armp_admin_audit')||'[]');
+  if(!logs.length){tbody.innerHTML='<tr><td colspan="3"><div class="em"><div class="em-icon">📋</div><div class="em-t">No admin actions yet</div></div></td></tr>';return;}
+  tbody.innerHTML=logs.slice(0,100).map(l=>`<tr><td class="mono" style="white-space:nowrap">${new Date(l.ts).toLocaleString()}</td><td style="font-weight:500">${l.action||'—'}</td><td style="color:var(--t2)">${l.detail||'—'}</td></tr>`).join('');
+}
 
 function createUser(){
   const name=document.getElementById('cu-name').value.trim();

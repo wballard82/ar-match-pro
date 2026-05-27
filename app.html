@@ -21,6 +21,21 @@
   }
 })();
 </script>
+<!-- Global error boundary: catch uncaught JS errors to prevent blank screens -->
+<script>
+window.onerror = function(msg, src, line, col, err){
+  // Suppress noisy 3rd-party script errors; only log app errors
+  if(src && (src.indexOf('armatchpro')>=0 || src.indexOf('app.html')>=0 || src==='')){
+    console.error('[ARMP Error]', msg, 'at', src, line+':'+col);
+  }
+  // Never show the browser default error UI
+  return true;
+};
+window.addEventListener('unhandledrejection', function(ev){
+  console.warn('[ARMP Unhandled Promise]', ev.reason);
+  ev.preventDefault();
+});
+</script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTRBOEQ4Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMTJCODg2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZmZmZmYiPkFSPC90ZXh0Pjwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5544,11 +5559,15 @@ function _armpCfgDeepMerge(target, source){
 }
 function armpCfgLoad(){
   try{
-    var uid = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? CURRENT_USER : '_global';
-    var raw = localStorage.getItem('armp_config_' + uid) || localStorage.getItem('armp_config');
+    // Use StorageManager (tenant-scoped) first; fall back to old per-uid key for migration
+    var raw = StorageManager.get('armp_cfg', null);
+    if(!raw){
+      // Migration: try old key format
+      var uid = CURRENT_USER || '_global';
+      raw = localStorage.getItem('armp_config_' + uid) || localStorage.getItem('armp_config');
+    }
     if(!raw) return false;
-    var stored = JSON.parse(raw);
-    // Deep-merge stored into a fresh defaults clone so new defaults are present
+    var stored = typeof raw === 'string' ? JSON.parse(raw) : raw;
     var merged = JSON.parse(JSON.stringify(ARMP_CFG_DEFAULTS));
     _armpCfgDeepMerge(merged, stored);
     ARMP_CFG = merged;
@@ -5557,8 +5576,7 @@ function armpCfgLoad(){
 }
 function armpCfgSave(){
   try{
-    var uid = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? CURRENT_USER : '_global';
-    localStorage.setItem('armp_config_' + uid, JSON.stringify(ARMP_CFG));
+    StorageManager.save('armp_cfg', JSON.stringify(ARMP_CFG));
     return true;
   }
   catch(e){ console.warn('[armpCfgSave]', e); return false; }
@@ -6010,6 +6028,115 @@ const VALID_KEYS={
 function sk(k){return 'armp_'+CURRENT_USER+'_'+k;}
 
 // ════════════════════════════════════════════════════════════════════════════
+// STORAGE MANAGER — Phase 1: Multi-tenant data isolation
+// All localStorage access should route through these helpers.
+// Keys are namespaced: ARMP_{userId}_{key} for user data
+//                      ARMP_SYS_{key} for system-wide data (users registry, etc.)
+//                      ARMP_DEMO_{key} for cross-session demo tracking
+// ════════════════════════════════════════════════════════════════════════════
+var StorageManager = (function(){
+  var PREFIX      = 'ARMP_';
+  var SYS_PREFIX  = 'ARMP_SYS_';
+  var DEMO_PREFIX = 'ARMP_DEMO_';
+
+  // Get the current tenant ID (user email, lowercased)
+  function getCurrentTenant(){
+    try{ return (typeof CURRENT_USER!=='undefined'&&CURRENT_USER)?CURRENT_USER.toLowerCase():'_anon'; }
+    catch(e){ return '_anon'; }
+  }
+
+  // Build a fully-namespaced key for the current user
+  function tenantKey(key){
+    return PREFIX + getCurrentTenant().replace(/[^a-z0-9@._-]/gi,'_') + '_' + key;
+  }
+
+  // Save data scoped to the current tenant
+  function saveTenantData(key, value){
+    try{
+      var serialized = (typeof value === 'string') ? value : JSON.stringify(value);
+      localStorage.setItem(tenantKey(key), serialized);
+      return true;
+    }catch(e){ console.warn('[StorageManager.saveTenantData]', key, e); return false; }
+  }
+
+  // Get data scoped to the current tenant
+  function getTenantData(key, defaultVal){
+    try{
+      var raw = localStorage.getItem(tenantKey(key));
+      if(raw===null||raw===undefined) return defaultVal!==undefined?defaultVal:null;
+      try{ return JSON.parse(raw); }catch(e){ return raw; }
+    }catch(e){ return defaultVal!==undefined?defaultVal:null; }
+  }
+
+  // Remove data scoped to the current tenant
+  function removeTenantData(key){
+    try{ localStorage.removeItem(tenantKey(key)); return true; }
+    catch(e){ return false; }
+  }
+
+  // Clear ALL data for the current tenant (transactional keys only — preserves system keys)
+  function clearTenantData(){
+    try{
+      var tKey = tenantKey('');
+      var toRemove = [];
+      for(var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        if(k && k.indexOf(tKey)===0) toRemove.push(k);
+      }
+      toRemove.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // System-wide keys (shared across all tenants — users registry, demo tracking, etc.)
+  function saveSystem(key, value){
+    try{
+      localStorage.setItem(SYS_PREFIX+key, typeof value==='string'?value:JSON.stringify(value));
+      return true;
+    }catch(e){ return false; }
+  }
+  function getSystem(key, defaultVal){
+    try{
+      var raw=localStorage.getItem(SYS_PREFIX+key);
+      if(raw===null) return defaultVal!==undefined?defaultVal:null;
+      try{ return JSON.parse(raw); }catch(e){ return raw; }
+    }catch(e){ return defaultVal!==undefined?defaultVal:null; }
+  }
+  function removeSystem(key){
+    try{ localStorage.removeItem(SYS_PREFIX+key); return true; }catch(e){ return false; }
+  }
+
+  // Demo-specific keys (cross-session, cross-user, for tracking used demo emails)
+  function saveDemo(key, value){
+    try{
+      localStorage.setItem(DEMO_PREFIX+key, typeof value==='string'?value:JSON.stringify(value));
+      return true;
+    }catch(e){ return false; }
+  }
+  function getDemo(key, defaultVal){
+    try{
+      var raw=localStorage.getItem(DEMO_PREFIX+key);
+      if(raw===null) return defaultVal!==undefined?defaultVal:null;
+      try{ return JSON.parse(raw); }catch(e){ return raw; }
+    }catch(e){ return defaultVal!==undefined?defaultVal:null; }
+  }
+
+  return {
+    getCurrentTenant: getCurrentTenant,
+    tenantKey: tenantKey,
+    save: saveTenantData,
+    get: getTenantData,
+    remove: removeTenantData,
+    clearTenant: clearTenantData,
+    saveSystem: saveSystem,
+    getSystem: getSystem,
+    removeSystem: removeSystem,
+    saveDemo: saveDemo,
+    getDemo: getDemo
+  };
+})();
+
+// ════════════════════════════════════════════════════════════════════════════
 // CUSTOMER CONFIGURATION LAYER  (Phase 5 — scalable config)
 // Keys: armp_<user>_cfg_*
 // Falls back to existing logic when no config is set
@@ -6338,25 +6465,44 @@ function cfgInit(){
   setTimeout(cfgRenderAll, 0);
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// PRODUCTION STABILITY — Defensive storage, error boundaries, null checks
+// ════════════════════════════════════════════════════════════════════════════
+var _lastSaveError = null;
+var _STORAGE_SIZE_WARN_MB = 4; // warn when localStorage usage approaches 5MB limit
+
 function saveToStorage(){
-  if(IS_DEMO)return;
+  if(IS_DEMO) return;
   try{
+    // Guard: don't save if INV is enormous (would exceed 5MB quota)
+    var estMB = (JSON.stringify(INV).length + JSON.stringify(PAY).length) / 1048576;
+    if(estMB > _STORAGE_SIZE_WARN_MB){
+      console.warn('[saveToStorage] Dataset ~'+estMB.toFixed(1)+'MB — skipping localStorage save to avoid quota error');
+      return;
+    }
     localStorage.setItem(sk('inv'),JSON.stringify(INV));
     localStorage.setItem(sk('pay'),JSON.stringify(PAY));
     localStorage.setItem(sk('res'),JSON.stringify(RES));
     localStorage.setItem(sk('exc'),JSON.stringify(EXC));
     localStorage.setItem(sk('remadvice'),JSON.stringify(REM_ADVICE||[]));
-  }catch(e){}
+    _lastSaveError = null;
+  }catch(e){
+    _lastSaveError = e;
+    // Storage quota exceeded — silently continue; app still works in-memory
+    if(e && e.name === 'QuotaExceededError'){
+      console.warn('[saveToStorage] Quota exceeded — running in-memory mode');
+    }
+  }
 }
 function loadFromStorage(){
-  if(IS_DEMO)return;
+  if(IS_DEMO) return;
   try{
-    const i=localStorage.getItem(sk('inv'));if(i)INV=JSON.parse(i);
-    const p=localStorage.getItem(sk('pay'));if(p)PAY=JSON.parse(p);
-    const r=localStorage.getItem(sk('res'));if(r)RES=JSON.parse(r);
-    const e=localStorage.getItem(sk('exc'));if(e)EXC=JSON.parse(e);
-    const ra=localStorage.getItem(sk('remadvice'));if(ra)REM_ADVICE=JSON.parse(ra);
-  }catch(e){}
+    const i=localStorage.getItem(sk('inv'));if(i){ try{INV=JSON.parse(i);}catch(e){INV=[];} }
+    const p=localStorage.getItem(sk('pay'));if(p){ try{PAY=JSON.parse(p);}catch(e){PAY=[];} }
+    const r=localStorage.getItem(sk('res'));if(r){ try{RES=JSON.parse(r);}catch(e){RES=[];} }
+    const e=localStorage.getItem(sk('exc'));if(e){ try{EXC=JSON.parse(e);}catch(e){EXC=[];} }
+    const ra=localStorage.getItem(sk('remadvice'));if(ra){ try{REM_ADVICE=JSON.parse(ra);}catch(e){REM_ADVICE=[];} }
+  }catch(e){ console.warn('[loadFromStorage]',e); }
 }
 function getUsers(){try{return JSON.parse(localStorage.getItem('armp_users')||'{}')}catch(e){return {}}}
 function saveUser(email,data){const u=getUsers();u[email]=data;localStorage.setItem('armp_users',JSON.stringify(u))}
@@ -6440,12 +6586,11 @@ function sp(id){
 
 // ── Dark mode ──
 function toggleDark(){
-  // Item 1 (v16): Manual theme toggle. Stores user's explicit choice in armp_theme_manual.
+  // Manual theme toggle — stored per-user so accounts don't share theme preferences
   var cur = document.documentElement.dataset.theme || 'light';
   var next = (cur === 'dark') ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
-  try{ localStorage.setItem('armp_theme_manual', next); }catch(e){}
-  // Update any toggle button label
+  try{ StorageManager.save('theme_manual', next); }catch(e){}
   try{
     var btn = document.getElementById('btn-theme-toggle') || document.getElementById('theme-toggle');
     if(btn){
@@ -6459,14 +6604,14 @@ function toggleDark(){
 // ── Item 14: Auto theme by user time of day ──────────────────────────
 function _armpGetUserHour(){
   try{
-    var tz=localStorage.getItem('armp_user_tz');
+    var tz=StorageManager.get('user_tz','');
     if(tz){
       var fmt=new Intl.DateTimeFormat('en-US',{hour:'numeric',hour12:false,timeZone:tz});
       var parts=fmt.formatToParts(new Date());
       var h=parts.find(function(p){return p.type==='hour';});
       if(h)return parseInt(h.value,10);
     }
-  }catch(e){console.warn('[autoTheme] timezone error',e);}
+  }catch(e){}
   return new Date().getHours();
 }
 
@@ -6506,12 +6651,11 @@ function _armpGetUserHour(){
 function armpSetTimezone(tz){
   try{
     if(tz){
-      localStorage.setItem('armp_user_tz', tz);
+      StorageManager.save('user_tz', tz);
     } else {
-      localStorage.removeItem('armp_user_tz');
+      StorageManager.remove('user_tz');
     }
     armpRefreshTimezoneLabel();
-    // Re-apply auto theme based on new timezone (unless manual override is set)
     if(typeof _armpApplyAutoTheme==='function') _armpApplyAutoTheme();
     if(typeof toast==='function') toast(tz ? 'Timezone set to '+tz : 'Using browser default timezone');
   }catch(e){console.warn('[armpSetTimezone]',e);}
@@ -6521,7 +6665,7 @@ function armpRefreshTimezoneLabel(){
     var sel = document.getElementById('s-timezone');
     var lbl = document.getElementById('s-timezone-current');
     if(!lbl) return;
-    var tz = localStorage.getItem('armp_user_tz') || '';
+    var tz = StorageManager.get('user_tz','') || '';
     if(sel) sel.value = tz;
     var nowHour;
     if(tz){
@@ -6539,7 +6683,7 @@ function armpRefreshTimezoneLabel(){
 }
 function armpClearManualTheme(){
   try{
-    localStorage.removeItem('armp_theme_manual');
+    StorageManager.remove('theme_manual');
     if(typeof _armpApplyAutoTheme==='function') _armpApplyAutoTheme();
     if(typeof toast==='function') toast('Theme reset to auto (based on time of day)');
     armpRefreshTimezoneLabel();
@@ -6558,17 +6702,15 @@ function armpClearManualTheme(){
 })();
 
 function _armpApplyAutoTheme(){
-  // Item 1 (v16): Default theme is LIGHT. Manual toggle wins.
-  // The previous time-of-day auto-switch is disabled — timezone selector in Settings
-  // remains for reference but doesn't auto-switch theme any more.
+  // Default theme is LIGHT. Manual toggle per-user wins.
   try{
-    var manual = localStorage.getItem('armp_theme_manual');
+    var manual = StorageManager.get('theme_manual', null);
+    // Fallback: check legacy unscoped key (for users who toggled before this update)
+    if(!manual){ try{ manual = localStorage.getItem('armp_theme_manual'); }catch(e){} }
     var theme;
     if(manual === 'dark' || manual === 'light'){
-      // User has manually toggled — preserve their choice
       theme = manual;
     } else {
-      // Default for everyone else: light
       theme = 'light';
     }
     document.documentElement.dataset.theme = theme;
@@ -6797,7 +6939,7 @@ function armpCloseSetupModal(){
   modal.classList.remove('open');
   modal.style.display = 'none';
   // Set permanent dismissal flag
-  try{ localStorage.setItem('armp_setup_seen','true'); }catch(e){}
+  try{ StorageManager.save('setup_seen','true'); }catch(e){}
   // Show inline banner as workflow guidance
   setTimeout(function(){ armpShowBannerIfNeeded(); }, 200);
 }
@@ -6819,14 +6961,14 @@ function armpSetupClickStep(n){
 function armpMaybeShowSetupOnCashApp(){
   // Show modal only when user is genuinely in onboarding (no data yet, hasn't dismissed)
   try{
-    if(localStorage.getItem('armp_setup_seen') === 'true') return;
+    if(StorageManager.get('setup_seen',null) === 'true') return;
     // FIX (v16 follow-up): if user has ANY meaningful state, they're past onboarding.
     // Skip the modal AND mark seen so it doesn't reopen unprompted.
     var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
     var hasInv = (typeof INV!=='undefined') && INV.length > 0;
     var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
     if(hasPay || hasInv || hasMatched){
-      try{ localStorage.setItem('armp_setup_seen','true'); }catch(e){}
+      try{ StorageManager.save('setup_seen','true'); }catch(e){}
       // Still show the inline banner if helpful (for partial completion)
       setTimeout(function(){ if(typeof armpShowBannerIfNeeded==='function') armpShowBannerIfNeeded(); }, 100);
       return;
@@ -6840,7 +6982,7 @@ function armpUpdateBanner(){
   try{
     var banner = document.getElementById('armp-banner');
     if(!banner) return;
-    if(localStorage.getItem('armp_banner_dismissed') === 'true'){
+    if(StorageManager.get('banner_dismissed',null) === 'true'){
       banner.style.display = 'none';
       return;
     }
@@ -6866,7 +7008,7 @@ function armpShowBannerIfNeeded(){
   try{
     var banner = document.getElementById('armp-banner');
     if(!banner) return;
-    if(localStorage.getItem('armp_banner_dismissed') === 'true'){
+    if(StorageManager.get('banner_dismissed',null) === 'true'){
       banner.style.display = 'none';
       return;
     }
@@ -6882,7 +7024,7 @@ function armpShowBannerIfNeeded(){
   }catch(e){ console.warn('[armpShowBannerIfNeeded]', e); }
 }
 function armpDismissBanner(){
-  try{ localStorage.setItem('armp_banner_dismissed','true'); }catch(e){}
+  try{ StorageManager.save('banner_dismissed','true'); }catch(e){}
   var b = document.getElementById('armp-banner');
   if(b) b.style.display = 'none';
 }
@@ -7591,8 +7733,15 @@ function doLogout(){
   if(app){ app.classList.remove('visible'); app.style.display='none'; app.style.pointerEvents=''; app.style.visibility=''; app.style.opacity=''; }
   var ls=document.getElementById('login-screen');
   if(ls){ ls.style.display=''; ls.style.visibility=''; ls.style.pointerEvents=''; ls.style.zIndex=''; ls.style.opacity=''; }
-  INV=[];PAY=[];RES=[];EXC=[];
+  // Full state clear — ensure no tenant data bleeds into next session
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];
+  _invalidateInvIndexes();
+  _dismissedNotifs={};
+  USER_ROLE='specialist';
   IS_DEMO=true;CURRENT_USER='';IS_MASTER=false;
+  // Reset ARMP_CFG to defaults (prevents next user seeing previous user's config)
+  try{ ARMP_CFG = JSON.parse(JSON.stringify(ARMP_CFG_DEFAULTS)); }catch(e){}
+  try{ CFG_ALIASES={}; }catch(e){}
 }
 
 function setUserDisplay(user){
@@ -7622,11 +7771,19 @@ function launchApp(user){
   IS_MASTER=!!(user.isMaster);
   setUserDisplay(user);
   setPlan(user.plan||'demo');
-  // Check demo expiry
+  // Load user-scoped role (must come before initRole renders settings)
+  try{ initRole(); }catch(e){}
+
+  // ── Initialize user-scoped state (AFTER CURRENT_USER/IS_DEMO are set) ──
+  try{ _initUserFirstLoad(); }catch(e){}
+  try{ _initUserHourlyRate(); }catch(e){}
+  // Load per-user dismissed notifications (prevents cross-account notification bleed)
+  try{ _dismissedNotifs = JSON.parse(StorageManager.get('dismissed_notifs','{}')||'{}'); }catch(e){ _dismissedNotifs={}; }
+
+  // ── Check demo expiry ──
   if((user.plan||'demo')==='demo'&&user.demoExpiresAt&&!user.isMaster){
     const exp=new Date(user.demoExpiresAt);
     if(exp<new Date()){
-      // Demo expired — show upgrade prompt
       setTimeout(function(){
         showModal('Your 7-day free demo has ended',
           '<div style="text-align:center;padding:12px 0">'+
@@ -7642,8 +7799,22 @@ function launchApp(user){
       },800);
     }
   }
-  // Always start with a clean workspace — clear transactional data and localStorage
-  INV=[];PAY=[];RES=[];EXC=[];
+
+  // ── Demo isolation: admin/other-user config MUST NOT bleed into demo accounts ──
+  if(IS_DEMO && !IS_MASTER){
+    // Reset all config to clean defaults — demo users get no cross-tenant normalization
+    try{ ARMP_CFG = JSON.parse(JSON.stringify(ARMP_CFG_DEFAULTS)); }catch(e){}
+    try{ CFG_ALIASES = {}; CFG_MATCH_RULES = CFG_MATCH_RULES_DEFAULT.map(function(r){return Object.assign({},r);}); CFG_TOL = Object.assign({},CFG_TOL_DEFAULT); }catch(e){}
+    MP_RULES = DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); });
+  } else if(!IS_DEMO){
+    // Load user-scoped config for paid/admin users
+    try{ armpCfgLoad(); }catch(e){}
+    try{ _loadMpRules(); }catch(e){}
+  }
+
+  // ── Clean workspace — fully reset transactional data ──
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];
+  _invalidateInvIndexes();
   ['inv','pay','res','exc'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}});
   var _bsel=document.getElementById('ca-bank-sel');
   if(_bsel){_bsel.innerHTML='<option value="">All bank accounts</option>';}
@@ -7652,17 +7823,17 @@ function launchApp(user){
   try{updTop();}catch(e){console.warn('updTop:',e);}
   try{initAuditTbl();}catch(e){console.warn('initAuditTbl:',e);}
   addAudit('Login','User: '+(user.name||CURRENT_USER));
-  try{cfgInit();}catch(e){console.warn('cfgInit:',e);}
+  // cfgInit for non-demo users (already loaded above)
+  if(!IS_DEMO || IS_MASTER){try{cfgInit();}catch(e){console.warn('cfgInit:',e);}}
 
-  // Fix: Reset setup-modal seen flag on each fresh login so onboarding shows on next
-  // Cash Application click. Within the same session, dismissing still sets the flag,
-  // so it won't pop up repeatedly. Only fresh login (or Reset All Data) restores it.
+  // Reset session-level UI flags per login
   try{
-    localStorage.removeItem('armp_setup_seen');
-    localStorage.removeItem('armp_banner_dismissed');
+    StorageManager.remove('setup_seen');
+    StorageManager.remove('banner_dismissed');
+    window._firstLoadMonth = null; // force re-read per-user on next reporting load
   }catch(e){}
 
-  // Item 1 (v16): Apply theme — default light, or user's manual override if set
+  // Apply per-user theme preference
   try{ _armpApplyAutoTheme(); }catch(e){}
 
   setTimeout(navToWorklist, 0);
@@ -7925,19 +8096,21 @@ function resetAllData(){
   _doResetAll();
 }
 function _doResetAll(){
-  INV=[];PAY=[];RES=[];EXC=[];
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];
+  _invalidateInvIndexes();
   rAll();updDash();updTop();setStatus('ready');
-  // Clear localStorage — try both prefixed and unprefixed keys
+  // Clear user-scoped transactional keys
   var keys=['inv','pay','res','exc'];
   keys.forEach(function(k){
     try{localStorage.removeItem(sk(k));}catch(e){}
     try{localStorage.removeItem('armp_'+k);}catch(e){}
-    try{localStorage.removeItem(k);}catch(e){}
   });
-  // NEW-3: Reset triggers Let's Get Started flow again
+  // Reset session-level UI flags
   try{
-    localStorage.removeItem('armp_setup_seen');
-    localStorage.removeItem('armp_banner_dismissed');
+    StorageManager.remove('setup_seen');
+    StorageManager.remove('banner_dismissed');
+    _dismissedNotifs={};
+    StorageManager.remove('dismissed_notifs');
   }catch(e){}
   addAudit('Full reset','All data cleared — setup flow re-enabled');
   toast('✓ All data reset');
@@ -11575,7 +11748,9 @@ function loginShowPricing(){
 // ═══════════════════════════════════════════════════════════
 // USER ROLE SYSTEM
 // ═══════════════════════════════════════════════════════════
-var USER_ROLE = localStorage.getItem('armp_role') || 'specialist';
+// USER_ROLE is initialized after login in initRole() — don't read at module load
+// (CURRENT_USER isn't set yet at parse time)
+var USER_ROLE = 'specialist';
 // CFO Summary visible to CFO + ADMIN (admin is owner-only)
 var CFO_ROLES = ['cfo'];
 
@@ -11583,43 +11758,51 @@ function saveUserRole(){
   var sel = document.getElementById('s-role');
   if(!sel) return;
   var newRole = sel.value;
-  // CFO role can only be assigned by company admin (IS_MASTER)
+  // Security: CFO role can ONLY be assigned by the company admin (IS_MASTER)
   if(newRole === 'cfo' && !IS_MASTER){
-    sel.value = USER_ROLE; // revert
+    sel.value = USER_ROLE; // revert — non-admins cannot self-elevate to CFO
     var note = document.getElementById('cfo-role-note');
     if(note){ note.style.display='block'; setTimeout(function(){note.style.display='none';},4000); }
     toast('CFO role must be assigned by your Company Admin.','warn');
+    addAudit('Role change blocked', 'Attempt to self-assign CFO role denied');
     return;
   }
+  var prevRole = USER_ROLE;
   USER_ROLE = newRole;
-  // Persist role per user
+  // Persist role: user object (primary) + StorageManager per-user key (backup)
   try{
     var users=getUsers();
     if(users[CURRENT_USER]){users[CURRENT_USER].role=USER_ROLE;localStorage.setItem('armp_users',JSON.stringify(users));}
   }catch(e){}
-  localStorage.setItem('armp_role_'+CURRENT_USER, USER_ROLE);
+  try{ StorageManager.save('role', USER_ROLE); }catch(e){}
   applyCfoAccess();
   toast('Role updated: ' + sel.options[sel.selectedIndex].text);
-  addAudit('Role changed', USER_ROLE);
+  addAudit('Role changed', prevRole + ' → ' + USER_ROLE);
 }
 
 function initRole(){
   var sel = document.getElementById('s-role');
-  // Load role: per-user key first, fallback to legacy
+  // Load role: user object (most reliable) → StorageManager per-user key → legacy key → default
   try{
     var users=getUsers();
-    if(users[CURRENT_USER]&&users[CURRENT_USER].role) USER_ROLE=users[CURRENT_USER].role;
-    else{
-      var r=localStorage.getItem('armp_role_'+CURRENT_USER)||localStorage.getItem('armp_role');
-      if(r) USER_ROLE=r;
+    if(users[CURRENT_USER]&&users[CURRENT_USER].role){
+      USER_ROLE=users[CURRENT_USER].role;
+    } else {
+      var r = StorageManager.get('role', null)
+           || localStorage.getItem('armp_role_'+CURRENT_USER)
+           || localStorage.getItem('armp_role')
+           || 'specialist';
+      USER_ROLE = r;
     }
-  }catch(e){}
+  }catch(e){ USER_ROLE='specialist'; }
   if(sel){
-    // Admin gets full role access; non-admin cannot select CFO via dropdown
     sel.value = IS_MASTER ? 'controller' : (USER_ROLE||'specialist');
-    // Disable CFO option for non-admins
+    // Non-admins cannot see or select the CFO option — role elevation requires admin
     Array.from(sel.options).forEach(function(opt){
-      if(opt.value==='cfo') opt.disabled = !IS_MASTER;
+      if(opt.value==='cfo'){
+        opt.disabled = !IS_MASTER;
+        opt.title = IS_MASTER ? '' : 'CFO role must be assigned by your Company Admin';
+      }
     });
   }
   applyCfoAccess();
@@ -11640,10 +11823,15 @@ var DEFAULT_MP_RULES = [
   {id:'parent',  label:'Parent/Child Customer',   desc:'Parent-child account hierarchy',      enabled:false}
 ];
 
-var MP_RULES = (function(){
-  try{ var s=localStorage.getItem('armp_mp_rules'); if(s) return JSON.parse(s); } catch(e){}
-  return DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); });
-})();
+var MP_RULES = DEFAULT_MP_RULES.map(function(r){ return Object.assign({},r); }); // defaults; reloaded in initRole
+
+function _loadMpRules(){
+  try{
+    // Try user-scoped key first (StorageManager), then legacy global key
+    var s = StorageManager.get('mp_rules', null) || localStorage.getItem('armp_mp_rules');
+    if(s){ var parsed = typeof s === 'string' ? JSON.parse(s) : s; if(Array.isArray(parsed)) MP_RULES=parsed; }
+  }catch(e){}
+}
 
 function renderMpRules(){
   var el = document.getElementById('mp-rules-list');
@@ -11677,7 +11865,7 @@ function moveMpRule(idx,dir){
 }
 
 function saveMpRules(){
-  localStorage.setItem('armp_mp_rules',JSON.stringify(MP_RULES));
+  try{ StorageManager.save('mp_rules', JSON.stringify(MP_RULES)); }catch(e){}
   syncMpCheckboxes();
   toast('Match priority saved');
   addAudit('Match priority updated', MP_RULES.filter(function(r){return r.enabled;}).map(function(r){return r.label;}).join(', '));
@@ -12294,7 +12482,8 @@ function closeNotifDrop(){
   var drop=document.getElementById('notif-dropdown');
   if(drop)drop.classList.remove('open');
 }
-var _dismissedNotifs=(function(){try{return JSON.parse(localStorage.getItem('armp_dismissed_notifs'))||{};}catch(e){return{};}})();
+// _dismissedNotifs is loaded per-user in launchApp after CURRENT_USER is set
+var _dismissedNotifs={};
 function renderNotifDrop(){
   var list=document.getElementById('notif-drop-list');
   var ct=document.getElementById('notif-drop-ct');
@@ -12348,18 +12537,15 @@ function _notifItemClick(el){
 }
 function _notifItemDelete(el){
   var key=el.getAttribute('data-key');
-  console.log('[notif] dismiss',key);
   _dismissedNotifs[key]=true;
-  try{localStorage.setItem('armp_dismissed_notifs',JSON.stringify(_dismissedNotifs));}catch(e){}
+  try{StorageManager.save('dismissed_notifs',JSON.stringify(_dismissedNotifs));}catch(e){}
   renderNotifDrop();
 }
 function dismissAllNotifs(){
-  console.log('[notif] dismiss all');
-  // Mark every current notif as dismissed
   var openExc=EXC.filter(function(e){return e.s!=='Resolved'&&e.s!=='Resolved — rejected';});
   openExc.forEach(function(e,i){_dismissedNotifs['exc_'+i+'_'+e.id]=true;});
   _dismissedNotifs['unmatched_all']=true;
-  try{localStorage.setItem('armp_dismissed_notifs',JSON.stringify(_dismissedNotifs));}catch(e){}
+  try{StorageManager.save('dismissed_notifs',JSON.stringify(_dismissedNotifs));}catch(e){}
   renderNotifDrop();
   toast('All notifications cleared');
 }
@@ -12502,22 +12688,27 @@ function navToWorklist(){
 var CFO_PERIOD='month';
 
 
-// ── First load month tracker (Item 8) ─────────────────────────────────
+// ── First load month tracker ─────────────────────────────────────────
 (function(){
   try{
-    if(!localStorage.getItem('armp_first_load_month')){
+    // Deferred until user is known — will be set in launchApp via _initUserFirstLoad
+  }catch(e){}
+})();
+function _initUserFirstLoad(){
+  try{
+    if(!StorageManager.get('first_load_month',null)){
       var d=new Date();
       var key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-      localStorage.setItem('armp_first_load_month',key);
-      console.log('[first-load] month set to',key);
+      StorageManager.save('first_load_month',key);
     }
-  }catch(e){console.warn('[first-load]',e);}
-})();
-// ── ROI Hourly Rate (Item 7) ─────────────────────────────────────────
-var AR_HOURLY_RATE = (function(){
-  try{return parseFloat(localStorage.getItem('armp_hourly_rate'))||65;}
-  catch(e){return 65;}
-})();
+  }catch(e){}
+}
+// ── ROI Hourly Rate ─────────────────────────────────────────────────
+var AR_HOURLY_RATE = 65; // default; updated in launchApp after user is known
+function _initUserHourlyRate(){
+  try{ AR_HOURLY_RATE = parseFloat(StorageManager.get('hourly_rate',65))||65; }
+  catch(e){ AR_HOURLY_RATE = 65; }
+}
 function roiCanEditRate(){
   try{return (typeof IS_MASTER!=='undefined'&&IS_MASTER)||(typeof USER_ROLE!=='undefined'&&USER_ROLE==='cfo');}
   catch(e){return false;}
@@ -12554,10 +12745,9 @@ function roiSaveRate(){
   var v=inp?parseFloat(inp.value):NaN;
   if(!v||v<=0){if(typeof toast==='function')toast('Enter a valid rate','warn');return;}
   AR_HOURLY_RATE=v;
-  try{localStorage.setItem('armp_hourly_rate',String(v));}catch(e){}
+  try{StorageManager.save('hourly_rate',String(v));}catch(e){}
   closeModal();
   roiApplyRateVisibility();
-  // Refresh CFO summary since labor savings depends on the rate
   try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
   if(typeof toast==='function')toast('Hourly rate saved: $'+v+'/hr');
 }
@@ -12612,14 +12802,14 @@ function updateCfoSummary(){
   var setW=function(id,w){var el=document.getElementById(id);if(el)el.style.width=w;};
   // Period logic: on first month of data, Q and YTD = This Month.
   // Once additional months accumulate, scale up to reflect actual elapsed time.
-  // FIRST_LOAD_MONTH persists across sessions via localStorage.
+  // FIRST_LOAD_MONTH persists across sessions via user-scoped storage.
   var nowDate=new Date();
   var nowKey=nowDate.getFullYear()+'-'+String(nowDate.getMonth()+1).padStart(2,'0');
   if(!window._firstLoadMonth){
     try{
-      var stored=localStorage.getItem('armp_first_load_month');
+      var stored=StorageManager.get('first_load_month',null);
       if(stored){window._firstLoadMonth=stored;}
-      else{window._firstLoadMonth=nowKey;localStorage.setItem('armp_first_load_month',nowKey);}
+      else{window._firstLoadMonth=nowKey;StorageManager.save('first_load_month',nowKey);}
     }catch(e){window._firstLoadMonth=nowKey;}
   }
   // Calculate months elapsed since first load
