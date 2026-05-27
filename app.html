@@ -2585,12 +2585,45 @@ body.app-active #app {
 }
 .armp-match-pill.armp-match-invoice { color: var(--p); border-color: rgba(20,168,216,.3); background: rgba(20,168,216,.06); }
 .armp-match-pill.armp-match-po { color: var(--pu-t); border-color: rgba(139,92,246,.3); background: rgba(139,92,246,.06); }
+.armp-match-pill.armp-match-so { color: var(--cy-t); border-color: rgba(14,165,233,.3); background: rgba(14,165,233,.06); }
 .armp-match-pill.armp-match-amount { color: var(--g-t); border-color: rgba(18,184,134,.3); background: rgba(18,184,134,.06); }
 .armp-match-pill.armp-match-customerAccount,
 .armp-match-pill.armp-match-customerName { color: var(--pd); border-color: rgba(22,141,226,.3); background: rgba(22,141,226,.06); }
 .armp-match-pill.armp-match-multiInvoice { color: var(--am-t); border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.06); }
+.armp-match-pill.armp-match-tracking { color: var(--cy-t); border-color: rgba(14,165,233,.3); background: rgba(14,165,233,.06); }
+.armp-match-pill.armp-match-delivery { color: var(--pu-t); border-color: rgba(139,92,246,.3); background: rgba(139,92,246,.06); }
+.armp-match-pill.armp-match-dateRange { color: var(--am-t); border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.06); }
 .armp-match-pill.armp-match-more { color: var(--t3); }
 .armp-match-pill.armp-match-variance { color: var(--r-t); border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.06); }
+
+/* AI-ready suggestion chip in Needs Attention */
+.armp-ai-suggest {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(20,168,216,.07);
+  color: var(--p);
+  border: 1px solid rgba(20,168,216,.2);
+  white-space: nowrap;
+  letter-spacing: .01em;
+}
+.armp-ai-suggest::before { content: '→'; margin-right: 1px; opacity: .7; }
+
+/* Confidence bar in review header */
+.armp-conf-bar {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 800; font-family: var(--mono);
+}
+.armp-conf-ring {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 900; font-family: var(--mono);
+  flex-shrink: 0;
+}
 
 /* Audit activity log (v18) */
 .armp-activity-log {
@@ -3881,13 +3914,14 @@ body.app-active #app {
                   <th onclick="sortTbl('exc-tbl',5)">Type<span class="si2"></span></th>
                   <th>Detail</th>
                   <th>Notes</th>
+                  <th style="color:var(--p);font-size:9.5px">Suggested</th>
                   <th>Action</th>
                   <th id="exc-action-th">Status</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody id="exc-tb">
-                <tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp(&apos;cash-app&apos;);setTimeout(function(){setCaTab(&apos;recon&apos;,document.getElementById(&apos;ca-tab-recon&apos;));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>
+                <tr><td colspan="12"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp(&apos;cash-app&apos;);setTimeout(function(){setCaTab(&apos;recon&apos;,document.getElementById(&apos;ca-tab-recon&apos;));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -4926,12 +4960,20 @@ function renderWsExcPremium(){
   }
   const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
   const typeSev={'Short pay':'med','Unapplied payment':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
-  const POST_D=['Apply to invoice','Cash on Account','Write off','Bank fee','Wire transfer'];
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
     const sev=typeSev[ex.type]||'med';
     const icon=typeIcon[ex.type]||'⚠️';
+    // Build AI suggestion chip
+    const sugg = armpGetSuggestedResolution(ex);
+    const suggHtml = (!isResV && sugg)
+      ? `<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+          <span style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.05em">Suggested:</span>
+          <span class="armp-ai-suggest" title="${sugg.rationale} (${sugg.confidence}% confidence)">${sugg.label}</span>
+          <span style="font-size:10px;color:var(--t3)">${sugg.confidence}% match</span>
+        </div>`
+      : '';
     return`<div class="exc-card sev-${sev}" onclick="excSelectCard(${realIdx},this)" style="cursor:pointer">
       <div class="exc-card-amount" style="color:${sev==='high'?'var(--r-t)':sev==='med'?'var(--am-t)':'var(--cy-t)'}">${$f(ex.amt)}</div>
       <div class="exc-card-header">
@@ -4946,15 +4988,20 @@ function renderWsExcPremium(){
         ${isResV?
           `<span class="badge badge-g">${ex.dec||'Resolved'}</span>
            <button class="btn btn-outline btn-xs" onclick="revertException(${realIdx});setTimeout(renderWsExcPremium,600)">↩ Revert</button>`
-          :`<select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="(function(s){var d=s.value;s.selectedIndex=0;resolveException(parseInt(s.dataset.idx),d);})(this)">
-            <option value="">— Select action —</option>
-            <option>Apply to invoice</option>
-            <option>Cash on Account</option>
-            <option>Write off</option><option>Bank fee</option>
-            <option>Chase customer</option><option>Duplicate — reject</option>
-          </select>
-          <input type="text" class="inp" style="flex:1;font-size:11.5px;padding:5px 10px;min-width:80px;max-width:140px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Add note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
-          <span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Open</span>`
+          :`<div style="flex:1">
+            ${suggHtml}
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <select class="sel" style="font-size:11.5px;padding:5px 8px;border-radius:7px" data-idx="${realIdx}" onchange="(function(s){var d=s.value;s.selectedIndex=0;resolveException(parseInt(s.dataset.idx),d);})(this)">
+                <option value="">— Select action —</option>
+                <option>Apply to invoice</option>
+                <option>Cash on Account</option>
+                <option>Write off</option><option>Bank fee</option>
+                <option>Chase customer</option><option>Duplicate — reject</option>
+              </select>
+              <input type="text" class="inp" style="flex:1;font-size:11.5px;padding:5px 10px;min-width:80px;max-width:140px" value="${(ex.notes||'').replace(/"/g,'&quot;')}" placeholder="Add note…" oninput="EXC[${realIdx}].notes=this.value;saveToStorage()">
+              <span class="ws-badge ws-badge-pending"><span class="ws-dot"></span>Open</span>
+            </div>
+          </div>`
         }
       </div>
     </div>`;
@@ -5009,7 +5056,14 @@ function renderWsReview(){
     var statusPriority=['Short pay','Overpay','Amount match','Subset exact','Exact','Resolved'];
     var headerStatus=items[0].st||'Exact';
     statusPriority.forEach(function(s){if(items.some(function(r){return r.st===s;}))headerStatus=s;});
-    var conf = headerStatus==='Exact'?'100%':headerStatus==='Subset exact'?'98%':headerStatus==='Amount match'?'72%':headerStatus==='Short pay'?'61%':'—';
+
+    // Real confidence from armpAnnotateMatch (falls back to status-based estimate)
+    var _leadItem = items[0];
+    if(!_leadItem.matchReasons) armpAnnotateMatch(_leadItem);
+    var confNum = _leadItem.confidence != null ? _leadItem.confidence :
+      (headerStatus==='Exact' ? 95 : headerStatus==='Subset exact' ? 88 : headerStatus==='Amount match' ? 65 : headerStatus==='Short pay' ? 55 : 0);
+    var conf = confNum + '%';
+    var confColor = confNum >= 90 ? 'var(--g-t)' : confNum >= 70 ? 'var(--am-t)' : 'var(--r-t)';
     
     // Approval state — Item 5
     // A group is "approved" if every item has r.approved=true (user explicitly approved)
@@ -5037,7 +5091,7 @@ function renderWsReview(){
       '<div style="text-align:right;flex-shrink:0">'+
         '<div style="font-size:17px;font-weight:900;font-family:var(--mono);color:var(--t1)">'+$f(totalPaid)+'</div>'+
         '<div style="font-size:11px;color:var(--t3)">of '+$f(totalOrig)+'</div>'+
-        '<div style="font-size:11.5px;font-weight:700;color:'+(conf==='100%'?'var(--g-t)':'var(--am-t)')+'">Conf: '+conf+'</div>'+
+        '<div style="font-size:11.5px;font-weight:800;color:'+confColor+';font-family:var(--mono)">'+conf+'</div>'+
       '</div>'+
       // Item 5: Approve + Revert buttons
       '<div style="flex-shrink:0;margin-left:12px;display:flex;gap:6px" onclick="event.stopPropagation()">'+
@@ -5761,29 +5815,48 @@ function armpAnnotateMatch(r, payment){
   r.matchReasons = reasons;
   r.confidence = confidence;
 }
-// Render compact explanation pills HTML for a RES entry. Returns string.
+// Render compact match explanation HTML for a RES entry.
+// Shows: confidence % badge + "Matched by:" reason pills.
 function armpRenderMatchPills(r, opts){
   opts = opts || {};
-  if(!r || !r.matchReasons || !r.matchReasons.length){
-    return '';
-  }
-  var conf = r.confidence != null ? r.confidence : 0;
-  var confColor = conf >= 85 ? 'var(--g-t)' : conf >= 60 ? 'var(--am-t)' : 'var(--r-t)';
-  var confBg = conf >= 85 ? 'rgba(18,184,134,.10)' : conf >= 60 ? 'rgba(245,158,11,.10)' : 'rgba(239,68,68,.10)';
-  var tooltip = r.matchReasons.map(function(rs){
-    return '• ' + rs.label + (rs.value ? ': ' + rs.value : '') + ' (' + (rs.w > 0 ? '+' : '') + rs.w + '%)';
-  }).join('\n');
+  if(!r || !r.matchReasons || !r.matchReasons.length){ return ''; }
+
+  var conf = (r.confidence != null) ? r.confidence : 0;
+  var confColor = conf >= 90 ? 'var(--g-t)' : conf >= 70 ? 'var(--am-t)' : 'var(--r-t)';
+  var confBg    = conf >= 90 ? 'rgba(18,184,134,.10)' : conf >= 70 ? 'rgba(245,158,11,.10)' : 'rgba(239,68,68,.10)';
+  var confBdr   = conf >= 90 ? 'rgba(18,184,134,.30)' : conf >= 70 ? 'rgba(245,158,11,.30)' : 'rgba(239,68,68,.30)';
+
+  // Build tooltip: full reason list
+  var tooltip = 'Confidence: ' + conf + '%\nMatched by:\n' +
+    r.matchReasons.map(function(rs){
+      return (rs.w > 0 ? '✓ ' : '✗ ') + rs.label + (rs.value ? ': ' + rs.value : '') + ' (' + (rs.w > 0 ? '+' : '') + rs.w + '%)';
+    }).join('\n');
+
+  // Positive reasons only, up to 4 pills
+  var positiveReasons = r.matchReasons.filter(function(rs){ return rs.w > 0; });
+  var shown    = positiveReasons.slice(0, 4);
+  var hiddenCt = positiveReasons.length - shown.length;
+
   var html = '<div class="armp-match-explain" title="' + _escapeAttr(tooltip) + '">' +
-    '<span class="armp-match-conf" style="color:' + confColor + ';background:' + confBg + '">' + conf + '%</span>';
-  // Show up to 3 reason pills, the rest collapsed into "+N"
-  var shown = r.matchReasons.filter(function(rs){ return rs.w > 0; }).slice(0, 3);
+    // Confidence badge
+    '<span class="armp-match-conf" style="color:' + confColor + ';background:' + confBg + ';border-color:' + confBdr + '">' + conf + '%</span>' +
+    // "Matched by:" label (subtle)
+    '<span style="font-size:10px;color:var(--t3);font-weight:600;letter-spacing:.03em;margin-right:1px">by</span>';
+
+  // Reason pills
   shown.forEach(function(rs){
     html += '<span class="armp-match-pill armp-match-' + rs.type + '">✓ ' + _escapeHtml(rs.label) + '</span>';
   });
-  var hiddenCt = r.matchReasons.filter(function(rs){ return rs.w > 0; }).length - shown.length;
   if(hiddenCt > 0){
-    html += '<span class="armp-match-pill armp-match-more">+' + hiddenCt + '</span>';
+    html += '<span class="armp-match-pill armp-match-more" title="' + hiddenCt + ' more match signal' + (hiddenCt>1?'s':'') + '">+' + hiddenCt + '</span>';
   }
+
+  // Negative signals (variance etc.) — shown as a small warning
+  var negReasons = r.matchReasons.filter(function(rs){ return rs.w < 0; });
+  negReasons.forEach(function(rs){
+    html += '<span class="armp-match-pill armp-match-variance">⚠ ' + _escapeHtml(rs.label) + '</span>';
+  });
+
   html += '</div>';
   return html;
 }
@@ -6029,8 +6102,142 @@ function armpAnnotateAllResults(){
   try{
     if(typeof RES === 'undefined') return;
     RES.forEach(function(r){ armpAnnotateMatch(r); });
+    // Also build AI payloads for all results
+    RES.forEach(function(r){ armpBuildMatchPayload(r); });
   }catch(e){ console.warn('[armpAnnotateAllResults]', e); }
 }
+
+// ══════════════════════════════════════════════════════════
+// AI-READY LAYER — structured match payloads + hook stubs
+// No external AI calls. Prepares structured objects that an
+// AI model could parse for classification and recommendation.
+// ══════════════════════════════════════════════════════════
+
+// ── Match Payload Builder ──────────────────────────────────────────────
+// Attaches r._aiPayload — a clean, structured object on every RES entry.
+// Shape is designed for direct serialisation to an AI prompt or API call.
+function armpBuildMatchPayload(r){
+  if(!r || r._aiPayload) return; // already built
+  try{
+    if(!r.matchReasons) armpAnnotateMatch(r);
+    r._aiPayload = {
+      // Identity
+      invoiceNo:    r.i  || null,
+      poNumber:     r.po || null,
+      salesOrder:   r.so || null,
+      trackingNo:   r.trackingNo || null,
+      deliveryNo:   r.deliveryNo || null,
+      custAccount:  r.a  || null,
+      custName:     r.c  || null,
+      // Amounts
+      invoiceAmt:   r.oa || 0,
+      paidAmt:      r.pd || 0,
+      variance:     r.vr || 0,
+      // Match result
+      matchStatus:  r.st || 'Unknown',
+      matchMethod:  r.m  || null,
+      confidence:   r.confidence || 0,
+      matchReasons: (r.matchReasons || []).map(function(rs){
+        return { signal: rs.type, label: rs.label, value: rs.value || null, weight: rs.w };
+      }),
+      // Flags
+      isExact:      r.st === 'Exact' || r.st === 'Subset exact',
+      hasVariance:  Math.abs(r.vr || 0) > 0.01,
+      isMultiInvoice: !!(r.m && /multi-invoice/i.test(r.m)),
+      isApproved:   !!(r.approved || r.fromAlloc),
+      isExported:   !!(r.exported),
+      // Audit
+      approvedBy:   r.approvedBy || null,
+      exportedBy:   r.exportedBy || null,
+      // Schema version (for future AI API versioning)
+      _schema: 'armp_match_v1'
+    };
+  }catch(e){}
+}
+
+// ── Exception Payload Builder ──────────────────────────────────────────
+// Attaches ex._aiPayload — structured exception object for AI resolution.
+function armpBuildExcPayload(ex){
+  if(!ex || ex._aiPayload) return;
+  try{
+    ex._aiPayload = {
+      exceptionId:  ex.id   || null,
+      exceptionType: ex.type || 'Unknown',
+      custAccount:  ex.a    || null,
+      custName:     ex.c    || null,
+      amount:       ex.amt  || 0,
+      reference:    ex.ref  || null,
+      detail:       ex.detail || null,
+      status:       ex.s   || 'Open',
+      decision:     ex.dec || null,
+      notes:        ex.notes || null,
+      // AI-suggested resolution (populated by armpGetSuggestedResolution)
+      suggestedResolution: armpGetSuggestedResolution(ex),
+      _schema: 'armp_exc_v1'
+    };
+  }catch(e){}
+}
+
+// ── Suggested Resolution Logic ─────────────────────────────────────────
+// Deterministic rule-based resolver — no ML yet.
+// Returns { action, label, rationale, confidence } for every exception type.
+// Designed to plug into an AI model call in a future release.
+function armpGetSuggestedResolution(ex){
+  if(!ex) return null;
+  var type = ex.type || '';
+  var amt  = ex.amt  || 0;
+
+  // Rule-based resolution map
+  var RULES = {
+    'Duplicate':          { action:'duplicate_reject',   label:'Duplicate — Reject',  rationale:'Amount and reference match an existing matched payment.',        confidence:92 },
+    'Unapplied payment':  { action:'cash_on_account',    label:'Cash on Account',     rationale:'No invoice reference. Post as unapplied credit until invoice is provided.', confidence:80 },
+    'Short pay':          { action:'chase_customer',     label:'Chase Customer',      rationale:'Payment is less than invoiced amount. Contact customer for balance.', confidence:75 },
+    'Overpay':            { action:'cash_on_account',    label:'Cash on Account',     rationale:'Payment exceeds invoice. Hold overpayment as credit or return to customer.', confidence:72 },
+    'Bank fee':           { action:'bank_fee',           label:'Bank Fee',            rationale:'Small variance typical of wire/ACH bank charges. Post as bank fee.', confidence:85 },
+    'Unmatched':          { action:'chase_customer',     label:'Chase Customer',      rationale:'No matching invoice, PO, or SO found. Request invoice reference from customer.', confidence:60 },
+    'Missing PO':         { action:'chase_customer',     label:'Chase Customer',      rationale:'PO number absent. Contact customer purchasing team to confirm PO.', confidence:68 },
+    'Currency mismatch':  { action:'chase_customer',     label:'Chase Customer',      rationale:'Currency on remittance differs from invoice. Clarify with customer.', confidence:70 },
+    'Down payment':       { action:'apply_to_invoice',   label:'Apply to Invoice',    rationale:'Down payment or deposit. Find open invoice and partially apply.', confidence:74 }
+  };
+
+  var rule = RULES[type];
+  if(!rule){
+    // Generic fallback: small amounts → bank fee candidate; large → chase
+    if(amt < 25)  rule = { action:'bank_fee',      label:'Bank Fee',       rationale:'Small unmatched amount — possible bank charge.', confidence:55 };
+    else           rule = { action:'chase_customer',label:'Chase Customer', rationale:'Review with customer before posting.',           confidence:50 };
+  }
+
+  return {
+    action:     rule.action,
+    label:      rule.label,
+    rationale:  rule.rationale,
+    confidence: rule.confidence,
+    // AI hook placeholder — will carry prompt context in future release
+    _aiHook:    { ready: false, model: null, promptVersion: null }
+  };
+}
+
+// ── AI Hooks — Stubs for future AI integration ────────────────────────
+// These are intentionally no-ops. Each hook is a clearly named placeholder
+// where an AI API call will be wired in a future sprint.
+var ARMPAIHooks = {
+  // Called after Auto Match completes — future: re-score low-confidence matches
+  onMatchComplete: function(results){ /* AI_HOOK: classify low-confidence results */ },
+  // Called when an exception is created — future: suggest resolution via LLM
+  onExceptionCreated: function(exc){ /* AI_HOOK: armpGetSuggestedResolution → LLM refinement */ },
+  // Called on export — future: AI quality check before posting
+  onPreExport: function(results){ /* AI_HOOK: flag anomalies before export */ },
+  // Called on delivery report import — future: AI date-range parser
+  onDeliveryImport: function(delivRows){ /* AI_HOOK: parse unstructured delivery text */ },
+  // Future: pass a structured payload to an AI model
+  classify: function(payload, callback){
+    // Placeholder — will call an AI API endpoint
+    // Example shape when implemented:
+    // fetch('/api/ai/classify', { method:'POST', body:JSON.stringify(payload) })
+    //   .then(r=>r.json()).then(callback).catch(()=>callback(null))
+    if(typeof callback === 'function') callback(null); // no-op for now
+  }
+};
 
 
 const IH=['Customer','Account','Invoice #','PO #','Sales Order','Amount','Type','Invoice Date','Due Date','Document #','Status'];
@@ -8573,7 +8780,7 @@ function rExc(){
   if(EXC_VIEW==='resolved'){
     const shown=resolvedItems.filter(ex=>!tval||ex.type===tval);
     if(ec)ec.textContent=shown.length+' resolved';
-    if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div></td></tr>';return;}
+    if(!shown.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No resolved exceptions</div></div></td></tr>';return;}
     tb.innerHTML=shown.map(ex=>{const realIdx=EXC.indexOf(ex);return`<tr style="opacity:.75;background:var(--surface2)">
       <td class="td-mono">${ex.id}</td><td class="td-mono">${ex.a}</td><td>${ex.c}</td>
       <td class="td-amt">${$f(ex.amt)}</td><td class="td-mono">${ex.ref||'—'}</td>
@@ -8596,8 +8803,8 @@ function rExc(){
     return true;
   });
   if(ec)ec.textContent=shown.length+' exception'+(shown.length!==1?'s':'');
-  if(!EXC.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>';return;}
-  if(!shown.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">🎉</div><div class="empty-t">All exceptions resolved</div><div class="empty-s">Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp(&apos;cash-app&apos;);setTimeout(function(){setCaTab(&apos;recon&apos;,document.getElementById(&apos;ca-tab-recon&apos;));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>';return;}
+  if(!EXC.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>';return;}
+  if(!shown.length){tb.innerHTML='<tr><td colspan="12"><div class="empty"><div class="empty-icon">🎉</div><div class="empty-t">All exceptions resolved</div><div class="empty-s">Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp(&apos;cash-app&apos;);setTimeout(function(){setCaTab(&apos;recon&apos;,document.getElementById(&apos;ca-tab-recon&apos;));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></td></tr>';return;}
   // Item 5: Group exceptions by category
   // Map exception type → category
   function _excCategory(ex){
@@ -8664,6 +8871,11 @@ function rExc(){
         '<td>'+badge(ex.type)+'</td>'+
         '<td style="color:var(--t2);max-width:180px;white-space:normal;font-size:12px;line-height:1.4">'+(ex.detail||'—')+'</td>'+
         '<td><input type="text" class="ed" style="width:100px;font-size:11.5px" value="'+(ex.notes||'').replace(/"/g,'&quot;')+'" placeholder="Note…" oninput="EXC['+idx+'].notes=this.value;saveToStorage()"></td>'+
+        // Suggested resolution from AI layer
+        (function(){
+          var s=armpGetSuggestedResolution(ex);
+          return s?'<td><span class="armp-ai-suggest" title="'+_escapeAttr(s.rationale)+' ('+s.confidence+'%)">'+s.label+'</span></td>':'<td style="color:var(--t4);font-size:11px">—</td>';
+        })()+
         '<td>'+
           '<select class="ed" style="font-size:11.5px;width:120px" data-idx="'+idx+'" onchange="(function(s){var d=s.value;s.selectedIndex=0;resolveException(parseInt(s.dataset.idx),d);})(this)">'+
             '<option value="">— Select action —</option>'+
@@ -10981,7 +11193,12 @@ async function runMatch(){
   }
 
   await processChunk(0);
-  try{ armpAnnotateAllResults(); }catch(e){}
+  try{
+    armpAnnotateAllResults(); // annotates + builds _aiPayload on all RES entries
+    EXC.forEach(function(ex){ armpBuildExcPayload(ex); }); // build AI payloads on exceptions
+    ARMPAIHooks.onMatchComplete(RES);  // AI hook placeholder
+    EXC.forEach(function(ex){ ARMPAIHooks.onExceptionCreated(ex); }); // AI hook per exception
+  }catch(e){}
   addAudit('Matching completed',RES.length+' results · '+EXC.length+' exceptions');
 }
 
