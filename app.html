@@ -2698,7 +2698,7 @@ body.app-active #app {
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">1</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
           <div class="armp-setup-step-label">Upload Bank File</div>
-          <div class="armp-setup-step-sub">Remittance data — BAI2, MUFG, YayPay, CSV, or PDF</div>
+          <div class="armp-setup-step-sub">Upload Bank File / Remittance Data — BAI2, MUFG, CSV, or PDF</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-1" onclick="armpSetupClickStep(1)">Upload Bank File</button>
       </div>
@@ -5680,22 +5680,26 @@ function _normLabel(s){ return String(s||'').toLowerCase().replace(/[\s#._\/\-]/
 // Each key is the canonical field; values are all known header aliases.
 // ════════════════════════════════════════════════════════════════════════════
 var RM_FIELD_MAPS = {
-  custName:    ['supplier','customer','customername','vendorname','payerfrom','clientname','companyname','soldto','billto','name','payingcompany','remittingcompany'],
-  custAcct:    ['customeraccount','customeraccountnumber','accountno','accountnumber','customerid','vendorid','customercode','acct'],
+  // TK-Fujikin remittance headers: Supplier | Date | INV DATE | INV No. | Remarks | Amount
+  custName:    ['supplier','customer','customername','vendorname','payerfrom','clientname','companyname','soldto','billto','name','payingcompany','remittingcompany','nameofcustomer','nameofparty','payee'],
+  custAcct:    ['customeraccount','customeraccountnumber','accountno','accountnumber','customerid','vendorid','customercode','acct','soldtoparty','soldto'],
   paymentDate: ['date','paymentdate','paydate','postdate','valuedate','paymentpostdate','checkdate','transactiondate'],
+  invDate:     ['invdate','invoicedate','inv date','invdate','docdate','documentdate','billingdate'],
   paymentRef:  ['paymentreference','payref','checkno','checknumber','wirereferece','eftref','paymentid','voucherno','paymentnumber','remittanceref'],
   bankRef:     ['bankreference','bankref','bankrefno','fedref','achref','transref','banktraceref'],
-  invNo:       ['invno','inv','invoiceno','invoicenumber','invoiceref','customerinvoice','referencenumber','billingdocument','billdoc','documentno','docno','documentnumber','invoice','invoiceid','invoicereference','reference','refno','referencedocument','billingref'],
-  soNo:        ['so','sonumber','salesorder','salesordernumber','orderno','ordernumber','referencedocument','refdoc','salesdocument','salesref','salesorderref'],
+  // "INV No." header in TK-Fujikin → invNo (may contain SS refs, invoice #, delivery # — resolved at parse time)
+  invNo:       ['invno','inv no','inv','invoiceno','invoicenumber','invoiceref','customerinvoice','referencenumber','billingdocument','billdoc','documentno','docno','documentnumber','invoice','invoiceid','invoicereference','reference','refno','referencedocument','billingref'],
+  soNo:        ['so','sonumber','salesorder','salesordernumber','orderno','ordernumber','referencedocument','refdoc','salesdocument','salesref','salesorderref','referencedoc'],
   delNo:       ['delivery','deliverynumber','deliveryno','deliverydocument','deliveryref','shipdoc','packingslip','deliverydoc','shipmentdocument','pickinglist'],
-  poNo:        ['po','ponumber','purchaseorder','customerpono','customerpurchaseorder','purchasordernumber','purchasedocument','purchasedoc','ponr','pono'],
+  poNo:        ['po','ponumber','purchaseorder','customerpono','customerpurchaseorder','purchasordernumber','purchasedocument','purchasedoc','ponr','pono','customerponumber'],
   creditMemo:  ['creditmemo','creditmemono','creditnote','creditdocument','creditref','cm','creditnoteno'],
   debitMemo:   ['debitmemo','debitmemono','debitnote','debitdocument','debitref','dm','debitnoteno'],
-  trkNo:       ['tracking','trackingnumber','trackingno','bol','billoflading','bolno','upstrack','trackingref','shipperref','proref','pronumber','carrierbill','airwaybill'],
+  // "Remarks" header in TK-Fujikin → trkNo (may contain 1Z UPS tracking or other refs)
+  trkNo:       ['tracking','trackingnumber','trackingno','bol','billoflading','bolno','upstrack','trackingref','shipperref','proref','pronumber','carrierbill','airwaybill','remarks','logisticsmemointernalheader','logisticsmemo','billofladingnumber'],
   currency:    ['currency','curr','ccy','iso','isocurrencycode'],
-  amt:         ['amount','paidamount','paymentamount','remitamount','appliedamount','grossamount','netamount','usdamount','remittanceamount','lineamount','invoiceamount','settlementamount','creditamount'],
-  notes:       ['notes','description','remarks','memo','comment','detail','addenda','narration','paymentdetail','remittanceinfo'],
-  invDate:     ['invdate','invoicedate','inv date','invoicedate','docdate','documentdate','billingdate']
+  // "Amount" header → amt
+  amt:         ['amount','paidamount','paymentamount','remitamount','appliedamount','grossamount','netamount','usdamount','remittanceamount','lineamount','invoiceamount','settlementamount','creditamount','planedbillingamount','plannedbillingamount'],
+  notes:       ['notes','description','memo','comment','detail','addenda','narration','paymentdetail','remittanceinfo']
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -5704,7 +5708,7 @@ var RM_FIELD_MAPS = {
 // Credit Memo: 310xxxxxxx | Debit Memo: 410xxxxxxx
 // ════════════════════════════════════════════════════════════════════════════
 var HORIBA_PARSER_PROFILE = {
-  custMatch: ['HORIBA','HORIBA INSTRUMENTS','HII'],
+  custMatch: ['HORIBA','HORIBA INSTRUMENTS','HII','TK-FUJIKIN','TK FUJIKIN','FUJIKIN'],
   docPrefixes: {
     '510': 'invNo',
     '210': 'soNo',
@@ -5712,22 +5716,76 @@ var HORIBA_PARSER_PROFILE = {
     '310': 'creditMemo',
     '410': 'debitMemo'
   },
-  docLength: 10,      // preferred document length
-  confidence: 0.92    // base confidence when prefix matched
+  strPrefixes: {            // string (non-numeric) prefix rules
+    '1Z':  'trkNo',         // UPS tracking numbers
+    'SS':  'poNo'           // Shipment/PO references like SS260312-DS1(TK-F)
+  },
+  docLength: 10,
+  confidence: 0.92
 };
 
-// Classify a raw document reference using HORIBA rules (or any prefix map)
+// ── Smart prefix detector helper functions ────────────────────────────────
+// All use lightweight regex — no repeated full-row scans.
+
+function detectInvoiceNumber(val){
+  var s=String(val||'').trim();
+  var digits=s.replace(/[^0-9]/g,'');
+  if(/^510\d{7,9}$/.test(digits)) return digits;
+  // Also accept comma-separated invoice lists like "5105165526, 28"
+  if(/^510\d/.test(digits.slice(0,10))) return digits.slice(0,10);
+  return '';
+}
+function detectDeliveryNumber(val){
+  var s=String(val||'').trim();
+  var digits=s.replace(/[^0-9]/g,'');
+  if(/^710\d{7,9}$/.test(digits)) return digits;
+  return '';
+}
+function detectSalesOrder(val){
+  var s=String(val||'').trim();
+  var digits=s.replace(/[^0-9]/g,'');
+  if(/^210\d{7,9}$/.test(digits)) return digits;
+  return '';
+}
+function detectTracking(val){
+  var s=String(val||'').trim();
+  // Extract 1Z UPS tracking number — may be embedded in longer strings
+  var m=s.match(/1Z[A-Z0-9]{16,18}/i);
+  if(m) return m[0];
+  // Also plain 1Z prefix start
+  if(/^1Z/i.test(s)) return s.split(/\s/)[0];
+  return '';
+}
+function detectPONumber(val){
+  var s=String(val||'').trim();
+  // SS prefix shipment references
+  if(/^SS\d{6,}/.test(s)) return s;
+  // Numeric PO with 10-12 digits starting with 20
+  var digits=s.replace(/[^0-9]/g,'');
+  if(/^20\d{8,10}$/.test(digits)) return digits;
+  return '';
+}
+
+// Enhanced _classifyDocRef that handles string prefixes (1Z, SS) too
 function _classifyDocRef(val, prefixMap){
-  var s = String(val||'').trim().replace(/[^0-9]/g,'');
+  var raw=String(val||'').trim();
+  // String prefix checks (1Z, SS) — before stripping to digits
+  if(/^1Z[A-Z0-9]{10,}/i.test(raw)||/1Z[A-Z0-9]{16,18}/i.test(raw)){
+    var trk=detectTracking(raw);
+    if(trk) return {field:'trkNo', value:trk, confidence:0.92, method:'prefix:1Z'};
+  }
+  if(/^SS\d{6,}/i.test(raw)){
+    return {field:'poNo', value:raw, confidence:0.85, method:'prefix:SS'};
+  }
+  // Numeric prefix checks
+  var s = raw.replace(/[^0-9]/g,'');
   if(s.length < 6) return null;
-  // Prefer 10-digit exactly
   var candidates = prefixMap || HORIBA_PARSER_PROFILE.docPrefixes;
   for(var prefix in candidates){
-    if(s.startsWith(prefix) && s.length >= 9){
+    if(s.indexOf(prefix)===0 && s.length >= 9){
       return { field: candidates[prefix], value: s, confidence: 0.9, method: 'prefix:'+prefix };
     }
   }
-  // Fallback: pure numeric 10-digit — unclassified
   if(/^\d{9,12}$/.test(s)) return { field: 'unclassified', value: s, confidence: 0.3, method: 'numeric' };
   return null;
 }
@@ -5880,6 +5938,7 @@ var RemittanceParser = (function(){
   // ── Step 4: Parse a single data row into normalized schema ───────────────
   function _parseRow(r, colMap, custCtx, dateCtx, isHoriba, fileName, rowIdx){
     function _get(field){ var ci=colMap[field]; return (ci!==undefined&&r[ci]!==undefined&&r[ci]!==null) ? String(r[ci]).trim() : ''; }
+    function _getRaw(ci){ return (ci!==undefined&&ci>=0&&r[ci]!==undefined&&r[ci]!==null) ? String(r[ci]).trim() : ''; }
 
     var custName  = _get('custName') || custCtx;
     var custAcct  = _get('custAcct');
@@ -5899,14 +5958,37 @@ var RemittanceParser = (function(){
     var invDate   = _fmtRdDate(_get('invDate'));
     var confidence= 0.5;
 
-    // ── HORIBA prefix classifier: run over every cell in the row ──────────
+    // ── HORIBA/TK-Fujikin per-cell prefix classification ─────────────────
+    // Run over every cell — lightweight regex, not a full rescan.
+    // TK-Fujikin specifics:
+    //   Col D ("INV No."): may contain SS260312-DS1(TK-F) → poNo,
+    //                                         5105xxxxxx  → invNo,
+    //                                         7105xxxxxx  → delNo
+    //   Col E ("Remarks"): may contain 1Zxxxxxxxxxx → trkNo,
+    //                                 10-digit numbers (various refs)
     if(isHoriba){
-      r.forEach(function(cell){
-        var s=String(cell||'').trim().replace(/[^0-9]/g,'');
-        if(s.length>=9){
-          var cls = _classifyDocRef(s, HORIBA_PARSER_PROFILE.docPrefixes);
+      r.forEach(function(cell, ci){
+        if(cell===null||cell===undefined) return;
+        var raw = String(cell).trim();
+        if(!raw) return;
+
+        // Check tracking (1Z prefix) — before stripping to digits
+        if(!trkNo){
+          var _trk=detectTracking(raw);
+          if(_trk){ trkNo=_trk; confidence=Math.max(confidence,0.92); return; }
+        }
+        // Check SS shipment/PO reference
+        if(!poNo && /^SS[A-Z0-9]/i.test(raw)){
+          poNo=raw; confidence=Math.max(confidence,0.85); return;
+        }
+
+        // Numeric prefix classification
+        var digits=raw.replace(/[^0-9]/g,'');
+        if(digits.length>=9){
+          // Handle comma-separated like "5105165526, 28" → extract first 10-digit number
+          var digFirst=digits.slice(0,10);
+          var cls=_classifyDocRef(digFirst, HORIBA_PARSER_PROFILE.docPrefixes);
           if(cls&&cls.field!=='unclassified'){
-            // Only assign if target field is currently empty
             if(cls.field==='invNo'&&!invNo){ invNo=cls.value; confidence=Math.max(confidence,cls.confidence); }
             else if(cls.field==='soNo'&&!soNo){ soNo=cls.value; confidence=Math.max(confidence,cls.confidence); }
             else if(cls.field==='delNo'&&!delNo){ delNo=cls.value; confidence=Math.max(confidence,cls.confidence); }
@@ -5917,7 +5999,7 @@ var RemittanceParser = (function(){
       });
     }
 
-    // ── Boost confidence based on how many fields were populated ──────────
+    // ── Boost confidence ──────────────────────────────────────────────────
     var populated=[invNo,soNo,delNo,poNo,trkNo,custName,payRef].filter(Boolean).length;
     confidence = Math.min(0.99, confidence + (populated * 0.06));
     if(amt>0) confidence = Math.min(0.99, confidence + 0.05);
@@ -5943,7 +6025,7 @@ var RemittanceParser = (function(){
       srcRow:     rowIdx,
       confidence: parseFloat(confidence.toFixed(2)),
       status:     'Pending',
-      docClass:   invNo?'Invoice':soNo?'SalesOrder':delNo?'Delivery':creditMemo?'CreditMemo':debitMemo?'DebitMemo':'Unknown',
+      docClass:   invNo?'Invoice':soNo?'SalesOrder':delNo?'Delivery':creditMemo?'CreditMemo':debitMemo?'DebitMemo':trkNo?'Tracking':poNo?'PO':'Unknown',
       _raw:       r.join('|')
     };
   }
@@ -6039,146 +6121,213 @@ var RemittanceParser = (function(){
 })();
 
 // ════════════════════════════════════════════════════════════════════════════
-// MAPPING REVIEW SCREEN
-// Shows detected columns vs AR Match Pro fields, lets user correct before import.
-// State held in _remDetailParsed until user confirms.
+// MAPPING REVIEW SCREEN — Performance-optimized (Feature 2)
+// Parse-once: file parsed once on upload, cached in _remDetailParsed.
+// Dropdown changes update colMap in memory only — no re-parse.
+// Preview table: max 50 rows rendered, lazy-load on demand.
+// Debounced updates: DOM only refreshes after 300ms idle.
 // ════════════════════════════════════════════════════════════════════════════
-var _remDetailParsed = null; // holds RemittanceParser result pending user confirm
+var _remDetailParsed = null; // cached parse result — single source of truth
+var _rmUpdateTimer   = null; // debounce timer for mapping dropdown changes
+var _rmPreviewOffset = 0;    // lazy-load offset for preview table
 
 var RM_FIELD_LABELS = {
   custName:'Customer Name', custAcct:'Customer Account', paymentDate:'Payment Date',
-  paymentRef:'Payment Reference', bankRef:'Bank Reference', invNo:'Invoice Number',
-  soNo:'Sales Order Number', delNo:'Delivery Number', poNo:'PO Number',
-  creditMemo:'Credit Memo', debitMemo:'Debit Memo', trkNo:'Tracking / BOL',
-  currency:'Currency', amt:'Amount', notes:'Notes / Description', invDate:'Invoice Date'
+  invDate:'Invoice Date', paymentRef:'Payment Reference', bankRef:'Bank Reference',
+  invNo:'Invoice Number', soNo:'Sales Order Number', delNo:'Delivery Number',
+  poNo:'PO Number', creditMemo:'Credit Memo', debitMemo:'Debit Memo',
+  trkNo:'Tracking / BOL', currency:'Currency', amt:'Amount', notes:'Notes'
 };
 
+// ── Parser timing metrics (internal — never shown to user unless debug) ──
+var _parserMetrics = { startTs:0, endTs:0, rowCount:0, durationMs:0 };
+
 function _showMappingReview(parsed, rawHdrs, fileName, matchedBankTotal){
-  var colMap = parsed.colMap;
-  var meta   = parsed.mappingMeta;
+  _rmPreviewOffset = 0; // reset lazy-load
+
+  var colMap   = parsed.colMap;
+  var meta     = parsed.mappingMeta;
   var custName = parsed.custName || '(unknown customer)';
   var profile  = ParserLearningProfile.get(parsed.custName);
 
-  // ── Parser learning banner ────────────────────────────────────────────
-  var learnHtml = '';
-  if(profile){
-    learnHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.07);border:1px solid rgba(20,168,216,.2);margin-bottom:10px;font-size:12px">'+
-      '<span>🧠</span>'+
-      '<div><strong style="color:var(--p)">Learned profile applied</strong> · Customer: <strong>'+_escapeHtml(custName)+'</strong> · '+
-      'Confidence: <strong>'+(Math.round((profile.confidence||0)*100))+'%</strong> · '+
-      'Used '+(profile.useCount||0)+' time'+(profile.useCount!==1?'s':'')+
-      '</div>'+
-      '<button class="btn btn-outline btn-xs" onclick="_resetParserProfile(\''+_escapeAttr(custName)+'\')" style="margin-left:auto;white-space:nowrap">Reset Profile</button>'+
-    '</div>';
-  } else {
-    learnHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);margin-bottom:10px;font-size:12px">'+
-      '<span>📋</span>'+
-      '<div>No saved profile for <strong>'+_escapeHtml(custName)+'</strong>. '+
-      'Confirm the mapping below to build one.'+
-      (parsed.isHoriba?' <strong style="color:var(--p)">HORIBA prefix rules applied.</strong>':'')+
-      '</div>'+
-    '</div>';
-  }
+  // ── Parser learning banner ─────────────────────────────────────────────
+  var learnHtml = profile
+    ? '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.07);border:1px solid rgba(20,168,216,.2);margin-bottom:10px;font-size:12px">'+
+        '<span>🧠</span><div><strong style="color:var(--p)">Learned profile applied</strong> · '+_escapeHtml(custName)+' · Confidence: <strong>'+(Math.round((profile.confidence||0)*100))+'%</strong> · Used '+(profile.useCount||0)+' time'+(profile.useCount!==1?'s':'')+'</div>'+
+        '<button class="btn btn-outline btn-xs" onclick="_resetParserProfile(\''+_escapeAttr(custName)+'\')" style="margin-left:auto">Reset Profile</button>'+
+      '</div>'
+    : '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);margin-bottom:10px;font-size:12px">'+
+        '<span>📋</span><div>No saved profile for <strong>'+_escapeHtml(custName)+'</strong>. Confirm mapping to build one.'+
+        (parsed.isHoriba?' <strong style="color:var(--p)">🏭 HORIBA prefix rules applied.</strong>':'')+
+        '</div></div>';
 
-  // ── Confidence indicator ──────────────────────────────────────────────
-  var confPct = Math.round(parsed.confidence*100);
-  var confColor = confPct>=80?'var(--g-t)':confPct>=55?'var(--am-t)':'var(--r-t)';
-  var confWarn = confPct<55 ?
-    '<div style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);margin-bottom:10px;font-size:12px;color:var(--r-t)">'+
-    '⚠️ <strong>Low parser confidence ('+confPct+'%)</strong> — AR Match Pro could not confidently map all fields. Please review and correct the mapping below before importing.</div>' : '';
+  // ── Timing metrics ──────────────────────────────────────────────────────
+  var timingNote = _parserMetrics.durationMs > 0
+    ? '<span style="font-size:10px;color:var(--t4);margin-left:8px">parsed in '+_parserMetrics.durationMs+'ms · '+_parserMetrics.rowCount+' rows</span>' : '';
 
-  // ── Required field check ──────────────────────────────────────────────
-  var hasRef = colMap.invNo!==undefined||colMap.soNo!==undefined||colMap.poNo!==undefined||colMap.delNo!==undefined||colMap.trkNo!==undefined||colMap.paymentRef!==undefined;
-  var hasAmt = colMap.amt!==undefined;
-  var missingWarn = (!hasRef||!hasAmt) ?
-    '<div style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);margin-bottom:10px;font-size:12px;color:var(--r-t)">'+
-    '⚠️ <strong>Required field missing:</strong> '+(!hasRef?'At least one document reference (Invoice #, PO #, SO #, etc.) is required. ':'')+
-    (!hasAmt?'Amount column is required.':'')+' Please correct the mapping.</div>' : '';
+  // ── Confidence ──────────────────────────────────────────────────────────
+  var confPct    = Math.round(parsed.confidence*100);
+  var confColor  = confPct>=80?'var(--g-t)':confPct>=55?'var(--am-t)':'var(--r-t)';
+  var confWarn   = confPct<55
+    ? '<div style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);margin-bottom:10px;font-size:12px;color:var(--r-t)">'+
+      '⚠️ <strong>Low parser confidence ('+confPct+'%)</strong> — Please review the field mapping.</div>' : '';
 
-  // ── Mapping table ─────────────────────────────────────────────────────
-  var mappedFields = Object.keys(RM_FIELD_LABELS);
-  var reverseMap = {}; // colIdx → field
-  Object.keys(colMap).forEach(function(f){ reverseMap[colMap[f]]=f; });
+  // ── Required field check (Feature 7) ───────────────────────────────────
+  var missingWarn = _rmValidationWarning(parsed);
 
-  var mapRows = rawHdrs.map(function(h,ci){
-    var mappedTo = reverseMap[ci] || '';
-    var m = meta[mappedTo] || {};
-    var srcBadge = m.src==='learned'?'<span class="badge" style="background:rgba(20,168,216,.1);color:var(--p);font-size:9px">learned</span>':
-                   m.src==='auto'?'<span class="badge" style="background:rgba(18,184,134,.1);color:var(--g-t);font-size:9px">auto</span>':
-                   m.src==='fuzzy'?'<span class="badge" style="background:rgba(245,158,11,.1);color:var(--am-t);font-size:9px">fuzzy</span>':'';
-    var opts = '<option value="">— Ignore —</option>';
-    mappedFields.forEach(function(f){
-      opts += '<option value="'+f+'" '+(mappedTo===f?'selected':'')+'>'+RM_FIELD_LABELS[f]+'</option>';
-    });
-    return '<tr>'+
-      '<td style="font-weight:600;font-size:12px;color:var(--t1)">'+_escapeHtml(h||'(blank)')+'</td>'+
-      '<td style="font-size:11px;color:var(--t3)">col '+(ci+1)+'</td>'+
-      '<td>'+srcBadge+'</td>'+
-      '<td><select class="sel" style="font-size:11.5px;width:100%" onchange="_rmUpdateColMap('+ci+',this.value)">'+opts+'</select></td>'+
-    '</tr>';
-  }).join('');
-
-  // ── Variance banner ───────────────────────────────────────────────────
+  // ── Variance banner ─────────────────────────────────────────────────────
   var varHtml = '';
   if(matchedBankTotal>0){
     var vDiff = matchedBankTotal - parsed.totalAmt;
     if(Math.abs(vDiff)>0.01){
       varHtml = '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);margin-bottom:10px">'+
         '<span>⚠️</span><div style="font-size:12px">'+
-        '<strong style="color:var(--r-t)">Variance:</strong> Bank total <strong>$'+$f(matchedBankTotal)+'</strong> ≠ Remittance total <strong>$'+$f(parsed.totalAmt)+'</strong> — difference <strong style="color:var(--r-t)">$'+$f(Math.abs(vDiff))+'</strong>'+
-        (vDiff<0?' (remittance exceeds bank)':' (bank exceeds remittance)')+'. Will be flagged as exception.'+
-        '</div></div>';
+        '<strong style="color:var(--r-t)">Variance:</strong> Bank <strong>$'+$f(matchedBankTotal)+'</strong> ≠ Remittance <strong>$'+$f(parsed.totalAmt)+'</strong> — diff <strong style="color:var(--r-t)">$'+$f(Math.abs(vDiff))+'</strong>'+
+        (vDiff<0?' (remittance exceeds bank)':' (bank exceeds remittance)')+'. Will be flagged as exception.</div></div>';
     }
   }
+
+  // ── Mapping table — one row per detected column ─────────────────────────
+  var reverseMap = {};
+  Object.keys(colMap).forEach(function(f){ reverseMap[colMap[f]]=f; });
+  var mapRows = rawHdrs.map(function(h, ci){
+    var mappedTo = reverseMap[ci] || '';
+    var m        = meta[mappedTo] || {};
+    var srcBadge = m.src==='learned'?'<span class="badge" style="background:rgba(20,168,216,.1);color:var(--p);font-size:9px">learned</span>':
+                   m.src==='auto'   ?'<span class="badge" style="background:rgba(18,184,134,.1);color:var(--g-t);font-size:9px">auto</span>':
+                   m.src==='fuzzy'  ?'<span class="badge" style="background:rgba(245,158,11,.1);color:var(--am-t);font-size:9px">fuzzy</span>':'';
+    var optHtml = '<option value="">— Ignore —</option>';
+    Object.keys(RM_FIELD_LABELS).forEach(function(f){
+      optHtml += '<option value="'+f+'"'+(mappedTo===f?' selected':'')+'>'+RM_FIELD_LABELS[f]+'</option>';
+    });
+    return '<tr>'+
+      '<td style="font-weight:600;font-size:12px;color:var(--t1)">'+_escapeHtml(h||'(blank)')+'</td>'+
+      '<td style="font-size:11px;color:var(--t3)">col '+(ci+1)+'</td>'+
+      '<td>'+srcBadge+'</td>'+
+      '<td><select class="sel" style="font-size:11.5px;width:100%" data-col="'+ci+'" onchange="_rmOnDropdownChange('+ci+',this.value)">'+optHtml+'</select></td>'+
+    '</tr>';
+  }).join('');
+
+  // ── Preview table — first 50 rows only, lazy-load ──────────────────────
+  var previewHtml = _rmRenderPreviewRows(parsed.lines, 0, 50);
+  var moreCount   = parsed.lines.length > 50 ? parsed.lines.length - 50 : 0;
+  var loadMoreBtn = moreCount > 0
+    ? '<button class="btn btn-outline btn-xs" onclick="_rmLoadMorePreview()" style="margin-top:6px">Load '+Math.min(50,moreCount)+' more rows</button>' : '';
 
   var html =
     learnHtml + confWarn + missingWarn + varHtml +
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:8px 12px;background:var(--surface2);border-radius:8px">'+
       '<div style="font-size:12px;color:var(--t2)">'+
-        '<strong>'+_escapeHtml(fileName||'File')+'</strong> · '+
-        '<strong>'+(parsed.lines.length)+'</strong> data lines · Total: <strong>$'+$f(parsed.totalAmt)+'</strong> · '+
-        'Customer: <strong>'+_escapeHtml(custName)+'</strong>'+
-        (parsed.isHoriba?' 🏭 <span style="color:var(--p);font-weight:700">HORIBA</span>':'')+
+        '<strong>'+_escapeHtml(fileName||'File')+'</strong> · <strong>'+parsed.lines.length+'</strong> data lines · $'+$f(parsed.totalAmt)+' · Customer: <strong>'+_escapeHtml(custName)+'</strong>'+
+        (parsed.isHoriba?' 🏭 <span style="color:var(--p);font-weight:700">HORIBA</span>':'')+timingNote+
       '</div>'+
-      '<div style="margin-left:auto;font-size:12px;font-weight:700;color:'+confColor+'">Parser confidence: '+confPct+'%</div>'+
+      '<div style="margin-left:auto;font-size:12px;font-weight:700;color:'+confColor+'">'+confPct+'% confidence</div>'+
     '</div>'+
-    '<div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Column Mapping — Detected File Headers → AR Match Pro Field</div>'+
-    '<div style="overflow-y:auto;max-height:280px;border:1px solid var(--bdr);border-radius:8px;margin-bottom:12px">'+
-    '<table class="fbl5n-tbl" style="min-width:380px">'+
-      '<thead><tr><th>Detected Column Header</th><th>Col</th><th>Method</th><th>Mapped To (edit if wrong)</th></tr></thead>'+
-      '<tbody>'+mapRows+'</tbody>'+
-    '</table></div>'+
-    '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">'+
+    '<div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Column Mapping</div>'+
+    '<div style="overflow-y:auto;max-height:220px;border:1px solid var(--bdr);border-radius:8px;margin-bottom:10px">'+
+    '<table class="fbl5n-tbl" style="min-width:380px"><thead><tr><th>Detected Header</th><th>Col</th><th>Method</th><th>Mapped To (edit if wrong)</th></tr></thead>'+
+    '<tbody>'+mapRows+'</tbody></table></div>'+
+    '<div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Preview — first 50 rows</div>'+
+    '<div id="rm-preview-tbody-wrap" style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid var(--bdr);border-radius:8px;margin-bottom:6px">'+
+    '<table class="fbl5n-tbl" id="rm-preview-tbl" style="min-width:520px"><thead><tr>'+
+      '<th>Customer</th><th>Pay Date</th><th>Invoice/Ref</th><th>PO #</th><th>Tracking</th><th style="text-align:right">Amount</th><th>Class</th>'+
+    '</tr></thead><tbody id="rm-preview-tbody">'+previewHtml+'</tbody></table></div>'+
+    loadMoreBtn+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px">'+
       '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-      '<button class="btn btn-outline btn-sm" onclick="_saveParserProfileFromReview()">🧠 Save Mapping for This Customer</button>'+
+      '<button class="btn btn-outline btn-sm" onclick="_saveParserProfileFromReview()">🧠 Save Mapping</button>'+
       '<button class="btn btn-p btn-sm" onclick="_confirmRemDetailImport('+matchedBankTotal+')">✓ Confirm Import</button>'+
     '</div>';
 
-  showModal('Remittance Field Mapping — Review Before Import', html);
+  showModal('Remittance Field Mapping', html);
 }
 
-// Called from mapping dropdown change
+// ── Feature 7: Validate before import ────────────────────────────────────
+function _rmValidationWarning(parsed){
+  if(!parsed||!parsed.lines||!parsed.lines.length) return '';
+  var hasCust  = parsed.lines.some(function(l){ return l.custName && l.custName.length>1; });
+  var hasAmt   = parsed.lines.some(function(l){ return l.amt>0; });
+  var hasRef   = parsed.lines.some(function(l){ return l.invNo||l.soNo||l.delNo||l.poNo||l.trkNo||l.paymentRef; });
+  var msgs = [];
+  if(!hasCust) msgs.push('Customer Name');
+  if(!hasAmt)  msgs.push('Payment Amount');
+  if(!hasRef)  msgs.push('at least one reference (Invoice, Delivery, Tracking, PO, or SO)');
+  if(msgs.length>0){
+    return '<div style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);margin-bottom:10px;font-size:12px;color:var(--r-t)">'+
+      '⚠️ <strong>AR Match Pro could not confidently identify remittance references.</strong> Missing: '+msgs.join('; ')+'. Please review field mappings.</div>';
+  }
+  return '';
+}
+
+// ── Render preview rows (lightweight — no full re-parse) ─────────────────
+function _rmRenderPreviewRows(lines, from, to){
+  return lines.slice(from, to).map(function(rd){
+    var conf = rd.confidence>=0.8?'var(--g-t)':rd.confidence>=0.5?'var(--am-t)':'var(--r-t)';
+    return '<tr>'+
+      '<td style="font-size:11px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_escapeHtml(rd.custName||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:10px;white-space:nowrap">'+_escapeHtml(rd.paymentDate||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:11px;color:var(--pd)">'+_escapeHtml(rd.invNo||rd.soNo||rd.poNo||rd.paymentRef||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:10px">'+_escapeHtml(rd.poNo||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:10px;max-width:80px;overflow:hidden;text-overflow:ellipsis">'+_escapeHtml(rd.trkNo||'—')+'</td>'+
+      '<td class="td-num" style="font-weight:600">$'+$f(rd.amt)+'</td>'+
+      '<td><span class="badge badge-am" style="font-size:9px">'+_escapeHtml(rd.docClass||'?')+'</span></td>'+
+    '</tr>';
+  }).join('');
+}
+
+// Lazy-load more rows without re-rendering the whole table
+function _rmLoadMorePreview(){
+  if(!_remDetailParsed) return;
+  _rmPreviewOffset += 50;
+  var tbody = document.getElementById('rm-preview-tbody');
+  if(!tbody) return;
+  var newRows = _rmRenderPreviewRows(_remDetailParsed.lines, _rmPreviewOffset, _rmPreviewOffset+50);
+  tbody.insertAdjacentHTML('beforeend', newRows);
+  // Update or remove load more button
+  var remaining = _remDetailParsed.lines.length - (_rmPreviewOffset+50);
+  var btn = document.querySelector('#rm-preview-tbody-wrap + button');
+  if(btn){
+    if(remaining>0){ btn.textContent='Load '+Math.min(50,remaining)+' more rows'; }
+    else { btn.style.display='none'; }
+  }
+}
+
+// ── Debounced mapping update — only triggers preview refresh after 300ms ─
+function _rmOnDropdownChange(colIdx, field){
+  // Update colMap immediately in memory (no DOM work)
+  _rmUpdateColMap(colIdx, field);
+  // Debounce preview refresh to avoid rapid re-renders
+  clearTimeout(_rmUpdateTimer);
+  _rmUpdateTimer = setTimeout(function(){
+    // Only refresh the validation warning — not the whole modal
+    var parsed = _remDetailParsed;
+    if(!parsed) return;
+    // Re-run validation warning update (lightweight)
+    var warnEl = document.querySelector('#rm-validation-warn');
+    if(warnEl) warnEl.innerHTML = _rmValidationWarning(parsed);
+  }, 300);
+}
+
+// Called from mapping dropdown change — updates in-memory colMap only
 function _rmUpdateColMap(colIdx, field){
   if(!_remDetailParsed) return;
-  // Remove any existing mapping to this field
   Object.keys(_remDetailParsed.colMap).forEach(function(f){
     if(_remDetailParsed.colMap[f]===colIdx) delete _remDetailParsed.colMap[f];
   });
-  if(field) _remDetailParsed.colMap[field]=colIdx;
+  if(field) _remDetailParsed.colMap[field] = colIdx;
 }
 
 // Save mapping back to learning profile
 function _saveParserProfileFromReview(){
   if(!_remDetailParsed) return;
-  var profile = ParserLearningProfile.save(_remDetailParsed.custName, {
-    colMap:      _remDetailParsed.colMap,
-    headerIdx:   _remDetailParsed.headerIdx,
-    isHoriba:    _remDetailParsed.isHoriba,
-    confidence:  _remDetailParsed.confidence,
-    lastFile:    _remDetailParsed.srcFile,
-    hasTotalRow: _remDetailParsed.hasTotalRow
+  ParserLearningProfile.save(_remDetailParsed.custName, {
+    colMap:    _remDetailParsed.colMap,
+    headerIdx: _remDetailParsed.headerIdx,
+    isHoriba:  _remDetailParsed.isHoriba,
+    confidence:_remDetailParsed.confidence,
+    lastFile:  _remDetailParsed.srcFile
   });
-  toast('Mapping saved for '+_remDetailParsed.custName+' — will be auto-applied next time.');
+  toast('Mapping saved for '+(_remDetailParsed.custName||'customer')+' — auto-applied next time.');
 }
 
 // Reset a customer parser profile
@@ -6192,37 +6341,41 @@ function _confirmRemDetailImport(matchedBankTotal){
   if(!_remDetailParsed){ closeModal(); return; }
   var parsed = _remDetailParsed;
 
-  // Re-parse rows with updated colMap if user changed mappings
-  REM_DETAIL = parsed.lines;
+  // Feature 7: Validate before accepting
+  var hasRef = parsed.lines.some(function(l){ return l.invNo||l.soNo||l.delNo||l.poNo||l.trkNo||l.paymentRef; });
+  var hasAmt = parsed.lines.some(function(l){ return l.amt>0; });
+  if(!hasRef||!hasAmt){
+    toast('AR Match Pro could not confidently identify remittance references. Please review field mappings.','warn');
+    return;
+  }
 
-  // Save profile automatically after confirm
+  REM_DETAIL = parsed.lines;
   _saveParserProfileFromReview();
-  // Reinforce based on line count
   ParserLearningProfile.reinforce(parsed.custName, parsed.lines.length, parsed.lines.length);
 
-  // Check variance
+  // Variance exception
   if(matchedBankTotal>0 && Math.abs(matchedBankTotal-parsed.totalAmt)>0.01){
     var vDiff = matchedBankTotal - parsed.totalAmt;
     EXC.push({
       id:'EXC-REMVAR-001', a:'', c:parsed.custName, amt:Math.abs(vDiff),
-      ref:'Remittance vs Bank',
-      type:'Variance',
-      detail:'Bank total $'+$f(matchedBankTotal)+' ≠ Remittance total $'+$f(parsed.totalAmt)+' — difference $'+$f(Math.abs(vDiff))+
-        (vDiff<0?' (remittance exceeds bank wire)':' (bank wire exceeds remittance)')+'. Do not force-match. Investigate with customer.',
-      action:'Review variance with customer before applying',
-      dec:'', s:'Open',
-      notes:'Auto-flagged. Remittance lines: '+REM_DETAIL.length+'. Parser confidence: '+Math.round(parsed.confidence*100)+'%'
+      ref:'Remittance vs Bank', type:'Variance',
+      detail:'Bank $'+$f(matchedBankTotal)+' ≠ Remittance $'+$f(parsed.totalAmt)+' — diff $'+$f(Math.abs(vDiff))+
+        (vDiff<0?' (remittance exceeds bank)':' (bank exceeds remittance)')+'. Do not force-match.',
+      action:'Review with customer', dec:'', s:'Open',
+      notes:'Lines: '+REM_DETAIL.length+'. Confidence: '+Math.round(parsed.confidence*100)+'%'
     });
     try{renderWsExcPremium();}catch(e){}
   }
 
   saveToStorage();
   addAudit('Remittance details imported',
-    REM_DETAIL.length+' lines · $'+$f(parsed.totalAmt)+' · customer: '+parsed.custName+' · confidence: '+Math.round(parsed.confidence*100)+'%');
-  closeModal();
-  _remDetailParsed = null;
+    REM_DETAIL.length+' lines · $'+$f(parsed.totalAmt)+' · '+parsed.custName+' · '+Math.round(parsed.confidence*100)+'% conf');
 
-  // Show summary preview
+  // Dispose large cached parse result to free memory
+  _remDetailParsed = null;
+  clearTimeout(_rmUpdateTimer);
+
+  closeModal();
   _showRemDetailPreview(REM_DETAIL, parsed.totalAmt, matchedBankTotal);
   toast('Imported '+REM_DETAIL.length+' remittance lines for '+parsed.custName+'. Run Auto Match.');
 }
@@ -7956,7 +8109,7 @@ function armpUpdateSetupState(){
       var subEl = s1.querySelector('.armp-setup-step-sub');
       if(subEl) subEl.textContent = hasPay
         ? PAY.length + ' payment' + (PAY.length===1?'':'s') + ' imported'
-        : 'Remittance data — BAI2, MUFG, YayPay, CSV, or PDF';
+        : 'Upload Bank File / Remittance Data — BAI2, MUFG, CSV, or PDF';
     }
     if(s2){
       var subEl2 = s2.querySelector('.armp-setup-step-sub');
@@ -11950,6 +12103,7 @@ async function runMatch(){
       if(rd.trkNo){if(!_rdByTrk2.has(rd.trkNo))_rdByTrk2.set(rd.trkNo,rd);}
       if(rd.paymentRef){if(!_rdByRef2.has(rd.paymentRef))_rdByRef2.set(rd.paymentRef,rd);}
     });
+
     PAY.forEach(function(p){
       var _rd=null;
       if(!_rd&&p.bankRef) _rd=_rdByRef2.get(p.bankRef)||null;
@@ -11969,6 +12123,28 @@ async function runMatch(){
         if(_rd.debitMemo)p._debitMemo=_rd.debitMemo;
         p._hasRemDetail=true;
         p._remConfidence=_rd.confidence||0;
+      }
+
+      // ── Feature 5: Delivery Report bridge cross-reference ────────────────
+      // If still no invoice ref, try to bridge via delivery report:
+      // remittance trkNo → DELIV bridge → SO → INV
+      if(!p.i && !p.so && p.trackingNo && window._TRK_BRIDGE){
+        var _br = window._TRK_BRIDGE.get(p.trackingNo)||null;
+        if(_br){
+          if(!p.so && _br.salesOrder) p.so = _br.salesOrder;
+          if(!p.po && _br.poNo)       p.po = _br.poNo;
+          if(!p.deliveryNo)           p.deliveryNo = _br.deliveryNo;
+          p._bridgedViaDelivery = true;
+        }
+      }
+      // remittance delNo → DELIV bridge → SO → INV
+      if(!p.i && !p.so && p.deliveryNo && window._DELIV_BRIDGE){
+        var _br2 = window._DELIV_BRIDGE.get(p.deliveryNo)||null;
+        if(_br2){
+          if(!p.so && _br2.salesOrder) p.so = _br2.salesOrder;
+          if(!p.po && _br2.poNo)       p.po = _br2.poNo;
+          p._bridgedViaDelivery = true;
+        }
       }
     });
     // Variance check
@@ -12316,10 +12492,10 @@ async function handleFile(inp){
       const buf=await f.arrayBuffer();
       const wb=XLSX.read(buf,{type:'array',cellText:true,cellDates:true,raw:true});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      // ── YayPay / MUFG bank export detection ──
+      // ── MUFG / bank export detection ──
       const _yyHeaders=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',blankrows:false})[0]||[];
       if(IMP_TYPE==='rem'&&typeof detectYayPay==='function'&&detectYayPay(_yyHeaders)){
-        showProgress('Parsing YayPay/MUFG bank export…',60);
+        showProgress('Parsing MUFG/bank export…',60);
         await new Promise(r=>setTimeout(r,40));
         try{
           const _yyPays=parseYayPayExcel(wb);
@@ -12332,10 +12508,10 @@ async function handleFile(inp){
           if(typeof rAll==='function')rAll();
           hideProgress();
           const _yyAccts=[...new Set(_yyPays.map(p=>p.bankAcct).filter(Boolean))];
-          addAudit('YayPay/MUFG import',_yyPays.length+' payments · accounts: '+_yyAccts.join(', '));
+          addAudit('Bank/MUFG import',_yyPays.length+' payments · accounts: '+_yyAccts.join(', '));
           toast('Imported '+_yyPays.length+' bank payments · '+_yyAccts.length+' account(s)');
           const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
-        }catch(yyErr){hideProgress();toast('YayPay parse error: '+yyErr.message,'warn');console.error('YayPay:',yyErr);}
+        }catch(yyErr){hideProgress();toast('Bank file parse error: '+yyErr.message,'warn');console.error('BankParse:',yyErr);}
         return;
       }
       // ── Standard Excel / CSV import ──
@@ -12381,7 +12557,7 @@ async function handleFile(inp){
 
 // ════════════════════════════════════════════════════════════════════════════
 // YAYPAY / MUFG BANK EXCEL PARSER
-// Dedicated parser for structured YayPay/MUFG bank exports
+// Dedicated parser for structured MUFG/bank Excel exports (BAI2, MUFG YayPay format)
 // Headers: Post Date, Bank ID, Account Number, Bank Reference, BAI Code, DETAIL1-20
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -12519,7 +12695,7 @@ function parseYayPayExcel(wb){
     var invRef=_yyExtractInvoice(rawDetail);
     var poRef=_yyExtractPO(rawDetail);
     var isCOA=rawDetail.toUpperCase().includes('CASH ON ACCOUNT')||rawDetail.toUpperCase().includes('UNAPPLIED');
-    payments.push({bankAcct:bankAcct,bankId:iBankId>=0?String(row[iBankId]||'').trim():'',a:'',c:customer,amt:amt,i:invRef,po:poRef,so:'',m:method||baiCode,baiCode:baiCode,txId:bankRef||custRef||'',bankRef:bankRef,custRef:custRef,payDate:postDate,ccy:ccy,n:rawDetail,st:'Unapplied Cash',coa:isCOA,unapplied:false,dp:false,sourceFormat:'yaypay-excel'});
+    payments.push({bankAcct:bankAcct,bankId:iBankId>=0?String(row[iBankId]||'').trim():'',a:'',c:customer,amt:amt,i:invRef,po:poRef,so:'',m:method||baiCode,baiCode:baiCode,txId:bankRef||custRef||'',bankRef:bankRef,custRef:custRef,payDate:postDate,ccy:ccy,n:rawDetail,st:'Unapplied Cash',coa:isCOA,unapplied:false,dp:false,sourceFormat:'mufg-excel'});
   }
   return payments;
 }
@@ -12635,7 +12811,7 @@ async function parsePDFRemittance(file){
       showModal('Bank Summary PDF Detected',
         '<div style="padding:12px 0">'+
         '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This is an <strong>MUFG Account Summary PDF</strong> — not a remittance advice file.</p>'+
-        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">To import bank transactions, use the YayPay/MUFG Excel export (.xlsx) or a BAI2 file (.txt).</p>'+
+        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">To import bank transactions, use the MUFG bank export (.xlsx), BAI2 (.txt), or a BAI2 file (.txt).</p>'+
         '<button class="btn btn-p btn-sm" onclick="closeModal()">OK</button></div>'
       );
       return;
@@ -12909,104 +13085,193 @@ function processImport(){
     }catch(e){}
     try{updDash();}catch(e){}
   }else if(IMP_TYPE==='del'){
-    // Delivery Report: parse rows
-    DELIV=rows.filter(r=>r.some(c=>c)).map(r=>({
-      trackingNo: r[col('tracking','trackingnumber','trackingno','trackingnum','trackingref','trkno')]||'',
-      deliveryNo: r[col('delivery','deliverynumber','deliveryno','deliverynum','deliveryref','delno','shipmentnumber','shipmentno','dn')]||'',
-      invoiceNo:  r[col('invoice','invoicenumber','inv','invoiceref','invoiceno','documentnumber','docno')]||'',
-      salesOrder: r[col('salesorder','so','soref','salesdoc','salesordernumber','vbeln')]||'',
-      poNo:       r[col('po','purchaseorder','ponumber','poref','ponum')]||'',
-      custAcct:   r[col('account','customeraccount','acct','customernumber','kunnr')]||'',
-      custName:   r[col('customer','customername','name','soldto','billto')]||'',
-      amount:     parseFloat(String(r[col('amount','amt','netamount','deliveryamount')]||'0').replace(/[$,\s]/g,''))||0,
-      shipDate:   r[col('shipdate','shippingdate','shippedon','deliverydate','dateofdelivery')]||'',
-      rawRow:     r.join(',')
-    }));
-    // Ensure INV lookup indexes exist — O(1) access per delivery row
+    // ── Delivery Report Parse ─────────────────────────────────────────────
+    // TK-Fujikin delivery report exact columns (auto-detected by header):
+    //  A: Name of Sold-to party  → custName
+    //  B: Delivery               → deliveryNo
+    //  C: Reference document     → salesOrder (210xxxxxxx prefix)
+    //  D: Sold-to party          → custAcct
+    //  E: Planed Billing Amount  → amount
+    //  F: Customer PO Number     → poNo
+    //  G: Bill of lading         → trackingNo (1Z prefix, may have date prefix)
+    //  H: Logistics Memo         → trackingNo (1Z) or poNo (SS) — multi-value
+    DELIV = rows.filter(function(r){ return r.some(function(c){ return c; }); }).map(function(r){
+      // Column index lookup — support both positional (TK-Fujikin) and header-based
+      var _c = function(){ var aliases=Array.prototype.slice.call(arguments); return col.apply(null,aliases); };
+      var custNameVal  = r[_c('nameofsoldt','nameofcust','customername','customer','supplier','soldtoname','nameofparty','nameofsoldt')] || r[0] || '';
+      var delivNoVal   = r[_c('delivery','deliverynumber','deliveryno','deliverynum','delno','dn')] || r[1] || '';
+      var soVal        = r[_c('referencedocument','salesorder','so','soref','salesdoc','salesordernumber','refdoc')] || r[2] || '';
+      var custAcctVal  = r[_c('soldtoparty','soldto','accountno','customeraccount','acct','kunnr','customernumber')] || r[3] || '';
+      var amtVal       = r[_c('planedbillingamount','plannedbillingamount','billingamount','amount','amt','deliveryamount','netamount')] || r[4] || '';
+      var poNoVal      = r[_c('customerponumber','ponumber','po','custpo','purchaseorder','customerpono')] || r[5] || '';
+      var bolVal       = r[_c('billoflading','bol','billofladingnumber','bolno','trackingnumber','tracking')] || r[6] || '';
+      var logMemoVal   = r[_c('logisticsmemointernalheader','logisticsmemo','logmemo','internalmemo','memo','notes')] || r[7] || '';
+
+      // Normalize delivery number — strip to digits if pure numeric
+      var delivNo = String(delivNoVal||'').trim();
+      // Normalize sales order — use prefix detection
+      var so = String(soVal||'').trim();
+      var soDigits = so.replace(/[^0-9]/g,'');
+      if(detectSalesOrder(soDigits)) so = detectSalesOrder(soDigits) || so;
+
+      // Bill of lading: may be "12/19/25 UPS 1Z9998V6049972463" — extract 1Z part
+      var bol = String(bolVal||'').trim();
+      var bolTrk = detectTracking(bol) || bol;
+
+      // Logistics Memo: may contain 1Z tracking AND SS PO reference
+      var logMemo = String(logMemoVal||'').trim();
+      var logTrk = detectTracking(logMemo);  // 1Z tracking from memo
+      var logPO  = '';
+      if(/SS[A-Z0-9]/i.test(logMemo)){
+        var _logPoM = logMemo.match(/(SS[A-Z0-9\-\(\)]+)/i);
+        if(_logPoM) logPO = _logPoM[1];
+      }
+
+      // Final tracking: prefer Bill of Lading 1Z, fallback to Logistics Memo 1Z
+      var finalTrk = (bolTrk && bolTrk.indexOf('1Z')>=0) ? bolTrk : (logTrk || bolTrk);
+      // Final PO: prefer column F, fallback to Logistics Memo SS
+      var finalPO = String(poNoVal||'').trim() || logPO;
+
+      return {
+        custName:   String(custNameVal||'').trim(),
+        custAcct:   String(custAcctVal||'').trim(),
+        deliveryNo: delivNo,
+        salesOrder: so,
+        invoiceNo:  '',  // derived via SO → invoice bridge
+        poNo:       finalPO,
+        trackingNo: finalTrk,
+        logMemo:    logMemo,
+        amount:     parseFloat(String(amtVal||'0').replace(/[$,\s]/g,'')) || 0,
+        shipDate:   '',
+        rawRow:     r.join(',')
+      };
+    }).filter(function(d){
+      // Skip header row if re-encountered and blank/empty rows
+      return d.deliveryNo && String(d.deliveryNo).toLowerCase()!=='delivery';
+    });
+
+    // Ensure INV lookup indexes exist
     _ensureInvIndexes();
     var _dIdx = _INV_IDX;
-    var matchedDel=0;
-    // Process delivery rows in PERF_CHUNK batches — keeps UI responsive for large delivery files
-    var _applyDelChunk=function(start){
-      var end=Math.min(start+PERF_CHUNK, DELIV.length);
-      showProgress('Matching delivery records '+start+'–'+end+' of '+DELIV.length+'…', Math.round(end/DELIV.length*80)+10);
-      for(var _di=start;_di<end;_di++){
-        var d=DELIV[_di];
-        var matched=null;
-        // Priority chain — all O(1) Map lookups
-        if(d.invoiceNo&&!matched) matched=_dIdx.byInv&&_dIdx.byInv.get(norm(d.invoiceNo))||null;
+    var matchedDel = 0;
+
+    // ── Build delivery→SO bridge map for cross-reference matching (Feature 5) ──
+    // DELIV rows contain: deliveryNo, salesOrder, trackingNo, poNo, custAcct
+    // This bridge lets us match: remittance delivery# → DELIV → SO → INV
+    var _delivBridge = new Map(); // deliveryNo → DELIV row
+    var _trkBridge   = new Map(); // trackingNo → DELIV row
+    var _soBridge    = new Map(); // salesOrder  → DELIV row
+    DELIV.forEach(function(d){
+      if(d.deliveryNo) _delivBridge.set(String(d.deliveryNo).trim(), d);
+      if(d.trackingNo) _trkBridge.set(String(d.trackingNo).trim(), d);
+      if(d.salesOrder) _soBridge.set(String(d.salesOrder).trim(), d);
+    });
+    // Store bridges globally for use in runMatch
+    window._DELIV_BRIDGE = _delivBridge;
+    window._TRK_BRIDGE   = _trkBridge;
+    window._SO_BRIDGE    = _soBridge;
+
+    var _applyDelChunk = function(start){
+      var end = Math.min(start + PERF_CHUNK, DELIV.length);
+      showProgress('Matching delivery records ' + start + '–' + end + ' of ' + DELIV.length + '…', Math.round(end/DELIV.length*80)+10);
+      for(var _di=start; _di<end; _di++){
+        var d = DELIV[_di];
+        var matched = null;
+        // Priority: salesOrder → poNo → custAcct → custName
         if(d.salesOrder&&!matched){ var _ds=_dIdx.bySO&&_dIdx.bySO.get(norm(d.salesOrder)); matched=_ds&&_ds[0]||null; }
+        if(d.invoiceNo&&!matched)  matched=_dIdx.byInv&&_dIdx.byInv.get(norm(d.invoiceNo))||null;
         if(d.poNo&&!matched){ var _dp=_dIdx.byPO&&_dIdx.byPO.get(norm(d.poNo)); matched=_dp&&_dp[0]||null; }
         if(d.custAcct&&!matched){ var _da=_dIdx.byAcct&&_dIdx.byAcct.get(d.custAcct); matched=_da&&_da[0]||null; }
         if(d.custName&&!matched){ var _dnn=String(d.custName).toUpperCase().trim(); var _dna=_dIdx.byName&&_dIdx.byName.get(_dnn); matched=_dna&&_dna[0]||null; }
         if(matched){
-          if(d.trackingNo) matched.t=d.trackingNo;
-          if(d.deliveryNo) matched.dl=d.deliveryNo;
-          if(d.shipDate&&!matched.shipDate) matched.shipDate=d.shipDate;
+          if(d.trackingNo) matched.t = d.trackingNo;
+          if(d.deliveryNo) matched.dl = d.deliveryNo;
+          if(d.salesOrder && !matched.so) matched.so = d.salesOrder;
+          if(d.shipDate && !matched.shipDate) matched.shipDate = d.shipDate;
           matchedDel++;
         }
       }
-      if(end<DELIV.length){
+      if(end < DELIV.length){
         setTimeout(function(){ _applyDelChunk(end); }, 0);
       } else {
-        // Final: match tracking/delivery to PAY rows using a Map (O(n+m) not O(n*m))
-        var _payMatchMap=new Map(); // invoiceNo|poNo → DELIV row
+        // Final: bridge tracking/delivery to PAY rows (O(n+m))
+        var _payMatchMap = new Map();
         DELIV.forEach(function(dd){
-          if(dd.invoiceNo) _payMatchMap.set(dd.invoiceNo, dd);
-          if(dd.poNo&&!_payMatchMap.has(dd.poNo)) _payMatchMap.set(dd.poNo, dd);
+          if(dd.salesOrder) _payMatchMap.set(norm(dd.salesOrder), dd);
+          if(dd.deliveryNo) _payMatchMap.set(dd.deliveryNo, dd);
+          if(dd.poNo&&!_payMatchMap.has(norm(dd.poNo))) _payMatchMap.set(norm(dd.poNo), dd);
         });
         PAY.forEach(function(p){
           if(!p.trackingNo){
-            var _pdd=null;
-            if(p.i) _pdd=_payMatchMap.get(p.i)||null;
-            if(!_pdd&&p.po) _pdd=_payMatchMap.get(p.po)||null;
+            var _pdd = null;
+            if(p.i)  _pdd = _payMatchMap.get(norm(p.i)) || null;
+            if(!_pdd&&p.po) _pdd = _payMatchMap.get(norm(p.po)) || null;
+            if(!_pdd&&p.so) _pdd = _payMatchMap.get(norm(p.so)) || null;
             if(_pdd){ p.trackingNo=_pdd.trackingNo||''; p.deliveryNo=p.deliveryNo||_pdd.deliveryNo||''; }
           }
         });
-        // Rebuild indexes to include new t/dl fields
         _buildInvIndexes();
         saveToStorage();
         addAudit('Delivery report imported', DELIV.length+' rows · '+matchedDel+' matched to invoices');
         try{renderFbl5n('ca-open-items-body','','');}catch(e){}
         hideProgress();
-        updTop();closeMo();
+        updTop(); closeMo();
         toast('Imported '+DELIV.length+' delivery records · '+matchedDel+' matched to invoice rows');
       }
     };
     showProgress('Processing '+DELIV.length+' delivery rows…', 5);
     setTimeout(function(){ _applyDelChunk(0); }, 30);
-    return; // async path — closeMo/updTop handled inside chunk handler
+    return;
   }else if(IMP_TYPE==='remdetail'){
     // ── Multi-Format Remittance Parse via RemittanceParser ────────────────────
-    // Uses header detection, flex field mapping, HORIBA prefix rules,
-    // and parser learning profiles. Shows mapping review before final import.
+    // Parse ONCE — result cached in _remDetailParsed.
+    // No re-parse on mapping changes (debounced in-memory updates only).
     var _rdFileName = (typeof _lastImportFileName!=='undefined') ? _lastImportFileName : 'remittance';
 
-    // Run the parser
-    var _parsed = RemittanceParser.parse(rows, {
-      fileName: _rdFileName,
-      savedProfile: ParserLearningProfile.get('') // will be resolved inside parse()
-    });
+    // Loading state 1
+    showProgress('Analyzing remittance format…', 10);
 
-    // Store result globally pending user confirmation in mapping review screen
-    _parsed.srcFile = _rdFileName;
-    _remDetailParsed = _parsed;
+    // Record parse start time (Feature 2 timing metrics)
+    _parserMetrics.startTs = Date.now();
+    _parserMetrics.rowCount = rows.length;
 
-    // Find matching bank total for variance check
-    var _rdCustUpper = String(_parsed.custName||'').toUpperCase().trim();
-    var _matchedBankTotal = 0;
-    if(_rdCustUpper){
-      PAY.forEach(function(p){
-        var _pc=String(p.c||'').toUpperCase().trim();
-        if(_pc&&(_pc.indexOf(_rdCustUpper.slice(0,6))>=0||_rdCustUpper.indexOf(_pc.slice(0,6))>=0)){
-          _matchedBankTotal+=(p.amt||0);
-        }
+    // Loading state 2
+    setTimeout(function(){
+      showProgress('Building field mapping preview…', 40);
+    }, 50);
+
+    // Async: yield to browser so progress bar renders before heavy parse
+    setTimeout(function(){
+      showProgress('Optimizing parser…', 60);
+
+      // Run the parser (parse ONCE, cache result)
+      var _parsed = RemittanceParser.parse(rows, {
+        fileName: _rdFileName,
+        savedProfile: ParserLearningProfile.get('')
       });
-    }
+      _parsed.srcFile = _rdFileName;
+      _remDetailParsed = _parsed;
 
-    // Close import modal and show mapping review
-    closeMo();
-    _showMappingReview(_parsed, _parsed.headerRow, _rdFileName, _matchedBankTotal);
+      // Timing metrics
+      _parserMetrics.endTs = Date.now();
+      _parserMetrics.durationMs = _parserMetrics.endTs - _parserMetrics.startTs;
+
+      // Find matching bank total for variance check
+      var _rdCustUpper = String(_parsed.custName||'').toUpperCase().trim();
+      var _matchedBankTotal = 0;
+      if(_rdCustUpper){
+        PAY.forEach(function(p){
+          var _pc=String(p.c||'').toUpperCase().trim();
+          if(_pc&&(_pc.indexOf(_rdCustUpper.slice(0,6))>=0||_rdCustUpper.indexOf(_pc.slice(0,6))>=0)){
+            _matchedBankTotal+=(p.amt||0);
+          }
+        });
+      }
+
+      hideProgress();
+      closeMo();
+      _showMappingReview(_parsed, _parsed.headerRow, _rdFileName, _matchedBankTotal);
+    }, 80);
     return;
   }else{
     PAY=rows.filter(r=>r.some(c=>c)).map(r=>{
