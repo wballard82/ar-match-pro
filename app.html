@@ -2625,6 +2625,13 @@ body.app-active #app {
   flex-shrink: 0;
 }
 
+/* Upload status panel */
+.ustat-row { display:flex; align-items:center; gap:7px; }
+.ustat-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.ustat-dot-empty  { background:var(--bdr2,#D1D5DB); }
+.ustat-dot-loaded { background:var(--g-t,#059669); }
+.ustat-dot-warn   { background:var(--am-t,#D97706); }
+
 /* Audit activity log (v18) */
 .armp-activity-log {
   max-height: 360px;
@@ -3880,6 +3887,25 @@ body.app-active #app {
                     <div class="armp-banner-step-label">Run Auto Match</div>
                   </div>
                   <button class="armp-banner-step-cta" onclick="runMatch()">Run</button>
+                </div>
+              </div>
+
+              <!-- ── Upload Status + Auto Match Diagnostics ── -->
+              <div id="upload-status-panel" style="display:flex;gap:10px;flex-wrap:wrap;padding:10px 16px 0;align-items:flex-start">
+                <!-- Upload Status -->
+                <div style="background:var(--surface2);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px;min-width:220px;flex:1">
+                  <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Upload Status</div>
+                  <div style="display:flex;flex-direction:column;gap:4px" id="upload-status-rows">
+                    <div class="ustat-row" id="ustat-bank"><span class="ustat-dot ustat-dot-empty"></span><span style="font-size:12px;color:var(--t3)">Bank File: not loaded</span></div>
+                    <div class="ustat-row" id="ustat-inv"><span class="ustat-dot ustat-dot-empty"></span><span style="font-size:12px;color:var(--t3)">Open Items: not loaded</span></div>
+                    <div class="ustat-row" id="ustat-del"><span class="ustat-dot ustat-dot-empty"></span><span style="font-size:12px;color:var(--t3)">Delivery Report: not loaded</span></div>
+                    <div class="ustat-row" id="ustat-rem"><span class="ustat-dot ustat-dot-empty"></span><span style="font-size:12px;color:var(--t3)">Remittance Details: not loaded</span></div>
+                  </div>
+                </div>
+                <!-- Diagnostics (visible after Auto Match) -->
+                <div id="match-diag-panel" style="background:var(--surface2);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px;min-width:220px;flex:1;display:none">
+                  <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Auto Match Diagnostics</div>
+                  <div id="match-diag-body" style="font-size:12px;color:var(--t2);line-height:1.8"></div>
                 </div>
               </div>
             </div>
@@ -5630,6 +5656,88 @@ function _invalidateInvIndexes(){ _INV_IDX={byInv:null,byPO:null,bySO:null,byAcc
 function _ensureInvIndexes(){ if(!_INV_IDX.byInv){ _buildInvIndexes(); } }
 
 // ════════════════════════════════════════════════════════════════════════════
+// ENRICH OPEN ITEMS WITH DELIVERY REPORT (Bug 1 Fix)
+// After delivery report import, sync ALL delivery fields into matching INV rows.
+// Enriched fields: dl (Delivery#), t (Tracking#), so (Sales Order#),
+//                  po (PO#), a (Customer Account#), logMemo, bol
+// Match priority: SO# → PO# → Customer Account + Amount → Customer Name + Amount
+// Shows: "Delivery Report synced: X open items enriched, Y unmatched rows."
+// ════════════════════════════════════════════════════════════════════════════
+function enrichOpenItemsWithDeliveryReport(){
+  if(!DELIV || !DELIV.length || !INV || !INV.length) return;
+  _ensureInvIndexes();
+  var enriched = 0;
+  var unmatched = 0;
+
+  DELIV.forEach(function(d){
+    var matched = null;
+
+    // Priority 1: Sales Order # (Reference Document)
+    if(d.salesOrder && !matched){
+      var _ds = _INV_IDX.bySO && _INV_IDX.bySO.get(norm(d.salesOrder));
+      if(_ds && _ds.length) matched = _ds[0];
+    }
+    // Priority 2: PO #
+    if(d.poNo && !matched){
+      var _dp = _INV_IDX.byPO && _INV_IDX.byPO.get(norm(d.poNo));
+      if(_dp && _dp.length){
+        // Disambiguate by amount if multiple matches
+        if(_dp.length === 1){ matched = _dp[0]; }
+        else if(d.amount > 0){
+          var _dpa = _dp.find(function(v){ return Math.abs(v.amt - d.amount) < 0.01; });
+          matched = _dpa || _dp[0];
+        } else { matched = _dp[0]; }
+      }
+    }
+    // Priority 3: Customer Account + Invoice Amount
+    if(d.custAcct && !matched){
+      var _da = _INV_IDX.byAcct && _INV_IDX.byAcct.get(d.custAcct);
+      if(_da && _da.length && d.amount > 0){
+        var _daa = _da.find(function(v){ return Math.abs(v.amt - d.amount) < 0.01; });
+        if(_daa) matched = _daa;
+        else if(_da.length === 1) matched = _da[0];
+      } else if(_da && _da.length === 1){ matched = _da[0]; }
+    }
+    // Priority 4: Customer Name + Invoice Amount
+    if(d.custName && !matched){
+      var _dnn = String(d.custName).toUpperCase().trim();
+      var _dna = _INV_IDX.byName && _INV_IDX.byName.get(_dnn);
+      if(_dna && _dna.length && d.amount > 0){
+        var _dnaa = _dna.find(function(v){ return Math.abs(v.amt - d.amount) < 0.01; });
+        if(_dnaa) matched = _dnaa;
+      }
+    }
+
+    if(matched){
+      // Write ALL delivery fields into the matched invoice row
+      if(d.deliveryNo) matched.dl      = d.deliveryNo;
+      if(d.trackingNo) matched.t       = d.trackingNo;
+      if(d.salesOrder && !matched.so)  matched.so  = d.salesOrder;
+      if(d.poNo && !matched.po)        matched.po  = d.poNo;
+      if(d.custAcct && !matched.a)     matched.a   = d.custAcct;
+      if(d.logMemo)                    matched.logMemo = d.logMemo;
+      if(d.trackingNo)                 matched.bol = d.trackingNo; // Bill of Lading
+      enriched++;
+    } else {
+      unmatched++;
+    }
+  });
+
+  // Rebuild indexes to include new t/dl/so/po fields
+  _buildInvIndexes();
+
+  // Refresh open items table
+  try{ renderFbl5n('ca-open-items-body','',''); }catch(e){}
+  // Update status panel
+  _updateUploadStatus();
+
+  var msg = 'Delivery Report synced: ' + enriched + ' open items enriched';
+  if(unmatched > 0) msg += ', ' + unmatched + ' delivery rows unmatched';
+  toast(msg);
+  return { enriched: enriched, unmatched: unmatched };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // REMITTANCE PARSER ENGINE
 // Multi-format, customer-agnostic parser for remittance detail files.
 // Supports: Excel/CSV, bank text, PDF exports, email-style remittance,
@@ -5646,6 +5754,66 @@ function _ensureInvIndexes(){ if(!_INV_IDX.byInv){ _buildInvIndexes(); } }
 //     currency, amt, totalRemAmt, notes, srcFile, srcRow,
 //     confidence, docClass, _raw }
 // ════════════════════════════════════════════════════════════════════════════
+
+// ── Upload Status Panel — updates after every import ──────────────────────
+function _updateUploadStatus(){
+  function _setRow(id, loaded, label, detail){
+    var el=document.getElementById(id); if(!el)return;
+    var dot=el.querySelector('.ustat-dot');
+    var txt=el.querySelector('span:last-child');
+    if(dot){ dot.className='ustat-dot '+(loaded?'ustat-dot-loaded':'ustat-dot-empty'); }
+    if(txt){ txt.style.color=loaded?'var(--t1)':'var(--t3)'; txt.textContent=label+(detail?' ('+detail+')':''); }
+  }
+  try{
+    _setRow('ustat-bank', PAY&&PAY.length>0, 'Bank File', PAY&&PAY.length?PAY.length+' payments':null);
+    _setRow('ustat-inv',  INV&&INV.length>0, 'Open Items', INV&&INV.length?INV.length+' invoices':null);
+    _setRow('ustat-del',  DELIV&&DELIV.length>0, 'Delivery Report', DELIV&&DELIV.length?DELIV.length+' rows':null);
+    _setRow('ustat-rem',  REM_DETAIL&&REM_DETAIL.length>0, 'Remittance Details', REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length+' lines':null);
+  }catch(e){}
+}
+
+// ── Auto Match Diagnostics — shown after runMatch ─────────────────────────
+function _showMatchDiagnostics(stats){
+  try{
+    var panel=document.getElementById('match-diag-panel');
+    var body=document.getElementById('match-diag-body');
+    if(!panel||!body) return;
+    panel.style.display='';
+    var noMatchReasons=[];
+    if(stats.matched===0 && stats.attempted>0){
+      if(!INV||!INV.length)              noMatchReasons.push('No open items loaded — upload invoice/AR file first');
+      else if(!PAY||!PAY.length)         noMatchReasons.push('No bank payments loaded — upload bank file first');
+      else{
+        if(!stats.invRefsFound)          noMatchReasons.push('No invoice references extracted from payments or remittance');
+        if(!stats.delIndexed)            noMatchReasons.push('Delivery references not indexed — upload delivery report');
+        if(!stats.trkFound)              noMatchReasons.push('No tracking numbers found in any source');
+        if(!stats.poFound)               noMatchReasons.push('No PO numbers matched across sources');
+        if(stats.custMismatch)           noMatchReasons.push('Customer names do not match between bank and open items');
+        if(stats.amtMismatch)            noMatchReasons.push('Amount tolerance too tight — try increasing in Settings');
+        if(!REM_DETAIL||!REM_DETAIL.length) noMatchReasons.push('No remittance details loaded — upload remittance file');
+      }
+    }
+    var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 14px">';
+    [['Bank payments',stats.payCount],['Remittance lines',stats.remCount],
+     ['Delivery rows',stats.delCount],['Open items',stats.invCount],
+     ['Refs extracted',stats.refsExtracted],
+     ['Matches found', stats.matched],
+     ['Exceptions',stats.exceptions]
+    ].forEach(function(pair){
+      var valColor = pair[0]==='Matches found'?(stats.matched>0?'var(--g-t)':'var(--r-t)'):
+                    pair[0]==='Exceptions'?'var(--am-t)':'var(--t1)';
+      html+='<span style="color:var(--t3)">'+pair[0]+':</span><span style="font-weight:700;color:'+valColor+'">'+pair[1]+'</span>';
+    });
+    html+='</div>';
+    if(noMatchReasons.length>0){
+      html+='<div style="margin-top:8px;padding:7px 10px;border-radius:7px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18)">';
+      html+='<div style="color:var(--r-t);font-weight:700;font-size:11.5px;margin-bottom:4px">Why no matches:</div>';
+      html+=noMatchReasons.map(function(r){return '<div style="font-size:11.5px;color:var(--t2)">• '+r+'</div>';}).join('');
+      html+='</div>';
+    }
+    body.innerHTML=html;
+  }catch(e){}
+}
 
 // ── Amount parser ─────────────────────────────────────────────────────────
 function _parseRemAmt(v){
@@ -5791,9 +5959,34 @@ function _classifyDocRef(val, prefixMap){
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// PARSER LEARNING PROFILE — localStorage-backed per-customer column learning
-// Replace localStorage calls here with API calls when moving to backend.
+// TK-FUJIKIN / HORIBA HARDCODED REMITTANCE PROFILE
+// When exact TK-Fujikin headers are detected (Supplier|Date|INV DATE|INV No.|Remarks|Amount)
+// this profile bypasses confidence scoring and forces 100% confidence.
+// Column D ("INV No.") may contain: SS refs (→ poNo), 510-prefix (→ invNo), 710-prefix (→ delNo)
+// Column E ("Remarks") may contain: 1Z tracking (→ trkNo) or 10-digit refs
 // ════════════════════════════════════════════════════════════════════════════
+var TKFUJIKIN_REM_PROFILE = {
+  // Exact header pattern from real file (normalized)
+  headerSignature: ['supplier','date','inv date','inv no','remarks','amount'],
+  // Fixed column map indices (0-based)
+  colMap: { custName:0, paymentDate:1, invDate:2, invNo:3, trkNo:4, amt:5 },
+  confidence: 1.0,  // 100%
+  isHoriba: true,
+  custName: 'HORIBA Instruments, Inc.'
+};
+
+// Check if rows match the TK-Fujikin remittance header signature
+function _isTkFujikinRemittance(headerRow){
+  if(!headerRow || headerRow.length < 6) return false;
+  var normed = headerRow.slice(0,6).map(function(h){ return String(h||'').toLowerCase().trim(); });
+  var sig = TKFUJIKIN_REM_PROFILE.headerSignature;
+  var matches = 0;
+  for(var i=0;i<sig.length;i++){
+    if(normed[i] && normed[i].indexOf(sig[i].replace(/ /g,''))>=0) matches++;
+    else if(sig[i] && normed[i] && normed[i].indexOf(sig[i].split(' ')[0])>=0) matches++;
+  }
+  return matches >= 5; // 5+ of 6 headers match → TK-Fujikin format
+}
 var ParserLearningProfile = (function(){
   var STORE_KEY = 'ARMP:SYS:remittance_parser_profiles';
 
@@ -6056,6 +6249,12 @@ var RemittanceParser = (function(){
     var hdr = _findHeaderRow(rows);
     var dataRows = rows.slice(hdr.headerIdx+1);
 
+    // ── PRIORITY: Check for TK-Fujikin/HORIBA exact header format ────────────
+    // When detected, bypass general mapping and use hardcoded profile → 100% conf
+    if(_isTkFujikinRemittance(hdr.rawHdrs)){
+      return _parseTkFujikinRemittance(dataRows, hdr, fileName);
+    }
+
     // Build column map (with saved profile override)
     var cm = _buildColMap(hdr.rawHdrs, opts.savedProfile);
 
@@ -6114,6 +6313,137 @@ var RemittanceParser = (function(){
       lineSum:    lineSum,
       confidence: parseFloat(parserConf.toFixed(2)),
       savedProfile: !!profile
+    };
+  }
+
+  // ── TK-Fujikin dedicated parser — 100% confidence, exact column logic ──────
+  // Col A: Supplier → custName (cascade)
+  // Col B: Date → paymentDate (cascade)
+  // Col C: INV DATE → invDate
+  // Col D: INV No. → SS-prefix → poNo, 510-prefix → invNo, 710-prefix → delNo
+  // Col E: Remarks → 1Z → trkNo, else notes/ref
+  // Col F: Amount → amt
+  function _parseTkFujikinRemittance(dataRows, hdr, fileName){
+    var lines = [];
+    var custFwd = '';
+    var dateFwd = '';
+    var totalAmt = 0;
+
+    dataRows.forEach(function(r, idx){
+      if(!r || !r.some(Boolean)) return;
+      // Detect total row — col B = "Total" and col F has an amount
+      var colBstr = String(r[1]||'').trim().toLowerCase();
+      if(colBstr === 'total' || colBstr === 'grand total'){
+        var tAmt = _parseRemAmt(r[5]);
+        if(tAmt > 0) totalAmt = tAmt;
+        return;
+      }
+      // Skip sub-headers that repeat inside data
+      var colAstr = String(r[0]||'').trim();
+      if(colAstr && colAstr.toLowerCase() === 'supplier') return;
+
+      // Cascade customer name (col A)
+      if(colAstr && colAstr.length > 1) custFwd = colAstr;
+      // Cascade payment date (col B)
+      var colBraw = r[1];
+      if(colBraw && String(colBraw).trim().length > 3) dateFwd = _fmtRdDate(colBraw);
+
+      var invDate = _fmtRdDate(r[2]);  // col C: INV DATE
+
+      // Col D: INV No. — multi-type ref field
+      var colD = String(r[3]||'').trim();
+      var invNo = '', delNo = '', poNo = '';
+      if(colD){
+        if(/^SS[A-Z0-9]/i.test(colD)){
+          // SS reference — PO/shipment reference
+          poNo = colD;
+        } else {
+          // May be 510-prefix (invoice) or 710-prefix (delivery)
+          var dDigits = colD.replace(/[^0-9]/g,'');
+          // Handle comma-separated: "5105165526, 28" — extract first 10-digit number
+          var dFirst = dDigits.slice(0,10);
+          if(dFirst.startsWith('510') && dFirst.length>=9) invNo = dFirst;
+          else if(dFirst.startsWith('710') && dFirst.length>=9) delNo = dFirst;
+          else if(dFirst.startsWith('210') && dFirst.length>=9) {} // SO — handled by bridge
+          else { invNo = colD; } // generic ref
+        }
+      }
+
+      // Col E: Remarks — tracking number or 10-digit ref
+      var colE = String(r[4]||'').trim();
+      var trkNo = '';
+      var notesVal = '';
+      if(colE){
+        var eTracking = detectTracking(colE);
+        if(eTracking){
+          trkNo = eTracking;
+        } else {
+          // 10-digit number — may be a document ref or tracking
+          notesVal = colE;
+        }
+      }
+
+      // Col F: Amount
+      var amt = _parseRemAmt(r[5]);
+
+      // Skip rows with no useful data
+      if(!invNo && !delNo && !poNo && !trkNo && amt <= 0) return;
+
+      var confidence = 1.0; // hardcoded profile = 100%
+
+      lines.push({
+        custName:    custFwd,
+        custAcct:    '',
+        paymentDate: dateFwd,
+        invDate:     invDate,
+        paymentRef:  '',
+        bankRef:     '',
+        invNo:       invNo,
+        soNo:        '',
+        delNo:       delNo,
+        poNo:        poNo,
+        creditMemo:  '',
+        debitMemo:   '',
+        trkNo:       trkNo,
+        currency:    'USD',
+        amt:         amt,
+        notes:       notesVal,
+        srcFile:     fileName||'',
+        srcRow:      hdr.headerIdx+1+idx,
+        confidence:  confidence,
+        status:      'Pending',
+        docClass:    invNo?'Invoice':delNo?'Delivery':trkNo?'Tracking':poNo?'PO':'Unknown',
+        _raw:        r.join('|')
+      });
+    });
+
+    var lineSum = lines.reduce(function(s,l){return s+(l.amt||0);},0);
+    if(totalAmt===0) totalAmt = lineSum;
+
+    // Hardcoded col map for mapping review screen
+    var colMap = { custName:0, paymentDate:1, invDate:2, invNo:3, trkNo:4, amt:5 };
+    var mappingMeta = {
+      custName:    {src:'auto',conf:1.0,label:'Supplier'},
+      paymentDate: {src:'auto',conf:1.0,label:'Date'},
+      invDate:     {src:'auto',conf:1.0,label:'INV DATE'},
+      invNo:       {src:'auto',conf:1.0,label:'INV No. (510→Invoice, 710→Delivery, SS→PO)'},
+      trkNo:       {src:'auto',conf:1.0,label:'Remarks (1Z→Tracking)'},
+      amt:         {src:'auto',conf:1.0,label:'Amount'}
+    };
+
+    return {
+      lines:       lines,
+      colMap:      colMap,
+      mappingMeta: mappingMeta,
+      headerRow:   hdr.rawHdrs,
+      headerIdx:   hdr.headerIdx,
+      custName:    custFwd || 'HORIBA Instruments, Inc.',
+      isHoriba:    true,
+      totalAmt:    totalAmt,
+      lineSum:     lineSum,
+      confidence:  1.0,   // 100%
+      savedProfile:false,
+      isTkFujikin: true
     };
   }
 
@@ -6376,6 +6706,7 @@ function _confirmRemDetailImport(matchedBankTotal){
   clearTimeout(_rmUpdateTimer);
 
   closeModal();
+  try{_updateUploadStatus();}catch(e){}
   _showRemDetailPreview(REM_DETAIL, parsed.totalAmt, matchedBankTotal);
   toast('Imported '+REM_DETAIL.length+' remittance lines for '+parsed.custName+'. Run Auto Match.');
 }
@@ -12221,22 +12552,36 @@ async function runMatch(){
       if(matched)continue;
 
       // PRIORITY 1: Exact invoice # — O(1) Map lookup
+      // Account guard: if payment has no account (e.g. MUFG wires have a:''), allow match.
+      // Customer name match: fuzzy (normalization strips hyphens/spaces).
       if(ni&&useInv){
         var _h=_idx.byInv&&_idx.byInv.get(ni);
-        if(_h&&(_h.a===p.a||((_h.c||'').toLowerCase().trim()===((p.c||'').toLowerCase().trim())))){
-          const vr=p.amt-_h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';
-          _h.s=st;RES.push({c:_h.c,a:_h.a,i:_h.i,po:_h.po,so:_h.so,d:_h.d,oa:_h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});
-          if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(_h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});
-          matched=true;
+        if(_h&&!_h.s){
+          // Account match: allow if either side has no account, or accounts match
+          var _acctOk = !p.a || !_h.a || (_h.a===p.a);
+          // Customer name match: normalize both sides (remove hyphens/spaces)
+          var _pc_norm = (p.c||'').toUpperCase().replace(/[\s\-_]/g,'').trim();
+          var _hc_norm = (_h.c||'').toUpperCase().replace(/[\s\-_]/g,'').trim();
+          var _nameOk  = !_pc_norm || !_hc_norm ||
+                         _hc_norm===_pc_norm ||
+                         _hc_norm.indexOf(_pc_norm.slice(0,8))>=0 ||
+                         _pc_norm.indexOf(_hc_norm.slice(0,8))>=0;
+          if(_acctOk&&_nameOk){
+            const vr=p.amt-_h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';
+            _h.s=st;RES.push({c:_h.c,a:_h.a||p.a,i:_h.i,po:_h.po,so:_h.so,d:_h.d,oa:_h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});
+            if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||_h.a,c:p.c||_h.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(_h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});
+            matched=true;
+          }
         }
       }
       if(matched)continue;
 
       // PRIORITY 2: PO group — O(1) Map lookup, then group match
+      // Account filter: skip account filter when payment has no account
       if(np&&usePO&&hasFeat('multi')){
         var _gpo=_idx.byPO&&_idx.byPO.get(np);
         if(_gpo&&_gpo.length){
-          var _gpoFilt=_gpo.filter(v=>v.a===p.a&&!v.s);
+          var _gpoFilt=p.a ? _gpo.filter(v=>v.a===p.a&&!v.s) : _gpo.filter(v=>!v.s);
           if(_gpoFilt.length&&_groupMatch(_gpoFilt,p,tol,'PO',ec)){matched=true;}
         }
       }
@@ -12246,7 +12591,7 @@ async function runMatch(){
       if(ns&&useSO&&hasFeat('so')){
         var _gso=_idx.bySO&&_idx.bySO.get(ns);
         if(_gso&&_gso.length){
-          var _gsoFilt=_gso.filter(v=>v.a===p.a&&!v.s);
+          var _gsoFilt=p.a ? _gso.filter(v=>v.a===p.a&&!v.s) : _gso.filter(v=>!v.s);
           if(_gsoFilt.length&&_groupMatch(_gsoFilt,p,tol,'SO',ec)){matched=true;}
         }
       }
@@ -12376,6 +12721,27 @@ async function runMatch(){
     },600);
     var autoMatch=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact').length;
     var rate=PAY.length>0?(autoMatch/PAY.length*100).toFixed(1):0;
+    // ── Diagnostics ──
+    try{
+      var _diagStats={
+        payCount:  PAY.length,
+        remCount:  REM_DETAIL ? REM_DETAIL.length : 0,
+        delCount:  DELIV ? DELIV.length : 0,
+        invCount:  INV.length,
+        refsExtracted: PAY.filter(function(p){return p.i||p.po||p.so||p.trackingNo||p.deliveryNo;}).length,
+        matched:   RES.length,
+        exceptions:EXC.length,
+        attempted: PAY.length,
+        invRefsFound: PAY.some(function(p){return p.i||p.po||p.so;}),
+        delIndexed:  DELIV&&DELIV.length>0,
+        trkFound:  PAY.some(function(p){return p.trackingNo;}),
+        poFound:   RES.some(function(r){return r.m&&r.m.indexOf('PO')>=0;}),
+        custMismatch: RES.length===0 && PAY.length>0 && INV.length>0,
+        amtMismatch: false
+      };
+      _showMatchDiagnostics(_diagStats);
+      _updateUploadStatus();
+    }catch(e){}
     toast('✓ Matched '+autoMatch+'/'+PAY.length+' payments ('+rate+'% auto-match rate) · '+EXC.length+' exceptions');
   }
 
@@ -12510,6 +12876,7 @@ async function handleFile(inp){
           const _yyAccts=[...new Set(_yyPays.map(p=>p.bankAcct).filter(Boolean))];
           addAudit('Bank/MUFG import',_yyPays.length+' payments · accounts: '+_yyAccts.join(', '));
           toast('Imported '+_yyPays.length+' bank payments · '+_yyAccts.length+' account(s)');
+          try{_updateUploadStatus();}catch(e){}
           const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
         }catch(yyErr){hideProgress();toast('Bank file parse error: '+yyErr.message,'warn');console.error('BankParse:',yyErr);}
         return;
@@ -13084,6 +13451,7 @@ function processImport(){
       if(_lbl)_lbl.textContent='All accounts · '+INV.length+' open invoices';
     }catch(e){}
     try{updDash();}catch(e){}
+    try{_updateUploadStatus();}catch(e){}
   }else if(IMP_TYPE==='del'){
     // ── Delivery Report Parse ─────────────────────────────────────────────
     // TK-Fujikin delivery report exact columns (auto-detected by header):
@@ -13212,11 +13580,15 @@ function processImport(){
         });
         _buildInvIndexes();
         saveToStorage();
-        addAudit('Delivery report imported', DELIV.length+' rows · '+matchedDel+' matched to invoices');
+        // ── BUG 1 FIX: Enrich ALL open item rows with delivery fields ──
+        var _enrichResult = enrichOpenItemsWithDeliveryReport();
+        addAudit('Delivery report imported', DELIV.length+' rows · '+(_enrichResult?_enrichResult.enriched:matchedDel)+' matched to invoices');
         try{renderFbl5n('ca-open-items-body','','');}catch(e){}
         hideProgress();
         updTop(); closeMo();
-        toast('Imported '+DELIV.length+' delivery records · '+matchedDel+' matched to invoice rows');
+        var _delMsg = 'Delivery Report synced: '+(_enrichResult?_enrichResult.enriched:matchedDel)+' open items enriched';
+        if(_enrichResult && _enrichResult.unmatched>0) _delMsg += ', '+_enrichResult.unmatched+' delivery rows unmatched';
+        toast(_delMsg);
       }
     };
     showProgress('Processing '+DELIV.length+' delivery rows…', 5);
