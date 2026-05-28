@@ -6238,9 +6238,6 @@ var RemittanceParser = (function(){
   }
 
   // ── MAIN PARSE FUNCTION ───────────────────────────────────────────────────
-  // rows: 2D array (from CSV or XLSX parse)
-  // opts: { fileName, savedProfile, isHoriba }
-  // Returns: { lines, colMap, mappingMeta, headerRow, custName, isHoriba, totalAmt, confidence }
   function parse(rows, opts){
     opts = opts || {};
     var fileName = opts.fileName || '';
@@ -6250,7 +6247,7 @@ var RemittanceParser = (function(){
     var dataRows = rows.slice(hdr.headerIdx+1);
 
     // ── PRIORITY: Check for TK-Fujikin/HORIBA exact header format ────────────
-    // When detected, bypass general mapping and use hardcoded profile → 100% conf
+    // Must run BEFORE profile lookup — bypasses any bad saved profiles.
     if(_isTkFujikinRemittance(hdr.rawHdrs)){
       return _parseTkFujikinRemittance(dataRows, hdr, fileName);
     }
@@ -6258,12 +6255,16 @@ var RemittanceParser = (function(){
     // Build column map (with saved profile override)
     var cm = _buildColMap(hdr.rawHdrs, opts.savedProfile);
 
-    // Detect customer
+    // Detect customer FIRST — so we look up the correct profile
     var custCtx = _detectCustomer(dataRows, cm.colMap, hdr.rawHdrs);
     var isHoriba = opts.isHoriba || custCtx.isHoriba;
 
-    // Check for saved profile
-    var profile = ParserLearningProfile.get(custCtx.custName);
+    // Check for saved profile — ONLY for known customers, not blank/unknown
+    // Avoids applying "_UNKNOWN" profile to unrelated files
+    var profile = null;
+    if(custCtx.custName && custCtx.custName.length > 2){
+      profile = ParserLearningProfile.get(custCtx.custName);
+    }
     if(profile && !opts.savedProfile){
       cm = _buildColMap(hdr.rawHdrs, profile);
     }
@@ -13617,9 +13618,12 @@ function processImport(){
       showProgress('Optimizing parser…', 60);
 
       // Run the parser (parse ONCE, cache result)
+      // NOTE: do NOT pass ParserLearningProfile.get('') — empty key loads the
+      // bad "_UNKNOWN" profile from previous sessions. Let parse() detect the
+      // customer name first, then look up the correct profile internally.
       var _parsed = RemittanceParser.parse(rows, {
-        fileName: _rdFileName,
-        savedProfile: ParserLearningProfile.get('')
+        fileName: _rdFileName
+        // No savedProfile here — RemittanceParser.parse() handles profile lookup internally
       });
       _parsed.srcFile = _rdFileName;
       _remDetailParsed = _parsed;
@@ -13627,6 +13631,28 @@ function processImport(){
       // Timing metrics
       _parserMetrics.endTs = Date.now();
       _parserMetrics.durationMs = _parserMetrics.endTs - _parserMetrics.startTs;
+
+      // ── TK-Fujikin / 100% confidence: skip mapping review, auto-import ──
+      // When confidence is 100% (TK-Fujikin hardcoded profile), bypass the
+      // field mapping screen entirely and import directly.
+      if(_parsed.isTkFujikin || _parsed.confidence >= 0.99){
+        // Find bank total for variance check
+        var _rdCustUpper2 = String(_parsed.custName||'').toUpperCase().trim();
+        var _bankTot2 = 0;
+        if(_rdCustUpper2){
+          PAY.forEach(function(p){
+            var _pc2=String(p.c||'').toUpperCase().trim();
+            if(_pc2&&(_pc2.indexOf(_rdCustUpper2.slice(0,6))>=0||_rdCustUpper2.indexOf(_pc2.slice(0,6))>=0)){
+              _bankTot2+=(p.amt||0);
+            }
+          });
+        }
+        hideProgress();
+        closeMo();
+        // Auto-confirm without showing mapping screen
+        _confirmRemDetailImport(_bankTot2);
+        return;
+      }
 
       // Find matching bank total for variance check
       var _rdCustUpper = String(_parsed.custName||'').toUpperCase().trim();
