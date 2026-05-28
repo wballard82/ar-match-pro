@@ -1,0 +1,4 @@
+# AR Match Pro — Netlify Redirects
+# /Login loads the single-page app (which shows the login screen)
+/Login    /app.html   200
+/login    /app.html   200

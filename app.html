@@ -2721,7 +2721,7 @@ body.app-active #app {
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
           <div class="armp-setup-step-label">Upload Bank File</div>
-          <div class="armp-setup-step-sub">BAI2, MUFG, CSV, Excel, or PDF bank payment file</div>
+          <div class="armp-setup-step-sub">MUFG, US Bank, BAI2, CSV, Excel, or PDF bank payment file</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Upload Bank File</button>
       </div>
@@ -9004,7 +9004,7 @@ function armpUpdateSetupState(){
     var steps = [
       {id:'armp-setup-step-1', done: ws.invoiceReportLoaded,    sub_done: INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',             sub_pending: 'Open invoices / account open items — XLSX, CSV'},
       {id:'armp-setup-step-2', done: ws.deliveryReportLoaded,   sub_done: DELIV.length.toLocaleString()+' delivery rows loaded',                                    sub_pending: 'Delivery, tracking, bill of lading, PO, sales order bridge — XLSX, CSV'},
-      {id:'armp-setup-step-3', done: ws.bankFileLoaded,          sub_done: PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                             sub_pending: 'BAI2, MUFG, CSV, Excel, or PDF bank payment file'},
+      {id:'armp-setup-step-3', done: ws.bankFileLoaded,          sub_done: PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                             sub_pending: 'MUFG, US Bank, BAI2, CSV, Excel, or PDF bank payment file'},
       {id:'armp-setup-step-4', done: ws.remittanceDetailsLoaded, sub_done: (REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines loaded', sub_pending: 'Customer remittance with invoice, tracking, PO, delivery references — XLSX, CSV, PDF'}
     ];
 
@@ -10267,7 +10267,7 @@ function openImportBank(){
     const title=document.getElementById('imp-title');
     if(title)title.textContent='Import Bank File';
     const lbl=document.getElementById('imp-lbl');
-    if(lbl)lbl.textContent='Upload a BAI2, CAMT.053, bank CSV, or Bank Summary Report';
+    if(lbl)lbl.textContent='Upload MUFG, US Bank, BAI2, CAMT.053, bank CSV, or bank summary PDF';
     const dzt=document.querySelector('#dz .drop-zone-t');
     if(dzt)dzt.textContent='Drop bank file here or click to browse';
     const dzs=document.querySelector('#dz .drop-zone-s');
@@ -13806,10 +13806,10 @@ async function handleFile(inp){
       const t=await f.text();const rows=parseCAMT(t);const _mt3=document.getElementById('mo-ta');if(_mt3)_mt3.value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='pdf'){
       // Fix 3: Route PDF based on import type
-      // Bank file mode: parse as MUFG Bank Summary PDF → extract payments
+      // Bank file mode: parse as bank summary PDF (MUFG or US Bank) → extract payments
       // Remittance mode: parse as remittance advice → extract invoice refs
       if(IMP_TYPE==='rem' || IMP_BANK_MODE){
-        await parseMUFGBankPDF(f);
+        await parseBankSummaryPDF(f);
       } else {
         await parsePDFRemittance(f);
       }
@@ -14045,173 +14045,381 @@ function parseCAMT(txt){
 // Excludes: ZBA transfers, fees, payroll/AP disbursements.
 // Stages payments in PAY[] for Auto Match — does NOT populate Review.
 // ════════════════════════════════════════════════════════════════════════════
-async function parseMUFGBankPDF(file){
+// ════════════════════════════════════════════════════════════════════════════
+// BANK SUMMARY PDF PARSER — MUFG and US Bank (Fix 2)
+// Detects bank type from PDF text, applies the matching parser, and outputs
+// a normalized payment schema. Stages PAY[] for Auto Match only.
+//
+// Normalized bank payment schema:
+// { bankName, accountNumber, bankId, postingDate, transactionDate,
+//   transactionType, creditDebit, customerReference, bankReference,
+//   traceNumber, referenceNumber, detailText, payerName, amount, currency,
+//   paymentMethod, extractedInvoices, extractedSalesOrders,
+//   extractedDeliveries, extractedPOs, extractedTrackingNumbers,
+//   sourceFileName, sourcePage, parserConfidence }
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── Shared extraction helpers ─────────────────────────────────────────────
+var _bankReAmt   = /\$?\s*([\d,]+\.\d{2})/;
+var _bankReDate  = /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/;
+var _bankReRef   = /[A-Z0-9]{2,}[0-9]{4,}/;
+var _bankReInv   = /5[01]\d{8}/;          // 510/510xxxxxxx HORIBA invoice
+var _bankReSO    = /2[01]\d{8}/;          // 210xxxxxxx sales order
+var _bankReDel   = /7[01]\d{8}/;          // 710xxxxxxx delivery
+var _bankReCM    = /3[01]\d{8}/;          // 310xxxxxxx credit memo
+var _bankReDM    = /4[01]\d{8}/;          // 410xxxxxxx debit memo
+var _bankReTrk   = /1Z[A-Z0-9]{16,18}/i; // UPS 1Z tracking
+var _bankReDHL   = /(?:DHL\s+)?(\d{10,12})/; // DHL numeric
+var _bankReSS    = /SS[A-Z0-9\-]{4,}/;   // SS PO reference
+
+function _bankExtractRefs(text){
+  var refs = {
+    extractedInvoices:[], extractedSalesOrders:[], extractedDeliveries:[],
+    extractedPOs:[], extractedTrackingNumbers:[], extractedCreditMemos:[], extractedDebitMemos:[]
+  };
+  var words = text.split(/[\s\t|]+/);
+  words.forEach(function(w){
+    var d = w.replace(/[^0-9]/g,'');
+    if(_bankReInv.test(d)) refs.extractedInvoices.push(d);
+    else if(_bankReSO.test(d)) refs.extractedSalesOrders.push(d);
+    else if(_bankReDel.test(d)) refs.extractedDeliveries.push(d);
+    else if(_bankReCM.test(d)) refs.extractedCreditMemos.push(d);
+    else if(_bankReDM.test(d)) refs.extractedDebitMemos.push(d);
+  });
+  var trkMatches = text.match(/1Z[A-Z0-9]{16,18}/gi)||[];
+  trkMatches.forEach(function(t){ refs.extractedTrackingNumbers.push(t.toUpperCase()); });
+  var ssMatches = text.match(/SS[A-Z0-9\-]{4,}/g)||[];
+  refs.extractedPOs = refs.extractedPOs.concat(ssMatches);
+  // DHL numeric refs embedded after "DHL "
+  var dhlMatches = text.match(/DHL\s+(\d{7,12})/gi)||[];
+  dhlMatches.forEach(function(m){ var n=m.match(/(\d{7,12})/); if(n) refs.extractedTrackingNumbers.push('DHL:'+n[1]); });
+  // Deduplicate
+  Object.keys(refs).forEach(function(k){ refs[k]=[...new Set(refs[k])]; });
+  return refs;
+}
+
+function _bankNormalize(raw, bankName, fileName, page){
+  var refs = _bankExtractRefs(raw.detailText||'');
+  return {
+    // PAY schema fields (used by matching engine)
+    bankAcct:   raw.accountNumber||'',
+    bankId:     raw.bankId||'',
+    a:          '',  // customer account — to be resolved by matching
+    c:          raw.payerName||'',
+    amt:        raw.amount||0,
+    i:          refs.extractedInvoices[0]||'',
+    po:         refs.extractedPOs[0]||'',
+    so:         refs.extractedSalesOrders[0]||'',
+    m:          raw.paymentMethod||raw.transactionType||'Credit',
+    baiCode:    '',
+    txId:       raw.bankReference||raw.referenceNumber||raw.traceNumber||'',
+    bankRef:    raw.bankReference||'',
+    custRef:    raw.customerReference||'',
+    payDate:    raw.postingDate||raw.transactionDate||'',
+    ccy:        raw.currency||'USD',
+    n:          raw.detailText||'',
+    st:         'Unapplied Cash',
+    coa:        false,
+    unapplied:  false,
+    dp:         false,
+    trackingNo: refs.extractedTrackingNumbers[0]||'',
+    sourceFormat: bankName.toLowerCase().replace(/\s/g,'')+'-pdf',
+    // Extended schema fields
+    bankName:             bankName,
+    accountNumber:        raw.accountNumber||'',
+    transactionType:      raw.transactionType||'',
+    creditDebit:          'Credit',
+    customerReference:    raw.customerReference||'',
+    bankReference:        raw.bankReference||'',
+    traceNumber:          raw.traceNumber||'',
+    referenceNumber:      raw.referenceNumber||'',
+    detailText:           raw.detailText||'',
+    payerName:            raw.payerName||'',
+    paymentMethod:        raw.paymentMethod||'',
+    extractedInvoices:    refs.extractedInvoices,
+    extractedSalesOrders: refs.extractedSalesOrders,
+    extractedDeliveries:  refs.extractedDeliveries,
+    extractedPOs:         refs.extractedPOs,
+    extractedTrackingNumbers: refs.extractedTrackingNumbers,
+    sourceFileName:       fileName||'',
+    sourcePage:           page||1,
+    parserConfidence:     raw.parserConfidence||0.7
+  };
+}
+
+// ── Text extractor — shared for all bank PDFs ─────────────────────────────
+async function _bankExtractPDFText(file, progressCb){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  const numPages = pdf.numPages;
+  let allText = '';
+  let pageTexts = [];
+  for(let p=1;p<=numPages;p++){
+    if(progressCb) progressCb(p, numPages);
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    // Preserve layout: same-y items joined with tab, different-y with newline
+    const _items = tc.items.slice().sort(function(a,b){
+      const dy = Math.round(b.transform[5]) - Math.round(a.transform[5]);
+      return dy !== 0 ? dy : a.transform[4] - b.transform[4];
+    });
+    let lastY=null, lineText='', pageText='';
+    _items.forEach(function(item){
+      const y=Math.round(item.transform[5]);
+      if(lastY!==null&&Math.abs(y-lastY)>3){pageText+=lineText+'\n';lineText='';}
+      lineText+=(lineText?'\t':'')+item.str.trim();
+      lastY=y;
+    });
+    if(lineText) pageText+=lineText+'\n';
+    pageTexts.push(pageText);
+    allText+=pageText+'\n---PAGE---\n';
+  }
+  return {allText, pageTexts, numPages};
+}
+
+// ── MUFG Bank parser ──────────────────────────────────────────────────────
+function _parseMUFGText(allText, fileName){
+  const lc = allText.toLowerCase();
+  const lines = allText.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  const payments = [];
+
+  // Account number
+  var _acctM = allText.match(/(?:Account\s*(?:Number|#|No\.?)?:?\s*)([0-9\-]{6,20})/i);
+  var _acctNo = _acctM ? _acctM[1].trim() : '';
+  var _bankIdM = allText.match(/(?:ABA|Routing|Bank\s*ID):?\s*([0-9]{9})/i);
+  var _bankId = _bankIdM ? _bankIdM[1] : '';
+
+  const _creditKw = ['incoming money transfer','preauthorized ach credit','ach credit',
+    'wire transfer credit','lockbox deposit','incoming wire','fedwire credit','incoming ach',
+    'incoming transfer','credit transfer'];
+  const _excludeKw = ['zba transfer','account transfer','payroll','controlled disbursement',
+    'service charge','account analysis','fee ','interest charge','outgoing wire',
+    'ap disbursement','debit'];
+
+  let _cur = null;
+  let _pageNum = 1;
+
+  lines.forEach(function(line){
+    const lc2 = line.toLowerCase();
+    if(lc2.includes('---page---')){ _pageNum++; return; }
+    if(_excludeKw.some(function(k){ return lc2.startsWith(k)||lc2.includes(' '+k); })) return;
+
+    const _isCredit = _creditKw.some(function(k){ return lc2.includes(k); });
+    if(_isCredit){
+      if(_cur && _cur.amount>0) payments.push(_cur);
+      const _am = line.match(_bankReAmt);
+      const _dt = line.match(_bankReDate);
+      const _m = lc2.includes('wire')||lc2.includes('fedwire')?'Wire':lc2.includes('ach')?'ACH':lc2.includes('lockbox')?'Lockbox':'Credit';
+      _cur = {
+        bankName:'MUFG', accountNumber:_acctNo, bankId:_bankId,
+        postingDate:_dt?_dt[1]:'', transactionDate:_dt?_dt[1]:'',
+        transactionType:line.split('\t')[0]||'Credit',
+        paymentMethod:_m,
+        customerReference:'', bankReference:'', traceNumber:'', referenceNumber:'',
+        payerName:'', detailText:line, currency:'USD',
+        amount:_am?parseFloat(_am[1].replace(/,/g,'')):0,
+        sourcePage:_pageNum, sourceFileName:fileName, parserConfidence:0.85
+      };
+      return;
+    }
+
+    if(_cur){
+      _cur.detailText += ' | '+line;
+      // Customer/originator name
+      var _nmM = line.match(/(?:originator|remitter|payer|from|sender|company\s*name)\s*[:\-]\s*(.+)/i);
+      if(_nmM && !_cur.payerName) _cur.payerName = _nmM[1].trim().slice(0,80);
+      // References
+      var _refM = line.match(/(?:ref(?:erence)?|bank\s*ref|cust(?:omer)?\s*ref)[^\w]*([\w\-]{6,})/i);
+      if(_refM){
+        if(/bank\s*ref/i.test(line) && !_cur.bankReference) _cur.bankReference=_refM[1];
+        else if(!_cur.customerReference) _cur.customerReference=_refM[1];
+        if(!_cur.traceNumber) _cur.traceNumber=_refM[1];
+      }
+      // Amount if not set
+      if(_cur.amount===0){
+        var _am2=line.match(_bankReAmt);
+        if(_am2) _cur.amount=parseFloat(_am2[1].replace(/,/g,''));
+      }
+    }
+  });
+  if(_cur && _cur.amount>0) payments.push(_cur);
+  return payments;
+}
+
+// ── US Bank parser ────────────────────────────────────────────────────────
+function _parseUSBankText(allText, fileName){
+  const lines = allText.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  const payments = [];
+
+  var _acctM = allText.match(/(?:Account\s*(?:Number|#|No\.?)?:?\s*)([0-9\-X\*]{6,20})/i);
+  var _acctNo = _acctM ? _acctM[1].trim() : '';
+  var _rtM = allText.match(/(?:Routing|ABA)\s*(?:Number|#)?:?\s*([0-9]{9})/i);
+  var _bankId = _rtM ? _rtM[1] : '';
+
+  const _creditKw = ['ach credit','incoming wire','wire credit','lockbox deposit',
+    'credit transfer','customer deposit','deposited item','wire transfer','incoming ach',
+    'preauth credit','preauthorized credit'];
+  const _excludeKw = ['ach debit','outgoing wire','wire debit','service charge','analysis fee',
+    'account analysis','zba','sweep','payroll','ap disbursement','controlled disbursement',
+    'debit','fee ','nsf','return item'];
+
+  let _cur = null;
+  let _pageNum = 1;
+
+  lines.forEach(function(line){
+    const lc2 = line.toLowerCase();
+    if(lc2.includes('---page---')){ _pageNum++; return; }
+    if(_excludeKw.some(function(k){ return lc2.startsWith(k)||lc2.includes(k); })) return;
+
+    const _isCredit = _creditKw.some(function(k){ return lc2.includes(k); });
+    if(_isCredit){
+      if(_cur && _cur.amount>0) payments.push(_cur);
+      const _am = line.match(_bankReAmt);
+      const _dt = line.match(_bankReDate);
+      const _m = lc2.includes('wire')?'Wire':lc2.includes('ach')?'ACH':lc2.includes('lockbox')?'Lockbox':'Credit';
+      _cur = {
+        bankName:'US Bank', accountNumber:_acctNo, bankId:_bankId,
+        postingDate:_dt?_dt[1]:'', transactionDate:_dt?_dt[1]:'',
+        transactionType:line.split('\t')[0]||'Credit',
+        paymentMethod:_m,
+        customerReference:'', bankReference:'', traceNumber:'', referenceNumber:'',
+        payerName:'', detailText:line, currency:'USD',
+        amount:_am?parseFloat(_am[1].replace(/,/g,'')):0,
+        sourcePage:_pageNum, sourceFileName:fileName, parserConfidence:0.82
+      };
+      return;
+    }
+
+    if(_cur){
+      _cur.detailText += ' | '+line;
+      var _nmM = line.match(/(?:originator|remitter|payer|from|company|sender)\s*[:\-]\s*(.+)/i);
+      if(_nmM && !_cur.payerName) _cur.payerName = _nmM[1].trim().slice(0,80);
+      // US Bank specific: Trace number
+      var _traceM = line.match(/(?:trace|seq|reference|ref)\s*(?:no|#|:)?\s*([0-9]{6,})/i);
+      if(_traceM && !_cur.traceNumber) _cur.traceNumber = _traceM[1];
+      if(!_cur.bankReference && _cur.traceNumber) _cur.bankReference = _cur.traceNumber;
+      if(!_cur.referenceNumber){
+        var _rnM = line.match(/(?:ref(?:erence)?)\s*(?:no|#|:)?\s*([\w\-]{6,})/i);
+        if(_rnM) _cur.referenceNumber = _rnM[1];
+      }
+      if(_cur.amount===0){
+        var _am2=line.match(_bankReAmt);
+        if(_am2) _cur.amount=parseFloat(_am2[1].replace(/,/g,''));
+      }
+    }
+  });
+  if(_cur && _cur.amount>0) payments.push(_cur);
+  return payments;
+}
+
+// ── Generic fallback bank parser ──────────────────────────────────────────
+function _parseGenericBankText(allText, fileName){
+  const lines = allText.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  const payments = [];
+  var _acctM = allText.match(/Account\s*(?:Number|#|No\.?)?:?\s*([0-9\-]{6,20})/i);
+  var _acctNo = _acctM?_acctM[1].trim():'';
+  const _creditKw = ['ach credit','incoming wire','wire credit','credit','lockbox','incoming transfer','incoming ach'];
+  const _excludeKw = ['debit','fee','payroll','zba','outgoing'];
+  let _cur = null;
+  lines.forEach(function(line){
+    const lc2=line.toLowerCase();
+    if(_excludeKw.some(function(k){return lc2.startsWith(k);})) return;
+    if(_creditKw.some(function(k){return lc2.includes(k);})){
+      if(_cur&&_cur.amount>0) payments.push(_cur);
+      var _am=line.match(_bankReAmt); var _dt=line.match(_bankReDate);
+      _cur={bankName:'Unknown Bank',accountNumber:_acctNo,bankId:'',postingDate:_dt?_dt[1]:'',
+        transactionDate:_dt?_dt[1]:'',transactionType:line.slice(0,40),paymentMethod:'Credit',
+        customerReference:'',bankReference:'',traceNumber:'',referenceNumber:'',payerName:'',
+        detailText:line,currency:'USD',amount:_am?parseFloat(_am[1].replace(/,/g,'')):0,
+        sourcePage:1,sourceFileName:fileName,parserConfidence:0.5};
+      return;
+    }
+    if(_cur){
+      _cur.detailText+=' | '+line;
+      var _nm=line.match(/(?:originator|payer|from)\s*[:\-]\s*(.+)/i);
+      if(_nm&&!_cur.payerName) _cur.payerName=_nm[1].trim().slice(0,80);
+      if(_cur.amount===0){var _am2=line.match(_bankReAmt);if(_am2)_cur.amount=parseFloat(_am2[1].replace(/,/g,''));}
+    }
+  });
+  if(_cur&&_cur.amount>0) payments.push(_cur);
+  return payments;
+}
+
+// ── Main dispatcher: parseBankSummaryPDF ─────────────────────────────────
+async function parseBankSummaryPDF(file){
   if(typeof pdfjsLib==='undefined'){
     hideProgress();
     toast('PDF parser loading — please try again in a moment','warn');
     return;
   }
   try{
-    showProgress('Reading bank summary PDF…',15);
-    const buf = await file.arrayBuffer();
-    showProgress('Extracting text from PDF…',30);
-    const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-    const numPages = pdf.numPages;
-    let allText = '';
-    for(let p=1;p<=numPages;p++){
-      showProgress('Reading page '+p+'/'+numPages+'…',30+Math.round(p/numPages*40));
-      const page = await pdf.getPage(p);
-      const tc = await page.getTextContent();
-      // Join items preserving layout — items on same y-line joined with tab
-      let lastY=null, lineText='';
-      tc.items.forEach(function(item){
-        const y=Math.round(item.transform[5]);
-        if(lastY!==null&&Math.abs(y-lastY)>3){allText+=lineText+'\n';lineText='';}
-        lineText+=(lineText?'\t':'')+item.str.trim();
-        lastY=y;
-      });
-      if(lineText) allText+=lineText+'\n';
-      allText+='\n---PAGE---\n';
-    }
-
-    // ── Validate: is this a bank summary PDF? ──
-    const _lc = allText.toLowerCase();
-    const _isBankPDF = _lc.includes('account summary') || _lc.includes('transaction summary') ||
-                       _lc.includes('opening ledger') || _lc.includes('closing ledger') ||
-                       _lc.includes('incoming money transfer') || _lc.includes('mufg') ||
-                       _lc.includes('posted transaction') || _lc.includes('preauthorized ach');
-    if(!_isBankPDF){
-      hideProgress();
-      showModal('Unrecognized PDF Format',
-        '<div style="padding:12px 0">'+
-          '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This PDF could not be recognized as a bank summary report.</p>'+
-          '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">Please upload a searchable MUFG bank summary PDF, or use CSV/XLSX export instead.</p>'+
-          '<p style="color:var(--t3);font-size:12px">If this is a scanned (image-only) PDF, text extraction is not possible.</p>'+
-          '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button>'+
-        '</div>'
-      );
-      return;
-    }
-
-    showProgress('Extracting bank transactions…',75);
-    await new Promise(function(r){setTimeout(r,30);});
-
-    // ── Extract transactions from PDF text ──
-    const lines = allText.split('\n').map(function(l){return l.trim();}).filter(Boolean);
-    const payments = [];
-
-    // Patterns for MUFG-style bank summary
-    const reAmt       = /\$?([\d,]+\.\d{2})/;
-    const reDateMD    = /(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/;
-    const reRef       = /[A-Z]{2,}[0-9]{6,}/;
-    const reInv       = /5\d{9}/;   // 510xxxxxxx HORIBA invoice
-    const reSO        = /2\d{9}/;   // 210xxxxxxx sales order
-    const reDel       = /7\d{9}/;   // 710xxxxxxx delivery
-    const reTrk1Z     = /1Z[A-Z0-9]{16,18}/i;
-
-    // MUFG credit transaction keywords
-    const _creditKeywords = ['incoming money transfer','preauthorized ach credit','ach credit',
-      'wire transfer credit','lockbox deposit','incoming wire','credit','fedwire credit',
-      'incoming transfer','incoming ach'];
-    // Exclusion keywords
-    const _excludeKeywords = ['zba transfer','account transfer','payroll','controlled disbursement',
-      'service charge','account analysis','fee','interest credit'];
-
-    let _curTx = null;
-    let _acctNo = '';
-
-    // Extract account number from header area
-    var _acctM = allText.match(/(?:Account\s*(?:Number|#|No\.?)?:?\s*)([A-Z0-9\-]{6,20})/i);
-    if(_acctM) _acctNo = _acctM[1].trim();
-
-    lines.forEach(function(line){
-      const lc = line.toLowerCase();
-
-      // Skip excluded transactions
-      if(_excludeKeywords.some(function(k){ return lc.includes(k); })) return;
-
-      // Detect credit transaction start
-      const _isCredit = _creditKeywords.some(function(k){ return lc.includes(k); });
-      if(_isCredit){
-        // Flush previous transaction
-        if(_curTx && _curTx.amt > 0) payments.push(_curTx);
-        const _amtM = line.match(reAmt);
-        const _dateM = line.match(reDateMD);
-        _curTx = {
-          bankAcct:  _acctNo,
-          bankId:    '',
-          a:         '',
-          c:         '',
-          amt:       _amtM ? parseFloat(_amtM[1].replace(/,/g,'')) : 0,
-          i:         '',
-          po:        '',
-          so:        '',
-          m:         lc.includes('wire')||lc.includes('fedwire') ? 'Wire' : lc.includes('ach') ? 'ACH' : 'Credit',
-          baiCode:   '',
-          txId:      '',
-          bankRef:   '',
-          custRef:   '',
-          payDate:   _dateM ? _dateM[1] : '',
-          ccy:       'USD',
-          n:         line,
-          st:        'Unapplied Cash',
-          coa:       false,
-          unapplied: false,
-          dp:        false,
-          sourceFormat: 'mufg-pdf'
-        };
-        return;
-      }
-
-      // Add detail text to current transaction
-      if(_curTx){
-        _curTx.n = (_curTx.n||'') + ' | ' + line;
-
-        // Extract payer/customer name from "ORIGINATOR" or name patterns
-        if(/(?:originator|remitter|payer|from|sender)\s*[:]\s*(.+)/i.test(line)){
-          var _nm = line.match(/(?:originator|remitter|payer|from|sender)\s*[:]\s*(.+)/i);
-          if(_nm) _curTx.c = _nm[1].trim().slice(0,60);
-        }
-
-        // Extract bank/customer references
-        var _refM = line.match(reRef);
-        if(_refM){
-          if(!_curTx.bankRef && /(?:ref|bank)\s*(?:no|#|:)/i.test(line)) _curTx.bankRef = _refM[0];
-          else if(!_curTx.custRef) _curTx.custRef = _refM[0];
-          if(!_curTx.txId) _curTx.txId = _refM[0];
-        }
-
-        // HORIBA doc number extraction
-        var _invM = line.match(reInv);
-        if(_invM && !_curTx.i) _curTx.i = _invM[0];
-        var _soM = line.match(reSO);
-        if(_soM && !_curTx.so) _curTx.so = _soM[0];
-        var _trkM = line.match(reTrk1Z);
-        if(_trkM && !_curTx.trackingNo) _curTx.trackingNo = _trkM[0];
-
-        // Extract amount if not yet set
-        if(_curTx.amt===0){
-          var _amtM2 = line.match(reAmt);
-          if(_amtM2) _curTx.amt = parseFloat(_amtM2[1].replace(/,/g,''));
-        }
-      }
+    showProgress('Reading bank summary PDF…',10);
+    const {allText, numPages} = await _bankExtractPDFText(file, function(p,n){
+      showProgress('Reading page '+p+'/'+n+'…',10+Math.round(p/n*50));
     });
-    if(_curTx && _curTx.amt>0) payments.push(_curTx);
 
-    if(!payments.length){
+    // Check for scanned / no-text PDF
+    if(allText.replace(/[\s\-_|]/g,'').length < 100){
       hideProgress();
-      showModal('No Payments Found in PDF',
+      showModal('PDF Could Not Be Read',
         '<div style="padding:12px 0">'+
-          '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">No credit transactions were found in this bank summary PDF.</p>'+
-          '<p style="color:var(--t3);font-size:12px">The PDF may be image-only (scanned) or use an unsupported format. Try uploading a CSV or XLSX bank export instead.</p>'+
-          '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button>'+
-        '</div>'
+        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This PDF could not be read. Please upload a searchable PDF, CSV, Excel, or BAI2 export.</p>'+
+        '<p style="color:var(--t3);font-size:12px">Scanned / image-only PDFs do not contain extractable text.</p>'+
+        '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button></div>'
       );
       return;
     }
 
-    // Stage payments — do NOT run Auto Match or populate Review
-    PAY = payments;
+    showProgress('Detecting bank type…',65);
+    await new Promise(function(r){setTimeout(r,20);});
+
+    // ── Detect bank type ──────────────────────────────────────────────────
+    const _lc = allText.toLowerCase();
+    var _bankName = 'Unknown Bank';
+    var _rawPayments = [];
+
+    const _isMUFG = _lc.includes('mufg') || _lc.includes('union bank') ||
+                    _lc.includes('incoming money transfer') ||
+                    (_lc.includes('account summary')&&_lc.includes('posted transaction description'));
+    const _isUSBank = _lc.includes('u.s. bank') || _lc.includes('us bank') ||
+                      _lc.includes('usbank') ||
+                      (_lc.includes('transaction detail')&&(_lc.includes('trace number')||_lc.includes('reference number')));
+
+    showProgress('Extracting transactions…',80);
+
+    if(_isMUFG){
+      _bankName='MUFG';
+      _rawPayments = _parseMUFGText(allText, file.name);
+    } else if(_isUSBank){
+      _bankName='US Bank';
+      _rawPayments = _parseUSBankText(allText, file.name);
+    } else {
+      // Generic parser + user review prompt
+      _bankName='Unknown Bank';
+      _rawPayments = _parseGenericBankText(allText, file.name);
+    }
+
+    if(!_rawPayments.length){
+      hideProgress();
+      showModal('No Payments Found',
+        '<div style="padding:12px 0">'+
+        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">No credit transactions were found in this bank summary PDF.</p>'+
+        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">The PDF may be image-only, or the transaction format is not recognized.</p>'+
+        '<p style="color:var(--t3);font-size:12px">Bank detected: <strong>'+_escapeHtml(_bankName)+'</strong> · Pages: '+numPages+'</p>'+
+        '<p style="color:var(--t3);font-size:12px">Try uploading a CSV, Excel, or BAI2 export instead.</p>'+
+        '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button></div>'
+      );
+      return;
+    }
+
+    // Normalize to unified schema + PAY array
+    const _payments = _rawPayments.map(function(raw){ return _bankNormalize(raw, _bankName, file.name, raw.sourcePage); });
+
+    // Extract account number for display
+    var _acctDisplay = (_payments[0]&&_payments[0].accountNumber)||'—';
+
+    // Stage payments — do NOT trigger Auto Match or populate Review
+    PAY = _payments;
     autoMatchHasRun = false; RES = []; EXC = [];
     hideProgress();
     saveToStorage();
@@ -14221,14 +14429,32 @@ async function parseMUFGBankPDF(file){
     try{_updateUploadStatus();}catch(e){}
     try{armpUpdateSetupState();}catch(e){}
     var _mo=document.getElementById('imp-modal');if(_mo)_mo.classList.remove('open');
-    addAudit('Bank PDF import',payments.length+' payments extracted · account: '+(_acctNo||'—'));
-    toast('Imported '+payments.length+' bank payments from PDF · account: '+(_acctNo||'—'));
+    addAudit('Bank PDF import', _payments.length+' payments · bank: '+_bankName+' · acct: '+_acctDisplay);
+    toast('Imported '+_payments.length+' payments from '+_bankName+' bank summary PDF · acct: '+_acctDisplay);
+
+    // Show field-mapping review prompt for unrecognized bank
+    if(_bankName==='Unknown Bank'){
+      setTimeout(function(){
+        showModal('Unrecognized Bank Format — Please Review',
+          '<div style="padding:12px 0">'+
+          '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">'+_payments.length+' transactions were imported but the bank format could not be identified.</p>'+
+          '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">Please review the imported payments to confirm they are correct before running Auto Match.</p>'+
+          '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">'+
+            '<button class="btn btn-outline btn-sm" onclick="closeModal()">Review Later</button>'+
+            '<button class="btn btn-p btn-sm" onclick="closeModal();sp(\'cash-app\')">Review Payments ↗</button>'+
+          '</div></div>'
+        );
+      }, 400);
+    }
   }catch(err){
     hideProgress();
     toast('Bank PDF parse error: '+err.message,'warn');
-    console.error('parseMUFGBankPDF:',err);
+    console.error('[parseBankSummaryPDF]',err.message);
   }
 }
+
+// Legacy alias — parseMUFGBankPDF now routes through the dispatcher
+async function parseMUFGBankPDF(file){ return parseBankSummaryPDF(file); }
 async function parsePDFRemittance(file){
   // ── PDF.js remittance extraction ──
   if(typeof pdfjsLib==='undefined'){
