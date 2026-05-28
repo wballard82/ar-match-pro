@@ -6338,74 +6338,74 @@ var RemittanceParser = (function(){
   // Col F: Amount → amt
   function _parseTkFujikinRemittance(dataRows, hdr, fileName){
     var lines = [];
-    var custFwd = '';
+    var supplierFwd = '';  // Col A = Supplier (HORIBA) — NOT the customer/payer
     var dateFwd = '';
     var totalAmt = 0;
 
+    // Try to resolve the real customer/payer from the delivery report (TK-FUJIKIN CORPORATION)
+    // or fall back to a placeholder to be resolved from PAY at match time.
+    var resolvedCustName = '';
+    if(typeof DELIV !== 'undefined' && DELIV && DELIV.length > 0 && DELIV[0].custName){
+      resolvedCustName = DELIV[0].custName; // "TK-FUJIKIN CORPORATION"
+    }
+
     dataRows.forEach(function(r, idx){
       if(!r || !r.some(Boolean)) return;
-      // Detect total row — col B = "Total" and col F has an amount
+      // Detect total row
       var colBstr = String(r[1]||'').trim().toLowerCase();
       if(colBstr === 'total' || colBstr === 'grand total'){
         var tAmt = _parseRemAmt(r[5]);
         if(tAmt > 0) totalAmt = tAmt;
         return;
       }
-      // Skip sub-headers that repeat inside data
+      // Skip header rows
       var colAstr = String(r[0]||'').trim();
       if(colAstr && colAstr.toLowerCase() === 'supplier') return;
 
-      // Cascade customer name (col A)
-      if(colAstr && colAstr.length > 1) custFwd = colAstr;
+      // Col A = Supplier Name (HORIBA) — cascade for display only
+      if(colAstr && colAstr.length > 1) supplierFwd = colAstr;
+
       // Cascade payment date (col B)
       var colBraw = r[1];
       if(colBraw && String(colBraw).trim().length > 3) dateFwd = _fmtRdDate(colBraw);
 
       var invDate = _fmtRdDate(r[2]);  // col C: INV DATE
 
-      // Col D: INV No. — multi-type ref field
+      // Col D: INV No. — SS→poNo, 510→invNo, 710→delNo
       var colD = String(r[3]||'').trim();
       var invNo = '', delNo = '', poNo = '';
       if(colD){
         if(/^SS[A-Z0-9]/i.test(colD)){
-          // SS reference — PO/shipment reference
           poNo = colD;
         } else {
-          // May be 510-prefix (invoice) or 710-prefix (delivery)
           var dDigits = colD.replace(/[^0-9]/g,'');
-          // Handle comma-separated: "5105165526, 28" — extract first 10-digit number
           var dFirst = dDigits.slice(0,10);
           if(dFirst.startsWith('510') && dFirst.length>=9) invNo = dFirst;
           else if(dFirst.startsWith('710') && dFirst.length>=9) delNo = dFirst;
-          else if(dFirst.startsWith('210') && dFirst.length>=9) {} // SO — handled by bridge
-          else { invNo = colD; } // generic ref
+          else if(dFirst.startsWith('210') && dFirst.length>=9) {} // SO via bridge
+          else { invNo = colD; }
         }
       }
 
-      // Col E: Remarks — tracking number or 10-digit ref
+      // Col E: Remarks — 1Z→trkNo, else notes
       var colE = String(r[4]||'').trim();
-      var trkNo = '';
-      var notesVal = '';
+      var trkNo = '', notesVal = '';
       if(colE){
         var eTracking = detectTracking(colE);
-        if(eTracking){
-          trkNo = eTracking;
-        } else {
-          // 10-digit number — may be a document ref or tracking
-          notesVal = colE;
-        }
+        if(eTracking){ trkNo = eTracking; }
+        else { notesVal = colE; }
       }
 
       // Col F: Amount
       var amt = _parseRemAmt(r[5]);
 
-      // Skip rows with no useful data
       if(!invNo && !delNo && !poNo && !trkNo && amt <= 0) return;
 
-      var confidence = 1.0; // hardcoded profile = 100%
-
       lines.push({
-        custName:    custFwd,
+        // custName = the PAYER (TK-FUJIKIN CORPORATION), resolved from DELIV or PAY
+        // supplierName = col A (HORIBA Instruments, Inc.) — stored separately
+        custName:    resolvedCustName,  // TK-FUJIKIN CORPORATION (to be resolved)
+        supplierName:supplierFwd,       // HORIBA Instruments, Inc.
         custAcct:    '',
         paymentDate: dateFwd,
         invDate:     invDate,
@@ -6423,7 +6423,7 @@ var RemittanceParser = (function(){
         notes:       notesVal,
         srcFile:     fileName||'',
         srcRow:      hdr.headerIdx+1+idx,
-        confidence:  confidence,
+        confidence:  1.0,
         status:      'Pending',
         docClass:    invNo?'Invoice':delNo?'Delivery':trkNo?'Tracking':poNo?'PO':'Unknown',
         _raw:        r.join('|')
@@ -6433,10 +6433,9 @@ var RemittanceParser = (function(){
     var lineSum = lines.reduce(function(s,l){return s+(l.amt||0);},0);
     if(totalAmt===0) totalAmt = lineSum;
 
-    // Hardcoded col map for mapping review screen
     var colMap = { custName:0, paymentDate:1, invDate:2, invNo:3, trkNo:4, amt:5 };
     var mappingMeta = {
-      custName:    {src:'auto',conf:1.0,label:'Supplier'},
+      custName:    {src:'auto',conf:1.0,label:'Supplier Name (Col A — Supplier; Customer/Payer from bank/delivery)'},
       paymentDate: {src:'auto',conf:1.0,label:'Date'},
       invDate:     {src:'auto',conf:1.0,label:'INV DATE'},
       invNo:       {src:'auto',conf:1.0,label:'INV No. (510→Invoice, 710→Delivery, SS→PO)'},
@@ -6445,18 +6444,19 @@ var RemittanceParser = (function(){
     };
 
     return {
-      lines:       lines,
-      colMap:      colMap,
-      mappingMeta: mappingMeta,
-      headerRow:   hdr.rawHdrs,
-      headerIdx:   hdr.headerIdx,
-      custName:    custFwd || 'HORIBA Instruments, Inc.',
-      isHoriba:    true,
-      totalAmt:    totalAmt,
-      lineSum:     lineSum,
-      confidence:  1.0,   // 100%
-      savedProfile:false,
-      isTkFujikin: true
+      lines:         lines,
+      colMap:        colMap,
+      mappingMeta:   mappingMeta,
+      headerRow:     hdr.rawHdrs,
+      headerIdx:     hdr.headerIdx,
+      custName:      resolvedCustName || '',   // TK-FUJIKIN (payer), not HORIBA (supplier)
+      supplierName:  supplierFwd,              // HORIBA Instruments, Inc.
+      isHoriba:      true,
+      totalAmt:      totalAmt,
+      lineSum:       lineSum,
+      confidence:    1.0,
+      savedProfile:  false,
+      isTkFujikin:   true
     };
   }
 
@@ -6739,16 +6739,44 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
     varHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(18,184,134,.08);border:1px solid rgba(18,184,134,.25);margin-bottom:10px">'+
       '<span>✅</span><span style="font-size:12.5px;font-weight:600;color:var(--g-t)">Bank total matches remittance — $'+$f(remTotal)+'</span></div>';
   }
+
+  // Detect TK-Fujikin format (has supplierName field)
+  var _isTkFFormat = lines.length>0 && lines[0].supplierName;
+  var _supplierName = _isTkFFormat ? (lines[0].supplierName||'') : '';
+  var _custName = _isTkFFormat ? (lines[0].custName||'TK-FUJIKIN CORPORATION') : (lines[0]&&lines[0].custName||'');
+
+  // TK-Fujikin diagnostics banner
+  var tkDiagHtml = '';
+  if(_isTkFFormat){
+    var _trkCount = lines.filter(function(l){return l.trkNo;}).length;
+    var _poCount  = lines.filter(function(l){return l.poNo;}).length;
+    var _invCount = lines.filter(function(l){return l.invNo;}).length;
+    tkDiagHtml = '<div style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.06);border:1px solid rgba(20,168,216,.18);margin-bottom:10px;font-size:12px">'+
+      '<div><strong style="color:var(--p)">🏭 HORIBA / TK-Fujikin Format</strong></div>'+
+      '<div style="margin-left:auto;display:flex;gap:14px;flex-wrap:wrap">'+
+      '<span><strong style="color:var(--t2)">Customer / Payer:</strong> <strong>'+_escapeHtml(_custName)+'</strong></span>'+
+      '<span><strong style="color:var(--t2)">Supplier:</strong> <strong>'+_escapeHtml(_supplierName)+'</strong></span>'+
+      '<span><strong style="color:var(--cy-t)">Tracking #:</strong> '+_trkCount+'</span>'+
+      '<span><strong style="color:var(--pu-t)">PO refs:</strong> '+_poCount+'</span>'+
+      '<span><strong style="color:var(--pd)">Invoice refs:</strong> '+_invCount+'</span>'+
+      '</div></div>';
+  }
+
   // Group by doc class for summary
   var classCounts = {};
   lines.forEach(function(l){ classCounts[l.docClass||'Unknown']=(classCounts[l.docClass||'Unknown']||0)+1; });
   var classSummary = Object.keys(classCounts).map(function(k){ return '<span class="badge badge-p" style="font-size:10px;margin-right:3px">'+k+': '+classCounts[k]+'</span>'; }).join('');
 
+  // Column headers — show "Supplier" for TK-Fujikin format, "Customer" for others
+  var custColHeader = _isTkFFormat ? 'Supplier' : 'Customer';
+
   var tableRows = lines.slice(0,80).map(function(rd){
     var conf = rd.confidence>=0.8?'var(--g-t)':rd.confidence>=0.5?'var(--am-t)':'var(--r-t)';
+    // Show supplier name in col A for TK-Fujikin (it IS col A), customer/payer in parentheses
+    var displayName = _isTkFFormat ? _escapeHtml(rd.supplierName||'—') : _escapeHtml(rd.custName||'—');
     return '<tr>'+
-      '<td style="font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_escapeHtml(rd.custName||'—')+'</td>'+
-      '<td class="td-mono" style="font-size:10px">'+_escapeHtml(rd.paymentDate||'—')+'</td>'+
+      '<td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+displayName+'</td>'+
+      '<td class="td-mono" style="font-size:10px;white-space:nowrap">'+_escapeHtml(rd.paymentDate||'—')+'</td>'+
       '<td class="td-mono" style="color:var(--pd);font-size:11.5px">'+_escapeHtml(rd.invNo||rd.soNo||rd.poNo||rd.paymentRef||'—')+'</td>'+
       '<td class="td-mono" style="font-size:10.5px">'+_escapeHtml(rd.poNo||'—')+'</td>'+
       '<td class="td-mono" style="font-size:10.5px">'+_escapeHtml(rd.soNo||'—')+'</td>'+
@@ -6758,20 +6786,24 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
       '<td><span class="badge badge-am" style="font-size:9.5px">'+_escapeHtml(rd.docClass||'?')+'</span></td>'+
     '</tr>';
   }).join('');
-  var more = lines.length>80?'<tr><td colspan="9" style="text-align:center;color:var(--t3);font-size:11px;padding:6px">+'+( lines.length-80)+' more rows</td></tr>':'';
+  var more = lines.length>80?'<tr><td colspan="9" style="text-align:center;color:var(--t3);font-size:11px;padding:6px">+'+(lines.length-80)+' more rows</td></tr>':'';
 
   showModal('Remittance Details — Import Summary',
-    varHtml+
+    tkDiagHtml + varHtml+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
-      '<div style="font-size:12.5px;color:var(--t2)"><strong>'+lines.length+'</strong> lines · $'+$f(remTotal)+' · '+classSummary+'</div>'+
+      '<div style="font-size:12.5px;color:var(--t2)"><strong>'+lines.length+'</strong> lines · $'+$f(remTotal)+'  · '+classSummary+'</div>'+
       '<button class="btn btn-p btn-sm" onclick="closeModal();runMatch()">⚡ Auto Match Now</button>'+
     '</div>'+
     '<div style="overflow-x:auto;max-height:320px;overflow-y:auto;border:1px solid var(--bdr);border-radius:8px">'+
     '<table class="fbl5n-tbl" style="min-width:640px"><thead><tr>'+
-      '<th>Customer</th><th>Pay Date</th><th>Invoice/Ref</th><th>PO #</th><th>SO #</th><th>Tracking</th>'+
+      '<th>'+custColHeader+'</th><th>Pay Date</th><th>Invoice/Ref</th><th>PO #</th><th>SO #</th><th>Tracking</th>'+
       '<th style="text-align:right">Amount</th><th>Conf.</th><th>Class</th>'+
     '</tr></thead><tbody>'+tableRows+more+'</tbody></table></div>'+
-    '<div style="margin-top:10px;font-size:11.5px;color:var(--t3)">✓ Run <strong>Auto Match</strong> to apply. Invoice #, PO #, SO #, Delivery #, Tracking, Credit/Debit Memos all used as match signals.</div>'
+    '<div style="margin-top:10px;font-size:11.5px;color:var(--t3)">'+
+    (_isTkFFormat
+      ? '🏭 TK-Fujikin format: Customer/Payer = <strong>'+_escapeHtml(_custName)+'</strong> · Supplier = <strong>'+_escapeHtml(_supplierName)+'</strong>. Matching uses Tracking# → Delivery Report → Invoice.'
+      : '✓ Run <strong>Auto Match</strong>. Invoice #, PO #, SO #, Delivery #, Tracking all used as match signals.')+
+    '</div>'
   );
 }
 
@@ -12468,17 +12500,41 @@ async function runMatch(){
     });
 
     PAY.forEach(function(p){
-      // Step 1: Link PAY to a REM_DETAIL line by bank ref or customer name
+      // Step 1: Link PAY to a REM_DETAIL line by bank ref or customer name.
+      // For TK-Fujikin: PAY.c = "TK FUJIKIN CORPORATION" (payer from bank)
+      //                 REM_DETAIL[i].custName = "TK-FUJIKIN CORPORATION" (from DELIV/resolved)
+      //                 REM_DETAIL[i].supplierName = "HORIBA Instruments, Inc." (from col A)
+      // Match by custName first, then by supplierName as a known-supplier heuristic.
       var _rd=null;
       if(!_rd&&p.bankRef) _rd=_rdByRef2.get(p.bankRef)||null;
       if(!_rd&&p.c){
-        var _pUp=String(p.c).toUpperCase().trim().slice(0,8);
+        var _pUp=String(p.c).toUpperCase().trim();
+        var _pUp8=_pUp.slice(0,8);
+        // Try custName match (customer/payer field)
         REM_DETAIL.forEach(function(rd){
-          if(!_rd&&rd.custName){
+          if(_rd) return;
+          if(rd.custName){
             var _rdn=String(rd.custName).toUpperCase().trim();
-            if(_rdn.indexOf(_pUp)>=0||_pUp.indexOf(_rdn.slice(0,8))>=0) _rd=rd;
+            if(_rdn.indexOf(_pUp8)>=0||_pUp.indexOf(_rdn.replace(/[\s\-]/g,'').slice(0,8))>=0||
+               _rdn.replace(/[\s\-]/g,'').indexOf(_pUp.replace(/[\s\-]/g,'').slice(0,8))>=0) _rd=rd;
           }
         });
+        // Fallback: if remittance is TK-Fujikin format (custName empty or HORIBA supplier),
+        // link all remittance lines to this payment by recognizing the known supplier pattern
+        if(!_rd && REM_DETAIL.length>0 && REM_DETAIL[0].supplierName){
+          // TK-Fujikin remittance: supplierName = HORIBA, custName = TK-FUJIKIN (payer)
+          // If PAY.c matches any known payer name that corresponds to this remittance, link them
+          var _isTkFPay = _pUp.indexOf('FUJIKIN')>=0 || _pUp.indexOf('TK')>=0;
+          var _isTkFRem = REM_DETAIL[0].supplierName && String(REM_DETAIL[0].supplierName).toUpperCase().indexOf('HORIBA')>=0;
+          if(_isTkFPay && _isTkFRem){
+            // This payment is TK-Fujikin paying HORIBA — link to all remittance lines
+            _rd = REM_DETAIL[0]; // start with first; all lines apply to this payment
+            // Also resolve custName on all lines if not yet set
+            REM_DETAIL.forEach(function(rd){
+              if(!rd.custName || rd.custName === '') rd.custName = p.c || 'TK-FUJIKIN CORPORATION';
+            });
+          }
+        }
       }
 
       // Step 2: Copy refs from REM_DETAIL into PAY
@@ -12492,6 +12548,8 @@ async function runMatch(){
         if(_rd.debitMemo)  p._debitMemo  = _rd.debitMemo;
         p._hasRemDetail   = true;
         p._remConfidence  = _rd.confidence||0;
+        // Store all remittance lines for multi-invoice matching
+        p._remLines = REM_DETAIL;
         if(p.trackingNo) _diagTrkExtracted++;
       }
 
@@ -12771,18 +12829,114 @@ async function runMatch(){
       }
       if(matched)continue;
 
-      // PRIORITY 9: Oldest invoice suggestion — when remittance is present but no exact ref match
-      // Only suggest, do not auto-apply. Creates an exception with oldest open invoices for review.
+      // PRIORITY 8b: Multi-line remittance matching (TK-Fujikin style)
+      // When a payment has ALL remittance lines attached (_remLines), try to match
+      // each remittance line independently to open invoices by tracking→SO or PO or invoice#.
+      // Then aggregate matched invoices. Remaining balance → Cash on Account suggestion.
+      if(!matched && p._remLines && p._remLines.length>1){
+        var _mlMatched=[];
+        var _mlTotal=0;
+        p._remLines.forEach(function(rl){
+          if(!rl || rl.amt<=0) return;
+          var _inv=null;
+          // Try invoice# first
+          if(rl.invNo && _idx.byInv){
+            var _h2=_idx.byInv.get(norm(rl.invNo));
+            if(_h2&&!_h2.s) _inv=_h2;
+          }
+          // Try tracking → SO bridge
+          if(!_inv && rl.trkNo && _hasBridge){
+            var _ntk3=_normTrk(rl.trkNo);
+            var _tbr=window._TRK_BRIDGE.get(_ntk3)||window._TRK_BRIDGE.get(rl.trkNo.trim())||null;
+            if(_tbr && _tbr.salesOrder && _idx.bySO){
+              var _bso2=_idx.bySO.get(norm(_tbr.salesOrder));
+              if(_bso2&&_bso2.length){
+                _inv=_bso2.find(function(v){return !v.s && Math.abs(v.amt-rl.amt)<=tol;});
+                if(!_inv) _inv=_bso2.find(function(v){return !v.s;});
+              }
+            }
+          }
+          // Try PO match
+          if(!_inv && rl.poNo && _idx.byPO){
+            var _pp=_idx.byPO.get(norm(rl.poNo));
+            if(_pp&&_pp.length){
+              _inv=_pp.find(function(v){return !v.s && Math.abs(v.amt-rl.amt)<=tol;});
+              if(!_inv) _inv=_pp.find(function(v){return !v.s;});
+            }
+          }
+          // Try delivery # → SO bridge
+          if(!_inv && rl.delNo && _hasDelBridge){
+            var _dbr=window._DELIV_BRIDGE.get(rl.delNo)||null;
+            if(_dbr && _dbr.salesOrder && _idx.bySO){
+              var _bso3=_idx.bySO.get(norm(_dbr.salesOrder));
+              if(_bso3&&_bso3.length){
+                _inv=_bso3.find(function(v){return !v.s && Math.abs(v.amt-rl.amt)<=tol;});
+                if(!_inv) _inv=_bso3.find(function(v){return !v.s;});
+              }
+            }
+          }
+          if(_inv && !_mlMatched.find(function(x){return x.i===_inv.i;})){
+            _mlMatched.push(_inv);
+            _mlTotal+=_inv.amt;
+          }
+        });
+
+        if(_mlMatched.length>0){
+          // Mark matched invoices
+          _mlMatched.forEach(function(inv){
+            inv.s='Exact';
+            RES.push({c:inv.c,a:inv.a,i:inv.i,po:inv.po,so:inv.so,d:inv.d,oa:inv.amt,pd:inv.amt,vr:0,
+              st:'Exact',m:'Multi-line remittance',n:'Matched via remittance line'+(p._bridgedViaDelivery?' + delivery bridge':'')});
+          });
+          matched=true;
+
+          // Fix 3: Partial match + Cash on Account
+          var _remaining = p.amt - _mlTotal;
+          if(Math.abs(_remaining) > tol){
+            if(_remaining > 0){
+              // Bank payment exceeds matched invoices → suggest COA for remainder
+              EXC.push({
+                id:'EXC-COA-'+String(ec++).padStart(3,'0'),
+                a:p.a, c:p.c||(_mlMatched[0]&&_mlMatched[0].c)||'',
+                amt:_remaining,
+                ref:p.txId||p.bankRef||'—',
+                type:'Partially Applied',
+                detail:'Matched invoices: $'+$f(_mlTotal)+' — Remaining unapplied balance: $'+$f(_remaining)+'. Suggest posting as Cash on Account.',
+                action:'Post remaining $'+$f(_remaining)+' as Cash on Account',
+                dec:'Cash on Account',
+                s:'Open',
+                notes:'Bank payment $'+$f(p.amt)+' · Matched '+_mlMatched.length+' invoice(s) · Remainder $'+$f(_remaining)+' → Cash on Account'
+              });
+            } else {
+              // Matched invoices exceed payment → Variance
+              EXC.push({
+                id:'EXC-'+String(ec++).padStart(3,'0'),
+                a:p.a, c:p.c,
+                amt:Math.abs(_remaining),
+                ref:p.txId||p.bankRef||'—',
+                type:'Variance',
+                detail:'Matched invoices total $'+$f(_mlTotal)+' exceeds bank payment $'+$f(p.amt)+' by $'+$f(Math.abs(_remaining))+'. Needs review.',
+                action:'Review with customer — possible short pay',
+                dec:'', s:'Open',
+                notes:'Invoice total exceeds payment. Check remittance for partial application instructions.'
+              });
+            }
+          }
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY 9: Oldest invoice suggestion
       if(!matched && p._hasRemDetail && p.c){
         var _custUpper = String(p.c).toUpperCase().trim();
         var _openInvs = INV.filter(function(v){
           if(v.s) return false;
           if(!v.c) return false;
           var _ic = String(v.c).toUpperCase().trim();
-          return _ic.indexOf(_custUpper.slice(0,8))>=0 || _custUpper.indexOf(_ic.slice(0,8))>=0;
+          return _ic.indexOf(_custUpper.replace(/[\s\-]/g,'').slice(0,8))>=0 ||
+                 _custUpper.replace(/[\s\-]/g,'').indexOf(_ic.replace(/[\s\-]/g,'').slice(0,8))>=0;
         });
         if(_openInvs.length>0){
-          // Sort by due date ascending (oldest first)
           var _sorted = _openInvs.slice().sort(function(a,b){
             var da=a.due?new Date(a.due):new Date(a.dt2||0);
             var db=b.due?new Date(b.due):new Date(b.dt2||0);
