@@ -3761,10 +3761,13 @@ body.app-active #app {
                       <th onclick="sortFbl5nExc(9)" style="text-align:right">Balance<span class="si2"></span></th>
                       <th onclick="sortFbl5nExc(10)">Status<span class="si2"></span></th>
                       <th style="text-align:center">Match %</th>
+                      <th style="text-align:center;color:var(--pu-t)" title="Delivery # from delivery report">Delivery #</th>
+                      <th style="text-align:center;color:var(--cy-t)" title="Tracking # / Bill of Lading from delivery report">Tracking / BOL</th>
+                      <th style="color:var(--am-t);max-width:160px" title="Logistics Memo - Internal Header from delivery report">Logistics Memo</th>
                     </tr>
                   </thead>
                   <tbody id="exc-open-items-body">
-                    <tr><td colspan="10"><div class="empty" style="padding:16px"><div class="empty-t">No open items — load invoice data to populate</div></div></td></tr>
+                    <tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items — load invoice data to populate</div></div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -5785,25 +5788,33 @@ function _showMatchDiagnostics(stats){
       if(!INV||!INV.length)              noMatchReasons.push('No open items loaded — upload invoice/AR file first');
       else if(!PAY||!PAY.length)         noMatchReasons.push('No bank payments loaded — upload bank file first');
       else{
-        if(!stats.invRefsFound)          noMatchReasons.push('No invoice references extracted from payments or remittance');
-        if(!stats.delIndexed)            noMatchReasons.push('Delivery references not indexed — upload delivery report');
-        if(!stats.trkFound)              noMatchReasons.push('No tracking numbers found in any source');
-        if(!stats.poFound)               noMatchReasons.push('No PO numbers matched across sources');
+        if(!stats.invRefsFound && !stats.trkFound)
+                                         noMatchReasons.push('No invoice, SO, PO, or tracking references found in payments or remittance');
+        if(stats.trkFound && !stats.trkBridged)
+                                         noMatchReasons.push('Tracking numbers found but NOT matched to Delivery Report — check delivery file was uploaded');
+        if(stats.trkBridged && !stats.matched)
+                                         noMatchReasons.push('Tracking matched delivery report but no open item found via SO/PO — check SO/PO in open items');
+        if(!stats.delIndexed)            noMatchReasons.push('Delivery report not uploaded — upload delivery report to enable tracking bridge');
+        if(!REM_DETAIL||!REM_DETAIL.length) noMatchReasons.push('No remittance details loaded — upload remittance file');
         if(stats.custMismatch)           noMatchReasons.push('Customer names do not match between bank and open items');
         if(stats.amtMismatch)            noMatchReasons.push('Amount tolerance too tight — try increasing in Settings');
-        if(!REM_DETAIL||!REM_DETAIL.length) noMatchReasons.push('No remittance details loaded — upload remittance file');
       }
     }
+    var rows=[
+      ['Bank payments',     stats.payCount,       'var(--t1)'],
+      ['Remittance lines',  stats.remCount,        'var(--t1)'],
+      ['Tracking #s found', stats.trkFound,        stats.trkFound>0?'var(--cy-t)':'var(--t3)'],
+      ['Trk → Delivery',    stats.trkBridged,      stats.trkBridged>0?'var(--g-t)':'var(--t3)'],
+      ['Delivery rows',     stats.delCount,        'var(--t1)'],
+      ['Open items',        stats.invCount,        'var(--t1)'],
+      ['Open items enriched',stats.enriched||0,    stats.enriched>0?'var(--p)':'var(--t3)'],
+      ['Matches found',     stats.matched,         stats.matched>0?'var(--g-t)':'var(--r-t)'],
+      ['Variances',         (EXC.filter(function(e){return e.type==='Variance';}).length), 'var(--am-t)'],
+      ['Exceptions',        stats.exceptions,      'var(--am-t)']
+    ];
     var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 14px">';
-    [['Bank payments',stats.payCount],['Remittance lines',stats.remCount],
-     ['Delivery rows',stats.delCount],['Open items',stats.invCount],
-     ['Refs extracted',stats.refsExtracted],
-     ['Matches found', stats.matched],
-     ['Exceptions',stats.exceptions]
-    ].forEach(function(pair){
-      var valColor = pair[0]==='Matches found'?(stats.matched>0?'var(--g-t)':'var(--r-t)'):
-                    pair[0]==='Exceptions'?'var(--am-t)':'var(--t1)';
-      html+='<span style="color:var(--t3)">'+pair[0]+':</span><span style="font-weight:700;color:'+valColor+'">'+pair[1]+'</span>';
+    rows.forEach(function(r){
+      html+='<span style="color:var(--t3)">'+r[0]+':</span><span style="font-weight:700;color:'+r[2]+'">'+r[1]+'</span>';
     });
     html+='</div>';
     if(noMatchReasons.length>0){
@@ -12422,70 +12433,129 @@ async function runMatch(){
   // Retrieve fresh index references
   const _idx = _INV_IDX;
 
-  // ── REMITTANCE DETAILS PRE-ENRICHMENT ─────────────────────────────────────
-  // REM_DETAIL lines (parsed by RemittanceParser) are the PRIMARY match source.
-  // Each PAY entry is enriched with document refs from the matching remittance
-  // line before the main matching loop. Also handles credit/debit memo offsets.
+  // ── REMITTANCE DETAILS PRE-ENRICHMENT + DELIVERY BRIDGE ──────────────────
+  // For TK-Fujikin and similar: tracking # is the PRIMARY bridge.
+  // Flow: REM_DETAIL trkNo → _TRK_BRIDGE (delivery report) → SO/PO → INV
+  //
+  // Rules:
+  // 1. Enrich every PAY entry from matching REM_DETAIL line (by customer name)
+  // 2. ALWAYS run tracking bridge regardless of whether p.so was set
+  //    (REM_DETAIL may set p.so but that SO might not exist in INV — the
+  //     delivery bridge may find a different SO that does)
+  // 3. Normalize tracking numbers: trim, uppercase, strip invisible chars
+  // 4. Bridge enriches PAY and also syncs delivery fields back into INV rows
+  // ─────────────────────────────────────────────────────────────────────────
+  var _hasBridge = !!(window._TRK_BRIDGE && window._TRK_BRIDGE.size > 0);
+  var _hasDelBridge = !!(window._DELIV_BRIDGE && window._DELIV_BRIDGE.size > 0);
+
+  // Normalize a tracking number consistently
+  function _normTrk(s){ return String(s||'').trim().toUpperCase().replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g,''); }
+
+  // Track diagnostics for diagnostics panel
+  var _diagTrkExtracted=0, _diagTrkBridged=0, _diagDelBridged=0, _diagEnriched=0;
+
   if(REM_DETAIL && REM_DETAIL.length>0){
-    var _rdByInv2=new Map(),_rdByPO2=new Map(),_rdBySO2=new Map(),_rdByDel2=new Map(),_rdByTrk2=new Map(),_rdByRef2=new Map();
+    // Build REM_DETAIL lookup maps
+    var _rdByInv2=new Map(),_rdByPO2=new Map(),_rdBySO2=new Map();
+    var _rdByDel2=new Map(),_rdByTrk2=new Map(),_rdByRef2=new Map();
     REM_DETAIL.forEach(function(rd){
       if(rd.invNo){var k=norm(rd.invNo);if(!_rdByInv2.has(k))_rdByInv2.set(k,rd);}
       if(rd.poNo){var k2=norm(rd.poNo);if(!_rdByPO2.has(k2))_rdByPO2.set(k2,rd);}
-      if(rd.soNo){if(!_rdBySO2.has(rd.soNo))_rdBySO2.set(rd.soNo,rd);}
-      if(rd.delNo){if(!_rdByDel2.has(rd.delNo))_rdByDel2.set(rd.delNo,rd);}
-      if(rd.trkNo){if(!_rdByTrk2.has(rd.trkNo))_rdByTrk2.set(rd.trkNo,rd);}
-      if(rd.paymentRef){if(!_rdByRef2.has(rd.paymentRef))_rdByRef2.set(rd.paymentRef,rd);}
+      if(rd.soNo&&!_rdBySO2.has(rd.soNo))_rdBySO2.set(rd.soNo,rd);
+      if(rd.delNo&&!_rdByDel2.has(rd.delNo))_rdByDel2.set(rd.delNo,rd);
+      if(rd.trkNo){var nt=_normTrk(rd.trkNo);if(!_rdByTrk2.has(nt))_rdByTrk2.set(nt,rd);}
+      if(rd.paymentRef&&!_rdByRef2.has(rd.paymentRef))_rdByRef2.set(rd.paymentRef,rd);
     });
 
     PAY.forEach(function(p){
+      // Step 1: Link PAY to a REM_DETAIL line by bank ref or customer name
       var _rd=null;
       if(!_rd&&p.bankRef) _rd=_rdByRef2.get(p.bankRef)||null;
       if(!_rd&&p.c){
         var _pUp=String(p.c).toUpperCase().trim().slice(0,8);
         REM_DETAIL.forEach(function(rd){
-          if(!_rd&&rd.custName){var _rdn=String(rd.custName).toUpperCase().trim();if(_rdn.indexOf(_pUp)>=0||_pUp.indexOf(_rdn.slice(0,8))>=0)_rd=rd;}
+          if(!_rd&&rd.custName){
+            var _rdn=String(rd.custName).toUpperCase().trim();
+            if(_rdn.indexOf(_pUp)>=0||_pUp.indexOf(_rdn.slice(0,8))>=0) _rd=rd;
+          }
         });
       }
+
+      // Step 2: Copy refs from REM_DETAIL into PAY
       if(_rd){
-        if(!p.i&&_rd.invNo)p.i=_rd.invNo;
-        if(!p.po&&_rd.poNo)p.po=_rd.poNo;
-        if(!p.so&&_rd.soNo)p.so=_rd.soNo;
-        if(!p.trackingNo&&_rd.trkNo)p.trackingNo=_rd.trkNo;
-        if(!p.deliveryNo&&_rd.delNo)p.deliveryNo=_rd.delNo;
-        if(_rd.creditMemo)p._creditMemo=_rd.creditMemo;
-        if(_rd.debitMemo)p._debitMemo=_rd.debitMemo;
-        p._hasRemDetail=true;
-        p._remConfidence=_rd.confidence||0;
+        if(!p.i   && _rd.invNo)  p.i         = _rd.invNo;
+        if(!p.po  && _rd.poNo)   p.po        = _rd.poNo;
+        if(!p.so  && _rd.soNo)   p.so        = _rd.soNo;
+        if(_rd.trkNo){ p.trackingNo = p.trackingNo || _normTrk(_rd.trkNo); }
+        if(_rd.delNo){ p.deliveryNo = p.deliveryNo || _rd.delNo; }
+        if(_rd.creditMemo) p._creditMemo = _rd.creditMemo;
+        if(_rd.debitMemo)  p._debitMemo  = _rd.debitMemo;
+        p._hasRemDetail   = true;
+        p._remConfidence  = _rd.confidence||0;
+        if(p.trackingNo) _diagTrkExtracted++;
       }
 
-      // ── Feature 5: Delivery Report bridge cross-reference ────────────────
-      // If still no invoice ref, try to bridge via delivery report:
-      // remittance trkNo → DELIV bridge → SO → INV
-      if(!p.i && !p.so && p.trackingNo && window._TRK_BRIDGE){
-        var _br = window._TRK_BRIDGE.get(p.trackingNo)||null;
+      // Step 3: ALWAYS run tracking bridge — even if p.so already set from REM_DETAIL.
+      // TK-Fujikin: remittance has tracking#; delivery report is the bridge to SO/INV.
+      if(p.trackingNo && _hasBridge){
+        var _ntk = _normTrk(p.trackingNo);
+        var _br  = window._TRK_BRIDGE.get(_ntk) || null;
+        // Also try original (un-uppercased) if no hit
+        if(!_br) _br = window._TRK_BRIDGE.get(p.trackingNo.trim()) || null;
         if(_br){
-          if(!p.so && _br.salesOrder) p.so = _br.salesOrder;
-          if(!p.po && _br.poNo)       p.po = _br.poNo;
-          if(!p.deliveryNo)           p.deliveryNo = _br.deliveryNo;
+          // Delivery bridge found — update SO/PO/delivery unconditionally
+          // (may override a REM_DETAIL SO that doesn't exist in INV)
+          if(_br.salesOrder){ p.so = _br.salesOrder; }
+          if(_br.poNo && !p.po) p.po = _br.poNo;
+          if(_br.deliveryNo)    p.deliveryNo = _br.deliveryNo;
           p._bridgedViaDelivery = true;
+          p._bridgedDelRow = _br;
+          _diagTrkBridged++;
+
+          // Also enrich the matching INV row immediately (belt-and-suspenders)
+          // so it's in the index before processChunk hits it
+          if(_br.salesOrder && _INV_IDX.bySO){
+            var _bso = _INV_IDX.bySO.get(norm(_br.salesOrder));
+            if(_bso && _bso.length){
+              _bso.forEach(function(inv){
+                if(!inv.dl && _br.deliveryNo) inv.dl = _br.deliveryNo;
+                if(!inv.t  && _br.trackingNo) inv.t  = _br.trackingNo;
+                if(!inv.so && _br.salesOrder) inv.so = _br.salesOrder;
+                if(!inv.po && _br.poNo)       inv.po = _br.poNo;
+                if(!inv.a  && _br.custAcct)   inv.a  = _br.custAcct;
+                if(_br.logMemo)               inv.logMemo = _br.logMemo;
+                _diagEnriched++;
+              });
+            }
+          }
         }
       }
-      // remittance delNo → DELIV bridge → SO → INV
-      if(!p.i && !p.so && p.deliveryNo && window._DELIV_BRIDGE){
-        var _br2 = window._DELIV_BRIDGE.get(p.deliveryNo)||null;
+
+      // Step 4: Delivery # bridge (for cases where REM_DETAIL has delNo not trkNo)
+      if(p.deliveryNo && _hasDelBridge && !p._bridgedViaDelivery){
+        var _br2 = window._DELIV_BRIDGE.get(p.deliveryNo) || null;
         if(_br2){
-          if(!p.so && _br2.salesOrder) p.so = _br2.salesOrder;
-          if(!p.po && _br2.poNo)       p.po = _br2.poNo;
+          if(_br2.salesOrder && !p.so) p.so = _br2.salesOrder;
+          if(_br2.poNo && !p.po)       p.po = _br2.poNo;
           p._bridgedViaDelivery = true;
+          p._bridgedDelRow = _br2;
+          _diagDelBridged++;
         }
       }
     });
-    // Variance check
+
+    // Rebuild INV indexes now that enrichment has added t/dl/so/po to INV rows
+    _buildInvIndexes();
+
+    // Variance check: bank total vs remittance total
     var _remTot2=REM_DETAIL.reduce(function(s,rd){return s+(rd.amt||0);},0);
     if(_remTot2>0){
       var _rdC2=REM_DETAIL[0]&&REM_DETAIL[0].custName?String(REM_DETAIL[0].custName).toUpperCase().trim():'';
       var _bTot2=0;
-      PAY.forEach(function(p){var _pc=String(p.c||'').toUpperCase().trim();if(_pc&&(_pc.indexOf(_rdC2.slice(0,6))>=0||_rdC2.indexOf(_pc.slice(0,6))>=0))_bTot2+=(p.amt||0);});
+      PAY.forEach(function(p){
+        var _pc=String(p.c||'').toUpperCase().trim();
+        if(_pc&&(_pc.indexOf(_rdC2.slice(0,6))>=0||_rdC2.indexOf(_pc.slice(0,6))>=0)) _bTot2+=(p.amt||0);
+      });
       if(_bTot2>0&&Math.abs(_bTot2-_remTot2)>0.01){
         var _vd2=_bTot2-_remTot2;
         EXC.push({id:'EXC-REMVAR-'+String(ec++).padStart(3,'0'),a:'',c:_rdC2,amt:Math.abs(_vd2),ref:'Remittance vs Bank',type:'Variance',
@@ -12554,14 +12624,11 @@ async function runMatch(){
       if(matched)continue;
 
       // PRIORITY 1: Exact invoice # — O(1) Map lookup
-      // Account guard: if payment has no account (e.g. MUFG wires have a:''), allow match.
-      // Customer name match: fuzzy (normalization strips hyphens/spaces).
+      // Account guard: allow when either side has no account (MUFG wires have a:'')
       if(ni&&useInv){
         var _h=_idx.byInv&&_idx.byInv.get(ni);
         if(_h&&!_h.s){
-          // Account match: allow if either side has no account, or accounts match
           var _acctOk = !p.a || !_h.a || (_h.a===p.a);
-          // Customer name match: normalize both sides (remove hyphens/spaces)
           var _pc_norm = (p.c||'').toUpperCase().replace(/[\s\-_]/g,'').trim();
           var _hc_norm = (_h.c||'').toUpperCase().replace(/[\s\-_]/g,'').trim();
           var _nameOk  = !_pc_norm || !_hc_norm ||
@@ -12578,40 +12645,82 @@ async function runMatch(){
       }
       if(matched)continue;
 
-      // PRIORITY 2: PO group — O(1) Map lookup, then group match
-      // Account filter: skip account filter when payment has no account
-      if(np&&usePO&&hasFeat('multi')){
+      // PRIORITY 2: SO group match
+      // Plan guard removed when delivery report is loaded — tracking bridge may have set p.so
+      if(ns && (useSO && (hasFeat('so') || _hasBridge))){
+        var _gso=_idx.bySO&&_idx.bySO.get(ns);
+        if(_gso&&_gso.length){
+          var _gsoFilt = p.a ? _gso.filter(function(v){return !v.s&&(v.a===p.a||!v.a);}) : _gso.filter(function(v){return !v.s;});
+          if(!_gsoFilt.length) _gsoFilt = _gso.filter(function(v){return !v.s;});
+          if(_gsoFilt.length&&_groupMatch(_gsoFilt,p,tol,'SO',ec)){
+            // Enrich result with bridge info
+            if(p._bridgedViaDelivery) RES[RES.length-1] && (RES[RES.length-1].m += ' (via tracking bridge)');
+            matched=true;
+          }
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY 3: PO group
+      // Plan guard removed for 'multi' when delivery report or remittance loaded
+      var _usePOMatch = usePO && (hasFeat('multi') || _hasBridge || (REM_DETAIL&&REM_DETAIL.length>0));
+      if(np && _usePOMatch){
         var _gpo=_idx.byPO&&_idx.byPO.get(np);
         if(_gpo&&_gpo.length){
-          var _gpoFilt=p.a ? _gpo.filter(v=>v.a===p.a&&!v.s) : _gpo.filter(v=>!v.s);
+          var _gpoFilt=p.a ? _gpo.filter(function(v){return !v.s&&(v.a===p.a||!v.a);}) : _gpo.filter(function(v){return !v.s;});
+          if(!_gpoFilt.length) _gpoFilt = _gpo.filter(function(v){return !v.s;});
           if(_gpoFilt.length&&_groupMatch(_gpoFilt,p,tol,'PO',ec)){matched=true;}
         }
       }
       if(matched)continue;
 
-      // PRIORITY 3: SO group — O(1) Map lookup
-      if(ns&&useSO&&hasFeat('so')){
-        var _gso=_idx.bySO&&_idx.bySO.get(ns);
-        if(_gso&&_gso.length){
-          var _gsoFilt=p.a ? _gso.filter(v=>v.a===p.a&&!v.s) : _gso.filter(v=>!v.s);
-          if(_gsoFilt.length&&_groupMatch(_gsoFilt,p,tol,'SO',ec)){matched=true;}
+      // PRIORITY 4: Tracking # direct match on INV rows (enriched by delivery import)
+      // Plan guard removed when delivery report loaded
+      if(p.trackingNo && (hasFeat('trk') || _hasBridge)){
+        var _ntk2 = _normTrk(p.trackingNo);
+        var _th   = (_idx.byTrk && _idx.byTrk.get(_ntk2)) || (_idx.byTrk && _idx.byTrk.get(p.trackingNo.trim()));
+        if(_th&&!_th.s){
+          const vr=p.amt-_th.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';
+          _th.s=st;
+          RES.push({c:_th.c,a:_th.a,i:_th.i,po:_th.po,so:_th.so,d:_th.d,oa:_th.amt,pd:p.amt,vr,st,m:'Tracking # match',n:'Tracking: '+_ntk2});
+          if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_ntk2,type:st,detail:'Tracking match '+_ntk2+' — variance '+$f(vr),action:'Review variance',dec:'',s:'Open'});
+          matched=true;
         }
       }
       if(matched)continue;
 
-      // PRIORITY 4: Tracking # — O(1) Map lookup
-      if(p.trackingNo&&hasFeat('trk')){
-        var _trk=String(p.trackingNo).trim();
-        var _th=_idx.byTrk&&_idx.byTrk.get(_trk);
-        if(_th&&!_th.s){const vr=p.amt-_th.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';_th.s=st;RES.push({c:_th.c,a:_th.a,i:_th.i,po:_th.po,so:_th.so,d:_th.d,oa:_th.amt,pd:p.amt,vr,st,m:'Tracking # match',n:'Tracking: '+_trk,trackingNo:_trk});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_trk,type:st,detail:'Tracking # match '+_trk+' — variance '+$f(vr),action:'Review variance',dec:'',s:'Open'});matched=true;}
+      // PRIORITY 5: Delivery # direct match on INV rows
+      if(p.deliveryNo && (hasFeat('del') || _hasDelBridge)){
+        var _dl=String(p.deliveryNo).trim();
+        var _dh=_idx.byDel&&_idx.byDel.get(_dl);
+        if(_dh&&!_dh.s){
+          const vr=p.amt-_dh.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';
+          _dh.s=st;
+          RES.push({c:_dh.c,a:_dh.a,i:_dh.i,po:_dh.po,so:_dh.so,d:_dh.d,oa:_dh.amt,pd:p.amt,vr,st,m:'Delivery # match',n:'Delivery: '+_dl});
+          if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_dl,type:st,detail:'Delivery match '+_dl+' — variance '+$f(vr),action:'Review variance',dec:'',s:'Open'});
+          matched=true;
+        }
       }
       if(matched)continue;
 
-      // PRIORITY 5: Delivery # — O(1) Map lookup
-      if(p.deliveryNo&&hasFeat('del')){
-        var _dl=String(p.deliveryNo).trim();
-        var _dh=_idx.byDel&&_idx.byDel.get(_dl);
-        if(_dh&&!_dh.s){const vr=p.amt-_dh.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';_dh.s=st;RES.push({c:_dh.c,a:_dh.a,i:_dh.i,po:_dh.po,so:_dh.so,d:_dh.d,oa:_dh.amt,pd:p.amt,vr,st,m:'Delivery # match',n:'Delivery: '+_dl,deliveryNo:_dl});if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_dl,type:st,detail:'Delivery # match '+_dl+' — variance '+$f(vr),action:'Review variance',dec:'',s:'Open'});matched=true;}
+      // PRIORITY 5b: Bridge-matched but no SO in index → try account + amount
+      // When tracking matched delivery report (p._bridgedViaDelivery) but SO wasn't found
+      if(!matched && p._bridgedViaDelivery && p._bridgedDelRow){
+        var _bdRow = p._bridgedDelRow;
+        // Try customer account from delivery row + payment amount against open items
+        var _bdAcct = _bdRow.custAcct || '';
+        var _bdAmt  = p.amt;
+        if(_bdAcct && _INV_IDX.byAcct){
+          var _bdInvs = _INV_IDX.byAcct.get(_bdAcct);
+          if(_bdInvs && _bdInvs.length){
+            var _bdMatch = _bdInvs.filter(function(v){ return !v.s && Math.abs(v.amt-_bdAmt)<=tol; });
+            if(_bdMatch.length===1){
+              var _bv=_bdMatch[0]; _bv.s='Delivery bridge';
+              RES.push({c:_bv.c,a:_bv.a,i:_bv.i,po:_bv.po,so:_bv.so,d:_bv.d,oa:_bv.amt,pd:p.amt,vr:p.amt-_bv.amt,st:'Delivery bridge',m:'Tracking → Delivery → Account match',n:'Bridge via tracking '+_normTrk(p.trackingNo||'')});
+              matched=true;
+            }
+          }
+        }
       }
       if(matched)continue;
 
@@ -12726,19 +12835,22 @@ async function runMatch(){
     // ── Diagnostics ──
     try{
       var _diagStats={
-        payCount:  PAY.length,
-        remCount:  REM_DETAIL ? REM_DETAIL.length : 0,
-        delCount:  DELIV ? DELIV.length : 0,
-        invCount:  INV.length,
+        payCount:    PAY.length,
+        remCount:    REM_DETAIL ? REM_DETAIL.length : 0,
+        delCount:    DELIV ? DELIV.length : 0,
+        invCount:    INV.length,
         refsExtracted: PAY.filter(function(p){return p.i||p.po||p.so||p.trackingNo||p.deliveryNo;}).length,
-        matched:   RES.length,
-        exceptions:EXC.length,
-        attempted: PAY.length,
-        invRefsFound: PAY.some(function(p){return p.i||p.po||p.so;}),
+        trkFound:    (typeof _diagTrkExtracted!=='undefined') ? _diagTrkExtracted : PAY.filter(function(p){return p.trackingNo;}).length,
+        trkBridged:  (typeof _diagTrkBridged!=='undefined') ? _diagTrkBridged : 0,
+        delBridged:  (typeof _diagDelBridged!=='undefined') ? _diagDelBridged : 0,
+        enriched:    (typeof _diagEnriched!=='undefined') ? _diagEnriched : 0,
+        matched:     RES.length,
+        exceptions:  EXC.length,
+        attempted:   PAY.length,
+        invRefsFound:PAY.some(function(p){return p.i||p.po||p.so;}),
         delIndexed:  DELIV&&DELIV.length>0,
-        trkFound:  PAY.some(function(p){return p.trackingNo;}),
-        poFound:   RES.some(function(r){return r.m&&r.m.indexOf('PO')>=0;}),
-        custMismatch: RES.length===0 && PAY.length>0 && INV.length>0,
+        poFound:     RES.some(function(r){return r.m&&r.m.indexOf('PO')>=0;}),
+        custMismatch:RES.length===0 && PAY.length>0 && INV.length>0,
         amtMismatch: false
       };
       _showMatchDiagnostics(_diagStats);
@@ -13529,11 +13641,18 @@ function processImport(){
     // DELIV rows contain: deliveryNo, salesOrder, trackingNo, poNo, custAcct
     // This bridge lets us match: remittance delivery# → DELIV → SO → INV
     var _delivBridge = new Map(); // deliveryNo → DELIV row
-    var _trkBridge   = new Map(); // trackingNo → DELIV row
+    var _trkBridge   = new Map(); // trackingNo (normalized) → DELIV row
     var _soBridge    = new Map(); // salesOrder  → DELIV row
     DELIV.forEach(function(d){
       if(d.deliveryNo) _delivBridge.set(String(d.deliveryNo).trim(), d);
-      if(d.trackingNo) _trkBridge.set(String(d.trackingNo).trim(), d);
+      if(d.trackingNo){
+        // Normalize: trim, uppercase, strip invisible chars (must match _normTrk in runMatch)
+        var _ntk = String(d.trackingNo).trim().toUpperCase().replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g,'');
+        if(_ntk) _trkBridge.set(_ntk, d);
+        // Also store original in case normalization differs
+        var _otk = String(d.trackingNo).trim();
+        if(_otk && _otk !== _ntk) _trkBridge.set(_otk, d);
+      }
       if(d.salesOrder) _soBridge.set(String(d.salesOrder).trim(), d);
     });
     // Store bridges globally for use in runMatch
