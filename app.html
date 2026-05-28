@@ -3677,12 +3677,13 @@ body.app-active #app {
                       <th onclick="sortFbl5n(9)" style="text-align:right">Balance<span class="si2"></span></th>
                       <th onclick="sortFbl5n(10)">Status<span class="si2"></span></th>
                       <th style="text-align:center">Match %</th>
-                      <th style="text-align:center;color:var(--cy-t)" title="Tracking number from delivery report">Tracking #</th>
                       <th style="text-align:center;color:var(--pu-t)" title="Delivery number from delivery report">Delivery #</th>
+                      <th style="text-align:center;color:var(--cy-t)" title="Bill of Lading / Tracking # from delivery report">Tracking / BOL</th>
+                      <th style="text-align:left;color:var(--am-t);max-width:160px" title="Logistics Memo from delivery report (may contain SS PO ref or 1Z tracking)">Logistics Memo</th>
                     </tr>
                   </thead>
                   <tbody id="ca-open-items-body">
-                    <tr><td colspan="15"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
+                    <tr><td colspan="16"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -4014,7 +4015,7 @@ body.app-active #app {
                 </tr>
               </thead>
               <tbody id="rem-tb">
-                <tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import a bank file to begin.</div></div></td></tr>
+                <tr><td colspan="16"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import a bank file to begin.</div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -10114,7 +10115,7 @@ function rRem(){
   const tb=document.getElementById('rem-tb');if(!tb)return;
   const ct=document.getElementById('rem-ct');
   if(typeof refreshBankAccountOptions==='function')refreshBankAccountOptions();
-  if(!PAY.length){tb.innerHTML='<tr><td colspan="13"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import bank file or paste CSV.</div></div></td></tr>';if(ct)ct.textContent='0 rows';renderPayQueue();return;}
+  if(!PAY.length){tb.innerHTML='<tr><td colspan="16"><div class="empty"><div class="empty-icon">💳</div><div class="empty-t">No remittance data</div><div class="empty-s">Import bank file or paste CSV.</div></div></td></tr>';if(ct)ct.textContent='0 rows';renderPayQueue();return;}
   if(ct)ct.textContent=PAY.length+' rows · ACH · Wire · Check · Lockbox';
   tb.innerHTML=PAY.map((p,idx)=>{
     const {badge:statusBadge}=getRemStatus(p,idx);
@@ -10411,7 +10412,7 @@ function toggleRemAlloc(btn,idx){
   btn.classList.add('open');btn.textContent='▲ Hide';
   const row=btn.closest('tr');const next=document.createElement('tr');
   next.className='alloc-row';
-  next.innerHTML=`<td colspan="13"><div class="alloc-wrap"><div class="alloc-header">📊 Payment allocation</div><div class="alloc-waterfall">${buildAllocWaterfall(PAY[idx],idx)}</div></div></td>`;
+  next.innerHTML=`<td colspan="16"><div class="alloc-wrap"><div class="alloc-header">📊 Payment allocation</div><div class="alloc-waterfall">${buildAllocWaterfall(PAY[idx],idx)}</div></div></td>`;
   row.after(next);
 }
 
@@ -11387,7 +11388,7 @@ function _legacyEngBuildAI(p,invs){
 
 function engRenderRows(){
   const tbody=document.getElementById('eng-inv-body');if(!tbody)return;
-  if(!ENG_ROWS.length){tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:28px;color:var(--t3)">No open invoices found for this customer.<br><small>Check customer name consistency between invoice and remittance data.</small></td></tr>`;return;}
+  if(!ENG_ROWS.length){tbody.innerHTML=`<tr><td colspan="16" style="text-align:center;padding:28px;color:var(--t3)">No open invoices found for this customer.<br><small>Check customer name consistency between invoice and remittance data.</small></td></tr>`;return;}
   tbody.innerHTML=ENG_ROWS.map((r,i)=>{
     const inv=r.inv;const disabled=r.alreadyPaid||ENG_LOCKED;
     const balance=inv.amt-(r.alreadyPaid?inv.amt:0);
@@ -13597,46 +13598,33 @@ function processImport(){
     return;
   }else if(IMP_TYPE==='remdetail'){
     // ── Multi-Format Remittance Parse via RemittanceParser ────────────────────
-    // Parse ONCE — result cached in _remDetailParsed.
-    // No re-parse on mapping changes (debounced in-memory updates only).
     var _rdFileName = (typeof _lastImportFileName!=='undefined') ? _lastImportFileName : 'remittance';
 
-    // Loading state 1
     showProgress('Analyzing remittance format…', 10);
-
-    // Record parse start time (Feature 2 timing metrics)
     _parserMetrics.startTs = Date.now();
     _parserMetrics.rowCount = rows.length;
 
-    // Loading state 2
-    setTimeout(function(){
-      showProgress('Building field mapping preview…', 40);
-    }, 50);
+    setTimeout(function(){ showProgress('Building field mapping preview…', 40); }, 50);
 
-    // Async: yield to browser so progress bar renders before heavy parse
     setTimeout(function(){
       showProgress('Optimizing parser…', 60);
 
-      // Run the parser (parse ONCE, cache result)
-      // NOTE: do NOT pass ParserLearningProfile.get('') — empty key loads the
-      // bad "_UNKNOWN" profile from previous sessions. Let parse() detect the
-      // customer name first, then look up the correct profile internally.
-      var _parsed = RemittanceParser.parse(rows, {
-        fileName: _rdFileName
-        // No savedProfile here — RemittanceParser.parse() handles profile lookup internally
-      });
+      // CRITICAL: processImport strips the header row into `hdrs` and passes only
+      // data rows in `rows`. RemittanceParser needs the full rows including the header
+      // row to detect the format (e.g. TK-Fujikin: Supplier|Date|INV DATE|INV No.|Remarks|Amount).
+      // Re-add the raw header row by re-parsing lines[0].
+      var _rawHeaderRow = pLine(lines[0]); // raw (un-normalized) header values
+      var _allRows = [_rawHeaderRow].concat(rows); // full rows: header + data
+
+      var _parsed = RemittanceParser.parse(_allRows, { fileName: _rdFileName });
       _parsed.srcFile = _rdFileName;
       _remDetailParsed = _parsed;
 
-      // Timing metrics
       _parserMetrics.endTs = Date.now();
       _parserMetrics.durationMs = _parserMetrics.endTs - _parserMetrics.startTs;
 
-      // ── TK-Fujikin / 100% confidence: skip mapping review, auto-import ──
-      // When confidence is 100% (TK-Fujikin hardcoded profile), bypass the
-      // field mapping screen entirely and import directly.
+      // TK-Fujikin / 100% confidence → skip mapping screen, auto-import directly
       if(_parsed.isTkFujikin || _parsed.confidence >= 0.99){
-        // Find bank total for variance check
         var _rdCustUpper2 = String(_parsed.custName||'').toUpperCase().trim();
         var _bankTot2 = 0;
         if(_rdCustUpper2){
@@ -13647,14 +13635,12 @@ function processImport(){
             }
           });
         }
-        hideProgress();
-        closeMo();
-        // Auto-confirm without showing mapping screen
+        hideProgress(); closeMo();
         _confirmRemDetailImport(_bankTot2);
         return;
       }
 
-      // Find matching bank total for variance check
+      // General path: show mapping review screen
       var _rdCustUpper = String(_parsed.custName||'').toUpperCase().trim();
       var _matchedBankTotal = 0;
       if(_rdCustUpper){
@@ -13665,9 +13651,7 @@ function processImport(){
           }
         });
       }
-
-      hideProgress();
-      closeMo();
+      hideProgress(); closeMo();
       _showMappingReview(_parsed, _parsed.headerRow, _rdFileName, _matchedBankTotal);
     }, 80);
     return;
@@ -14462,8 +14446,10 @@ function _fbl5nBuildRow(v){
   var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>':'\u2014';
   var sel=ENG_ROW&&ENG_ROW.selected;
   var vi=v.i||'';
-  var trkCell=v.t?'<span class="td-mono" style="font-size:10.5px;color:var(--cy-t)">'+v.t+'</span>':'<span style="color:var(--t4);font-size:11px">—</span>';
-  var delCell=v.dl?'<span class="td-mono" style="font-size:10.5px;color:var(--pu-t)">'+v.dl+'</span>':'<span style="color:var(--t4);font-size:11px">—</span>';
+  // Delivery report enriched fields
+  var delCell  = v.dl ? '<span class="td-mono" style="font-size:10.5px;color:var(--pu-t)">'+_escapeHtml(v.dl)+'</span>' : '<span style="color:var(--t4);font-size:11px">—</span>';
+  var trkCell  = v.t  ? '<span class="td-mono" style="font-size:10.5px;color:var(--cy-t)">'+_escapeHtml(v.t)+'</span>'  : '<span style="color:var(--t4);font-size:11px">—</span>';
+  var memoCell = v.logMemo ? '<span style="font-size:10.5px;color:var(--am-t);max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:bottom" title="'+_escapeAttr(v.logMemo)+'">'+_escapeHtml(v.logMemo.slice(0,28))+(v.logMemo.length>28?'…':'')+'</span>' : '<span style="color:var(--t4);font-size:11px">—</span>';
   return '<tr class="'+(sel?'selected-inv':'')+'" onclick="fbl5nRowClick(\''+vi+'\')" style="cursor:pointer">'+
     '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+vi+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
     '<td class="td-mono" style="font-size:11.5px">'+(v.a||'')+'</td>'+
@@ -14479,8 +14465,9 @@ function _fbl5nBuildRow(v){
     '<td class="td-num" style="color:'+(balance<v.amt*0.5?'var(--am-t)':'')+'">'+(typeof $f==='function'?'$'+$f(Math.max(0,balance)):'')+'</td>'+
     '<td>'+sb+'</td>'+
     '<td style="text-align:center">'+cd+'</td>'+
-    '<td style="text-align:center">'+trkCell+'</td>'+
     '<td style="text-align:center">'+delCell+'</td>'+
+    '<td style="text-align:center">'+trkCell+'</td>'+
+    '<td style="text-align:left;padding-left:10px">'+memoCell+'</td>'+
       '</tr>';
 }
 
@@ -14491,12 +14478,12 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   var rows=[];for(var ri=startIdx;ri<end;ri++){rows.push(_fbl5nBuildRow(invs[ri]));}
   var footer='';
   if(end<invs.length){
-    footer='<tr id="fbl5n-load-more"><td colspan="15" style="text-align:center;padding:12px">'+
+    footer='<tr id="fbl5n-load-more"><td colspan="16" style="text-align:center;padding:12px">'+
       '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' matching open items \u2014 refine search or load more</span> '+
       '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
     '</td></tr>';
   } else if(invs.length>_fbl5nPageSize){
-    footer='<tr><td colspan="15" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
+    footer='<tr><td colspan="16" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
   }
   if(startIdx===0){tbody.innerHTML=rows.join('')+footer;}
   else{var old=document.getElementById('fbl5n-load-more');if(old)old.remove();tbody.insertAdjacentHTML('beforeend',rows.join('')+footer);}
@@ -14537,7 +14524,7 @@ function _fbl5nApplyTextFilter(tbodyId, forceReset){
   var tbody=document.getElementById(tbodyId||'ca-open-items-body');
   if(!tbody){return;}
   if(!matched.length){
-    tbody.innerHTML='<tr><td colspan="15"><div class="empty" style="padding:16px">'+
+    tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px">'+
       '<div class="empty-t">No open items found</div>'+
       '<div class="empty-s">Try account number, customer name, invoice #, PO, or sales order.</div>'+
     '</div></td></tr>';
@@ -14613,7 +14600,7 @@ function caOpenSearch(q){
     var tbody=document.getElementById('ca-open-items-body');
     if(!tbody)return;
     if(!matched.length){
-      tbody.innerHTML='<tr><td colspan="15"><div class="empty" style="padding:16px"><div class="empty-t">No open items found</div><div class="empty-s">Try account number, customer name, or invoice #.</div></div></td></tr>';
+      tbody.innerHTML='<tr><td colspan="16"><div class="empty" style="padding:16px"><div class="empty-t">No open items found</div><div class="empty-s">Try account number, customer name, or invoice #.</div></div></td></tr>';
       return;
     }
     if(typeof _fbl5nRenderPage==='function')_fbl5nRenderPage('ca-open-items-body',0);
@@ -14639,12 +14626,12 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   for(var ri=startIdx;ri<end;ri++){rows.push(_fbl5nBuildRow(invs[ri]));}
   var footer='';
   if(end<invs.length){
-    footer='<tr id="fbl5n-load-more"><td colspan="13" style="text-align:center;padding:12px">'+
+    footer='<tr id="fbl5n-load-more"><td colspan="16" style="text-align:center;padding:12px">'+
       '<span style="color:var(--t3);font-size:12px">Showing '+end+' of '+invs.length+' open items</span> '+
       '<button class="btn btn-outline btn-xs" onclick="_fbl5nLoadMore(\''+tbodyId+'\')">Load '+Math.min(_fbl5nPageSize,invs.length-end)+' more</button>'+
     '</td></tr>';
   } else if(invs.length>_fbl5nPageSize){
-    footer='<tr><td colspan="13" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
+    footer='<tr><td colspan="16" style="text-align:center;padding:8px"><span style="color:var(--t3);font-size:11px">All '+invs.length+' open items shown</span></td></tr>';
   }
   if(startIdx===0){
     tbody.innerHTML=rows.join('')+footer;
