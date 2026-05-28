@@ -2789,6 +2789,8 @@ body.app-active #app {
           <div class="login-h2">Sign in</div>
           <div class="login-sub">Enter your credentials to access AR Match Pro</div>
         </div>
+        <!-- Inactivity / system message area -->
+        <div id="li-msg" style="display:none;font-size:12.5px;padding:10px 14px;border-radius:8px;margin-bottom:4px"></div>
         <div class="lf-field">
           <label class="lf-label" for="li-email">Email address</label>
           <input class="lf-input" type="email" id="li-email" placeholder="you@company.com" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()">
@@ -3432,6 +3434,7 @@ body.app-active #app {
               
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
               <button class="btn btn-outline btn-sm" onclick="openImportDelivery()" title="Upload delivery/tracking report to map Tracking # and Delivery # to invoices">+ Delivery Report</button>
+              <button class="btn btn-outline btn-sm" onclick="openImportRemDetail()" title="Upload remittance advice / remittance details (e.g. supplier remittance with invoice references, PO#, tracking#, amounts)" style="color:var(--pu-t)">+ Remittance Details</button>
               <button class="btn btn-p btn-sm" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px">⚡ Auto match</button>
               
             </div>
@@ -4619,6 +4622,7 @@ body.app-active #app {
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:16px;border-top:1px solid var(--bdr)">
             <button class="btn btn-ghost" onclick="clearAllData()" style="color:var(--r-t)">Clear all data</button>
             <div style="display:flex;gap:8px">
+              <button class="btn btn-outline" onclick="openFeedbackModal()" style="font-size:12.5px">💬 Send Feedback</button>
               <button class="btn btn-outline" onclick="doLogout()">Sign out</button>
               <button class="btn btn-p" onclick="saveSettings()">Save settings</button>
             </div>
@@ -4630,7 +4634,169 @@ body.app-active #app {
     </div><!-- end .main -->
   </div><!-- end .app-body -->
 
-<!-- ══ CUSTOMER ACCOUNT DRAWER ══ -->
+<!-- ══ INACTIVITY WARNING MODAL ══ -->
+<div id="inactivity-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:16px;padding:36px 32px;max-width:400px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.35);border:1px solid var(--bdr)">
+    <div style="font-size:36px;margin-bottom:12px">⏱</div>
+    <div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.2px">Still there?</div>
+    <div style="font-size:14px;color:var(--t2);line-height:1.6;margin-bottom:6px">You've been inactive for a while. For your security, you will be logged out in:</div>
+    <div id="inactivity-countdown" style="font-size:40px;font-weight:900;font-family:var(--mono);color:var(--p);margin:14px 0;letter-spacing:-2px">60</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:22px">seconds</div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-outline" onclick="doLogout();closeInactivityModal()" style="min-width:120px">Log Out Now</button>
+      <button class="btn btn-p" onclick="resetInactivityTimer();closeInactivityModal()" style="min-width:140px">Stay Logged In</button>
+    </div>
+    <div style="margin-top:14px;font-size:11px;color:var(--t4)">Production note: server-side session expiry enforces this independently.</div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// INACTIVITY AUTO LOGOUT
+// Tracks user activity via mouse, keyboard, scroll, touch.
+// At 14 min: shows warning modal with 60-second countdown.
+// At 15 min: auto logs out and shows message on login screen.
+// ════════════════════════════════════════════════════════════════════════════
+var _inactivityMain   = null;
+var _inactivityWarn   = null;
+var _inactivityCdwn   = null;
+var _inactivityActive = false;
+var _INACT_TOTAL      = 15 * 60 * 1000; // 15 min
+var _INACT_WARN_AFTER = 14 * 60 * 1000; // warn at 14 min
+var _INACT_CD_SECS    = 60;             // 60-second countdown
+
+function _inactivitySeen(){
+  // Ignore activity if app is not active or modal is showing
+  if(!_inactivityActive) return;
+  if(document.getElementById('inactivity-modal').style.display==='flex') return;
+  resetInactivityTimer();
+}
+
+function resetInactivityTimer(){
+  clearTimeout(_inactivityMain);
+  clearTimeout(_inactivityWarn);
+  clearInterval(_inactivityCdwn);
+  if(!_inactivityActive) return;
+  // Schedule warning at 14 min
+  _inactivityWarn = setTimeout(function(){
+    _showInactivityWarning();
+  }, _INACT_WARN_AFTER);
+  // Schedule hard logout at 15 min (backup if user ignores warning)
+  _inactivityMain = setTimeout(function(){
+    _inactivityForceLogout();
+  }, _INACT_TOTAL);
+}
+
+function _showInactivityWarning(){
+  var modal = document.getElementById('inactivity-modal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  var ctr = _INACT_CD_SECS;
+  var cdEl = document.getElementById('inactivity-countdown');
+  if(cdEl) cdEl.textContent = ctr;
+  _inactivityCdwn = setInterval(function(){
+    ctr--;
+    if(cdEl) cdEl.textContent = Math.max(0,ctr);
+    if(ctr<=0){
+      clearInterval(_inactivityCdwn);
+      _inactivityForceLogout();
+    }
+  }, 1000);
+}
+
+function closeInactivityModal(){
+  var modal = document.getElementById('inactivity-modal');
+  if(modal) modal.style.display = 'none';
+  clearInterval(_inactivityCdwn);
+}
+
+function _inactivityForceLogout(){
+  closeInactivityModal();
+  _inactivityActive = false;
+  clearTimeout(_inactivityMain);
+  clearTimeout(_inactivityWarn);
+  clearInterval(_inactivityCdwn);
+  // Perform logout
+  if(typeof doLogout==='function') doLogout();
+  // Show message on login screen
+  setTimeout(function(){
+    var msg = document.getElementById('li-msg') || document.getElementById('login-error-msg');
+    if(msg){
+      msg.style.display='';
+      msg.style.background='rgba(245,158,11,.1)';
+      msg.style.color='var(--am-t)';
+      msg.style.border='1px solid rgba(245,158,11,.3)';
+      msg.style.padding='10px 14px';
+      msg.style.borderRadius='8px';
+      msg.style.marginBottom='12px';
+      msg.textContent='You were logged out due to inactivity.';
+    }
+  }, 300);
+}
+
+function startInactivityWatch(){
+  _inactivityActive = true;
+  resetInactivityTimer();
+  // Bind activity events (use passive listeners for performance)
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(function(evt){
+    document.addEventListener(evt, _inactivitySeen, {passive:true});
+  });
+}
+
+function stopInactivityWatch(){
+  _inactivityActive = false;
+  clearTimeout(_inactivityMain);
+  clearTimeout(_inactivityWarn);
+  clearInterval(_inactivityCdwn);
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(function(evt){
+    document.removeEventListener(evt, _inactivitySeen, {passive:true});
+  });
+}
+</script>
+<!-- ══ SEND FEEDBACK MODAL ══ -->
+<div id="feedback-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:16px;padding:32px;max-width:480px;width:92%;box-shadow:0 24px 64px rgba(0,0,0,.32);border:1px solid var(--bdr)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:var(--t1);letter-spacing:-.2px">Send Feedback</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px">Help us improve AR Match Pro — all feedback goes directly to our team.</div>
+      </div>
+      <div onclick="closeFeedbackModal()" style="cursor:pointer;font-size:20px;color:var(--t3);line-height:1;padding:4px 8px;border-radius:6px">×</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:5px">Name</div>
+        <input id="fb-name" class="inp" type="text" placeholder="Your name" style="width:100%;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:5px">Email</div>
+        <input id="fb-email" class="inp" type="email" placeholder="your@email.com" style="width:100%;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:5px">Feedback Type</div>
+        <select id="fb-type" class="sel" style="width:100%">
+          <option value="">— Select type —</option>
+          <option value="Bug">🐛 Bug Report</option>
+          <option value="Feature Request">✨ Feature Request</option>
+          <option value="Matching Issue">🔗 Matching Issue</option>
+          <option value="Upload Issue">📁 Upload Issue</option>
+          <option value="Billing">💳 Billing Question</option>
+          <option value="Other">💬 Other</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:5px">Message</div>
+        <textarea id="fb-message" class="inp" rows="5" placeholder="Describe your feedback, issue, or feature request..." style="width:100%;box-sizing:border-box;resize:vertical;min-height:100px;font-family:inherit"></textarea>
+      </div>
+      <div id="fb-error" style="display:none;font-size:12px;color:var(--r-t);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);padding:8px 12px;border-radius:7px"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeFeedbackModal()">Cancel</button>
+      <button class="btn btn-p" onclick="submitFeedback()">Send Feedback →</button>
+    </div>
+  </div>
+</div>
+
 <div id="customer-drawer" class="customer-drawer">
   <div class="drawer-header">
     <div>
@@ -5406,6 +5572,17 @@ let INV=[],PAY=[],RES=[],EXC=[],REM_ADVICE=[],IMP_TYPE='inv',IMP_BANK_MODE=false
 // Delivery Report data: [{trackingNo, deliveryNo, invoiceNo, salesOrder, poNo, custAcct, custName, dateRange, amount, rawRow}]
 let DELIV=[];
 
+// Remittance Details (separate from bank PAY file — e.g. TK-Fujikin style remittance advices)
+// Each entry: { custName, paymentDate, invDate, invNo, invRef, poNo, soNo, delNo, trkNo, remarks, amt, currency, rawRow }
+let REM_DETAIL=[];
+
+// ── Inactivity auto-logout state ──────────────────────────────────────────
+var _INACTIVITY_LIMIT_MS = 15 * 60 * 1000; // 15 minutes
+var _INACTIVITY_WARN_MS  = 14 * 60 * 1000; // warn at 14 minutes
+var _inactivityTimer     = null;
+var _inactivityWarnTimer = null;
+var _inactivityWarning   = false;
+
 // ═══════════════════════════════════════════════════════════
 // PERFORMANCE: Indexed lookup Maps — rebuilt on every import
 // O(1) access for invoice#, PO, SO, customer acct, tracking, delivery
@@ -5451,6 +5628,655 @@ function _buildInvIndexes(){
 // Call this after INV is populated (import, sample load, etc.)
 function _invalidateInvIndexes(){ _INV_IDX={byInv:null,byPO:null,bySO:null,byAcct:null,byName:null,byTrk:null,byDel:null}; }
 function _ensureInvIndexes(){ if(!_INV_IDX.byInv){ _buildInvIndexes(); } }
+
+// ════════════════════════════════════════════════════════════════════════════
+// REMITTANCE PARSER ENGINE
+// Multi-format, customer-agnostic parser for remittance detail files.
+// Supports: Excel/CSV, bank text, PDF exports, email-style remittance,
+//           various column layouts, merged cells, header offset, multi-payment.
+//
+// Architecture:
+//   RemittanceParser.parse(rows, hdrs, fileName, opts) → normalized schema
+//   ParserLearningProfile  — localStorage per-customer learning store
+//   HORIBA_PARSER_PROFILE  — pilot customer document prefix classifier
+//
+// Normalized output schema per row:
+//   { custName, custAcct, paymentDate, paymentRef, bankRef,
+//     invNo, soNo, delNo, poNo, creditMemo, debitMemo, trkNo,
+//     currency, amt, totalRemAmt, notes, srcFile, srcRow,
+//     confidence, docClass, _raw }
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── Amount parser ─────────────────────────────────────────────────────────
+function _parseRemAmt(v){
+  if(v===null||v===undefined||v==='') return 0;
+  var s=String(v).replace(/[\$\u00a0\u00b7\s,]/g,'').replace(/[()]/g,'');
+  // Handle negatives written as (1234) accounting style
+  var neg = String(v).trim().charAt(0)==='(' || String(v).trim().charAt(String(v).trim().length-1)===')';
+  var n=parseFloat(s);
+  if(isNaN(n)) return 0;
+  return neg ? -Math.abs(n) : n;
+}
+
+// ── Date formatter ────────────────────────────────────────────────────────
+function _fmtRdDate(v){
+  if(!v) return '';
+  try{
+    if(v instanceof Date){ if(isNaN(v)) return ''; return (v.getMonth()+1)+'/'+(v.getDate())+'/'+v.getFullYear(); }
+    var s=String(v).trim();
+    var m=s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return m[2]+'/'+m[3]+'/'+m[1];
+    var m2=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if(m2) return m2[0];
+    return s.split(' ')[0]||s;
+  }catch(e){ return String(v||''); }
+}
+
+// ── Flex label normalizer — strips punctuation/spaces/case ────────────────
+function _normLabel(s){ return String(s||'').toLowerCase().replace(/[\s#._\/\-]/g,''); }
+
+// ════════════════════════════════════════════════════════════════════════════
+// PARSER FIELD MAPS — flex label→canonical field mapping
+// Each key is the canonical field; values are all known header aliases.
+// ════════════════════════════════════════════════════════════════════════════
+var RM_FIELD_MAPS = {
+  custName:    ['supplier','customer','customername','vendorname','payerfrom','clientname','companyname','soldto','billto','name','payingcompany','remittingcompany'],
+  custAcct:    ['customeraccount','customeraccountnumber','accountno','accountnumber','customerid','vendorid','customercode','acct'],
+  paymentDate: ['date','paymentdate','paydate','postdate','valuedate','paymentpostdate','checkdate','transactiondate'],
+  paymentRef:  ['paymentreference','payref','checkno','checknumber','wirereferece','eftref','paymentid','voucherno','paymentnumber','remittanceref'],
+  bankRef:     ['bankreference','bankref','bankrefno','fedref','achref','transref','banktraceref'],
+  invNo:       ['invno','inv','invoiceno','invoicenumber','invoiceref','customerinvoice','referencenumber','billingdocument','billdoc','documentno','docno','documentnumber','invoice','invoiceid','invoicereference','reference','refno','referencedocument','billingref'],
+  soNo:        ['so','sonumber','salesorder','salesordernumber','orderno','ordernumber','referencedocument','refdoc','salesdocument','salesref','salesorderref'],
+  delNo:       ['delivery','deliverynumber','deliveryno','deliverydocument','deliveryref','shipdoc','packingslip','deliverydoc','shipmentdocument','pickinglist'],
+  poNo:        ['po','ponumber','purchaseorder','customerpono','customerpurchaseorder','purchasordernumber','purchasedocument','purchasedoc','ponr','pono'],
+  creditMemo:  ['creditmemo','creditmemono','creditnote','creditdocument','creditref','cm','creditnoteno'],
+  debitMemo:   ['debitmemo','debitmemono','debitnote','debitdocument','debitref','dm','debitnoteno'],
+  trkNo:       ['tracking','trackingnumber','trackingno','bol','billoflading','bolno','upstrack','trackingref','shipperref','proref','pronumber','carrierbill','airwaybill'],
+  currency:    ['currency','curr','ccy','iso','isocurrencycode'],
+  amt:         ['amount','paidamount','paymentamount','remitamount','appliedamount','grossamount','netamount','usdamount','remittanceamount','lineamount','invoiceamount','settlementamount','creditamount'],
+  notes:       ['notes','description','remarks','memo','comment','detail','addenda','narration','paymentdetail','remittanceinfo'],
+  invDate:     ['invdate','invoicedate','inv date','invoicedate','docdate','documentdate','billingdate']
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// HORIBA PILOT CUSTOMER — document number prefix classifier
+// Invoice: 510xxxxxxx | Sales Order: 210xxxxxxx | Delivery: 710xxxxxxx
+// Credit Memo: 310xxxxxxx | Debit Memo: 410xxxxxxx
+// ════════════════════════════════════════════════════════════════════════════
+var HORIBA_PARSER_PROFILE = {
+  custMatch: ['HORIBA','HORIBA INSTRUMENTS','HII'],
+  docPrefixes: {
+    '510': 'invNo',
+    '210': 'soNo',
+    '710': 'delNo',
+    '310': 'creditMemo',
+    '410': 'debitMemo'
+  },
+  docLength: 10,      // preferred document length
+  confidence: 0.92    // base confidence when prefix matched
+};
+
+// Classify a raw document reference using HORIBA rules (or any prefix map)
+function _classifyDocRef(val, prefixMap){
+  var s = String(val||'').trim().replace(/[^0-9]/g,'');
+  if(s.length < 6) return null;
+  // Prefer 10-digit exactly
+  var candidates = prefixMap || HORIBA_PARSER_PROFILE.docPrefixes;
+  for(var prefix in candidates){
+    if(s.startsWith(prefix) && s.length >= 9){
+      return { field: candidates[prefix], value: s, confidence: 0.9, method: 'prefix:'+prefix };
+    }
+  }
+  // Fallback: pure numeric 10-digit — unclassified
+  if(/^\d{9,12}$/.test(s)) return { field: 'unclassified', value: s, confidence: 0.3, method: 'numeric' };
+  return null;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// PARSER LEARNING PROFILE — localStorage-backed per-customer column learning
+// Replace localStorage calls here with API calls when moving to backend.
+// ════════════════════════════════════════════════════════════════════════════
+var ParserLearningProfile = (function(){
+  var STORE_KEY = 'ARMP:SYS:remittance_parser_profiles';
+
+  function _load(){
+    try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'{}'); }catch(e){ return {}; }
+  }
+  function _save(db){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(db)); }catch(e){}
+  }
+  function _custKey(name){ return String(name||'_unknown').toUpperCase().trim().replace(/[^A-Z0-9]/g,'_').slice(0,30); }
+
+  // Get profile for a customer (returns null if none)
+  function get(custName){
+    var db=_load(); return db[_custKey(custName)] || null;
+  }
+
+  // Save/update a profile after successful mapping
+  function save(custName, profile){
+    var db=_load();
+    var k=_custKey(custName);
+    var existing=db[k]||{};
+    db[k]=Object.assign({}, existing, profile, {
+      custName: custName,
+      updatedAt: new Date().toISOString(),
+      useCount: (existing.useCount||0)+1
+    });
+    _save(db);
+    return db[k];
+  }
+
+  // Increment confidence score based on successful match
+  function reinforce(custName, matchCount, totalLines){
+    var db=_load(); var k=_custKey(custName);
+    if(!db[k]) return;
+    var ratio = totalLines>0 ? matchCount/totalLines : 0;
+    db[k].confidence = Math.min(0.99, ((db[k].confidence||0.5)*0.8) + (ratio*0.2));
+    db[k].lastMatchRatio = ratio;
+    db[k].lastReinforcedAt = new Date().toISOString();
+    _save(db);
+  }
+
+  // Delete profile
+  function reset(custName){
+    var db=_load(); delete db[_custKey(custName)]; _save(db);
+  }
+
+  // List all stored customer profiles
+  function listAll(){
+    var db=_load(); return Object.values(db);
+  }
+
+  return { get:get, save:save, reinforce:reinforce, reset:reset, listAll:listAll };
+})();
+
+// ════════════════════════════════════════════════════════════════════════════
+// REMITTANCE PARSER — core multi-format parse engine
+// ════════════════════════════════════════════════════════════════════════════
+var RemittanceParser = (function(){
+
+  // ── Step 1: Find header row ──────────────────────────────────────────────
+  // Header may not be row 0. Scan first 15 rows for the row with the most
+  // recognized field labels. Returns { headerIdx, hdrs }.
+  function _findHeaderRow(rows){
+    var bestScore=0, bestIdx=0, bestHdrs=[];
+    var limit=Math.min(15,rows.length);
+    for(var i=0;i<limit;i++){
+      var r=rows[i]; if(!r||!r.length) continue;
+      var normed=r.map(function(c){ return _normLabel(c); });
+      var score=0;
+      // Count how many cells match any known field alias
+      var allAliases=[];
+      Object.values(RM_FIELD_MAPS).forEach(function(aliases){ allAliases=allAliases.concat(aliases); });
+      normed.forEach(function(n){ if(allAliases.indexOf(n)>=0) score++; });
+      if(score>bestScore){ bestScore=score; bestIdx=i; bestHdrs=normed; }
+    }
+    // If no header found (score 0), assume row 0
+    return { headerIdx:bestIdx, hdrs:bestHdrs, rawHdrs:rows[bestIdx]||[], confidence: Math.min(1, bestScore/5) };
+  }
+
+  // ── Step 2: Map column indices from headers ───────────────────────────────
+  // Returns colMap: { fieldName → colIndex } and mappingConf per field
+  function _buildColMap(hdrs, savedProfile){
+    var normedHdrs = hdrs.map(function(h){ return _normLabel(h); });
+    var colMap = {};
+    var mappingMeta = {}; // which field was mapped how
+
+    // Apply saved profile first (highest priority)
+    if(savedProfile && savedProfile.colMap){
+      Object.assign(colMap, savedProfile.colMap);
+      Object.keys(savedProfile.colMap).forEach(function(f){ mappingMeta[f]={src:'learned',conf:0.95}; });
+    }
+
+    // Auto-detect remaining fields
+    Object.keys(RM_FIELD_MAPS).forEach(function(field){
+      if(colMap[field]!==undefined) return; // already mapped from profile
+      var aliases = RM_FIELD_MAPS[field];
+      for(var ci=0;ci<normedHdrs.length;ci++){
+        var nh=normedHdrs[ci];
+        if(aliases.indexOf(nh)>=0){
+          colMap[field]=ci; mappingMeta[field]={src:'auto',conf:0.85,label:hdrs[ci]}; break;
+        }
+      }
+      // Fuzzy: partial match
+      if(colMap[field]===undefined){
+        for(var ci2=0;ci2<normedHdrs.length;ci2++){
+          var nh2=normedHdrs[ci2];
+          for(var ai=0;ai<aliases.length;ai++){
+            if(nh2.length>3 && (nh2.indexOf(aliases[ai])>=0||aliases[ai].indexOf(nh2)>=0)){
+              colMap[field]=ci2; mappingMeta[field]={src:'fuzzy',conf:0.65,label:hdrs[ci2]}; break;
+            }
+          }
+          if(colMap[field]!==undefined) break;
+        }
+      }
+    });
+    return { colMap:colMap, meta:mappingMeta };
+  }
+
+  // ── Step 3: Detect customer profile ──────────────────────────────────────
+  function _detectCustomer(rows, colMap, hdrs){
+    // Try col-based extraction first
+    var custCol = colMap.custName;
+    var custNames = [];
+    rows.forEach(function(r){
+      if(custCol!==undefined && r[custCol]){ var v=String(r[custCol]).trim(); if(v&&v.length>2) custNames.push(v); }
+    });
+    // Count frequency
+    var freq={};
+    custNames.forEach(function(n){ freq[n]=(freq[n]||0)+1; });
+    var topCust = Object.keys(freq).sort(function(a,b){return freq[b]-freq[a];})[0] || '';
+
+    // Check HORIBA profile match
+    var isHoriba = false;
+    if(topCust){
+      HORIBA_PARSER_PROFILE.custMatch.forEach(function(m){
+        if(topCust.toUpperCase().indexOf(m)>=0) isHoriba=true;
+      });
+    }
+    return { custName: topCust, isHoriba: isHoriba };
+  }
+
+  // ── Step 4: Parse a single data row into normalized schema ───────────────
+  function _parseRow(r, colMap, custCtx, dateCtx, isHoriba, fileName, rowIdx){
+    function _get(field){ var ci=colMap[field]; return (ci!==undefined&&r[ci]!==undefined&&r[ci]!==null) ? String(r[ci]).trim() : ''; }
+
+    var custName  = _get('custName') || custCtx;
+    var custAcct  = _get('custAcct');
+    var payDate   = _fmtRdDate(_get('paymentDate')||dateCtx);
+    var payRef    = _get('paymentRef');
+    var bankRef   = _get('bankRef');
+    var invNo     = _get('invNo');
+    var soNo      = _get('soNo');
+    var delNo     = _get('delNo');
+    var poNo      = _get('poNo');
+    var creditMemo= _get('creditMemo');
+    var debitMemo = _get('debitMemo');
+    var trkNo     = _get('trkNo');
+    var currency  = _get('currency') || 'USD';
+    var amt       = _parseRemAmt(_get('amt'));
+    var notes     = _get('notes');
+    var invDate   = _fmtRdDate(_get('invDate'));
+    var confidence= 0.5;
+
+    // ── HORIBA prefix classifier: run over every cell in the row ──────────
+    if(isHoriba){
+      r.forEach(function(cell){
+        var s=String(cell||'').trim().replace(/[^0-9]/g,'');
+        if(s.length>=9){
+          var cls = _classifyDocRef(s, HORIBA_PARSER_PROFILE.docPrefixes);
+          if(cls&&cls.field!=='unclassified'){
+            // Only assign if target field is currently empty
+            if(cls.field==='invNo'&&!invNo){ invNo=cls.value; confidence=Math.max(confidence,cls.confidence); }
+            else if(cls.field==='soNo'&&!soNo){ soNo=cls.value; confidence=Math.max(confidence,cls.confidence); }
+            else if(cls.field==='delNo'&&!delNo){ delNo=cls.value; confidence=Math.max(confidence,cls.confidence); }
+            else if(cls.field==='creditMemo'&&!creditMemo){ creditMemo=cls.value; confidence=Math.max(confidence,cls.confidence); }
+            else if(cls.field==='debitMemo'&&!debitMemo){ debitMemo=cls.value; confidence=Math.max(confidence,cls.confidence); }
+          }
+        }
+      });
+    }
+
+    // ── Boost confidence based on how many fields were populated ──────────
+    var populated=[invNo,soNo,delNo,poNo,trkNo,custName,payRef].filter(Boolean).length;
+    confidence = Math.min(0.99, confidence + (populated * 0.06));
+    if(amt>0) confidence = Math.min(0.99, confidence + 0.05);
+
+    return {
+      custName:   custName,
+      custAcct:   custAcct,
+      paymentDate:payDate,
+      invDate:    invDate,
+      paymentRef: payRef,
+      bankRef:    bankRef,
+      invNo:      invNo,
+      soNo:       soNo,
+      delNo:      delNo,
+      poNo:       poNo,
+      creditMemo: creditMemo,
+      debitMemo:  debitMemo,
+      trkNo:      trkNo,
+      currency:   currency,
+      amt:        amt,
+      notes:      notes,
+      srcFile:    fileName||'',
+      srcRow:     rowIdx,
+      confidence: parseFloat(confidence.toFixed(2)),
+      status:     'Pending',
+      docClass:   invNo?'Invoice':soNo?'SalesOrder':delNo?'Delivery':creditMemo?'CreditMemo':debitMemo?'DebitMemo':'Unknown',
+      _raw:       r.join('|')
+    };
+  }
+
+  // ── Step 5: Detect and skip non-data rows (totals, headers, blanks) ───────
+  function _isNonDataRow(r, normedHdrs){
+    if(!r||!r.some(Boolean)) return true;
+    var rowText = r.map(function(c){return _normLabel(c);}).join(' ');
+    // Total/subtotal rows — contain "total" and no document-like numbers
+    if(rowText.match(/\btotal\b/) && !rowText.match(/inv|invoice|so|po|delivery|order/)) return true;
+    // Header-like rows within data (merged header repetitions)
+    var aliasesFlat=[];
+    Object.values(RM_FIELD_MAPS).forEach(function(a){ aliasesFlat=aliasesFlat.concat(a); });
+    var labelCount=rowText.split(' ').filter(function(t){ return aliasesFlat.indexOf(t)>=0; }).length;
+    if(labelCount>=3) return true; // looks like another header row
+    return false;
+  }
+
+  // ── MAIN PARSE FUNCTION ───────────────────────────────────────────────────
+  // rows: 2D array (from CSV or XLSX parse)
+  // opts: { fileName, savedProfile, isHoriba }
+  // Returns: { lines, colMap, mappingMeta, headerRow, custName, isHoriba, totalAmt, confidence }
+  function parse(rows, opts){
+    opts = opts || {};
+    var fileName = opts.fileName || '';
+
+    // Find header row
+    var hdr = _findHeaderRow(rows);
+    var dataRows = rows.slice(hdr.headerIdx+1);
+
+    // Build column map (with saved profile override)
+    var cm = _buildColMap(hdr.rawHdrs, opts.savedProfile);
+
+    // Detect customer
+    var custCtx = _detectCustomer(dataRows, cm.colMap, hdr.rawHdrs);
+    var isHoriba = opts.isHoriba || custCtx.isHoriba;
+
+    // Check for saved profile
+    var profile = ParserLearningProfile.get(custCtx.custName);
+    if(profile && !opts.savedProfile){
+      cm = _buildColMap(hdr.rawHdrs, profile);
+    }
+
+    // Parse data rows
+    var lines = [];
+    var custFwd = custCtx.custName; // cascade
+    var dateFwd = '';
+    var totalAmt = 0;
+
+    dataRows.forEach(function(r, idx){
+      if(_isNonDataRow(r, hdr.hdrs)){
+        // Extract total from subtotal rows
+        r.forEach(function(c){ var n=_parseRemAmt(c); if(n>50&&n>totalAmt) totalAmt=n; });
+        return;
+      }
+      // Cascade customer name
+      var colCust = cm.colMap.custName;
+      if(colCust!==undefined && r[colCust] && String(r[colCust]).trim().length>2) custFwd=String(r[colCust]).trim();
+      // Cascade payment date
+      var colDate = cm.colMap.paymentDate;
+      if(colDate!==undefined && r[colDate] && String(r[colDate]).trim().length>3) dateFwd=String(r[colDate]).trim();
+
+      var row = _parseRow(r, cm.colMap, custFwd, dateFwd, isHoriba, fileName, hdr.headerIdx+1+idx);
+      // Skip rows with no reference and no amount
+      if(!row.invNo&&!row.soNo&&!row.poNo&&!row.delNo&&!row.trkNo&&!row.creditMemo&&!row.debitMemo&&!row.paymentRef&&row.amt<=0) return;
+      lines.push(row);
+    });
+
+    // If totalAmt not extracted from a total row, sum lines
+    var lineSum = lines.reduce(function(s,l){return s+(l.amt||0);},0);
+    if(totalAmt===0) totalAmt=lineSum;
+
+    // Overall confidence
+    var avgConf = lines.length>0 ? lines.reduce(function(s,l){return s+(l.confidence||0);},0)/lines.length : 0;
+    var parserConf = Math.min(0.99, (hdr.confidence*0.3)+(avgConf*0.7));
+
+    return {
+      lines:      lines,
+      colMap:     cm.colMap,
+      mappingMeta:cm.meta,
+      headerRow:  hdr.rawHdrs,
+      headerIdx:  hdr.headerIdx,
+      custName:   custFwd,
+      isHoriba:   isHoriba,
+      totalAmt:   totalAmt,
+      lineSum:    lineSum,
+      confidence: parseFloat(parserConf.toFixed(2)),
+      savedProfile: !!profile
+    };
+  }
+
+  return { parse:parse };
+})();
+
+// ════════════════════════════════════════════════════════════════════════════
+// MAPPING REVIEW SCREEN
+// Shows detected columns vs AR Match Pro fields, lets user correct before import.
+// State held in _remDetailParsed until user confirms.
+// ════════════════════════════════════════════════════════════════════════════
+var _remDetailParsed = null; // holds RemittanceParser result pending user confirm
+
+var RM_FIELD_LABELS = {
+  custName:'Customer Name', custAcct:'Customer Account', paymentDate:'Payment Date',
+  paymentRef:'Payment Reference', bankRef:'Bank Reference', invNo:'Invoice Number',
+  soNo:'Sales Order Number', delNo:'Delivery Number', poNo:'PO Number',
+  creditMemo:'Credit Memo', debitMemo:'Debit Memo', trkNo:'Tracking / BOL',
+  currency:'Currency', amt:'Amount', notes:'Notes / Description', invDate:'Invoice Date'
+};
+
+function _showMappingReview(parsed, rawHdrs, fileName, matchedBankTotal){
+  var colMap = parsed.colMap;
+  var meta   = parsed.mappingMeta;
+  var custName = parsed.custName || '(unknown customer)';
+  var profile  = ParserLearningProfile.get(parsed.custName);
+
+  // ── Parser learning banner ────────────────────────────────────────────
+  var learnHtml = '';
+  if(profile){
+    learnHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.07);border:1px solid rgba(20,168,216,.2);margin-bottom:10px;font-size:12px">'+
+      '<span>🧠</span>'+
+      '<div><strong style="color:var(--p)">Learned profile applied</strong> · Customer: <strong>'+_escapeHtml(custName)+'</strong> · '+
+      'Confidence: <strong>'+(Math.round((profile.confidence||0)*100))+'%</strong> · '+
+      'Used '+(profile.useCount||0)+' time'+(profile.useCount!==1?'s':'')+
+      '</div>'+
+      '<button class="btn btn-outline btn-xs" onclick="_resetParserProfile(\''+_escapeAttr(custName)+'\')" style="margin-left:auto;white-space:nowrap">Reset Profile</button>'+
+    '</div>';
+  } else {
+    learnHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);margin-bottom:10px;font-size:12px">'+
+      '<span>📋</span>'+
+      '<div>No saved profile for <strong>'+_escapeHtml(custName)+'</strong>. '+
+      'Confirm the mapping below to build one.'+
+      (parsed.isHoriba?' <strong style="color:var(--p)">HORIBA prefix rules applied.</strong>':'')+
+      '</div>'+
+    '</div>';
+  }
+
+  // ── Confidence indicator ──────────────────────────────────────────────
+  var confPct = Math.round(parsed.confidence*100);
+  var confColor = confPct>=80?'var(--g-t)':confPct>=55?'var(--am-t)':'var(--r-t)';
+  var confWarn = confPct<55 ?
+    '<div style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);margin-bottom:10px;font-size:12px;color:var(--r-t)">'+
+    '⚠️ <strong>Low parser confidence ('+confPct+'%)</strong> — AR Match Pro could not confidently map all fields. Please review and correct the mapping below before importing.</div>' : '';
+
+  // ── Required field check ──────────────────────────────────────────────
+  var hasRef = colMap.invNo!==undefined||colMap.soNo!==undefined||colMap.poNo!==undefined||colMap.delNo!==undefined||colMap.trkNo!==undefined||colMap.paymentRef!==undefined;
+  var hasAmt = colMap.amt!==undefined;
+  var missingWarn = (!hasRef||!hasAmt) ?
+    '<div style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);margin-bottom:10px;font-size:12px;color:var(--r-t)">'+
+    '⚠️ <strong>Required field missing:</strong> '+(!hasRef?'At least one document reference (Invoice #, PO #, SO #, etc.) is required. ':'')+
+    (!hasAmt?'Amount column is required.':'')+' Please correct the mapping.</div>' : '';
+
+  // ── Mapping table ─────────────────────────────────────────────────────
+  var mappedFields = Object.keys(RM_FIELD_LABELS);
+  var reverseMap = {}; // colIdx → field
+  Object.keys(colMap).forEach(function(f){ reverseMap[colMap[f]]=f; });
+
+  var mapRows = rawHdrs.map(function(h,ci){
+    var mappedTo = reverseMap[ci] || '';
+    var m = meta[mappedTo] || {};
+    var srcBadge = m.src==='learned'?'<span class="badge" style="background:rgba(20,168,216,.1);color:var(--p);font-size:9px">learned</span>':
+                   m.src==='auto'?'<span class="badge" style="background:rgba(18,184,134,.1);color:var(--g-t);font-size:9px">auto</span>':
+                   m.src==='fuzzy'?'<span class="badge" style="background:rgba(245,158,11,.1);color:var(--am-t);font-size:9px">fuzzy</span>':'';
+    var opts = '<option value="">— Ignore —</option>';
+    mappedFields.forEach(function(f){
+      opts += '<option value="'+f+'" '+(mappedTo===f?'selected':'')+'>'+RM_FIELD_LABELS[f]+'</option>';
+    });
+    return '<tr>'+
+      '<td style="font-weight:600;font-size:12px;color:var(--t1)">'+_escapeHtml(h||'(blank)')+'</td>'+
+      '<td style="font-size:11px;color:var(--t3)">col '+(ci+1)+'</td>'+
+      '<td>'+srcBadge+'</td>'+
+      '<td><select class="sel" style="font-size:11.5px;width:100%" onchange="_rmUpdateColMap('+ci+',this.value)">'+opts+'</select></td>'+
+    '</tr>';
+  }).join('');
+
+  // ── Variance banner ───────────────────────────────────────────────────
+  var varHtml = '';
+  if(matchedBankTotal>0){
+    var vDiff = matchedBankTotal - parsed.totalAmt;
+    if(Math.abs(vDiff)>0.01){
+      varHtml = '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);margin-bottom:10px">'+
+        '<span>⚠️</span><div style="font-size:12px">'+
+        '<strong style="color:var(--r-t)">Variance:</strong> Bank total <strong>$'+$f(matchedBankTotal)+'</strong> ≠ Remittance total <strong>$'+$f(parsed.totalAmt)+'</strong> — difference <strong style="color:var(--r-t)">$'+$f(Math.abs(vDiff))+'</strong>'+
+        (vDiff<0?' (remittance exceeds bank)':' (bank exceeds remittance)')+'. Will be flagged as exception.'+
+        '</div></div>';
+    }
+  }
+
+  var html =
+    learnHtml + confWarn + missingWarn + varHtml +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:8px 12px;background:var(--surface2);border-radius:8px">'+
+      '<div style="font-size:12px;color:var(--t2)">'+
+        '<strong>'+_escapeHtml(fileName||'File')+'</strong> · '+
+        '<strong>'+(parsed.lines.length)+'</strong> data lines · Total: <strong>$'+$f(parsed.totalAmt)+'</strong> · '+
+        'Customer: <strong>'+_escapeHtml(custName)+'</strong>'+
+        (parsed.isHoriba?' 🏭 <span style="color:var(--p);font-weight:700">HORIBA</span>':'')+
+      '</div>'+
+      '<div style="margin-left:auto;font-size:12px;font-weight:700;color:'+confColor+'">Parser confidence: '+confPct+'%</div>'+
+    '</div>'+
+    '<div style="font-size:11.5px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Column Mapping — Detected File Headers → AR Match Pro Field</div>'+
+    '<div style="overflow-y:auto;max-height:280px;border:1px solid var(--bdr);border-radius:8px;margin-bottom:12px">'+
+    '<table class="fbl5n-tbl" style="min-width:380px">'+
+      '<thead><tr><th>Detected Column Header</th><th>Col</th><th>Method</th><th>Mapped To (edit if wrong)</th></tr></thead>'+
+      '<tbody>'+mapRows+'</tbody>'+
+    '</table></div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">'+
+      '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn btn-outline btn-sm" onclick="_saveParserProfileFromReview()">🧠 Save Mapping for This Customer</button>'+
+      '<button class="btn btn-p btn-sm" onclick="_confirmRemDetailImport('+matchedBankTotal+')">✓ Confirm Import</button>'+
+    '</div>';
+
+  showModal('Remittance Field Mapping — Review Before Import', html);
+}
+
+// Called from mapping dropdown change
+function _rmUpdateColMap(colIdx, field){
+  if(!_remDetailParsed) return;
+  // Remove any existing mapping to this field
+  Object.keys(_remDetailParsed.colMap).forEach(function(f){
+    if(_remDetailParsed.colMap[f]===colIdx) delete _remDetailParsed.colMap[f];
+  });
+  if(field) _remDetailParsed.colMap[field]=colIdx;
+}
+
+// Save mapping back to learning profile
+function _saveParserProfileFromReview(){
+  if(!_remDetailParsed) return;
+  var profile = ParserLearningProfile.save(_remDetailParsed.custName, {
+    colMap:      _remDetailParsed.colMap,
+    headerIdx:   _remDetailParsed.headerIdx,
+    isHoriba:    _remDetailParsed.isHoriba,
+    confidence:  _remDetailParsed.confidence,
+    lastFile:    _remDetailParsed.srcFile,
+    hasTotalRow: _remDetailParsed.hasTotalRow
+  });
+  toast('Mapping saved for '+_remDetailParsed.custName+' — will be auto-applied next time.');
+}
+
+// Reset a customer parser profile
+function _resetParserProfile(custName){
+  ParserLearningProfile.reset(custName);
+  toast('Parser profile reset for '+custName);
+}
+
+// Confirm and finalize import after mapping review
+function _confirmRemDetailImport(matchedBankTotal){
+  if(!_remDetailParsed){ closeModal(); return; }
+  var parsed = _remDetailParsed;
+
+  // Re-parse rows with updated colMap if user changed mappings
+  REM_DETAIL = parsed.lines;
+
+  // Save profile automatically after confirm
+  _saveParserProfileFromReview();
+  // Reinforce based on line count
+  ParserLearningProfile.reinforce(parsed.custName, parsed.lines.length, parsed.lines.length);
+
+  // Check variance
+  if(matchedBankTotal>0 && Math.abs(matchedBankTotal-parsed.totalAmt)>0.01){
+    var vDiff = matchedBankTotal - parsed.totalAmt;
+    EXC.push({
+      id:'EXC-REMVAR-001', a:'', c:parsed.custName, amt:Math.abs(vDiff),
+      ref:'Remittance vs Bank',
+      type:'Variance',
+      detail:'Bank total $'+$f(matchedBankTotal)+' ≠ Remittance total $'+$f(parsed.totalAmt)+' — difference $'+$f(Math.abs(vDiff))+
+        (vDiff<0?' (remittance exceeds bank wire)':' (bank wire exceeds remittance)')+'. Do not force-match. Investigate with customer.',
+      action:'Review variance with customer before applying',
+      dec:'', s:'Open',
+      notes:'Auto-flagged. Remittance lines: '+REM_DETAIL.length+'. Parser confidence: '+Math.round(parsed.confidence*100)+'%'
+    });
+    try{renderWsExcPremium();}catch(e){}
+  }
+
+  saveToStorage();
+  addAudit('Remittance details imported',
+    REM_DETAIL.length+' lines · $'+$f(parsed.totalAmt)+' · customer: '+parsed.custName+' · confidence: '+Math.round(parsed.confidence*100)+'%');
+  closeModal();
+  _remDetailParsed = null;
+
+  // Show summary preview
+  _showRemDetailPreview(REM_DETAIL, parsed.totalAmt, matchedBankTotal);
+  toast('Imported '+REM_DETAIL.length+' remittance lines for '+parsed.custName+'. Run Auto Match.');
+}
+
+// Show compact remittance details preview modal (post-import summary)
+function _showRemDetailPreview(lines, remTotal, bankTotal){
+  var varianceAmt = bankTotal>0 ? (bankTotal-remTotal) : 0;
+  var hasVariance = bankTotal>0 && Math.abs(varianceAmt)>0.01;
+  var varHtml = '';
+  if(hasVariance){
+    varHtml = '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);margin-bottom:12px">'+
+      '<span style="font-size:16px">⚠️</span><div>'+
+      '<div style="font-weight:700;color:var(--r-t);font-size:13px">Variance — do not force-match</div>'+
+      '<div style="font-size:12px;color:var(--t2);margin-top:2px">Bank: <strong>$'+$f(bankTotal)+'</strong> · Remittance: <strong>$'+$f(remTotal)+'</strong> · Diff: <strong style="color:var(--r-t)">$'+$f(Math.abs(varianceAmt))+'</strong></div>'+
+      '</div></div>';
+  } else if(bankTotal>0){
+    varHtml = '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(18,184,134,.08);border:1px solid rgba(18,184,134,.25);margin-bottom:10px">'+
+      '<span>✅</span><span style="font-size:12.5px;font-weight:600;color:var(--g-t)">Bank total matches remittance — $'+$f(remTotal)+'</span></div>';
+  }
+  // Group by doc class for summary
+  var classCounts = {};
+  lines.forEach(function(l){ classCounts[l.docClass||'Unknown']=(classCounts[l.docClass||'Unknown']||0)+1; });
+  var classSummary = Object.keys(classCounts).map(function(k){ return '<span class="badge badge-p" style="font-size:10px;margin-right:3px">'+k+': '+classCounts[k]+'</span>'; }).join('');
+
+  var tableRows = lines.slice(0,80).map(function(rd){
+    var conf = rd.confidence>=0.8?'var(--g-t)':rd.confidence>=0.5?'var(--am-t)':'var(--r-t)';
+    return '<tr>'+
+      '<td style="font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_escapeHtml(rd.custName||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:10px">'+_escapeHtml(rd.paymentDate||'—')+'</td>'+
+      '<td class="td-mono" style="color:var(--pd);font-size:11.5px">'+_escapeHtml(rd.invNo||rd.soNo||rd.poNo||rd.paymentRef||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:10.5px">'+_escapeHtml(rd.poNo||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:10.5px">'+_escapeHtml(rd.soNo||'—')+'</td>'+
+      '<td class="td-mono" style="font-size:10px;max-width:80px;overflow:hidden;text-overflow:ellipsis">'+_escapeHtml(rd.trkNo||'—')+'</td>'+
+      '<td class="td-num" style="font-weight:600">$'+$f(rd.amt)+'</td>'+
+      '<td style="font-size:10.5px;color:'+conf+'">'+Math.round(rd.confidence*100)+'%</td>'+
+      '<td><span class="badge badge-am" style="font-size:9.5px">'+_escapeHtml(rd.docClass||'?')+'</span></td>'+
+    '</tr>';
+  }).join('');
+  var more = lines.length>80?'<tr><td colspan="9" style="text-align:center;color:var(--t3);font-size:11px;padding:6px">+'+( lines.length-80)+' more rows</td></tr>':'';
+
+  showModal('Remittance Details — Import Summary',
+    varHtml+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+      '<div style="font-size:12.5px;color:var(--t2)"><strong>'+lines.length+'</strong> lines · $'+$f(remTotal)+' · '+classSummary+'</div>'+
+      '<button class="btn btn-p btn-sm" onclick="closeModal();runMatch()">⚡ Auto Match Now</button>'+
+    '</div>'+
+    '<div style="overflow-x:auto;max-height:320px;overflow-y:auto;border:1px solid var(--bdr);border-radius:8px">'+
+    '<table class="fbl5n-tbl" style="min-width:640px"><thead><tr>'+
+      '<th>Customer</th><th>Pay Date</th><th>Invoice/Ref</th><th>PO #</th><th>SO #</th><th>Tracking</th>'+
+      '<th style="text-align:right">Amount</th><th>Conf.</th><th>Class</th>'+
+    '</tr></thead><tbody>'+tableRows+more+'</tbody></table></div>'+
+    '<div style="margin-top:10px;font-size:11.5px;color:var(--t3)">✓ Run <strong>Auto Match</strong> to apply. Invoice #, PO #, SO #, Delivery #, Tracking, Credit/Debit Memos all used as match signals.</div>'
+  );
+}
 
 // Chunk size for large-file async processing
 var PERF_CHUNK = 500; // rows per chunk in import loops
@@ -6189,6 +7015,9 @@ function armpGetSuggestedResolution(ex){
 
   // Rule-based resolution map
   var RULES = {
+    'Needs Mapping Review':{ action:'apply_to_invoice',   label:'Review Remittance Mapping', rationale:'Remittance details uploaded but no exact document reference matched. Review the oldest open invoices suggested.',confidence:65 },
+    'Credit Memo':        { action:'apply_to_invoice',   label:'Apply Credit Memo',  rationale:'Credit memo offset — apply against matched invoice.',     confidence:88 },
+    'Debit Memo':         { action:'apply_to_invoice',   label:'Apply Debit Memo',   rationale:'Debit memo offset — apply against matched invoice.',      confidence:85 },
     'Duplicate':          { action:'duplicate_reject',   label:'Duplicate — Reject',  rationale:'Amount and reference match an existing matched payment.',        confidence:92 },
     'Unapplied payment':  { action:'cash_on_account',    label:'Cash on Account',     rationale:'No invoice reference. Post as unapplied credit until invoice is provided.', confidence:80 },
     'Short pay':          { action:'chase_customer',     label:'Chase Customer',      rationale:'Payment is less than invoiced amount. Contact customer for balance.', confidence:75 },
@@ -8059,6 +8888,58 @@ function doRegister(){
 
 function doForgot(){toast('Password reset instructions sent if account exists.','');}
 
+// ── Send Feedback Modal ────────────────────────────────────────────────────
+function openFeedbackModal(){
+  var modal=document.getElementById('feedback-modal');
+  if(!modal)return;
+  // Pre-fill if user info is known
+  try{
+    var users=getUsers&&getUsers();
+    var u=users&&users[CURRENT_USER];
+    if(u){
+      var nameEl=document.getElementById('fb-name');
+      var emailEl=document.getElementById('fb-email');
+      if(nameEl&&u.name)nameEl.value=u.name;
+      if(emailEl&&CURRENT_USER)emailEl.value=CURRENT_USER;
+    }
+  }catch(e){}
+  var errEl=document.getElementById('fb-error');
+  if(errEl)errEl.style.display='none';
+  modal.style.display='flex';
+}
+function closeFeedbackModal(){
+  var modal=document.getElementById('feedback-modal');
+  if(modal)modal.style.display='none';
+}
+function submitFeedback(){
+  var name    =(document.getElementById('fb-name').value||'').trim();
+  var email   =(document.getElementById('fb-email').value||'').trim();
+  var type    =document.getElementById('fb-type').value;
+  var message =(document.getElementById('fb-message').value||'').trim();
+  var errEl   =document.getElementById('fb-error');
+  if(!type||!message){
+    errEl.textContent='Please select a feedback type and enter a message.';
+    errEl.style.display='block';
+    return;
+  }
+  var ts=new Date().toLocaleString('en-US',{dateStyle:'short',timeStyle:'short'});
+  var body=[
+    'Name: '+(name||'Not provided'),
+    'Email: '+(email||'Not provided'),
+    'Feedback Type: '+type,
+    'Plan: '+(typeof USER_PLAN!=='undefined'?USER_PLAN:'—'),
+    'Timestamp: '+ts,
+    '---',
+    message
+  ].join('\n');
+  var subject=encodeURIComponent('AR Match Pro Feedback — '+type);
+  var bodyEnc=encodeURIComponent(body);
+  window.location.href='mailto:info@armatchpro.com?subject='+subject+'&body='+bodyEnc;
+  try{addAudit(AuditManager.ACTIONS.NOTE,'Feedback: '+type);}catch(e){}
+  closeFeedbackModal();
+  toast('Feedback sent — your email client should open. Or email info@armatchpro.com directly.');
+}
+
 // ══════════════════════════════════════════════════════════
 // DEMO MANAGER — 7-day free trial lifecycle
 // NOTE: Backend-required for bullet-proof enforcement.
@@ -8179,6 +9060,7 @@ function demoLogin(){
 }
 
 function doLogout(){
+  try{ stopInactivityWatch(); }catch(e){}
   localStorage.removeItem('armp_session');
   document.body.classList.remove('app-active');
   var app=document.getElementById('app');
@@ -8186,7 +9068,7 @@ function doLogout(){
   var ls=document.getElementById('login-screen');
   if(ls){ ls.style.display=''; ls.style.visibility=''; ls.style.pointerEvents=''; ls.style.zIndex=''; ls.style.opacity=''; }
   // Full state clear — ensure no tenant data bleeds into next session
-  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];
   _invalidateInvIndexes();
   _dismissedNotifs={};
   USER_ROLE='specialist';
@@ -8291,6 +9173,9 @@ function launchApp(user){
   // Apply per-user theme preference
   try{ _armpApplyAutoTheme(); }catch(e){}
 
+  // Start inactivity auto-logout watch (non-demo: 15 min)
+  try{ startInactivityWatch(); }catch(e){}
+
   setTimeout(navToWorklist, 0);
 }
 
@@ -8339,6 +9224,17 @@ function openImportDelivery(){
   const title=document.getElementById('imp-title');const lbl=document.getElementById('imp-lbl');
   if(title)title.textContent='Import Delivery Report';
   if(lbl)lbl.textContent='Delivery/tracking report — extracts Tracking #, Delivery #, and maps to invoice rows';
+  const ta=document.getElementById('mo-ta');if(ta)ta.value='';
+  hideProgress();
+  var _impM=document.getElementById('imp-modal');if(_impM)_impM.classList.add('open');
+}
+
+function openImportRemDetail(){
+  IMP_TYPE='remdetail';
+  IMP_BANK_MODE=false;
+  const title=document.getElementById('imp-title');const lbl=document.getElementById('imp-lbl');
+  if(title)title.textContent='Import Remittance Details';
+  if(lbl)lbl.innerHTML='Supplier/customer remittance advice — contains Invoice #, PO #, Tracking #, amounts, and remarks.<br><span style="font-size:11.5px;color:var(--t3)">Supported: CSV, XLSX. Columns auto-detected. This becomes the primary matching source when present.</span>';
   const ta=document.getElementById('mo-ta');if(ta)ta.value='';
   hideProgress();
   var _impM=document.getElementById('imp-modal');if(_impM)_impM.classList.add('open');
@@ -8551,7 +9447,7 @@ function resetAllData(){
   _doResetAll();
 }
 function _doResetAll(){
-  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];
   _invalidateInvIndexes();
   rAll();updDash();updTop();setStatus('ready');
   // Clear user-scoped transactional keys
@@ -11040,6 +11936,58 @@ async function runMatch(){
   // Retrieve fresh index references
   const _idx = _INV_IDX;
 
+  // ── REMITTANCE DETAILS PRE-ENRICHMENT ─────────────────────────────────────
+  // REM_DETAIL lines (parsed by RemittanceParser) are the PRIMARY match source.
+  // Each PAY entry is enriched with document refs from the matching remittance
+  // line before the main matching loop. Also handles credit/debit memo offsets.
+  if(REM_DETAIL && REM_DETAIL.length>0){
+    var _rdByInv2=new Map(),_rdByPO2=new Map(),_rdBySO2=new Map(),_rdByDel2=new Map(),_rdByTrk2=new Map(),_rdByRef2=new Map();
+    REM_DETAIL.forEach(function(rd){
+      if(rd.invNo){var k=norm(rd.invNo);if(!_rdByInv2.has(k))_rdByInv2.set(k,rd);}
+      if(rd.poNo){var k2=norm(rd.poNo);if(!_rdByPO2.has(k2))_rdByPO2.set(k2,rd);}
+      if(rd.soNo){if(!_rdBySO2.has(rd.soNo))_rdBySO2.set(rd.soNo,rd);}
+      if(rd.delNo){if(!_rdByDel2.has(rd.delNo))_rdByDel2.set(rd.delNo,rd);}
+      if(rd.trkNo){if(!_rdByTrk2.has(rd.trkNo))_rdByTrk2.set(rd.trkNo,rd);}
+      if(rd.paymentRef){if(!_rdByRef2.has(rd.paymentRef))_rdByRef2.set(rd.paymentRef,rd);}
+    });
+    PAY.forEach(function(p){
+      var _rd=null;
+      if(!_rd&&p.bankRef) _rd=_rdByRef2.get(p.bankRef)||null;
+      if(!_rd&&p.c){
+        var _pUp=String(p.c).toUpperCase().trim().slice(0,8);
+        REM_DETAIL.forEach(function(rd){
+          if(!_rd&&rd.custName){var _rdn=String(rd.custName).toUpperCase().trim();if(_rdn.indexOf(_pUp)>=0||_pUp.indexOf(_rdn.slice(0,8))>=0)_rd=rd;}
+        });
+      }
+      if(_rd){
+        if(!p.i&&_rd.invNo)p.i=_rd.invNo;
+        if(!p.po&&_rd.poNo)p.po=_rd.poNo;
+        if(!p.so&&_rd.soNo)p.so=_rd.soNo;
+        if(!p.trackingNo&&_rd.trkNo)p.trackingNo=_rd.trkNo;
+        if(!p.deliveryNo&&_rd.delNo)p.deliveryNo=_rd.delNo;
+        if(_rd.creditMemo)p._creditMemo=_rd.creditMemo;
+        if(_rd.debitMemo)p._debitMemo=_rd.debitMemo;
+        p._hasRemDetail=true;
+        p._remConfidence=_rd.confidence||0;
+      }
+    });
+    // Variance check
+    var _remTot2=REM_DETAIL.reduce(function(s,rd){return s+(rd.amt||0);},0);
+    if(_remTot2>0){
+      var _rdC2=REM_DETAIL[0]&&REM_DETAIL[0].custName?String(REM_DETAIL[0].custName).toUpperCase().trim():'';
+      var _bTot2=0;
+      PAY.forEach(function(p){var _pc=String(p.c||'').toUpperCase().trim();if(_pc&&(_pc.indexOf(_rdC2.slice(0,6))>=0||_rdC2.indexOf(_pc.slice(0,6))>=0))_bTot2+=(p.amt||0);});
+      if(_bTot2>0&&Math.abs(_bTot2-_remTot2)>0.01){
+        var _vd2=_bTot2-_remTot2;
+        EXC.push({id:'EXC-REMVAR-'+String(ec++).padStart(3,'0'),a:'',c:_rdC2,amt:Math.abs(_vd2),ref:'Remittance vs Bank',type:'Variance',
+          detail:'Bank $'+$f(_bTot2)+' ≠ Remittance $'+$f(_remTot2)+' — diff $'+$f(Math.abs(_vd2))+(_vd2<0?' (remittance exceeds bank)':' (bank exceeds remittance)')+'. Do not force-match.',
+          action:'Review variance with customer before applying',dec:'',s:'Open',
+          notes:'Remittance lines: '+REM_DETAIL.length+'. Flagged automatically.'});
+      }
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   // Helper: PO/SO group match (unchanged, operates on pre-filtered array)
   function _groupMatch(g,p,tl,label,_ec){
     if(!g||!g.length)return false;
@@ -11166,6 +12114,62 @@ async function runMatch(){
           }
         }
       }catch(_fbErr){}
+      if(matched)continue;
+
+      // PRIORITY 8: Credit Memo / Debit Memo offset (from remittance details)
+      if(!matched && p._creditMemo){
+        var _cmHit = _idx.byInv && _idx.byInv.get(norm(p._creditMemo));
+        if(_cmHit && !_cmHit.s){
+          _cmHit.s = 'Credit Memo';
+          RES.push({c:_cmHit.c,a:_cmHit.a,i:_cmHit.i,po:_cmHit.po,so:_cmHit.so,d:_cmHit.d,
+            oa:_cmHit.amt,pd:p.amt,vr:p.amt-_cmHit.amt,st:'Credit Memo',
+            m:'Credit memo offset',n:'Credit Memo: '+p._creditMemo});
+          matched=true;
+        }
+      }
+      if(!matched && p._debitMemo){
+        var _dmHit = _idx.byInv && _idx.byInv.get(norm(p._debitMemo));
+        if(_dmHit && !_dmHit.s){
+          _dmHit.s = 'Debit Memo';
+          RES.push({c:_dmHit.c,a:_dmHit.a,i:_dmHit.i,po:_dmHit.po,so:_dmHit.so,d:_dmHit.d,
+            oa:_dmHit.amt,pd:p.amt,vr:p.amt-_dmHit.amt,st:'Debit Memo',
+            m:'Debit memo offset',n:'Debit Memo: '+p._debitMemo});
+          matched=true;
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY 9: Oldest invoice suggestion — when remittance is present but no exact ref match
+      // Only suggest, do not auto-apply. Creates an exception with oldest open invoices for review.
+      if(!matched && p._hasRemDetail && p.c){
+        var _custUpper = String(p.c).toUpperCase().trim();
+        var _openInvs = INV.filter(function(v){
+          if(v.s) return false;
+          if(!v.c) return false;
+          var _ic = String(v.c).toUpperCase().trim();
+          return _ic.indexOf(_custUpper.slice(0,8))>=0 || _custUpper.indexOf(_ic.slice(0,8))>=0;
+        });
+        if(_openInvs.length>0){
+          // Sort by due date ascending (oldest first)
+          var _sorted = _openInvs.slice().sort(function(a,b){
+            var da=a.due?new Date(a.due):new Date(a.dt2||0);
+            var db=b.due?new Date(b.due):new Date(b.dt2||0);
+            return da-db;
+          });
+          var _oldestList = _sorted.slice(0,5).map(function(v){ return v.i||''; }).filter(Boolean).join(', ');
+          EXC.push({
+            id:'EXC-'+String(ec++).padStart(3,'0'),
+            a:p.a, c:p.c, amt:p.amt,
+            ref:p.po||p.i||'—',
+            type:'Needs Mapping Review',
+            detail:'Remittance present but no exact invoice match found. Suggest applying to oldest open invoices: '+_oldestList,
+            action:'Apply to oldest invoice or hold as Cash on Account',
+            dec:'', s:'Open',
+            notes:'Oldest open invoices for customer: '+_oldestList+'. Total open: $'+$f(_openInvs.reduce(function(s,v){return s+(v.amt||0);},0))
+          });
+          matched=true;
+        }
+      }
       if(matched)continue;
 
       // Exception: duplicate check or unmatched
@@ -11972,6 +12976,38 @@ function processImport(){
     showProgress('Processing '+DELIV.length+' delivery rows…', 5);
     setTimeout(function(){ _applyDelChunk(0); }, 30);
     return; // async path — closeMo/updTop handled inside chunk handler
+  }else if(IMP_TYPE==='remdetail'){
+    // ── Multi-Format Remittance Parse via RemittanceParser ────────────────────
+    // Uses header detection, flex field mapping, HORIBA prefix rules,
+    // and parser learning profiles. Shows mapping review before final import.
+    var _rdFileName = (typeof _lastImportFileName!=='undefined') ? _lastImportFileName : 'remittance';
+
+    // Run the parser
+    var _parsed = RemittanceParser.parse(rows, {
+      fileName: _rdFileName,
+      savedProfile: ParserLearningProfile.get('') // will be resolved inside parse()
+    });
+
+    // Store result globally pending user confirmation in mapping review screen
+    _parsed.srcFile = _rdFileName;
+    _remDetailParsed = _parsed;
+
+    // Find matching bank total for variance check
+    var _rdCustUpper = String(_parsed.custName||'').toUpperCase().trim();
+    var _matchedBankTotal = 0;
+    if(_rdCustUpper){
+      PAY.forEach(function(p){
+        var _pc=String(p.c||'').toUpperCase().trim();
+        if(_pc&&(_pc.indexOf(_rdCustUpper.slice(0,6))>=0||_rdCustUpper.indexOf(_pc.slice(0,6))>=0)){
+          _matchedBankTotal+=(p.amt||0);
+        }
+      });
+    }
+
+    // Close import modal and show mapping review
+    closeMo();
+    _showMappingReview(_parsed, _parsed.headerRow, _rdFileName, _matchedBankTotal);
+    return;
   }else{
     PAY=rows.filter(r=>r.some(c=>c)).map(r=>{
       const n=r[col(
