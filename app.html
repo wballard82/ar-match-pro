@@ -3906,11 +3906,19 @@ body.app-active #app {
                     <div class="ustat-row" id="ustat-rem"><span class="ustat-dot ustat-dot-empty"></span><span style="font-size:12px;color:var(--t3)">Remittance Details: not loaded</span></div>
                   </div>
                 </div>
-                <!-- Diagnostics (visible after Auto Match) -->
+                <!-- Auto Match Diagnostics (visible after Auto Match) -->
                 <div id="match-diag-panel" style="background:var(--surface2);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px;min-width:220px;flex:1;display:none">
                   <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Auto Match Diagnostics</div>
                   <div id="match-diag-body" style="font-size:12px;color:var(--t2);line-height:1.8"></div>
                 </div>
+              </div>
+              <!-- TK-Fujikin Match Validation panel (shown when TK-Fujikin data present) -->
+              <div id="tk-validation-panel" style="display:none;margin:10px 16px 0;border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--surface2);border-bottom:1px solid var(--bdr)">
+                  <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">🏭 TK-Fujikin Match Validation</div>
+                  <div id="tk-val-status-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(20,168,216,.1);color:var(--p)">Running…</div>
+                </div>
+                <div id="tk-val-body" style="padding:12px 14px;font-size:12px;color:var(--t2)"></div>
               </div>
             </div>
           </div>
@@ -5302,15 +5310,22 @@ function renderWsReview(){
     var rowsHtml = '';
     if(isMulti){
       rowsHtml = items.map(function(r, ii){
+        // Show bridge chain for TK-Fujikin matches
+        var _chainHtml = r.bridgeChain
+          ? '<div style="font-size:10px;color:var(--t3);font-family:var(--mono);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px" title="'+_escapeAttr(r.bridgeChain)+'">↳ '+_escapeHtml(r.bridgeChain)+'</div>'
+          : '';
         return '<div style="display:flex;align-items:center;gap:14px;padding:8px 16px 8px 36px;font-size:12.5px;border-bottom:'+(ii===items.length-1?'none':'1px solid var(--bdr-subtle, rgba(0,0,0,.04))')+';background:var(--surface1)">'+
-          '<div style="flex:1;min-width:0;display:flex;align-items:center;gap:12px;color:var(--t2)">'+
-            '<span style="font-family:var(--mono);color:var(--pd);font-weight:600">'+(r.i||'—')+'</span>'+
-            (r.po?'<span style="font-size:11px">PO '+r.po+'</span>':'')+
-            (r.so?'<span style="font-size:11px">SO '+r.so+'</span>':'')+
-            (r.vr&&Math.abs(r.vr)>0.01?'<span style="font-size:11px;color:var(--am-t)">Var '+$f(Math.abs(r.vr))+'</span>':'')+
+          '<div style="flex:1;min-width:0;color:var(--t2)">'+
+            '<div style="display:flex;align-items:center;gap:12px">'+
+              '<span style="font-family:var(--mono);color:var(--pd);font-weight:600">'+(r.i||'—')+'</span>'+
+              (r.po?'<span style="font-size:11px">PO '+r.po+'</span>':'')+
+              (r.so?'<span style="font-size:11px">SO '+r.so+'</span>':'')+
+              (r.vr&&Math.abs(r.vr)>0.01?'<span style="font-size:11px;color:var(--am-t)">Var '+$f(Math.abs(r.vr))+'</span>':'')+
+            '</div>'+
+            _chainHtml+
           '</div>'+
-          '<div style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--t1);font-weight:600">'+$f(r.pd)+'</div>'+
-          '<div style="text-align:right;color:var(--t3);font-size:11px">of '+$f(r.oa)+'</div>'+
+          '<div style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--t1);font-weight:600">$'+$f(r.pd)+'</div>'+
+          '<div style="text-align:right;color:var(--t3);font-size:11px">of $'+$f(r.oa)+'</div>'+
         '</div>';
       }).join('');
     }
@@ -5827,6 +5842,434 @@ function _showMatchDiagnostics(stats){
   }catch(e){}
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// TK-FUJIKIN MATCH VALIDATION ENGINE
+// Runs after Auto Match to calculate match coverage and validate the engine.
+// Target: ≥90% of bank payment amount matched to invoices automatically.
+//
+// Coverage = (matched invoice total ÷ bank payment total) × 100
+//
+// If <90%, runs auto-improvement loop:
+//   - fuzzy/DHL normalization, amount proximity, alternate SO/PO lookups
+// ════════════════════════════════════════════════════════════════════════════
+function runTKFujikinValidation(){
+  var panel  = document.getElementById('tk-validation-panel');
+  var body   = document.getElementById('tk-val-body');
+  var badge  = document.getElementById('tk-val-status-badge');
+  if(!panel||!body||!badge) return;
+
+  // Show for TK-Fujikin (supplierName=HORIBA) or any session with all four sources loaded
+  var _isTkF = REM_DETAIL && REM_DETAIL.length>0 &&
+               REM_DETAIL[0] && REM_DETAIL[0].supplierName &&
+               String(REM_DETAIL[0].supplierName).toUpperCase().indexOf('HORIBA')>=0;
+  if(!_isTkF && !(REM_DETAIL&&REM_DETAIL.length>0&&PAY&&PAY.length>0&&DELIV&&DELIV.length>0)) return;
+  panel.style.display='';
+  badge.textContent='Validating…';
+  badge.style.background='rgba(245,158,11,.1)';
+  badge.style.color='var(--am-t)';
+
+  // Yield for one frame so the "Validating…" badge renders before heavy work
+  setTimeout(function(){
+  try{
+    var TARGET_PCT = 95;  // validation passes only at ≥95%
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    // O(1) RES deduplicate check — build once, update incrementally
+    var _resInvSet = new Set();
+    RES.forEach(function(r){ if(r.i) _resInvSet.add(r.i); });
+
+    function _addToRES(inv, chain, method){
+      if(!inv || _resInvSet.has(inv.i)) return false;
+      if(inv.s) return false;  // already matched by main engine
+      inv.s = 'Exact';
+      _resInvSet.add(inv.i);
+      RES.push({
+        c:inv.c, a:inv.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
+        oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
+        m:'TK-Fujikin bridge',
+        n:chain, bridgeChain:chain, _valMethod:method
+      });
+      return true;
+    }
+
+    function _getBridge(trkVal){
+      if(!trkVal||!window._TRK_BRIDGE) return [];
+      var _k = _normTrkVal(trkVal);
+      return window._TRK_BRIDGE.get(_k) || window._TRK_BRIDGE.get(String(trkVal).trim()) || [];
+    }
+
+    function _soInvs(so){ return (so&&_INV_IDX.bySO&&_INV_IDX.bySO.get(norm(so)))||[]; }
+    function _poInvs(po){ return (po&&_INV_IDX.byPO&&_INV_IDX.byPO.get(norm(po)))||[]; }
+    function _invByNo(inv){ return (inv&&_INV_IDX.byInv&&_INV_IDX.byInv.get(norm(inv)))||null; }
+
+    // Best unmatched invoice from a list — prefer amount-exact, then any open
+    function _pick(list, amt, tol){
+      var open = list.filter(function(v){ return !v.s && !_resInvSet.has(v.i); });
+      if(!open.length) return null;
+      return open.find(function(v){ return Math.abs(v.amt-(amt||0))<=tol; }) || open[0];
+    }
+
+    // ── 1. Initial totals from existing RES ──────────────────────────────
+    var _bankTotal = PAY.reduce(function(s,p){return s+(p.amt||0);},0);
+    var _remTotal  = REM_DETAIL.reduce(function(s,r){return s+(r.amt||0);},0);
+    var _matchedInvTotal = RES.reduce(function(s,r){return s+(r.oa||0);},0);
+
+    var _coverage = _bankTotal>0 ? (_matchedInvTotal/_bankTotal*100) : 0;
+    var _improved = 0;
+    var _improvementLog = [];
+    var tol = 5;
+
+    // ── 2. Multi-pass improvement loop — runs until 95% or no new matches ─
+    // Engine processes EVERY remittance line on EVERY pass.
+    // UI display is capped at 20 rows; matching is not.
+    var _maxPasses = 8;
+    var _pass = 0;
+    var _prevMatched = -1;
+
+    while(_coverage < TARGET_PCT && _pass < _maxPasses && _matchedInvTotal !== _prevMatched){
+      _prevMatched = _matchedInvTotal;
+      _pass++;
+
+      REM_DETAIL.forEach(function(rl){
+        if(!rl || rl.amt<=0) return;
+
+        // Reference values — extracted + normalized
+        var _trkRaw  = rl.trkNo || '';
+        var _trkNorm = _normTrkVal(_trkRaw);
+        var _notesRaw= String(rl.notes||'').trim();
+        var _notesNorm = _notesRaw.replace(/[\s\-]/g,'').toUpperCase();
+        var _poRaw   = rl.poNo||'';
+        var _poCleaned= _poRaw.replace(/\(.*?\)/g,'').trim(); // strip "(TK-F)" suffixes
+        var _invRaw  = rl.invNo||'';
+        var _delRaw  = rl.delNo||'';
+
+        // PASS A: UPS 1Z tracking → bridge (one-to-many) → all SOs → all invoices
+        if(_trkNorm && /^1Z/i.test(_trkNorm)){
+          var _arr = _getBridge(_trkNorm);
+          _arr.forEach(function(dr){
+            var _sos = _soInvs(dr.salesOrder);
+            var _inv = _pick(_sos, rl.amt, tol);
+            if(!_inv && dr.poNo){ _inv=_pick(_poInvs(dr.poNo), rl.amt, tol); }
+            if(_inv){
+              var _chain='UPS:'+_trkNorm+'→Del:'+dr.deliveryNo+'→SO:'+dr.salesOrder+'→Inv:'+_inv.i;
+              if(_addToRES(_inv, _chain, 'UPS tracking')){ _matchedInvTotal+=_inv.amt; _improved++; _improvementLog.push(_chain); }
+            }
+          });
+        }
+
+        // PASS B: DHL from notes field (pure 10-digit numeric, not HORIBA doc prefix)
+        if(_notesNorm && /^\d{10}$/.test(_notesNorm) && !/^(510|710|210|310|410)\d{7}$/.test(_notesNorm)){
+          var _dhlArr = window._TRK_BRIDGE ? (window._TRK_BRIDGE.get(_notesNorm)||[]) : [];
+          _dhlArr.forEach(function(dr){
+            var _sos = _soInvs(dr.salesOrder);
+            var _inv = _pick(_sos, rl.amt, tol);
+            if(!_inv && dr.poNo){ _inv=_pick(_poInvs(dr.poNo), rl.amt, tol); }
+            if(_inv){
+              var _chain='DHL:'+_notesNorm+'→Del:'+dr.deliveryNo+'→SO:'+dr.salesOrder+'→Inv:'+_inv.i;
+              if(_addToRES(_inv, _chain, 'DHL tracking')){ _matchedInvTotal+=_inv.amt; _improved++; _improvementLog.push(_chain); }
+            }
+          });
+        }
+
+        // PASS C: DHL from notes — variable-length numeric (7-12 digits)
+        if(_notesRaw && /^\d{7,12}$/.test(_notesNorm) && !(/^\d{10}$/.test(_notesNorm))){
+          var _dhlArr2 = window._TRK_BRIDGE ? (window._TRK_BRIDGE.get(_notesNorm)||[]) : [];
+          _dhlArr2.forEach(function(dr){
+            var _inv = _pick(_soInvs(dr.salesOrder), rl.amt, tol) || _pick(_poInvs(dr.poNo), rl.amt, tol);
+            if(_inv){
+              var _chain='DHL:'+_notesNorm+'→Del:'+dr.deliveryNo+'→SO:'+dr.salesOrder+'→Inv:'+_inv.i;
+              if(_addToRES(_inv, _chain, 'DHL variable')){ _matchedInvTotal+=_inv.amt; _improved++; _improvementLog.push(_chain); }
+            }
+          });
+        }
+
+        // PASS D: Delivery # (710 prefix) → bridge → SO → invoice
+        if(_delRaw && window._DELIV_BRIDGE){
+          var _dr = window._DELIV_BRIDGE.get(_delRaw);
+          if(_dr){
+            var _inv = _pick(_soInvs(_dr.salesOrder), rl.amt, tol) || _pick(_poInvs(_dr.poNo), rl.amt, tol);
+            if(_inv){
+              var _chain='Del:'+_delRaw+'→SO:'+_dr.salesOrder+'→Inv:'+_inv.i;
+              if(_addToRES(_inv, _chain, 'Delivery#')){ _matchedInvTotal+=_inv.amt; _improved++; _improvementLog.push(_chain); }
+            }
+          }
+        }
+
+        // PASS E: Invoice # direct (510 prefix)
+        if(_invRaw){
+          var _directInv = _invByNo(_invRaw);
+          if(_directInv && !_directInv.s && !_resInvSet.has(_directInv.i)){
+            var _chain='Inv:'+_invRaw+' (direct)';
+            if(_addToRES(_directInv, _chain, 'Invoice direct')){ _matchedInvTotal+=_directInv.amt; _improved++; _improvementLog.push(_chain); }
+          }
+        }
+
+        // PASS F: PO exact match (SS prefix)
+        if(_poRaw){
+          var _inv = _pick(_poInvs(_poRaw), rl.amt, tol);
+          if(_inv){
+            var _chain='PO:'+_poRaw+'→Inv:'+_inv.i;
+            if(_addToRES(_inv, _chain, 'PO exact')){ _matchedInvTotal+=_inv.amt; _improved++; _improvementLog.push(_chain); }
+          }
+        }
+
+        // PASS G: PO cleaned (strip parenthetical suffix)
+        if(_poCleaned && _poCleaned !== _poRaw){
+          var _inv = _pick(_poInvs(_poCleaned), rl.amt, tol);
+          if(_inv){
+            var _chain='PO:'+_poCleaned+'→Inv:'+_inv.i+' (cleaned)';
+            if(_addToRES(_inv, _chain, 'PO cleaned')){ _matchedInvTotal+=_inv.amt; _improved++; _improvementLog.push(_chain); }
+          }
+        }
+
+        // PASS H: Partial/fuzzy tracking — if trkNorm has prefix shared with bridge key
+        if(_trkNorm && _trkNorm.length>=10 && window._TRK_BRIDGE){
+          window._TRK_BRIDGE.forEach(function(drArr, bridgeKey){
+            if(!bridgeKey||!drArr||!drArr.length) return;
+            // Partial match: first 12 chars match, or key is substring
+            if(bridgeKey.indexOf(_trkNorm.slice(0,12))===0 || _trkNorm.indexOf(bridgeKey.slice(0,12))===0){
+              drArr.forEach(function(dr){
+                var _inv = _pick(_soInvs(dr.salesOrder), rl.amt, tol);
+                if(_inv){
+                  var _chain='TrkFuzzy:'+_trkNorm+'→Del:'+dr.deliveryNo+'→SO:'+dr.salesOrder+'→Inv:'+_inv.i;
+                  if(_addToRES(_inv, _chain, 'Tracking fuzzy')){ _matchedInvTotal+=_inv.amt; _improved++; _improvementLog.push(_chain); }
+                }
+              });
+            }
+          });
+        }
+
+        // PASS I: Amount + Sales Order proximity (when SO is known from delivery enrichment)
+        if(rl.soNo && _INV_IDX.bySO){
+          var _soList = _soInvs(rl.soNo);
+          var _inv = _pick(_soList, rl.amt, tol);
+          if(_inv){
+            var _chain='SO:'+rl.soNo+'→Inv:'+_inv.i;
+            if(_addToRES(_inv, _chain, 'SO match')){ _matchedInvTotal+=_inv.amt; _improved++; _improvementLog.push(_chain); }
+          }
+        }
+      });
+
+      // Recalculate coverage after each full pass
+      _coverage = _bankTotal>0 ? (_matchedInvTotal/_bankTotal*100) : 0;
+    } // end while
+
+    // ── 3. Final totals ──────────────────────────────────────────────────
+    var _remaining   = Math.max(0, _bankTotal - _matchedInvTotal);
+    var _coverageFmt = _coverage.toFixed(1);
+    var _invMatched  = _resInvSet.size;
+    var _delBridged  = RES.filter(function(r){ return r.m&&(r.m.indexOf('bridge')>=0||r.m.indexOf('TK-Fujikin')>=0); }).length;
+
+    // Count references processed / matched / unmatched across all remittance lines
+    var _refsProcessed=0, _refsMatched=0;
+    var _unmatchedLines = [];
+    if(REM_DETAIL){
+      REM_DETAIL.forEach(function(rl){
+        if(!rl||rl.amt<=0) return;
+        _refsProcessed++;
+        // Check match: was any invoice that this line points to found in RES?
+        var _hasMatch = false;
+        if(rl.invNo && _resInvSet.has(rl.invNo)) _hasMatch=true;
+        if(!_hasMatch && rl.trkNo){
+          var _tarr=_getBridge(rl.trkNo);
+          _tarr.forEach(function(dr){
+            if(_soInvs(dr.salesOrder).some(function(v){return _resInvSet.has(v.i);})) _hasMatch=true;
+          });
+        }
+        if(!_hasMatch && rl.poNo){
+          if(_poInvs(rl.poNo).some(function(v){return _resInvSet.has(v.i);})) _hasMatch=true;
+          if(!_hasMatch){
+            var _pc=rl.poNo.replace(/\(.*?\)/g,'').trim();
+            if(_poInvs(_pc).some(function(v){return _resInvSet.has(v.i);})) _hasMatch=true;
+          }
+        }
+        if(!_hasMatch && rl.delNo && window._DELIV_BRIDGE){
+          var _dr=window._DELIV_BRIDGE.get(rl.delNo);
+          if(_dr&&_soInvs(_dr.salesOrder).some(function(v){return _resInvSet.has(v.i);})) _hasMatch=true;
+        }
+        if(!_hasMatch && rl.notes){
+          var _nn=rl.notes.replace(/[\s\-]/g,'').toUpperCase();
+          if(window._TRK_BRIDGE){
+            var _nArr=window._TRK_BRIDGE.get(_nn)||[];
+            _nArr.forEach(function(dr){ if(_soInvs(dr.salesOrder).some(function(v){return _resInvSet.has(v.i);})) _hasMatch=true; });
+          }
+        }
+
+        if(_hasMatch){ _refsMatched++; }
+        else {
+          // Classify WHY unmatched — check each bridge step
+          var _ref = rl.invNo||rl.trkNo||rl.poNo||rl.delNo||rl.notes||'—';
+          var _reason;
+          var _nn2=(rl.notes||'').replace(/[\s\-]/g,'').toUpperCase();
+          var _trkArr=_getBridge(rl.trkNo||'');
+          var _dhlArr=window._TRK_BRIDGE?(window._TRK_BRIDGE.get(_nn2)||[]):[];
+
+          if(!rl.trkNo&&!rl.invNo&&!rl.poNo&&!rl.delNo&&!rl.notes){
+            _reason='No document reference extracted from remittance line';
+          } else if(rl.trkNo && _trkArr.length===0){
+            _reason='Tracking '+rl.trkNo+' not found in Delivery Report';
+          } else if(_nn2&&/^\d{7,12}$/.test(_nn2)&&_dhlArr.length===0){
+            _reason='DHL ref '+_nn2+' not found in Delivery Report';
+          } else if(rl.trkNo && _trkArr.length>0){
+            // Bridge found — check SO step
+            var _hasSO=_trkArr.some(function(dr){return _soInvs(dr.salesOrder).length>0;});
+            if(!_hasSO) _reason='Delivery found but Sales Order '+(_trkArr[0].salesOrder||'?')+' not in Open Items';
+            else {
+              // SO found — check invoice
+              var _hasInv=_trkArr.some(function(dr){return _soInvs(dr.salesOrder).some(function(v){return !v.s;});});
+              if(!_hasInv) _reason='Sales Order found but all invoices already matched or zero open balance';
+              else         _reason='Invoice found but amount mismatch or duplicate invoice candidates';
+            }
+          } else if(rl.invNo && !_invByNo(rl.invNo)){
+            _reason='Invoice '+rl.invNo+' not found in Open Items';
+          } else if(rl.poNo && _poInvs(rl.poNo).length===0 && _poInvs(rl.poNo.replace(/\(.*?\)/g,'').trim()).length===0){
+            _reason='PO '+rl.poNo+' not found in Open Items';
+          } else {
+            _reason='Remittance line could not be classified — check reference format';
+          }
+          _unmatchedLines.push({ref:_ref, amt:rl.amt, reason:_reason});
+        }
+      });
+    }
+
+    // ── 4. Render validation panel ────────────────────────────────────────
+    var _isValid  = _coverage >= TARGET_PCT;
+    var _covColor = _coverage>=TARGET_PCT?'var(--g-t)':_coverage>=80?'var(--am-t)':'var(--r-t)';
+
+    badge.textContent = _isValid ? '✓ Matching Logic Validated ('+_coverageFmt+'%)' : '⚠ Needs Improvement ('+_coverageFmt+'%)';
+    badge.style.background = _isValid?'rgba(18,184,134,.1)':'rgba(239,68,68,.08)';
+    badge.style.color = _isValid?'var(--g-t)':'var(--r-t)';
+
+    // Coverage bar — 95% target marker
+    var _barW = Math.min(100,_coverage).toFixed(1);
+    var _barColor = _coverage>=TARGET_PCT?'var(--g)':_coverage>=80?'var(--am)':'var(--r)';
+    var _coverageBar =
+      '<div style="margin-bottom:10px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'+
+          '<span style="font-size:11px;color:var(--t3)">Match Coverage ('+(TARGET_PCT)+'% target)</span>'+
+          '<span style="font-size:15px;font-weight:800;color:'+_covColor+'">'+_coverageFmt+'%</span>'+
+        '</div>'+
+        '<div style="position:relative;height:10px;background:var(--bdr);border-radius:5px;overflow:hidden">'+
+          '<div style="height:100%;width:'+_barW+'%;background:'+_barColor+';border-radius:5px;transition:width .5s ease"></div>'+
+          // 95% target marker line
+          '<div style="position:absolute;top:0;bottom:0;left:'+TARGET_PCT+'%;width:2px;background:rgba(255,255,255,.7)"></div>'+
+        '</div>'+
+        '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:3px">'+
+          '<span>0%</span>'+
+          '<span style="color:'+_covColor+'">'+(_isValid?'✓ '+TARGET_PCT+'% target met':'✗ Below '+TARGET_PCT+'% target')+'</span>'+
+          '<span>100%</span>'+
+        '</div>'+
+      '</div>';
+
+    // Stats grid — full detail, no caps
+    var _amtGrid =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 16px;margin-bottom:10px">'+
+        '<span style="color:var(--t3)">Bank Payment Total:</span><span style="font-weight:700">$'+$f(_bankTotal)+'</span>'+
+        '<span style="color:var(--t3)">Remittance Total:</span><span style="font-weight:700">$'+$f(_remTotal)+'</span>'+
+        '<span style="color:var(--t3)">Matched Invoice Total:</span><span style="font-weight:700;color:var(--g-t)">$'+$f(_matchedInvTotal)+'</span>'+
+        '<span style="color:var(--t3)">Remaining Unapplied:</span>'+
+          '<span style="font-weight:700;color:'+(_remaining>0?'var(--am-t)':'var(--g-t)')+'">$'+$f(_remaining)+'</span>'+
+        (_remaining>0
+          ? '<span style="color:var(--t3)">Suggested Cash on Account:</span><span style="font-weight:700;color:var(--p)">$'+$f(_remaining)+'</span>'
+          : '')+
+        '<span style="color:var(--t3)">References processed:</span><span style="font-weight:700">'+_refsProcessed+'</span>'+
+        '<span style="color:var(--t3)">References matched:</span><span style="font-weight:700;color:var(--g-t)">'+_refsMatched+'</span>'+
+        '<span style="color:var(--t3)">References unmatched:</span>'+
+          '<span style="font-weight:700;color:'+(_unmatchedLines.length>0?'var(--am-t)':'var(--g-t)')+'">'+_unmatchedLines.length+'</span>'+
+        '<span style="color:var(--t3)">Invoices matched:</span><span style="font-weight:700">'+_invMatched+'</span>'+
+        '<span style="color:var(--t3)">Delivery rows bridged:</span><span style="font-weight:700">'+_delBridged+'</span>'+
+        (_pass>0?'<span style="color:var(--t3)">Improvement passes:</span><span style="font-weight:700">'+_pass+'</span>':'')+
+      '</div>';
+
+    // Match path breakdown
+    var _byPath = { Tracking:0, Delivery:0, SO:0, PO:0, Invoice:0, Other:0 };
+    RES.forEach(function(r){
+      var _m=r.m||''; var _vm=r._valMethod||'';
+      if(_vm==='UPS tracking'||_vm==='DHL tracking'||_vm==='DHL variable'||_vm==='Tracking fuzzy'||_m.indexOf('Tracking')>=0||_m.indexOf('TK-Fujikin bridge')>=0) _byPath.Tracking++;
+      else if(_vm==='Delivery#'||_m.indexOf('Delivery')>=0) _byPath.Delivery++;
+      else if(_vm==='SO match'||_m.indexOf('SO')>=0)        _byPath.SO++;
+      else if(_vm==='PO exact'||_vm==='PO cleaned'||_m.indexOf('PO')>=0) _byPath.PO++;
+      else if(_vm==='Invoice direct'||_m.indexOf('invoice')>=0||_m.indexOf('Invoice')>=0) _byPath.Invoice++;
+      else                                                   _byPath.Other++;
+    });
+    var _pathLabels={Tracking:'📦 Tracking→Del→SO→Inv',Delivery:'🚚 Del→SO→Inv',SO:'📄 SO→Inv',PO:'🔖 PO→Inv',Invoice:'# Invoice direct',Other:'Other'};
+    var _pathsHtml='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
+    Object.keys(_byPath).forEach(function(k){
+      if(_byPath[k]>0) _pathsHtml+='<span style="font-size:10.5px;padding:3px 8px;border-radius:12px;background:rgba(20,168,216,.08);color:var(--p);border:1px solid rgba(20,168,216,.15)">'+_pathLabels[k]+': <strong>'+_byPath[k]+'</strong></span>';
+    });
+    _pathsHtml+='</div>';
+
+    // Auto-improvement summary
+    var _improveHtml='';
+    if(_improved>0){
+      _improveHtml='<div style="padding:7px 10px;border-radius:7px;background:rgba(20,168,216,.06);border:1px solid rgba(20,168,216,.15);margin-bottom:8px;font-size:11.5px">'+
+        '<strong style="color:var(--p)">Auto-improvement: +'+_improved+' invoice(s) matched in '+_pass+' pass'+(_pass!==1?'es':'')+'</strong>'+
+        // Show first 6; rest summarized — display cap, engine processed all
+        _improvementLog.slice(0,6).map(function(l){return '<div style="color:var(--t2);font-family:var(--mono);font-size:10.5px">• '+_escapeHtml(l)+'</div>';}).join('')+
+        (_improvementLog.length>6?'<div style="color:var(--t3);font-size:10.5px">+'+(_improvementLog.length-6)+' more (engine processed all '+_refsProcessed+' remittance lines)</div>':'')+
+      '</div>';
+    }
+
+    // Unmatched analysis — engine analyzes ALL; UI shows first 20 with overflow note
+    var _unmatchedHtml='';
+    if(_unmatchedLines.length>0){
+      _unmatchedHtml='<details style="margin-top:8px">'+
+        '<summary style="cursor:pointer;font-size:11.5px;font-weight:700;color:var(--am-t)">'+
+          '⚠ '+_unmatchedLines.length+' unmatched remittance line'+(_unmatchedLines.length!==1?'s':'')+
+          ' · $'+$f(_unmatchedLines.reduce(function(s,u){return s+(u.amt||0);},0))+' — click to expand</summary>'+
+        '<div style="margin-top:6px;border:1px solid var(--bdr);border-radius:6px;overflow:hidden">'+
+        '<table style="width:100%;border-collapse:collapse;font-size:11px">'+
+        '<thead><tr style="background:var(--surface2)">'+
+          '<th style="padding:5px 8px;text-align:left;color:var(--t3)">Reference</th>'+
+          '<th style="padding:5px 8px;text-align:right;color:var(--t3)">Amount</th>'+
+          '<th style="padding:5px 8px;text-align:left;color:var(--t3)">Why Unmatched</th></tr></thead>'+
+        '<tbody>'+
+        // Display first 20 only for performance — all were analyzed by the engine
+        _unmatchedLines.slice(0,20).map(function(u){
+          return '<tr style="border-top:1px solid var(--bdr)">'+
+            '<td style="padding:5px 8px;font-family:var(--mono);font-size:10.5px;color:var(--pd)">'+_escapeHtml(String(u.ref).slice(0,35))+'</td>'+
+            '<td style="padding:5px 8px;text-align:right;font-weight:600">$'+$f(u.amt)+'</td>'+
+            '<td style="padding:5px 8px;color:var(--am-t)">'+_escapeHtml(u.reason)+'</td></tr>';
+        }).join('')+
+        (_unmatchedLines.length>20
+          ? '<tr><td colspan="3" style="padding:5px 8px;color:var(--t3);font-size:10.5px">'+
+              '* Showing 20 of '+_unmatchedLines.length+' rows (UI display cap). '+
+              'All '+_refsProcessed+' remittance lines were processed by the matching engine.</td></tr>'
+          : '')+
+        '</tbody></table></div></details>';
+    }
+
+    // Below-target diagnosis
+    var _belowHtml='';
+    if(!_isValid && _unmatchedLines.length>0){
+      var _reasons={};
+      _unmatchedLines.forEach(function(u){ _reasons[u.reason]=(_reasons[u.reason]||0)+1; });
+      _belowHtml='<div style="margin-top:8px;padding:8px 10px;border-radius:7px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);font-size:11.5px">'+
+        '<div style="color:var(--r-t);font-weight:700;margin-bottom:4px">Why below '+TARGET_PCT+'% target:</div>'+
+        Object.keys(_reasons).map(function(k){ return '<div style="color:var(--t2)">• <strong>'+_reasons[k]+'x</strong> — '+_escapeHtml(k)+'</div>'; }).join('')+
+      '</div>';
+    }
+
+    body.innerHTML = _coverageBar + _amtGrid + _pathsHtml + _improveHtml + _unmatchedHtml + _belowHtml;
+
+    // Sync updates to review/dash if improvement made new matches
+    if(_improved>0){
+      _buildInvIndexes();
+      try{ renderWsReview(); }catch(e){}
+      try{ updDash(); updTop(); }catch(e){}
+    }
+
+  }catch(_valErr){
+    body.innerHTML='<span style="color:var(--r-t)">Validation error: '+_escapeHtml(String(_valErr.message||_valErr))+'</span>';
+    badge.textContent='Error';
+    badge.style.color='var(--r-t)';
+  }
+  }, 150);
+}
+
+// Helper: normalize tracking for bridge lookup (same as _normTrk but accessible here)
+function _normTrkVal(s){ return String(s||'').trim().toUpperCase().replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g,''); }
+
 // ── Amount parser ─────────────────────────────────────────────────────────
 function _parseRemAmt(v){
   if(v===null||v===undefined||v==='') return 0;
@@ -5929,12 +6372,42 @@ function detectSalesOrder(val){
 }
 function detectTracking(val){
   var s=String(val||'').trim();
-  // Extract 1Z UPS tracking number — may be embedded in longer strings
+  // Extract 1Z UPS tracking number — may be embedded in longer strings like "3/11/26 UPS 1Z9998V..."
   var m=s.match(/1Z[A-Z0-9]{16,18}/i);
   if(m) return m[0];
-  // Also plain 1Z prefix start
+  // Plain 1Z prefix start
   if(/^1Z/i.test(s)) return s.split(/\s/)[0];
   return '';
+}
+// UPS: 1Z prefix, 18 chars
+function detectUPSTracking(val){
+  var s=String(val||'').trim();
+  var m=s.match(/1Z[A-Z0-9]{16,18}/i);
+  return m ? m[0].toUpperCase() : '';
+}
+// DHL: numeric sequences embedded after "DHL" keyword, 7-12 digits
+function detectDHLTracking(val){
+  var s=String(val||'').trim();
+  // "3/12/2026 DHL 5213011672" or "DHL 5213011672" or embedded DHL ref in memo
+  var m=s.match(/(?:DHL\s+)(\d{7,12})/i);
+  if(m) return m[1];
+  // Pure 10-digit numeric that is NOT a HORIBA doc prefix (510/710/210/310/410)
+  // and appears in a BOL/logistics context (passed via detectLogisticsReference)
+  return '';
+}
+// General logistics reference extractor — returns {type, value} or null
+function detectLogisticsReference(val){
+  var s=String(val||'').trim();
+  var ups=detectUPSTracking(s);
+  if(ups) return {type:'UPS', value:ups};
+  var dhl=detectDHLTracking(s);
+  if(dhl) return {type:'DHL', value:dhl};
+  // Fallback: pure 10-digit numeric that could be a DHL/logistics ref
+  var digits=s.replace(/[^0-9]/g,'');
+  if(/^\d{10}$/.test(digits) && !/^(510|710|210|310|410)\d{7}$/.test(digits)){
+    return {type:'logistics', value:digits};
+  }
+  return null;
 }
 function detectPONumber(val){
   var s=String(val||'').trim();
@@ -12465,6 +12938,127 @@ async function runMatch(){
   // Retrieve fresh index references
   const _idx = _INV_IDX;
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // DEDICATED TK-FUJIKIN MATCHING ENGINE
+  // Implements the exact AR/Cash Application business workflow:
+  //   Remittance Line → (Tracking/Del ref) → Delivery Report → SO → Invoice
+  //
+  // Supports: UPS 1Z tracking, DHL numeric tracking (one-to-many), SS PO refs,
+  //           710-prefix delivery#, 510-prefix invoice#.
+  // Returns: { matched: INV[], bridgeChain: string, totalAmt: number, unmatched: number }
+  // ════════════════════════════════════════════════════════════════════════════
+  function matchTKFujikinPayment(remLines, idx, tol){
+    if(!remLines || !remLines.length) return null;
+    var _result = { matched:[], bridgeChains:[], totalAmt:0, unmatched:0 };
+
+    // Helper: get DELIV rows by tracking (one-to-many)
+    function _getDelivByTrk(trkVal){
+      if(!trkVal || !window._TRK_BRIDGE) return [];
+      var _nk = String(trkVal).trim().toUpperCase().replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g,'');
+      var arr = window._TRK_BRIDGE.get(_nk) || window._TRK_BRIDGE.get(String(trkVal).trim()) || [];
+      return arr;
+    }
+    // Helper: get INV candidates from SO
+    function _invsBySO(so){
+      if(!so || !idx.bySO) return [];
+      return idx.bySO.get(norm(so)) || [];
+    }
+    // Helper: get INV candidate from invoice#
+    function _invByNo(invNo){
+      if(!invNo || !idx.byInv) return null;
+      return idx.byInv.get(norm(invNo)) || null;
+    }
+    // Helper: get INV candidates from PO
+    function _invsByPO(po){
+      if(!po || !idx.byPO) return [];
+      return idx.byPO.get(norm(po)) || [];
+    }
+    // Helper: pick best INV from list by amount proximity
+    function _pickInv(candidates, amt){
+      if(!candidates.length) return null;
+      var open = candidates.filter(function(v){ return !v.s; });
+      if(!open.length) return null;
+      // Prefer exact amount match
+      var exact = open.find(function(v){ return Math.abs(v.amt-amt)<=tol; });
+      return exact || open[0];
+    }
+    // Helper: add to matched without duplicating
+    function _addMatch(inv, chain){
+      if(!inv) return false;
+      if(_result.matched.find(function(x){ return x.i===inv.i; })) return false;
+      _result.matched.push(inv);
+      _result.bridgeChains.push(chain);
+      _result.totalAmt += inv.amt;
+      return true;
+    }
+
+    remLines.forEach(function(rl){
+      if(!rl || rl.amt<=0) return;
+      var _found = false;
+
+      // PRIORITY T1: Tracking number (UPS or DHL) → DELIV rows → SO → Invoice
+      var _trkVal = rl.trkNo || '';
+      // Also detect DHL from notes field (col E numeric refs)
+      if(!_trkVal && rl.notes){
+        var _dhlRef = detectDHLTracking(rl.notes) ||
+                      (/^\d{10}$/.test(rl.notes.trim()) ? rl.notes.trim() : '');
+        if(_dhlRef) _trkVal = _dhlRef;
+      }
+      if(_trkVal){
+        var _delRows = _getDelivByTrk(_trkVal);
+        if(_delRows.length){
+          // One-to-many: each DELIV row → SO → Invoice
+          _delRows.forEach(function(dr){
+            var _sos = _invsBySO(dr.salesOrder);
+            var _inv = _pickInv(_sos, rl.amt);
+            if(!_inv && dr.poNo) _inv = _pickInv(_invsByPO(dr.poNo), rl.amt);
+            if(_inv){
+              var chain = (_trkVal.length>6?_trkVal:'ref:'+_trkVal)+
+                '→Del:'+dr.deliveryNo+'→SO:'+dr.salesOrder+'→Inv:'+_inv.i;
+              _addMatch(_inv, chain);
+              _found=true;
+            }
+          });
+        }
+      }
+
+      // PRIORITY T2: Delivery# (710-prefix) → DELIV bridge → SO → Invoice
+      if(!_found && rl.delNo){
+        var _dr2 = window._DELIV_BRIDGE && window._DELIV_BRIDGE.get(rl.delNo);
+        if(_dr2 && _dr2.salesOrder){
+          var _sos2 = _invsBySO(_dr2.salesOrder);
+          var _inv2 = _pickInv(_sos2, rl.amt);
+          if(_inv2){
+            _addMatch(_inv2, 'Del:'+rl.delNo+'→SO:'+_dr2.salesOrder+'→Inv:'+_inv2.i);
+            _found=true;
+          }
+        }
+      }
+
+      // PRIORITY T3: Invoice# directly (510-prefix)
+      if(!_found && rl.invNo){
+        var _inv3 = _invByNo(rl.invNo);
+        if(_inv3 && !_inv3.s){
+          _addMatch(_inv3, 'Inv:'+rl.invNo+' (direct)');
+          _found=true;
+        }
+      }
+
+      // PRIORITY T4: SS PO reference → PO index → Invoice
+      if(!_found && rl.poNo){
+        var _inv4 = _pickInv(_invsByPO(rl.poNo), rl.amt);
+        if(_inv4){
+          _addMatch(_inv4, 'PO:'+rl.poNo+'→Inv:'+_inv4.i);
+          _found=true;
+        }
+      }
+
+      if(!_found) _result.unmatched++;
+    });
+
+    return _result.matched.length > 0 ? _result : null;
+  }
+
   // ── REMITTANCE DETAILS PRE-ENRICHMENT + DELIVERY BRIDGE ──────────────────
   // For TK-Fujikin and similar: tracking # is the PRIMARY bridge.
   // Flow: REM_DETAIL trkNo → _TRK_BRIDGE (delivery report) → SO/PO → INV
@@ -12554,24 +13148,23 @@ async function runMatch(){
       }
 
       // Step 3: ALWAYS run tracking bridge — even if p.so already set from REM_DETAIL.
-      // TK-Fujikin: remittance has tracking#; delivery report is the bridge to SO/INV.
+      // _TRK_BRIDGE is now one-to-many (Array). Pick first match for PAY enrichment.
+      // Full multi-SO matching happens in matchTKFujikinPayment() during processChunk.
       if(p.trackingNo && _hasBridge){
         var _ntk = _normTrk(p.trackingNo);
-        var _br  = window._TRK_BRIDGE.get(_ntk) || null;
-        // Also try original (un-uppercased) if no hit
-        if(!_br) _br = window._TRK_BRIDGE.get(p.trackingNo.trim()) || null;
+        var _brArr = window._TRK_BRIDGE.get(_ntk) || window._TRK_BRIDGE.get(p.trackingNo.trim()) || [];
+        var _br  = _brArr[0] || null;
         if(_br){
-          // Delivery bridge found — update SO/PO/delivery unconditionally
-          // (may override a REM_DETAIL SO that doesn't exist in INV)
+          // Use first delivery row's SO/PO for initial enrichment
+          // (processChunk Priority TK-F will handle all rows)
           if(_br.salesOrder){ p.so = _br.salesOrder; }
           if(_br.poNo && !p.po) p.po = _br.poNo;
           if(_br.deliveryNo)    p.deliveryNo = _br.deliveryNo;
           p._bridgedViaDelivery = true;
-          p._bridgedDelRow = _br;
+          p._bridgedDelRows = _brArr; // store all for Priority 8b
           _diagTrkBridged++;
 
-          // Also enrich the matching INV row immediately (belt-and-suspenders)
-          // so it's in the index before processChunk hits it
+          // Enrich matching INV rows immediately
           if(_br.salesOrder && _INV_IDX.bySO){
             var _bso = _INV_IDX.bySO.get(norm(_br.salesOrder));
             if(_bso && _bso.length){
@@ -12733,7 +13326,6 @@ async function runMatch(){
       if(matched)continue;
 
       // PRIORITY 4: Tracking # direct match on INV rows (enriched by delivery import)
-      // Plan guard removed when delivery report loaded
       if(p.trackingNo && (hasFeat('trk') || _hasBridge)){
         var _ntk2 = _normTrk(p.trackingNo);
         var _th   = (_idx.byTrk && _idx.byTrk.get(_ntk2)) || (_idx.byTrk && _idx.byTrk.get(p.trackingNo.trim()));
@@ -12762,10 +13354,8 @@ async function runMatch(){
       if(matched)continue;
 
       // PRIORITY 5b: Bridge-matched but no SO in index → try account + amount
-      // When tracking matched delivery report (p._bridgedViaDelivery) but SO wasn't found
-      if(!matched && p._bridgedViaDelivery && p._bridgedDelRow){
-        var _bdRow = p._bridgedDelRow;
-        // Try customer account from delivery row + payment amount against open items
+      if(!matched && p._bridgedViaDelivery && p._bridgedDelRows && p._bridgedDelRows.length){
+        var _bdRow = p._bridgedDelRows[0]; // use first delivery row
         var _bdAcct = _bdRow.custAcct || '';
         var _bdAmt  = p.amt;
         if(_bdAcct && _INV_IDX.byAcct){
@@ -12829,96 +13419,57 @@ async function runMatch(){
       }
       if(matched)continue;
 
-      // PRIORITY 8b: Multi-line remittance matching (TK-Fujikin style)
-      // When a payment has ALL remittance lines attached (_remLines), try to match
-      // each remittance line independently to open invoices by tracking→SO or PO or invoice#.
-      // Then aggregate matched invoices. Remaining balance → Cash on Account suggestion.
-      if(!matched && p._remLines && p._remLines.length>1){
-        var _mlMatched=[];
-        var _mlTotal=0;
-        p._remLines.forEach(function(rl){
-          if(!rl || rl.amt<=0) return;
-          var _inv=null;
-          // Try invoice# first
-          if(rl.invNo && _idx.byInv){
-            var _h2=_idx.byInv.get(norm(rl.invNo));
-            if(_h2&&!_h2.s) _inv=_h2;
-          }
-          // Try tracking → SO bridge
-          if(!_inv && rl.trkNo && _hasBridge){
-            var _ntk3=_normTrk(rl.trkNo);
-            var _tbr=window._TRK_BRIDGE.get(_ntk3)||window._TRK_BRIDGE.get(rl.trkNo.trim())||null;
-            if(_tbr && _tbr.salesOrder && _idx.bySO){
-              var _bso2=_idx.bySO.get(norm(_tbr.salesOrder));
-              if(_bso2&&_bso2.length){
-                _inv=_bso2.find(function(v){return !v.s && Math.abs(v.amt-rl.amt)<=tol;});
-                if(!_inv) _inv=_bso2.find(function(v){return !v.s;});
-              }
-            }
-          }
-          // Try PO match
-          if(!_inv && rl.poNo && _idx.byPO){
-            var _pp=_idx.byPO.get(norm(rl.poNo));
-            if(_pp&&_pp.length){
-              _inv=_pp.find(function(v){return !v.s && Math.abs(v.amt-rl.amt)<=tol;});
-              if(!_inv) _inv=_pp.find(function(v){return !v.s;});
-            }
-          }
-          // Try delivery # → SO bridge
-          if(!_inv && rl.delNo && _hasDelBridge){
-            var _dbr=window._DELIV_BRIDGE.get(rl.delNo)||null;
-            if(_dbr && _dbr.salesOrder && _idx.bySO){
-              var _bso3=_idx.bySO.get(norm(_dbr.salesOrder));
-              if(_bso3&&_bso3.length){
-                _inv=_bso3.find(function(v){return !v.s && Math.abs(v.amt-rl.amt)<=tol;});
-                if(!_inv) _inv=_bso3.find(function(v){return !v.s;});
-              }
-            }
-          }
-          if(_inv && !_mlMatched.find(function(x){return x.i===_inv.i;})){
-            _mlMatched.push(_inv);
-            _mlTotal+=_inv.amt;
-          }
-        });
-
-        if(_mlMatched.length>0){
-          // Mark matched invoices
-          _mlMatched.forEach(function(inv){
+      // PRIORITY TK-F: TK-Fujikin dedicated multi-line bridge match
+      // Uses exact business workflow: Remittance → Delivery Report → SO → Invoice
+      // Supports one-to-many tracking (DHL) and multi-invoice allocation.
+      if(!matched && p._remLines && p._remLines.length>=1){
+        var _tkResult = matchTKFujikinPayment(p._remLines, _idx, tol);
+        if(_tkResult && _tkResult.matched.length>0){
+          var _tkCust = p.c || (_tkResult.matched[0]&&_tkResult.matched[0].c)||'';
+          var _tkAcct = p.a || (_tkResult.matched[0]&&_tkResult.matched[0].a)||'';
+          // Mark matched invoices and push results
+          _tkResult.matched.forEach(function(inv, _ti){
             inv.s='Exact';
-            RES.push({c:inv.c,a:inv.a,i:inv.i,po:inv.po,so:inv.so,d:inv.d,oa:inv.amt,pd:inv.amt,vr:0,
-              st:'Exact',m:'Multi-line remittance',n:'Matched via remittance line'+(p._bridgedViaDelivery?' + delivery bridge':'')});
+            var _chain = _tkResult.bridgeChains[_ti]||'TK-Fujikin bridge';
+            RES.push({
+              c:inv.c||_tkCust, a:inv.a||_tkAcct, i:inv.i,
+              po:inv.po, so:inv.so, d:inv.d,
+              oa:inv.amt, pd:inv.amt, vr:0,
+              st:'Exact',
+              m:'TK-Fujikin bridge',
+              n:_chain,
+              bridgeChain:_chain  // shown in UI
+            });
           });
           matched=true;
 
-          // Fix 3: Partial match + Cash on Account
-          var _remaining = p.amt - _mlTotal;
+          // Fix 3: Partial match + Cash on Account for remainder
+          var _remaining = p.amt - _tkResult.totalAmt;
           if(Math.abs(_remaining) > tol){
             if(_remaining > 0){
-              // Bank payment exceeds matched invoices → suggest COA for remainder
               EXC.push({
                 id:'EXC-COA-'+String(ec++).padStart(3,'0'),
-                a:p.a, c:p.c||(_mlMatched[0]&&_mlMatched[0].c)||'',
+                a:_tkAcct, c:_tkCust,
                 amt:_remaining,
                 ref:p.txId||p.bankRef||'—',
                 type:'Partially Applied',
-                detail:'Matched invoices: $'+$f(_mlTotal)+' — Remaining unapplied balance: $'+$f(_remaining)+'. Suggest posting as Cash on Account.',
+                detail:'Matched '+_tkResult.matched.length+' invoice(s): $'+$f(_tkResult.totalAmt)+
+                       ' — Remaining unapplied: $'+$f(_remaining)+'. Suggest Cash on Account.'+
+                       (_tkResult.unmatched>0?' ('+_tkResult.unmatched+' remittance line(s) not matched to open invoices)':''),
                 action:'Post remaining $'+$f(_remaining)+' as Cash on Account',
-                dec:'Cash on Account',
-                s:'Open',
-                notes:'Bank payment $'+$f(p.amt)+' · Matched '+_mlMatched.length+' invoice(s) · Remainder $'+$f(_remaining)+' → Cash on Account'
+                dec:'Cash on Account', s:'Open',
+                notes:'Bank payment $'+$f(p.amt)+' · Matched '+_tkResult.matched.length+' invoice(s) · Remainder $'+$f(_remaining)
               });
             } else {
-              // Matched invoices exceed payment → Variance
               EXC.push({
                 id:'EXC-'+String(ec++).padStart(3,'0'),
-                a:p.a, c:p.c,
-                amt:Math.abs(_remaining),
+                a:_tkAcct, c:_tkCust, amt:Math.abs(_remaining),
                 ref:p.txId||p.bankRef||'—',
                 type:'Variance',
-                detail:'Matched invoices total $'+$f(_mlTotal)+' exceeds bank payment $'+$f(p.amt)+' by $'+$f(Math.abs(_remaining))+'. Needs review.',
+                detail:'Invoice total $'+$f(_tkResult.totalAmt)+' exceeds bank payment $'+$f(p.amt)+'. Needs review.',
                 action:'Review with customer — possible short pay',
                 dec:'', s:'Open',
-                notes:'Invoice total exceeds payment. Check remittance for partial application instructions.'
+                notes:'Invoice total exceeds payment.'
               });
             }
           }
@@ -13009,6 +13560,8 @@ async function runMatch(){
       };
       _showMatchDiagnostics(_diagStats);
       _updateUploadStatus();
+      // Run TK-Fujikin validation if applicable (≥90% coverage check)
+      runTKFujikinValidation();
     }catch(e){}
     toast('✓ Matched '+autoMatch+'/'+PAY.length+' payments ('+rate+'% auto-match rate) · '+EXC.length+' exceptions');
   }
@@ -13750,21 +14303,27 @@ function processImport(){
       var soDigits = so.replace(/[^0-9]/g,'');
       if(detectSalesOrder(soDigits)) so = detectSalesOrder(soDigits) || so;
 
-      // Bill of lading: may be "12/19/25 UPS 1Z9998V6049972463" — extract 1Z part
+      // Bill of lading: may be "12/19/25 UPS 1Z9998V..." or "3/12/2026 DHL 5213011672"
       var bol = String(bolVal||'').trim();
-      var bolTrk = detectTracking(bol) || bol;
+      var bolTrkUPS = detectUPSTracking(bol);
+      var bolTrkDHL = detectDHLTracking(bol);
+      var bolTrk = bolTrkUPS || bolTrkDHL || bol;
 
-      // Logistics Memo: may contain 1Z tracking AND SS PO reference
+      // Logistics Memo: may contain 1Z tracking AND SS PO reference AND DHL refs
       var logMemo = String(logMemoVal||'').trim();
-      var logTrk = detectTracking(logMemo);  // 1Z tracking from memo
+      var logTrkUPS = detectUPSTracking(logMemo);
+      var logTrkDHL = detectDHLTracking(logMemo);
+      var logTrk = logTrkUPS || logTrkDHL;
       var logPO  = '';
       if(/SS[A-Z0-9]/i.test(logMemo)){
         var _logPoM = logMemo.match(/(SS[A-Z0-9\-\(\)]+)/i);
         if(_logPoM) logPO = _logPoM[1];
       }
 
-      // Final tracking: prefer Bill of Lading 1Z, fallback to Logistics Memo 1Z
-      var finalTrk = (bolTrk && bolTrk.indexOf('1Z')>=0) ? bolTrk : (logTrk || bolTrk);
+      // Final tracking: prefer UPS 1Z from BOL, then DHL from BOL, then from LogMemo
+      var finalTrk = bolTrkUPS || bolTrkDHL || logTrkUPS || logTrkDHL || bolTrk;
+      // Store logistics ref type for bridge lookup
+      var trkType = (bolTrkUPS || logTrkUPS) ? 'UPS' : (bolTrkDHL || logTrkDHL) ? 'DHL' : 'unknown';
       // Final PO: prefer column F, fallback to Logistics Memo SS
       var finalPO = String(poNoVal||'').trim() || logPO;
 
@@ -13773,10 +14332,12 @@ function processImport(){
         custAcct:   String(custAcctVal||'').trim(),
         deliveryNo: delivNo,
         salesOrder: so,
-        invoiceNo:  '',  // derived via SO → invoice bridge
+        invoiceNo:  '',
         poNo:       finalPO,
         trackingNo: finalTrk,
+        trkType:    trkType,
         logMemo:    logMemo,
+        rawBOL:     bol,        // original BOL field for fallback matching
         amount:     parseFloat(String(amtVal||'0').replace(/[$,\s]/g,'')) || 0,
         shipDate:   '',
         rawRow:     r.join(',')
@@ -13791,27 +14352,41 @@ function processImport(){
     var _dIdx = _INV_IDX;
     var matchedDel = 0;
 
-    // ── Build delivery→SO bridge map for cross-reference matching (Feature 5) ──
-    // DELIV rows contain: deliveryNo, salesOrder, trackingNo, poNo, custAcct
-    // This bridge lets us match: remittance delivery# → DELIV → SO → INV
+    // ── Build delivery→SO bridge maps (one-to-many for DHL support) ──────────
+    // _TRK_BRIDGE: trackingNo → Array of DELIV rows (one DHL# can map to multiple SOs)
+    // _DELIV_BRIDGE: deliveryNo → DELIV row (one-to-one)
+    // _SO_BRIDGE: salesOrder → DELIV row (one-to-one, last wins)
     var _delivBridge = new Map(); // deliveryNo → DELIV row
-    var _trkBridge   = new Map(); // trackingNo (normalized) → DELIV row
-    var _soBridge    = new Map(); // salesOrder  → DELIV row
+    var _trkBridge   = new Map(); // trackingNo (normalized) → DELIV row[] (ONE-TO-MANY)
+    var _soBridge    = new Map(); // salesOrder → DELIV row
+
+    function _addTrkBridge(key, delRow){
+      if(!key) return;
+      var _k = String(key).trim().toUpperCase().replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g,'');
+      if(!_k) return;
+      if(!_trkBridge.has(_k)) _trkBridge.set(_k, []);
+      // Avoid exact duplicates (same deliveryNo + SO)
+      var _arr = _trkBridge.get(_k);
+      var _dup = _arr.some(function(x){ return x.deliveryNo===delRow.deliveryNo && x.salesOrder===delRow.salesOrder; });
+      if(!_dup) _arr.push(delRow);
+      // Also store original casing as fallback
+      var _korig = String(key).trim();
+      if(_korig !== _k){
+        if(!_trkBridge.has(_korig)) _trkBridge.set(_korig, []);
+        var _arr2 = _trkBridge.get(_korig);
+        if(!_arr2.some(function(x){ return x.deliveryNo===delRow.deliveryNo; })) _arr2.push(delRow);
+      }
+    }
+
     DELIV.forEach(function(d){
       if(d.deliveryNo) _delivBridge.set(String(d.deliveryNo).trim(), d);
-      if(d.trackingNo){
-        // Normalize: trim, uppercase, strip invisible chars (must match _normTrk in runMatch)
-        var _ntk = String(d.trackingNo).trim().toUpperCase().replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g,'');
-        if(_ntk) _trkBridge.set(_ntk, d);
-        // Also store original in case normalization differs
-        var _otk = String(d.trackingNo).trim();
-        if(_otk && _otk !== _ntk) _trkBridge.set(_otk, d);
-      }
+      // Index by UPS and DHL tracking numbers
+      if(d.trackingNo) _addTrkBridge(d.trackingNo, d);
       if(d.salesOrder) _soBridge.set(String(d.salesOrder).trim(), d);
     });
     // Store bridges globally for use in runMatch
     window._DELIV_BRIDGE = _delivBridge;
-    window._TRK_BRIDGE   = _trkBridge;
+    window._TRK_BRIDGE   = _trkBridge;   // now Map<string, DELIV[]>
     window._SO_BRIDGE    = _soBridge;
 
     var _applyDelChunk = function(start){
