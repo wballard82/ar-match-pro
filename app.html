@@ -2704,26 +2704,34 @@ body.app-active #app {
       <div class="armp-setup-step" id="armp-setup-step-1" data-state="active">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">1</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
-          <div class="armp-setup-step-label">Upload Bank File</div>
-          <div class="armp-setup-step-sub">Upload Bank File / Remittance Data — BAI2, MUFG, CSV, or PDF</div>
+          <div class="armp-setup-step-label">Upload Invoice Report</div>
+          <div class="armp-setup-step-sub">Open invoices / account open items used for invoice application — XLSX, CSV</div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-1" onclick="armpSetupClickStep(1)">Upload Bank File</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-1" onclick="armpSetupClickStep(1)">Upload Invoice Report</button>
       </div>
       <div class="armp-setup-step" id="armp-setup-step-2" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">2</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
-          <div class="armp-setup-step-label">Upload Invoice File</div>
-          <div class="armp-setup-step-sub">Aging report — XLSX or CSV</div>
+          <div class="armp-setup-step-label">Upload Delivery Report</div>
+          <div class="armp-setup-step-sub">Delivery, tracking, bill of lading, logistics memo, PO, and sales order bridge — XLSX, CSV</div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload Invoice File</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload Delivery Report</button>
       </div>
       <div class="armp-setup-step" id="armp-setup-step-3" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
-          <div class="armp-setup-step-label">Run Auto Match</div>
-          <div class="armp-setup-step-sub">Match payments to invoices automatically</div>
+          <div class="armp-setup-step-label">Upload Bank File</div>
+          <div class="armp-setup-step-sub">BAI2, MUFG, CSV, Excel, or PDF bank payment file</div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Run Auto Match</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Upload Bank File</button>
+      </div>
+      <div class="armp-setup-step" id="armp-setup-step-4" data-state="pending">
+        <div class="armp-setup-step-circle"><span class="armp-setup-step-num">4</span><span class="armp-setup-step-check">✓</span></div>
+        <div class="armp-setup-step-text">
+          <div class="armp-setup-step-label">Upload Remittance Details</div>
+          <div class="armp-setup-step-sub">Customer remittance with invoice, tracking, PO, and delivery references — XLSX, CSV, PDF</div>
+        </div>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Remittance Details</button>
       </div>
       <!-- Success state (hidden until all 3 complete) -->
       <div id="armp-setup-done" style="display:none;text-align:center;padding:18px 0 8px">
@@ -3886,7 +3894,7 @@ body.app-active #app {
                 </div>
                 <div class="armp-banner-step-divider"></div>
                 <div class="armp-banner-step" id="armp-banner-step-3" data-state="pending">
-                  <div class="armp-banner-step-circle"><span class="armp-banner-num">3</span><span class="armp-banner-check">✓</span></div>
+                  <div class="armp-banner-step-circle"><span class="armp-banner-num">5</span><span class="armp-banner-check">✓</span></div>
                   <div class="armp-banner-step-text">
                     <div class="armp-banner-step-label">Run Auto Match</div>
                   </div>
@@ -5217,6 +5225,19 @@ function renderWsExcPremium(){
 // ── Premium review items ──
 function renderWsReview(){
   const list=document.getElementById('review-list');const ct=document.getElementById('review-ct');if(!list)return;
+
+  // Fix 1: Keep Review blank until Auto Match has been explicitly run.
+  if(!autoMatchHasRun){
+    list.innerHTML='<div class="empty"><div class="empty-icon">⚡</div>'+
+      '<div class="empty-t">Upload required files, then click Auto Match</div>'+
+      '<div class="empty-s">Files are staged and indexed. Review results will appear here after Auto Match runs.</div>'+
+      '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center">'+
+        '<button class="btn btn-p btn-sm" onclick="runMatch()" style="font-size:13px;padding:9px 20px">⚡ Run Auto Match</button>'+
+      '</div>'+
+    '</div>';
+    if(ct) ct.textContent='Auto Match not yet run';
+    return;
+  }
   const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
   
   // ── Item 6: Group RES entries by payment ──────────────────────────
@@ -5614,6 +5635,9 @@ function _legacyClearAllExceptions(){
 
 // ── Data ──
 let INV=[],PAY=[],RES=[],EXC=[],REM_ADVICE=[],IMP_TYPE='inv',IMP_BANK_MODE=false;
+// autoMatchHasRun: Review section stays blank until user explicitly clicks Auto Match.
+// Resets to false when new files are uploaded or data is cleared.
+var autoMatchHasRun = false;
 // Delivery Report data: [{trackingNo, deliveryNo, invoiceNo, salesOrder, poNo, custAcct, custName, dateRange, amount, rawRow}]
 let DELIV=[];
 
@@ -6136,7 +6160,11 @@ function runTKFujikinValidation(){
     var _isValid  = _coverage >= TARGET_PCT;
     var _covColor = _coverage>=TARGET_PCT?'var(--g-t)':_coverage>=80?'var(--am-t)':'var(--r-t)';
 
-    badge.textContent = _isValid ? '✓ Matching Logic Validated ('+_coverageFmt+'%)' : '⚠ Needs Improvement ('+_coverageFmt+'%)';
+    badge.textContent = _coverage>=100 ? '✓ Applied ('+_coverageFmt+'%)' :
+                        _isValid       ? '✓ Validated — '+_coverageFmt+'% matched' :
+                        _coverage>=80  ? '⚠ Partially Applied ('+_coverageFmt+'%)' :
+                                         '⚠ Needs Review ('+_coverageFmt+'%)';
+    if(_remaining>0.01) badge.textContent += ' · Cash on Account Suggested';
     badge.style.background = _isValid?'rgba(18,184,134,.1)':'rgba(239,68,68,.08)';
     badge.style.color = _isValid?'var(--g-t)':'var(--r-t)';
 
@@ -6250,7 +6278,13 @@ function runTKFujikinValidation(){
       '</div>';
     }
 
-    body.innerHTML = _coverageBar + _amtGrid + _pathsHtml + _improveHtml + _unmatchedHtml + _belowHtml;
+    body.innerHTML = _coverageBar + _amtGrid + _pathsHtml + _improveHtml +
+      // Fix 2: Explain why 100% invoice application may not occur
+      '<div style="padding:7px 10px;border-radius:7px;background:rgba(20,168,216,.04);border:1px solid rgba(20,168,216,.12);margin-bottom:8px;font-size:11px;color:var(--t3)">'+
+        'ℹ️ 100% invoice application may not be possible when the payment includes unmatched invoices, missing open items, deductions, or unapplied cash. '+
+        'AR Match Pro matches every invoice the data supports and isolates any remaining balance for Cash on Account review.'+
+      '</div>' +
+      _unmatchedHtml + _belowHtml;
 
     // Sync updates to review/dash if improvement made new matches
     if(_improved>0){
@@ -8580,6 +8614,8 @@ function loadFromStorage(){
     const r=localStorage.getItem(sk('res'));if(r){ try{RES=JSON.parse(r);}catch(e){RES=[];} }
     const e=localStorage.getItem(sk('exc'));if(e){ try{EXC=JSON.parse(e);}catch(e){EXC=[];} }
     const ra=localStorage.getItem(sk('remadvice'));if(ra){ try{REM_ADVICE=JSON.parse(ra);}catch(e){REM_ADVICE=[];} }
+    // autoMatchHasRun = true only if we're restoring a prior session that had match results
+    autoMatchHasRun = RES.length > 0;
   }catch(e){ console.warn('[loadFromStorage]',e); }
 }
 function getUsers(){try{return JSON.parse(localStorage.getItem('armp_users')||'{}')}catch(e){return {}}}
@@ -9024,15 +9060,18 @@ function armpCloseSetupModal(){
 function armpSetupClickStep(n){
   try{
     if(n===1){
-      if(typeof openImportBank==='function') openImportBank();
-    } else if(n===2){
+      // Step 1: Upload Invoice Report
       if(typeof openImport==='function') openImport('inv');
+    } else if(n===2){
+      // Step 2: Upload Delivery Report
+      if(typeof openImportDelivery==='function') openImportDelivery();
+      else if(typeof openImport==='function') openImport('del');
     } else if(n===3){
-      // Flag for transient "All set!" if armpUpdateSetupState runs while still visible
-      window._armpSetupJustCompleted = true;
-      // Close the setup modal first so progress overlay is visible
-      armpCloseSetupModal();
-      setTimeout(function(){ if(typeof runMatch==='function') runMatch(); }, 100);
+      // Step 3: Upload Bank File
+      if(typeof openImportBank==='function') openImportBank();
+    } else if(n===4){
+      // Step 4: Upload Remittance Details
+      if(typeof openImport==='function') openImport('remdetail');
     }
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
 }
@@ -10070,7 +10109,7 @@ function doLogout(){
   var ls=document.getElementById('login-screen');
   if(ls){ ls.style.display=''; ls.style.visibility=''; ls.style.pointerEvents=''; ls.style.zIndex=''; ls.style.opacity=''; }
   // Full state clear — ensure no tenant data bleeds into next session
-  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];autoMatchHasRun=false;
   _invalidateInvIndexes();
   _dismissedNotifs={};
   USER_ROLE='specialist';
@@ -10152,7 +10191,7 @@ function launchApp(user){
   }
 
   // ── Clean workspace — fully reset transactional data ──
-  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];autoMatchHasRun=false;
   _invalidateInvIndexes();
   ['inv','pay','res','exc'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}});
   var _bsel=document.getElementById('ca-bank-sel');
@@ -10429,6 +10468,7 @@ function clearAllData(){
   clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
   showConfirm('Clear ALL data?\n\nInvoices, payments, matches, and exceptions will be permanently removed.\nThis cannot be undone.',function(){
     INV=[];PAY=[];RES=[];EXC=[];
+    autoMatchHasRun=false;
     rAll();
     try{renderFbl5n('ca-open-items-body','','');}catch(e){}
     try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
@@ -10449,7 +10489,7 @@ function resetAllData(){
   _doResetAll();
 }
 function _doResetAll(){
-  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];autoMatchHasRun=false;
   _invalidateInvIndexes();
   rAll();updDash();updTop();setStatus('ready');
   // Clear user-scoped transactional keys
@@ -12440,7 +12480,7 @@ function setCaTab(tab,btn){
   const viewMap={match:'ws-match',review:'ws-review',exc:'ws-exc',acct:'ws-acct',recon:'ws-recon'};
   const view=document.getElementById(viewMap[tab]||'ws-match');
   if(view)view.classList.add('active');
-  if(tab==='review')renderWsReview();
+  if(tab==='review') renderWsReview(); // renderWsReview shows placeholder if !autoMatchHasRun
   else if(tab==='exc'){if(typeof renderWsExcPremium==='function')renderWsExcPremium();else renderWsExc();}
   else if(tab==='acct'){renderAcctCustomers();} 
   else if(tab==='recon')renderWsRecon();
@@ -12909,6 +12949,21 @@ function _findInvoicesForPayment(p){
 async function runMatch(){
   if(!INV.length){toast('Import invoices first','warn');return;}
   if(!PAY.length){toast('Import remittance first','warn');return;}
+
+  // Fix 1: Mark Auto Match as explicitly run — Review section now shows results
+  autoMatchHasRun = true;
+
+  // Fix 5: Readiness hints for HORIBA/TK-Fujikin workflow
+  var _isTkFSess = REM_DETAIL&&REM_DETAIL.length>0&&REM_DETAIL[0]&&REM_DETAIL[0].supplierName&&
+                   String(REM_DETAIL[0].supplierName).toUpperCase().indexOf('HORIBA')>=0;
+  if(_isTkFSess && (!DELIV||!DELIV.length||!REM_DETAIL||!REM_DETAIL.length)){
+    toast('TK-Fujikin matching requires Remittance Details and Delivery Report for best results.','warn');
+  } else if(!DELIV||!DELIV.length||!REM_DETAIL||!REM_DETAIL.length){
+    if(PAY.length>0&&INV.length>0){
+      // Soft warning — match will still run
+      toast('Auto Match can run with invoice and bank data, but delivery report and remittance details improve match accuracy.','info');
+    }
+  }
   // ── Row limit gate ──
   const rowLimit=PLANS[USER_PLAN]?.rows||50;
   if(INV.length>rowLimit){
@@ -13697,6 +13752,8 @@ async function handleFile(inp){
           const _yyAccts=[...new Set(_yyPays.map(p=>p.bankAcct).filter(Boolean))];
           addAudit('Bank/MUFG import',_yyPays.length+' payments · accounts: '+_yyAccts.join(', '));
           toast('Imported '+_yyPays.length+' bank payments · '+_yyAccts.length+' account(s)');
+          // Fix 1: New bank file means previous match results are stale
+          autoMatchHasRun = false; RES = []; EXC = [];
           try{_updateUploadStatus();}catch(e){}
           const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
         }catch(yyErr){hideProgress();toast('Bank file parse error: '+yyErr.message,'warn');console.error('BankParse:',yyErr);}
@@ -14263,6 +14320,9 @@ function processImport(){
     try{_buildSearchText();}catch(e){}
     _invalidateInvIndexes(); // force rebuild on next runMatch
     _buildInvIndexes();      // eagerly build indexes now
+    // Fix 1: Reset Auto Match state — new invoice file means previous results are stale
+    autoMatchHasRun = false;
+    RES = []; EXC = [];
     rInv();setStatus('loaded');saveToStorage();addAudit('Invoices imported',INV.length+' rows');
     if(INV.length>2000){toast('Imported '+INV.length+' invoices — large dataset, paginating display');}else{toast('Imported '+INV.length+' invoices');}
     // Populate Customer Open Items immediately after invoice import
