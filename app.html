@@ -7227,6 +7227,7 @@ function _confirmRemDetailImport(matchedBankTotal){
 
   closeModal();
   try{_updateUploadStatus();}catch(e){}
+  try{armpUpdateSetupState();}catch(e){}  // Fix 5: advance workflow step
   _showRemDetailPreview(REM_DETAIL, parsed.totalAmt, matchedBankTotal);
   toast('Imported '+REM_DETAIL.length+' remittance lines for '+parsed.custName+'. Run Auto Match.');
 }
@@ -8972,78 +8973,81 @@ function naUpdateChipCounts(){
 // ── Workflow status logic ───────────────────────────────────────────
 
 // ─── ARMP Setup Modal + Inline Banner state management ─────────────
+// workflowState: tracks each upload type independently (Fix 5, Fix 6)
+var workflowState = {
+  invoiceReportLoaded: false,
+  deliveryReportLoaded: false,
+  bankFileLoaded: false,
+  remittanceDetailsLoaded: false,
+  autoMatchRun: false,
+  activeStep: 1
+};
+function _updateWorkflowState(){
+  workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0);
+  workflowState.deliveryReportLoaded  = !!(typeof DELIV!=='undefined' && DELIV.length>0);
+  workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0);
+  workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0);
+  workflowState.autoMatchRun          = autoMatchHasRun;
+  // Compute active step: first incomplete step
+  workflowState.activeStep =
+    !workflowState.invoiceReportLoaded   ? 1 :
+    !workflowState.deliveryReportLoaded  ? 2 :
+    !workflowState.bankFileLoaded        ? 3 :
+    !workflowState.remittanceDetailsLoaded? 4 :
+    !workflowState.autoMatchRun          ? 5 : 6;
+}
 function armpUpdateSetupState(){
   try{
-    var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
-    var hasInv = (typeof INV!=='undefined') && INV.length > 0;
-    var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
-    // Step elements
-    var s1 = document.getElementById('armp-setup-step-1');
-    var s2 = document.getElementById('armp-setup-step-2');
-    var s3 = document.getElementById('armp-setup-step-3');
-    // FIX (v16 follow-up): ALWAYS show step rows. They're the primary actionable UI.
-    // The "All set!" banner should only appear as a transient confirmation after
-    // user actively completes step 3 in the current modal session — never as a
-    // permanent fixture when data was pre-loaded.
-    [s1, s2, s3].forEach(function(el){ if(el) el.style.display = ''; });
-    if(s1) s1.setAttribute('data-state', hasPay ? 'done' : 'active');
-    if(s2) s2.setAttribute('data-state', hasInv ? 'done' : (hasPay ? 'active' : 'pending'));
-    if(s3) s3.setAttribute('data-state', hasMatched ? 'done' : (hasPay && hasInv ? 'active' : 'pending'));
-    // Update subtitles to show counts when complete
-    if(s1){
-      var subEl = s1.querySelector('.armp-setup-step-sub');
-      if(subEl) subEl.textContent = hasPay
-        ? PAY.length + ' payment' + (PAY.length===1?'':'s') + ' imported'
-        : 'Upload Bank File / Remittance Data — BAI2, MUFG, CSV, or PDF';
+    _updateWorkflowState();
+    var ws = workflowState;
+    // Steps 1-4 are file uploads; step 5 is Auto Match
+    var steps = [
+      {id:'armp-setup-step-1', done: ws.invoiceReportLoaded,    sub_done: INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',             sub_pending: 'Open invoices / account open items — XLSX, CSV'},
+      {id:'armp-setup-step-2', done: ws.deliveryReportLoaded,   sub_done: DELIV.length.toLocaleString()+' delivery rows loaded',                                    sub_pending: 'Delivery, tracking, bill of lading, PO, sales order bridge — XLSX, CSV'},
+      {id:'armp-setup-step-3', done: ws.bankFileLoaded,          sub_done: PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                             sub_pending: 'BAI2, MUFG, CSV, Excel, or PDF bank payment file'},
+      {id:'armp-setup-step-4', done: ws.remittanceDetailsLoaded, sub_done: (REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines loaded', sub_pending: 'Customer remittance with invoice, tracking, PO, delivery references — XLSX, CSV, PDF'}
+    ];
+
+    // Show all step rows always
+    for(var si=0;si<steps.length;si++){
+      var el=document.getElementById(steps[si].id);
+      if(!el) continue;
+      el.style.display='';
+      var stepIdx = si+1;
+      var state = steps[si].done ? 'done' : (ws.activeStep===stepIdx ? 'active' : 'pending');
+      el.setAttribute('data-state', state);
+      var subEl=el.querySelector('.armp-setup-step-sub');
+      if(subEl) subEl.textContent = steps[si].done ? steps[si].sub_done : steps[si].sub_pending;
     }
-    if(s2){
-      var subEl2 = s2.querySelector('.armp-setup-step-sub');
-      if(subEl2) subEl2.textContent = hasInv
-        ? INV.length.toLocaleString() + ' invoice' + (INV.length===1?'':'s') + ' imported'
-        : 'Aging report — XLSX or CSV';
-    }
-    if(s3){
-      var subEl3 = s3.querySelector('.armp-setup-step-sub');
-      if(subEl3) subEl3.textContent = hasMatched
-        ? RES.length + ' match' + (RES.length===1?'':'es')
-        : 'Match payments to invoices automatically';
-    }
+
+    // "All set!" / done banner
     var doneEl = document.getElementById('armp-setup-done');
-    var modal = document.getElementById('armp-setup-modal');
-    // Show "All set!" banner only as transient post-completion (in-memory flag set by armpSetupClickStep)
-    if(hasPay && hasInv && hasMatched && window._armpSetupJustCompleted === true){
-      if(doneEl) doneEl.style.display = 'block';
-      var skipBtn = document.getElementById('armp-setup-skip-btn');
-      if(skipBtn) skipBtn.textContent = 'Close';
-      // Auto-close after 1.6s
-      if(modal && modal.classList.contains('open')){
-        setTimeout(function(){
-          armpCloseSetupModal();
-          window._armpSetupJustCompleted = false;
-        }, 1600);
+    var allUploaded = ws.invoiceReportLoaded && ws.bankFileLoaded;
+    if(allUploaded && window._armpSetupJustCompleted===true){
+      if(doneEl) doneEl.style.display='block';
+      var skipBtn=document.getElementById('armp-setup-skip-btn');
+      if(skipBtn) skipBtn.textContent='Close';
+      var modal=document.getElementById('armp-setup-modal');
+      if(modal&&modal.classList.contains('open')){
+        setTimeout(function(){ armpCloseSetupModal(); window._armpSetupJustCompleted=false; }, 1600);
       }
     } else {
-      // Default: hide success banner so step rows are the primary UI
-      if(doneEl) doneEl.style.display = 'none';
-      var skipBtn2 = document.getElementById('armp-setup-skip-btn');
-      if(skipBtn2) skipBtn2.textContent = 'Skip for now';
+      if(doneEl) doneEl.style.display='none';
+      var skipBtn2=document.getElementById('armp-setup-skip-btn');
+      if(skipBtn2) skipBtn2.textContent='Skip for now';
     }
-  }catch(e){ console.warn('[armpUpdateSetupState]', e); }
+  }catch(e){ console.warn('[armpUpdateSetupState]',e); }
 }
 function armpOpenSetupModal(){
-  var modal = document.getElementById('armp-setup-modal');
+  var modal=document.getElementById('armp-setup-modal');
   if(!modal) return;
-  // FIX (v16 follow-up): defensively reset step row visibility before showing state.
-  // Prevents stale display:none from a prior render leaving the modal in "All set!" state.
-  ['armp-setup-step-1','armp-setup-step-2','armp-setup-step-3'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(el) el.style.display = '';
+  ['armp-setup-step-1','armp-setup-step-2','armp-setup-step-3','armp-setup-step-4'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='';
   });
-  var doneEl = document.getElementById('armp-setup-done');
-  if(doneEl) doneEl.style.display = 'none';
-  // Reset transient flag — a fresh modal open is not a "just completed" event
-  window._armpSetupJustCompleted = false;
-  modal.style.display = 'flex';
+  var doneEl=document.getElementById('armp-setup-done');
+  if(doneEl) doneEl.style.display='none';
+  window._armpSetupJustCompleted=false;
+  modal.style.display='flex';
   modal.classList.add('open');
   armpUpdateSetupState();
 }
@@ -9060,18 +9064,29 @@ function armpCloseSetupModal(){
 function armpSetupClickStep(n){
   try{
     if(n===1){
-      // Step 1: Upload Invoice Report
-      if(typeof openImport==='function') openImport('inv');
+      // Step 1: Upload Invoice Report — direct file picker, no secondary modal
+      IMP_TYPE='inv'; IMP_BANK_MODE=false;
+      var _fi=document.getElementById('fi');
+      if(_fi){ _fi.accept='.csv,.txt,.xlsx,.xls'; _fi.onchange=function(){handleFile(_fi);}; _fi.click(); }
+      else if(typeof openImport==='function') openImport('inv');
     } else if(n===2){
-      // Step 2: Upload Delivery Report
-      if(typeof openImportDelivery==='function') openImportDelivery();
-      else if(typeof openImport==='function') openImport('del');
+      // Step 2: Upload Delivery Report — direct file picker
+      IMP_TYPE='del'; IMP_BANK_MODE=false;
+      var _fi2=document.getElementById('fi');
+      if(_fi2){ _fi2.accept='.csv,.txt,.xlsx,.xls'; _fi2.onchange=function(){handleFile(_fi2);}; _fi2.click(); }
+      else if(typeof openImportDelivery==='function') openImportDelivery();
     } else if(n===3){
-      // Step 3: Upload Bank File
-      if(typeof openImportBank==='function') openImportBank();
+      // Step 3: Upload Bank File / Bank Summary PDF — direct file picker
+      IMP_TYPE='rem'; IMP_BANK_MODE=true;
+      var _fi3=document.getElementById('fi');
+      if(_fi3){ _fi3.accept='.csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf'; _fi3.onchange=function(){handleFile(_fi3);}; _fi3.click(); }
+      else if(typeof openImportBank==='function') openImportBank();
     } else if(n===4){
-      // Step 4: Upload Remittance Details
-      if(typeof openImport==='function') openImport('remdetail');
+      // Step 4: Upload Remittance Details — direct file picker
+      IMP_TYPE='remdetail'; IMP_BANK_MODE=false;
+      var _fi4=document.getElementById('fi');
+      if(_fi4){ _fi4.accept='.csv,.txt,.xlsx,.xls,.pdf'; _fi4.onchange=function(){handleFile(_fi4);}; _fi4.click(); }
+      else if(typeof openImport==='function') openImport('remdetail');
     }
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
 }
@@ -13755,6 +13770,7 @@ async function handleFile(inp){
           // Fix 1: New bank file means previous match results are stale
           autoMatchHasRun = false; RES = []; EXC = [];
           try{_updateUploadStatus();}catch(e){}
+          try{armpUpdateSetupState();}catch(e){}  // Fix 5: advance workflow step
           const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
         }catch(yyErr){hideProgress();toast('Bank file parse error: '+yyErr.message,'warn');console.error('BankParse:',yyErr);}
         return;
@@ -13789,7 +13805,14 @@ async function handleFile(inp){
     } else if(ext==='xml'){
       const t=await f.text();const rows=parseCAMT(t);const _mt3=document.getElementById('mo-ta');if(_mt3)_mt3.value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='pdf'){
-      await parsePDFRemittance(f);
+      // Fix 3: Route PDF based on import type
+      // Bank file mode: parse as MUFG Bank Summary PDF → extract payments
+      // Remittance mode: parse as remittance advice → extract invoice refs
+      if(IMP_TYPE==='rem' || IMP_BANK_MODE){
+        await parseMUFGBankPDF(f);
+      } else {
+        await parsePDFRemittance(f);
+      }
     } else {
       const t=await f.text();const _mt5=document.getElementById('mo-ta');if(_mt5)_mt5.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     }
@@ -14015,6 +14038,197 @@ function parseCAMT(txt){
   return lines.join('\n');
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// MUFG BANK SUMMARY PDF PARSER (Fix 3)
+// Extracts customer payments from MUFG-style bank summary report PDFs.
+// Supports: Incoming Money Transfer, ACH Credit, Lockbox Deposit.
+// Excludes: ZBA transfers, fees, payroll/AP disbursements.
+// Stages payments in PAY[] for Auto Match — does NOT populate Review.
+// ════════════════════════════════════════════════════════════════════════════
+async function parseMUFGBankPDF(file){
+  if(typeof pdfjsLib==='undefined'){
+    hideProgress();
+    toast('PDF parser loading — please try again in a moment','warn');
+    return;
+  }
+  try{
+    showProgress('Reading bank summary PDF…',15);
+    const buf = await file.arrayBuffer();
+    showProgress('Extracting text from PDF…',30);
+    const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+    const numPages = pdf.numPages;
+    let allText = '';
+    for(let p=1;p<=numPages;p++){
+      showProgress('Reading page '+p+'/'+numPages+'…',30+Math.round(p/numPages*40));
+      const page = await pdf.getPage(p);
+      const tc = await page.getTextContent();
+      // Join items preserving layout — items on same y-line joined with tab
+      let lastY=null, lineText='';
+      tc.items.forEach(function(item){
+        const y=Math.round(item.transform[5]);
+        if(lastY!==null&&Math.abs(y-lastY)>3){allText+=lineText+'\n';lineText='';}
+        lineText+=(lineText?'\t':'')+item.str.trim();
+        lastY=y;
+      });
+      if(lineText) allText+=lineText+'\n';
+      allText+='\n---PAGE---\n';
+    }
+
+    // ── Validate: is this a bank summary PDF? ──
+    const _lc = allText.toLowerCase();
+    const _isBankPDF = _lc.includes('account summary') || _lc.includes('transaction summary') ||
+                       _lc.includes('opening ledger') || _lc.includes('closing ledger') ||
+                       _lc.includes('incoming money transfer') || _lc.includes('mufg') ||
+                       _lc.includes('posted transaction') || _lc.includes('preauthorized ach');
+    if(!_isBankPDF){
+      hideProgress();
+      showModal('Unrecognized PDF Format',
+        '<div style="padding:12px 0">'+
+          '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This PDF could not be recognized as a bank summary report.</p>'+
+          '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">Please upload a searchable MUFG bank summary PDF, or use CSV/XLSX export instead.</p>'+
+          '<p style="color:var(--t3);font-size:12px">If this is a scanned (image-only) PDF, text extraction is not possible.</p>'+
+          '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button>'+
+        '</div>'
+      );
+      return;
+    }
+
+    showProgress('Extracting bank transactions…',75);
+    await new Promise(function(r){setTimeout(r,30);});
+
+    // ── Extract transactions from PDF text ──
+    const lines = allText.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    const payments = [];
+
+    // Patterns for MUFG-style bank summary
+    const reAmt       = /\$?([\d,]+\.\d{2})/;
+    const reDateMD    = /(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/;
+    const reRef       = /[A-Z]{2,}[0-9]{6,}/;
+    const reInv       = /5\d{9}/;   // 510xxxxxxx HORIBA invoice
+    const reSO        = /2\d{9}/;   // 210xxxxxxx sales order
+    const reDel       = /7\d{9}/;   // 710xxxxxxx delivery
+    const reTrk1Z     = /1Z[A-Z0-9]{16,18}/i;
+
+    // MUFG credit transaction keywords
+    const _creditKeywords = ['incoming money transfer','preauthorized ach credit','ach credit',
+      'wire transfer credit','lockbox deposit','incoming wire','credit','fedwire credit',
+      'incoming transfer','incoming ach'];
+    // Exclusion keywords
+    const _excludeKeywords = ['zba transfer','account transfer','payroll','controlled disbursement',
+      'service charge','account analysis','fee','interest credit'];
+
+    let _curTx = null;
+    let _acctNo = '';
+
+    // Extract account number from header area
+    var _acctM = allText.match(/(?:Account\s*(?:Number|#|No\.?)?:?\s*)([A-Z0-9\-]{6,20})/i);
+    if(_acctM) _acctNo = _acctM[1].trim();
+
+    lines.forEach(function(line){
+      const lc = line.toLowerCase();
+
+      // Skip excluded transactions
+      if(_excludeKeywords.some(function(k){ return lc.includes(k); })) return;
+
+      // Detect credit transaction start
+      const _isCredit = _creditKeywords.some(function(k){ return lc.includes(k); });
+      if(_isCredit){
+        // Flush previous transaction
+        if(_curTx && _curTx.amt > 0) payments.push(_curTx);
+        const _amtM = line.match(reAmt);
+        const _dateM = line.match(reDateMD);
+        _curTx = {
+          bankAcct:  _acctNo,
+          bankId:    '',
+          a:         '',
+          c:         '',
+          amt:       _amtM ? parseFloat(_amtM[1].replace(/,/g,'')) : 0,
+          i:         '',
+          po:        '',
+          so:        '',
+          m:         lc.includes('wire')||lc.includes('fedwire') ? 'Wire' : lc.includes('ach') ? 'ACH' : 'Credit',
+          baiCode:   '',
+          txId:      '',
+          bankRef:   '',
+          custRef:   '',
+          payDate:   _dateM ? _dateM[1] : '',
+          ccy:       'USD',
+          n:         line,
+          st:        'Unapplied Cash',
+          coa:       false,
+          unapplied: false,
+          dp:        false,
+          sourceFormat: 'mufg-pdf'
+        };
+        return;
+      }
+
+      // Add detail text to current transaction
+      if(_curTx){
+        _curTx.n = (_curTx.n||'') + ' | ' + line;
+
+        // Extract payer/customer name from "ORIGINATOR" or name patterns
+        if(/(?:originator|remitter|payer|from|sender)\s*[:]\s*(.+)/i.test(line)){
+          var _nm = line.match(/(?:originator|remitter|payer|from|sender)\s*[:]\s*(.+)/i);
+          if(_nm) _curTx.c = _nm[1].trim().slice(0,60);
+        }
+
+        // Extract bank/customer references
+        var _refM = line.match(reRef);
+        if(_refM){
+          if(!_curTx.bankRef && /(?:ref|bank)\s*(?:no|#|:)/i.test(line)) _curTx.bankRef = _refM[0];
+          else if(!_curTx.custRef) _curTx.custRef = _refM[0];
+          if(!_curTx.txId) _curTx.txId = _refM[0];
+        }
+
+        // HORIBA doc number extraction
+        var _invM = line.match(reInv);
+        if(_invM && !_curTx.i) _curTx.i = _invM[0];
+        var _soM = line.match(reSO);
+        if(_soM && !_curTx.so) _curTx.so = _soM[0];
+        var _trkM = line.match(reTrk1Z);
+        if(_trkM && !_curTx.trackingNo) _curTx.trackingNo = _trkM[0];
+
+        // Extract amount if not yet set
+        if(_curTx.amt===0){
+          var _amtM2 = line.match(reAmt);
+          if(_amtM2) _curTx.amt = parseFloat(_amtM2[1].replace(/,/g,''));
+        }
+      }
+    });
+    if(_curTx && _curTx.amt>0) payments.push(_curTx);
+
+    if(!payments.length){
+      hideProgress();
+      showModal('No Payments Found in PDF',
+        '<div style="padding:12px 0">'+
+          '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">No credit transactions were found in this bank summary PDF.</p>'+
+          '<p style="color:var(--t3);font-size:12px">The PDF may be image-only (scanned) or use an unsupported format. Try uploading a CSV or XLSX bank export instead.</p>'+
+          '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button>'+
+        '</div>'
+      );
+      return;
+    }
+
+    // Stage payments — do NOT run Auto Match or populate Review
+    PAY = payments;
+    autoMatchHasRun = false; RES = []; EXC = [];
+    hideProgress();
+    saveToStorage();
+    try{if(typeof refreshBankAccountOptions==='function') refreshBankAccountOptions();}catch(e){}
+    try{rRem();}catch(e){}
+    try{updDash();updTop();}catch(e){}
+    try{_updateUploadStatus();}catch(e){}
+    try{armpUpdateSetupState();}catch(e){}
+    var _mo=document.getElementById('imp-modal');if(_mo)_mo.classList.remove('open');
+    addAudit('Bank PDF import',payments.length+' payments extracted · account: '+(_acctNo||'—'));
+    toast('Imported '+payments.length+' bank payments from PDF · account: '+(_acctNo||'—'));
+  }catch(err){
+    hideProgress();
+    toast('Bank PDF parse error: '+err.message,'warn');
+    console.error('parseMUFGBankPDF:',err);
+  }
+}
 async function parsePDFRemittance(file){
   // ── PDF.js remittance extraction ──
   if(typeof pdfjsLib==='undefined'){
@@ -14224,115 +14438,105 @@ function processImport(){
     return -1;
   }
   if(IMP_TYPE==='inv'){
-    INV=rows.filter(r=>r.some(c=>c)).map(r=>({
-      c:r[col(
-        // Standard
-        'customername','customer','name','company','companyname',
-        // SAP FBL5N / FBL3N
-        'name1','nameonaccount','soldtoparty','soldto','debtorname',
-        // SAP S_ALR / aging
-        'debtor','bp','businesspartner','bpname','accountname',
-        
-        'entity','entityname','vendorname','clientname'
-      )]||'',
-      a:r[col(
-        // Standard
-        'account','acct','customerid','customeraccount','accountnumber',
-        // SAP
-        'customeraccount','debtornumber','debtoraccount','kunnr',
-        'accountingdocument','customer','customernumber','partnernumber',
-        
-        'entityid','externalid','accountcode','debtorcode','bpnumber'
-      )]||'',
-      i:r[col(
-        // Standard
-        'invoice','inv','invoicenum','invoicenumber','invoiceno',
-        'customerinvoice','invoiceid',
-        // SAP FBL5N
-        'documentnumber','docnumber','documentno','belnr','referencedocument',
-        'refdocno','refdoc','reference','invoicedocument',
-        // SAP S_ALR
-        'documentno','docno','invoicereference','invoiceref',
-        
-        'tranid','transactionnumber','invoicenumber2','externaldocnum'
-      )]||'',
-      po:r[col(
-        // Standard — specific keys first to avoid false matches
-        'customerpo','ponumber','purchaseordernumber','poref','purchaseorder','po',
-        // SAP
-        'purchaseordernumber','ponumber','ponum','ebeln',
-        'purchaseorderno','purchaseref','assignment','zuonr',
-        
-        'poname','purchaseordernum','orderreference','poref2'
-      )]||'',
-      so:r[col(
-        // Standard — specific first
-        'salesorderno','salesordernum','salesorder','salesorderreference','sales','so',
-        // SAP
-        'salesorderreference','vbeln','salesdocument','salesdoc',
-        'ordernum','ordernumber','soref',
-        
-        'salesorderid','orderid','tranid2'
-      )]||'',
-      amt:parseFloat(String(r[col(
-        // Standard
-        'amount','amt','openamount','balance','invoiceamount',
-        'netdue','netamount','openbalance',
-        // SAP FBL5N
-        'amountinlc','amtinlc','lcamount','amountinlocalcurrency',
-        'amountindoccurrency','amtindocumentcurrency','amountindocumentcurrency',
-        'wrbtr','dmbtr','openitemamount','remainingamount','balancedue',
-        // SAP S_ALR aging
-        'netpaymentamount','totaldue','amountdue','outstanding',
-        'invoicetotal','grossamount','originalamount',
-        
-        'amountremaining','amountopen','unpaidamount','balance2'
-      )]||'0').replace(/[$,\s]/g,''))||0,
-      dt:r[col('doctype','documenttype','type','dt','blart','postingkeytype')]||'RV',
-      dt2:r[col(
-        // Standard
-        'invoicedate','date','invdate',
-        // SAP
-        'documentdate','postingdate','budat','bldat','invoicecreatdate',
-        'billingdate','billingdocumentdate','baselinedate',
-        // NetSuite
-        'trandate','createddate','invoicedate2'
-      )]||'',
-      due:r[col(
-        // Standard
-        'duedate','due','netduedate',
-        // SAP FBL5N
-        'netduedate','cashdiscountdate1','cashdiscountdate','zfbdt',
-        'dueondate','paymentduedate','duedate2','maturitydate',
-        
-        'duedate3','paymentdate','dueby'
-      )]||'',
-      d:r[col(
-        // Standard
-        'document','docnum','documentnumber',
-        // SAP
-        'clearingdocument','augbl','clearedwith','referencedocno','xblnr'
-      )]||'',
-      t:r[col('tracking','trk','trackingnumber','trackingno')]||'',
-      dl:r[col('delivery','del','deliverynumber','deliveryno','vbeln2')]||'',
-      s:''
-    }));
-    try{_buildSearchText();}catch(e){}
-    _invalidateInvIndexes(); // force rebuild on next runMatch
-    _buildInvIndexes();      // eagerly build indexes now
-    // Fix 1: Reset Auto Match state — new invoice file means previous results are stale
-    autoMatchHasRun = false;
-    RES = []; EXC = [];
-    rInv();setStatus('loaded');saveToStorage();addAudit('Invoices imported',INV.length+' rows');
-    if(INV.length>2000){toast('Imported '+INV.length+' invoices — large dataset, paginating display');}else{toast('Imported '+INV.length+' invoices');}
-    // Populate Customer Open Items immediately after invoice import
-    try{renderFbl5n('ca-open-items-body','','');}catch(e){}
-    try{
-      var _lbl=document.getElementById('ca-bottom-cust-label');
-      if(_lbl)_lbl.textContent='All accounts · '+INV.length+' open invoices';
-    }catch(e){}
-    try{updDash();}catch(e){}
-    try{_updateUploadStatus();}catch(e){}
+    var _invT0 = Date.now();
+    showProgress('Importing invoice report…', 10);
+    // Parse all rows synchronously (fast — just array operations)
+    var _rawRows = rows.filter(function(r){ return r.some(function(c){return c;}); });
+    showProgress('Normalizing invoice data…', 30);
+
+    // Build INV in a non-blocking async chunk loop to avoid freezing the browser
+    var CHUNK_SIZE = 500;
+    var _invChunks = [];
+    for(var _ci=0; _ci<_rawRows.length; _ci+=CHUNK_SIZE){
+      _invChunks.push(_rawRows.slice(_ci, _ci+CHUNK_SIZE));
+    }
+    INV = [];
+    var _invChunkIdx = 0;
+
+    function _processInvChunk(){
+      if(_invChunkIdx >= _invChunks.length){
+        // All chunks done
+        var _invMs = Date.now() - _invT0;
+        showProgress('Building invoice index…', 85);
+        try{_buildSearchText();}catch(e){}
+        _invalidateInvIndexes();
+        _buildInvIndexes();
+        autoMatchHasRun = false;
+        RES = []; EXC = [];
+        showProgress('Invoice report ready — '+INV.length.toLocaleString()+' invoices indexed in '+_invMs+'ms', 100);
+        setTimeout(function(){
+          rInv();
+          setStatus('loaded');
+          saveToStorage();
+          addAudit('Invoices imported', INV.length+' rows · '+_invMs+'ms');
+          if(INV.length>2000){ toast('Imported '+INV.length.toLocaleString()+' invoices ('+_invMs+'ms) — large dataset, lazy rendering active'); }
+          else { toast('Imported '+INV.length+' invoices ('+_invMs+'ms)'); }
+          try{renderFbl5n('ca-open-items-body','','');}catch(e){}
+          try{
+            var _lbl=document.getElementById('ca-bottom-cust-label');
+            if(_lbl)_lbl.textContent='All accounts · '+INV.length+' open invoices';
+          }catch(e){}
+          try{updDash();}catch(e){}
+          try{_updateUploadStatus();}catch(e){}
+          try{armpUpdateSetupState();}catch(e){}
+          hideProgress();
+          closeMo();
+        }, 60);
+        return;
+      }
+      var _chunk = _invChunks[_invChunkIdx];
+      var _pct = 30 + Math.round((_invChunkIdx/_invChunks.length)*55);
+      showProgress('Normalizing invoice data… '+INV.length.toLocaleString()+' of '+_rawRows.length.toLocaleString()+' rows', _pct);
+      // Process one chunk
+      _chunk.forEach(function(r){
+        INV.push({
+          c:r[col(
+            'customername','customer','name','company','companyname',
+            'name1','nameonaccount','soldtoparty','soldto','debtorname',
+            'debtor','bp','businesspartner','bpname','accountname',
+            'entity','entityname','vendorname','clientname'
+          )]||'',
+          a:r[col(
+            'account','acct','customerid','customeraccount','accountnumber',
+            'customeraccount','debtornumber','debtoraccount','kunnr',
+            'accountingdocument','customer','customernumber','partnernumber',
+            'entityid','externalid','accountcode','debtorcode','bpnumber'
+          )]||'',
+          i:r[col(
+            'invoice','inv','invoicenum','invoicenumber','invoiceno',
+            'customerinvoice','invoiceid',
+            'documentnumber','docnumber','documentno','belnr','referencedocument',
+            'refdocno','refdoc','reference','invoicedocument',
+            'docno','invoicereference','invoiceref',
+            'tranid','transactionnumber','invoicenumber2','externaldocnum'
+          )]||'',
+          po:r[col(
+            'customerpo','ponumber','purchaseordernumber','poref','purchaseorder','po',
+            'purchaseordernumber','ponumber','ponum','ebeln',
+            'purchaseorderno','purchaseref','assignment','zuonr',
+            'poname','purchaseordernum','orderreference','poref2'
+          )]||'',
+          so:r[col(
+            'salesorderno','salesordernum','salesorder','salesorderreference','sales','so',
+            'salesorderreference','vbeln','salesdocument','salesdoc',
+            'ordernum','ordernumber','soref',
+            'salesorderid','orderid','tranid2'
+          )]||'',
+          amt:parseFloat(String(r[col('amount','amt','openamount','balance','invoiceamount','netdue','netamount','openbalance','amountinlocalcurrency','amountindoccurrency','amtlc','outstandingbalance','remainingbalance','arbalance')]||'0').replace(/[^0-9.\-]/g,''))||0,
+          dt:r[col('documenttype','doctype','type','transactiontype','blart','postingtype','invoicetype','dt','category','recordtype')]||'Invoice',
+          dt2:r[col('invoicedate','docdate','postingdate','documentdate','budat','bldat','date','invoicecreated','createdate','postdate','transactiondate','valuedate','trandate','createddate')]||'',
+          due:r[col('duedate','due','netduedate','netduedate','cashdiscountdate1','cashdiscountdate','zfbdt','dueondate','paymentduedate','duedate2','maturitydate','duedate3','paymentdate','dueby')]||'',
+          d:r[col('document','docnum','documentnumber','clearingdocument','augbl','clearedwith','referencedocno','xblnr')]||'',
+          t:r[col('tracking','trk','trackingnumber','trackingno')]||'',
+          dl:r[col('delivery','del','deliverynumber','deliveryno','vbeln2')]||'',
+          s:''
+        });
+      });
+      _invChunkIdx++;
+      setTimeout(_processInvChunk, 0);
+    }
+    setTimeout(_processInvChunk, 20);
+    return;  // async path — closeMo/updTop handled inside chunk completion
   }else if(IMP_TYPE==='del'){
     // ── Delivery Report Parse ─────────────────────────────────────────────
     // TK-Fujikin delivery report exact columns (auto-detected by header):
@@ -14499,6 +14703,7 @@ function processImport(){
         var _delMsg = 'Delivery Report synced: '+(_enrichResult?_enrichResult.enriched:matchedDel)+' open items enriched';
         if(_enrichResult && _enrichResult.unmatched>0) _delMsg += ', '+_enrichResult.unmatched+' delivery rows unmatched';
         toast(_delMsg);
+        try{armpUpdateSetupState();}catch(e){}  // Fix 5: advance workflow step
       }
     };
     showProgress('Processing '+DELIV.length+' delivery rows…', 5);
@@ -14880,6 +15085,13 @@ function initLogoCanvas(){
 window.addEventListener('load',()=>{
   initLogoCanvas();
   const params=new URLSearchParams(window.location.search);
+  // Fix 1: Handle /Login route — ensure login screen shows correctly
+  var _path = window.location.pathname;
+  if(_path==='/Login'||_path==='/login'||_path==='/Login/'||_path==='/login/'){
+    // Rewrite to app root for SPA — /Login is served as app.html via _redirects
+    if(window.history && window.history.replaceState) window.history.replaceState({},'',window.location.pathname);
+    // Ensure login screen is visible (default state on load)
+  }
   if(params.get('demo')==='true'){demoLogin();return;}
   const rem=localStorage.getItem('armp_remember_email');
   const emailEl=document.getElementById('li-email');
@@ -14894,7 +15106,7 @@ window.addEventListener('load',()=>{
       const modal=document.getElementById('mo-welcome');
       if(modal)modal.style.display='flex';
       // Clean the URL so refresh doesn't re-show the modal
-      window.history.replaceState({},'','/app.html');
+      window.history.replaceState({},'','/Login');
     },600);
   }
   const sess=localStorage.getItem('armp_session');
