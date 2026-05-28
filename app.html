@@ -8697,6 +8697,25 @@ function sp(id){
       setTimeout(armpRefreshTimezoneLabel, 80);
     }
   }catch(e){}
+
+  // Update browser URL to clean route when navigating panels (only when logged in)
+  try{
+    if(document.body.classList.contains('app-active') && window.history && window.history.pushState){
+      var _panelRoute = {
+        'cash-app':  '/dashboard',
+        'settings':  '/settings',
+        'reporting': '/dashboard',
+        'posting':   '/dashboard',
+        'remittance':'/dashboard',
+        'invoices':  '/dashboard',
+        'audit':     '/settings'
+      }[pid] || '/dashboard';
+      // Only push if route actually changed (avoids duplicate history entries)
+      if(window.location.pathname !== _panelRoute){
+        window.history.pushState({armpPanel:pid},'AR Match Pro',_panelRoute);
+      }
+    }
+  }catch(e){}
 }
 
 // ── Dark mode ──
@@ -10132,6 +10151,8 @@ function doLogout(){
   // Reset ARMP_CFG to defaults (prevents next user seeing previous user's config)
   try{ ARMP_CFG = JSON.parse(JSON.stringify(ARMP_CFG_DEFAULTS)); }catch(e){}
   try{ CFG_ALIASES={}; }catch(e){}
+  // Restore clean URL — /Login is the official app entry point
+  try{ if(window.history&&window.history.replaceState) window.history.replaceState({},'AR Match Pro — Login','/Login'); }catch(e){}
 }
 
 function setUserDisplay(user){
@@ -10232,7 +10253,35 @@ function launchApp(user){
   // Start inactivity auto-logout watch (non-demo: 15 min)
   try{ startInactivityWatch(); }catch(e){}
 
+  // ── Clean URL: hide /app.html from browser address bar ───────────────
+  // After login, set the visible URL to /dashboard (enterprise SaaS convention).
+  // The Netlify _redirects file maps all clean routes → /app.html 200 so
+  // direct links and refreshes never 404.
+  try{
+    var _targetRoute = '/dashboard';
+    var _curPath = window.location.pathname;
+    // If user deep-linked to a specific panel (/review, /settings, /recon), keep that
+    if(_curPath==='/review')   { _targetRoute='/review'; }
+    else if(_curPath==='/settings') { _targetRoute='/settings'; }
+    else if(_curPath==='/recon')    { _targetRoute='/recon'; }
+    if(window.history && window.history.replaceState){
+      window.history.replaceState({armpRoute:_targetRoute},'AR Match Pro',_targetRoute);
+    }
+  }catch(e){}
+
   setTimeout(navToWorklist, 0);
+
+  // Dispatch to correct panel if user deep-linked a specific route
+  try{
+    var _initRoute = window.location.pathname;
+    if(_initRoute==='/review'){
+      setTimeout(function(){try{sp('cash-app');setCaTab('review',document.getElementById('ca-tab-review'));}catch(e){}},300);
+    } else if(_initRoute==='/settings'){
+      setTimeout(function(){try{sp('settings');}catch(e){}},300);
+    } else if(_initRoute==='/recon'){
+      setTimeout(function(){try{sp('cash-app');setCaTab('recon',document.getElementById('ca-tab-recon'));}catch(e){}},300);
+    }
+  }catch(e){}
 }
 
 function gsLive(q){
@@ -15305,18 +15354,43 @@ function initLogoCanvas(){
   draw();
 }
 
-// ══════════════════════════════════════════════════════════
+// ── Handle browser back/forward with clean routes ─────────────────────
+window.addEventListener('popstate', function(evt){
+  try{
+    var _p = window.location.pathname;
+    // If we popped back to /Login and the app is open, treat as logout intent
+    if((_p==='/Login'||_p==='/login')&&document.body.classList.contains('app-active')){
+      // Don't force logout — just update title; user may use back/forward within app
+      document.title='AR Match Pro — Login';
+    } else if(_p==='/review'){
+      try{sp('cash-app');setCaTab('review',document.getElementById('ca-tab-review'));}catch(e){}
+    } else if(_p==='/settings'){
+      try{sp('settings');}catch(e){}
+    } else if(_p==='/recon'){
+      try{sp('cash-app');setCaTab('recon',document.getElementById('ca-tab-recon'));}catch(e){}
+    } else if(_p==='/dashboard'||_p==='/app'||_p==='/'){
+      try{sp('cash-app');}catch(e){}
+    }
+  }catch(e){}
+});
+
 // SESSION RESTORE + INIT
-// ══════════════════════════════════════════════════════════
 window.addEventListener('load',()=>{
   initLogoCanvas();
   const params=new URLSearchParams(window.location.search);
-  // Fix 1: Handle /Login route — ensure login screen shows correctly
-  var _path = window.location.pathname;
-  if(_path==='/Login'||_path==='/login'||_path==='/Login/'||_path==='/login/'){
-    // Rewrite to app root for SPA — /Login is served as app.html via _redirects
-    if(window.history && window.history.replaceState) window.history.replaceState({},'',window.location.pathname);
-    // Ensure login screen is visible (default state on load)
+
+  // ── SPA route handling: clean URLs served via Netlify _redirects ──────
+  // All of /Login /dashboard /review /settings /recon are rewritten to
+  // app.html by Netlify. Here we resolve which panel to show, and ensure
+  // /app.html never appears in the address bar.
+  var _initPath = window.location.pathname;
+  var _cleanRoutes = ['/Login','/login','/dashboard','/review','/settings','/recon','/app'];
+  var _isCleanRoute = _cleanRoutes.some(function(r){ return _initPath===r||_initPath===r+'/'; });
+
+  // If user landed on /app.html directly, silently rewrite to /Login
+  // (browser URL update only — does not reload or redirect)
+  if(_initPath==='/app.html'||_initPath==='/app.html/'){
+    try{ if(window.history&&window.history.replaceState) window.history.replaceState({},'AR Match Pro — Login','/Login'); }catch(e){}
   }
   if(params.get('demo')==='true'){demoLogin();return;}
   const rem=localStorage.getItem('armp_remember_email');
