@@ -2733,7 +2733,9 @@ body.app-active #app {
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Remittance Details</button>
       </div>
-      <!-- Success state (hidden until all 3 complete) -->
+      <!-- Dynamic recommendation area -->
+      <div id="armp-setup-recommendation" style="display:none;padding:0 4px"></div>
+      <!-- Success state (hidden — never auto-shown) -->
       <div id="armp-setup-done" style="display:none;text-align:center;padding:18px 0 8px">
         <div style="font-size:32px;margin-bottom:8px">✓</div>
         <div style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:6px">All set!</div>
@@ -2976,7 +2978,7 @@ body.app-active #app {
 
       <!-- File picker button — primary action -->
       <div id="imp-file-area">
-        <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf" style="display:none" onchange="handleFile(this)">
+        <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFile(this)">
         <button class="btn btn-p" style="width:100%;padding:14px;font-size:15px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="document.getElementById('fi').click()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 2v8M5 7l3 3 3-3"/></svg>
           Select file to import
@@ -7244,7 +7246,8 @@ function _confirmRemDetailImport(matchedBankTotal){
 
   closeModal();
   try{_updateUploadStatus();}catch(e){}
-  try{armpUpdateSetupState();}catch(e){}  // Fix 5: advance workflow step
+  if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
+    try{armpUpdateSetupState();}catch(e){}
   _showRemDetailPreview(REM_DETAIL, parsed.totalAmt, matchedBankTotal);
   toast('Imported '+REM_DETAIL.length+' remittance lines for '+parsed.custName+'. Run Auto Match.');
 }
@@ -9016,7 +9019,8 @@ var workflowState = {
   bankFileLoaded: false,
   remittanceDetailsLoaded: false,
   autoMatchRun: false,
-  activeStep: 1
+  activeStep: 1,
+  newDataSinceLastMatch: false
 };
 function _updateWorkflowState(){
   workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0);
@@ -9024,54 +9028,56 @@ function _updateWorkflowState(){
   workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0);
   workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0);
   workflowState.autoMatchRun          = autoMatchHasRun;
-  // Compute active step: first incomplete step
+  // Flexible: recommend next BEST action, don't force linear order
+  var _ready = workflowState.invoiceReportLoaded && workflowState.bankFileLoaded;
   workflowState.activeStep =
-    !workflowState.invoiceReportLoaded   ? 1 :
-    !workflowState.deliveryReportLoaded  ? 2 :
-    !workflowState.bankFileLoaded        ? 3 :
-    !workflowState.remittanceDetailsLoaded? 4 :
-    !workflowState.autoMatchRun          ? 5 : 6;
+    _ready && !workflowState.autoMatchRun ? 5 :
+    !workflowState.invoiceReportLoaded    ? 1 :
+    !workflowState.bankFileLoaded         ? 3 :
+    workflowState.autoMatchRun            ? 6 : 5;
 }
 function armpUpdateSetupState(){
   try{
     _updateWorkflowState();
     var ws = workflowState;
-    // Steps 1-4 are file uploads; step 5 is Auto Match
+    // Steps 1-4: file uploads — each independently done/active, NEVER locked
     var steps = [
-      {id:'armp-setup-step-1', done: ws.invoiceReportLoaded,    sub_done: INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',             sub_pending: 'Open invoices / account open items — XLSX, CSV'},
-      {id:'armp-setup-step-2', done: ws.deliveryReportLoaded,   sub_done: DELIV.length.toLocaleString()+' delivery rows loaded',                                    sub_pending: 'Delivery, tracking, bill of lading, PO, sales order bridge — XLSX, CSV'},
-      {id:'armp-setup-step-3', done: ws.bankFileLoaded,          sub_done: PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                             sub_pending: 'MUFG, US Bank, BAI2, CSV, Excel, or PDF bank payment file'},
-      {id:'armp-setup-step-4', done: ws.remittanceDetailsLoaded, sub_done: (REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines loaded', sub_pending: 'Customer remittance with invoice, tracking, PO, delivery references — XLSX, CSV, PDF'}
+      {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
+      {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:DELIV.length.toLocaleString()+' delivery rows loaded',                              sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
+      {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                      sub_pending:'MUFG, US Bank, BAI2, CSV, Excel, PDF, or screenshot'},
+      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines', sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
     ];
-
-    // Show all step rows always
     for(var si=0;si<steps.length;si++){
       var el=document.getElementById(steps[si].id);
       if(!el) continue;
       el.style.display='';
-      var stepIdx = si+1;
-      var state = steps[si].done ? 'done' : (ws.activeStep===stepIdx ? 'active' : 'pending');
-      el.setAttribute('data-state', state);
+      el.setAttribute('data-state', steps[si].done ? 'done' : 'active');
       var subEl=el.querySelector('.armp-setup-step-sub');
       if(subEl) subEl.textContent = steps[si].done ? steps[si].sub_done : steps[si].sub_pending;
     }
-
-    // "All set!" / done banner
-    var doneEl = document.getElementById('armp-setup-done');
-    var allUploaded = ws.invoiceReportLoaded && ws.bankFileLoaded;
-    if(allUploaded && window._armpSetupJustCompleted===true){
-      if(doneEl) doneEl.style.display='block';
-      var skipBtn=document.getElementById('armp-setup-skip-btn');
-      if(skipBtn) skipBtn.textContent='Close';
-      var modal=document.getElementById('armp-setup-modal');
-      if(modal&&modal.classList.contains('open')){
-        setTimeout(function(){ armpCloseSetupModal(); window._armpSetupJustCompleted=false; }, 1600);
-      }
-    } else {
-      if(doneEl) doneEl.style.display='none';
-      var skipBtn2=document.getElementById('armp-setup-skip-btn');
-      if(skipBtn2) skipBtn2.textContent='Skip for now';
+    // Dynamic recommendation area
+    var recEl = document.getElementById('armp-setup-recommendation');
+    if(recEl){
+      var _ready = ws.invoiceReportLoaded && ws.bankFileLoaded;
+      if(_ready && !ws.autoMatchRun){
+        recEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(18,184,134,.08);border:1px solid rgba(18,184,134,.2);font-size:12px;color:var(--g-t);margin-top:8px">'+
+          '✓ <strong>Ready for Auto Match</strong>'+
+          (ws.deliveryReportLoaded?'':' · Delivery report enhances bridge matching')+
+          (ws.remittanceDetailsLoaded?'':' · Remittance improves results')+
+          '<button class="btn btn-p btn-xs" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)" style="margin-left:auto">⚡ Run</button></div>';
+        recEl.style.display='';
+      } else if(ws.autoMatchRun && ws.newDataSinceLastMatch){
+        recEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.08);border:1px solid rgba(20,168,216,.2);font-size:12px;color:var(--p);margin-top:8px">'+
+          '🔄 <strong>New data detected.</strong> Re-run Auto Match for enhanced matching?'+
+          '<button class="btn btn-p btn-xs" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)" style="margin-left:auto">⚡ Re-run</button></div>';
+        recEl.style.display='';
+      } else { recEl.style.display='none'; }
     }
+    // Never auto-close setup modal — user controls it
+    var doneEl=document.getElementById('armp-setup-done');
+    if(doneEl) doneEl.style.display='none';
+    var skipBtn=document.getElementById('armp-setup-skip-btn');
+    if(skipBtn) skipBtn.textContent = ws.autoMatchRun ? 'Close' : 'Continue without completing';
   }catch(e){ console.warn('[armpUpdateSetupState]',e); }
 }
 function armpOpenSetupModal(){
@@ -9103,25 +9109,25 @@ function armpSetupClickStep(n){
       // Step 1: Upload Invoice Report — direct file picker, no secondary modal
       IMP_TYPE='inv'; IMP_BANK_MODE=false;
       var _fi=document.getElementById('fi');
-      if(_fi){ _fi.accept='.csv,.txt,.xlsx,.xls'; _fi.onchange=function(){handleFile(_fi);}; _fi.click(); }
+      if(_fi){ _fi.accept='.csv,.txt,.xlsx,.xls,.png,.jpg,.jpeg,.webp'; _fi.onchange=function(){handleFile(_fi);}; _fi.click(); }
       else if(typeof openImport==='function') openImport('inv');
     } else if(n===2){
       // Step 2: Upload Delivery Report — direct file picker
       IMP_TYPE='del'; IMP_BANK_MODE=false;
       var _fi2=document.getElementById('fi');
-      if(_fi2){ _fi2.accept='.csv,.txt,.xlsx,.xls'; _fi2.onchange=function(){handleFile(_fi2);}; _fi2.click(); }
+      if(_fi2){ _fi2.accept='.csv,.txt,.xlsx,.xls,.png,.jpg,.jpeg,.webp'; _fi2.onchange=function(){handleFile(_fi2);}; _fi2.click(); }
       else if(typeof openImportDelivery==='function') openImportDelivery();
     } else if(n===3){
       // Step 3: Upload Bank File / Bank Summary PDF — direct file picker
       IMP_TYPE='rem'; IMP_BANK_MODE=true;
       var _fi3=document.getElementById('fi');
-      if(_fi3){ _fi3.accept='.csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf'; _fi3.onchange=function(){handleFile(_fi3);}; _fi3.click(); }
+      if(_fi3){ _fi3.accept='.csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf,.png,.jpg,.jpeg,.webp'; _fi3.onchange=function(){handleFile(_fi3);}; _fi3.click(); }
       else if(typeof openImportBank==='function') openImportBank();
     } else if(n===4){
       // Step 4: Upload Remittance Details — direct file picker
       IMP_TYPE='remdetail'; IMP_BANK_MODE=false;
       var _fi4=document.getElementById('fi');
-      if(_fi4){ _fi4.accept='.csv,.txt,.xlsx,.xls,.pdf'; _fi4.onchange=function(){handleFile(_fi4);}; _fi4.click(); }
+      if(_fi4){ _fi4.accept='.csv,.txt,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp'; _fi4.onchange=function(){handleFile(_fi4);}; _fi4.click(); }
       else if(typeof openImport==='function') openImport('remdetail');
     }
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
@@ -9154,14 +9160,9 @@ function armpUpdateBanner(){
       banner.style.display = 'none';
       return;
     }
-    var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
-    var hasInv = (typeof INV!=='undefined') && INV.length > 0;
-    var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
-    // Hide banner once all 3 stages complete
-    if(hasPay && hasInv && hasMatched){
-      banner.style.display = 'none';
-      return;
-    }
+    _updateWorkflowState();
+    var ws = workflowState;
+    // Banner stays visible unless user explicitly dismissed it
     // Step states
     var s1 = document.getElementById('armp-banner-step-1');
     var s2 = document.getElementById('armp-banner-step-2');
@@ -13687,6 +13688,7 @@ async function runMatch(){
 
   // Fix 1: Mark Auto Match as explicitly run — Review section now shows results
   autoMatchHasRun = true;
+  workflowState.newDataSinceLastMatch = false;
 
   // Fix 5: Readiness hints for HORIBA/TK-Fujikin workflow
   var _isTkFSess = REM_DETAIL&&REM_DETAIL.length>0&&REM_DETAIL[0]&&REM_DETAIL[0].supplierName&&
@@ -14587,7 +14589,8 @@ async function handleFile(inp){
           // Fix 1: New bank file means previous match results are stale
           autoMatchHasRun = false; RES = []; EXC = [];
           try{_updateUploadStatus();}catch(e){}
-          try{armpUpdateSetupState();}catch(e){}  // Fix 5: advance workflow step
+          if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
+    try{armpUpdateSetupState();}catch(e){}
           const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
         }catch(yyErr){hideProgress();toast('Bank file parse error: '+yyErr.message,'warn');console.error('BankParse:',yyErr);}
         return;
@@ -14652,6 +14655,16 @@ async function handleFile(inp){
       }catch(_xErr){ hideProgress(); }
       // Standard .xls → treat as text/CSV
       const _xt=await f.text();const _xta=document.getElementById('mo-ta');if(_xta)_xta.value=_xt;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
+    } else if(ext==='png'||ext==='jpg'||ext==='jpeg'||ext==='webp'||ext==='gif'||ext==='bmp'||ext==='tiff'){
+      // Image file acceptance — accepted and stored for future OCR
+      hideProgress();
+      if(!window._imageImports) window._imageImports=[];
+      window._imageImports.push({fileName:f.name,fileSize:f.size,fileType:f.type||'image/'+ext,importType:IMP_TYPE,importedAt:new Date().toISOString(),status:'accepted',ocrStatus:'pending'});
+      addAudit('Image accepted',f.name+' ('+Math.round(f.size/1024)+'KB) — queued for OCR');
+      try{_updateUploadStatus();}catch(e){}
+      try{armpUpdateSetupState();}catch(e){}
+      var _imgMo=document.getElementById('imp-modal');if(_imgMo)_imgMo.classList.remove('open');
+      toast('📷 Image accepted: '+f.name+' — OCR/template parsing available in a future release.','info');
     } else {
       const t=await f.text();const _mt5=document.getElementById('mo-ta');if(_mt5)_mt5.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     }
@@ -15824,7 +15837,8 @@ function processImport(){
         var _delMsg = 'Delivery Report synced: '+(_enrichResult?_enrichResult.enriched:matchedDel)+' open items enriched';
         if(_enrichResult && _enrichResult.unmatched>0) _delMsg += ', '+_enrichResult.unmatched+' delivery rows unmatched';
         toast(_delMsg);
-        try{armpUpdateSetupState();}catch(e){}  // Fix 5: advance workflow step
+        if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
+    try{armpUpdateSetupState();}catch(e){}
       }
     };
     showProgress('Processing '+DELIV.length+' delivery rows…', 5);
