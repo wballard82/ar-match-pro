@@ -5812,6 +5812,23 @@ function _updateUploadStatus(){
     _setRow('ustat-inv',  INV&&INV.length>0, 'Open Items', INV&&INV.length?INV.length+' invoices':null);
     _setRow('ustat-del',  DELIV&&DELIV.length>0, 'Delivery Report', DELIV&&DELIV.length?DELIV.length+' rows':null);
     _setRow('ustat-rem',  REM_DETAIL&&REM_DETAIL.length>0, 'Remittance Details', REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length+' lines':null);
+    // ERS/VMI supporting files
+    if(ERS_LINES&&ERS_LINES.length>0){
+      var _ersEl=document.getElementById('ustat-ers');
+      if(!_ersEl){
+        var _usRows=document.getElementById('upload-status-rows');
+        if(_usRows) _usRows.insertAdjacentHTML('beforeend','<div class="ustat-row" id="ustat-ers"><span class="ustat-dot ustat-dot-empty"></span><span style="font-size:12px;color:var(--t3)">ERS Details: not loaded</span></div>');
+      }
+      _setRow('ustat-ers', true, 'ERS Details', ERS_LINES.length+' lines');
+    }
+    if(VMI_LINES&&VMI_LINES.length>0){
+      var _vmiEl=document.getElementById('ustat-vmi');
+      if(!_vmiEl){
+        var _usRows2=document.getElementById('upload-status-rows');
+        if(_usRows2) _usRows2.insertAdjacentHTML('beforeend','<div class="ustat-row" id="ustat-vmi"><span class="ustat-dot ustat-dot-empty"></span><span style="font-size:12px;color:var(--t3)">VMI Details: not loaded</span></div>');
+      }
+      _setRow('ustat-vmi', true, 'VMI Details', VMI_LINES.length+' lines');
+    }
   }catch(e){}
 }
 
@@ -13010,6 +13027,660 @@ function _findInvoicesForPayment(p){
   return found;
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// AR MATCH PRO — MATCHING INTELLIGENCE FRAMEWORK
+//
+// GENERIC, REUSABLE cash application matching engine.
+// NOT customer-specific — handles all real-world AR scenarios:
+//   Invoice matching, PO matching, SO matching, delivery/tracking matching,
+//   ERS self-billing, VMI/consignment, date-range matching, multi-invoice
+//   allocation, short pays, overpays, deductions, credit memos, COA.
+//
+// Architecture:
+//   MatchScenarioLibrary  — defines reusable scenario templates
+//   ConfidenceScorer      — scores each match candidate
+//   ERSParser             — parses ERS self-billing detail files (XML/.XLS/XLSX)
+//   VMIParser             — parses VMI/consignment detail files
+//   DateRangeMatcher      — matches VMI PO date ranges to detail rows
+//   DeductionHandler      — routes DZ/early deductions correctly
+//   QAValidator           — compares ARMP results against manual allocation
+//   MultiInvoiceAllocator — allocates one payment across multiple invoices
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── Match Scenario Library ─────────────────────────────────────────────────
+var MatchScenarioLibrary = [
+  { id:'INV_EXACT',    name:'Exact Invoice Match',               priority:1,  confidence:97, reqFields:['invoiceNumber'],        optFields:['amount'],                         description:'Invoice # from payment matches open invoice exactly' },
+  { id:'INV_DOC',      name:'SAP/ERP Document Match',            priority:2,  confidence:95, reqFields:['documentNumber'],       optFields:['amount','customerAccount'],        description:'SAP document number from bank/remittance matches invoice' },
+  { id:'PO_EXACT',     name:'PO Number Match',                   priority:3,  confidence:88, reqFields:['poNumber'],             optFields:['amount','customerAccount'],        description:'PO from remittance matches invoice PO — may span multiple invoices' },
+  { id:'SO_EXACT',     name:'Sales Order Match',                 priority:4,  confidence:87, reqFields:['salesOrder'],           optFields:['amount'],                         description:'Sales Order from remittance/delivery matches invoice SO/Ref Key' },
+  { id:'DEL_BRIDGE',   name:'Delivery/Tracking Bridge Match',    priority:5,  confidence:85, reqFields:['deliveryNumber|trackingNumber'], optFields:['salesOrder','amount'],   description:'Delivery# or tracking# bridges through delivery report to SO then invoice' },
+  { id:'ERS_GROUP',    name:'ERS Self-Billing Grouped Match',    priority:6,  confidence:90, reqFields:['ersGroupedTotal','poNumber'], optFields:['deliveryNote'],              description:'ERS self-billing line details grouped by PO/date tie out to invoice amount' },
+  { id:'VMI_DATERANGE',name:'VMI/Consignment Date Range Match',  priority:7,  confidence:88, reqFields:['dateRangeStart','dateRangeEnd','amount'], optFields:['vendorId'],     description:'Invoice PO contains date range — VMI rows within that range sum to invoice amount' },
+  { id:'MULTI_INV',    name:'Multi-Invoice Total Match',         priority:8,  confidence:82, reqFields:['invoiceNumbers[]','amount'], optFields:['customerAccount'],            description:'One payment covers multiple invoices — group until total matches' },
+  { id:'CUST_AMT',     name:'Customer + Amount Match',           priority:9,  confidence:55, reqFields:['customerName|customerAccount','amount'], optFields:[],               description:'Customer identified and amount matches, but no reference — low confidence' },
+  { id:'AMT_ONLY',     name:'Amount-Only Candidate',             priority:10, confidence:30, reqFields:['amount'],               optFields:[],                                 description:'Amount matches but no supporting reference — DO NOT auto-approve' },
+  { id:'DEDUCTION',    name:'Early Customer Deduction',          priority:11, confidence:70, reqFields:['customerAccount'],      optFields:['invoiceNumber','poNumber'],        description:'Customer deducted before official credit memo — route to Pending Customer Credit' },
+  { id:'COA',          name:'Cash on Account',                   priority:12, confidence:50, reqFields:['customerName|customerAccount'], optFields:['amount'],                 description:'Customer identified but no invoice confirmed — route to Cash on Account' }
+];
+
+// ── Confidence Scorer ──────────────────────────────────────────────────────
+// Scores a match based on which fields matched and their quality.
+// Returns { score:0-100, reasons:[], scenario:string }
+var ConfidenceScorer = {
+  bands: { autoMatch:[95,100], suggested:[80,94], needsAttention:[60,79], unmatched:[0,59] },
+  bandLabel: function(score){
+    if(score>=95) return 'Auto Match';
+    if(score>=80) return 'Suggested Match';
+    if(score>=60) return 'Needs Attention';
+    return 'Unmatched';
+  },
+  score: function(fields){
+    // fields: { invoiceMatch, poMatch, soMatch, amountMatch, customerMatch,
+    //           deliveryMatch, trackingMatch, ersMatch, vmiMatch, dateRangeMatch,
+    //           documentMatch, multiInvoiceMatch }
+    var s = 0;
+    var reasons = [];
+    if(fields.invoiceMatch)     { s+=40; reasons.push('✓ Invoice #'); }
+    if(fields.documentMatch)    { s+=38; reasons.push('✓ Document #'); }
+    if(fields.poMatch)          { s+=25; reasons.push('✓ PO #'); }
+    if(fields.soMatch)          { s+=25; reasons.push('✓ Sales Order'); }
+    if(fields.deliveryMatch)    { s+=20; reasons.push('✓ Delivery #'); }
+    if(fields.trackingMatch)    { s+=20; reasons.push('✓ Tracking #'); }
+    if(fields.ersMatch)         { s+=30; reasons.push('✓ ERS Grouped Total'); }
+    if(fields.vmiMatch)         { s+=28; reasons.push('✓ VMI Date Range'); }
+    if(fields.dateRangeMatch)   { s+=22; reasons.push('✓ Date Range'); }
+    if(fields.amountMatch)      { s+=15; reasons.push('✓ Amount Tie-Out'); }
+    if(fields.customerMatch)    { s+=10; reasons.push('✓ Customer'); }
+    if(fields.multiInvoiceMatch){ s+=18; reasons.push('✓ Multi-Invoice Group'); }
+    return { score:Math.min(100,s), reasons:reasons, band:ConfidenceScorer.bandLabel(Math.min(100,s)) };
+  }
+};
+
+// ── Matching Outcomes ──────────────────────────────────────────────────────
+var MATCH_OUTCOMES = {
+  AUTO_MATCHED:      'Auto Matched',
+  SUGGESTED:         'Suggested Match',
+  NEEDS_ATTENTION:   'Needs Attention',
+  COA:               'Cash on Account',
+  PENDING_CREDIT:    'Pending Customer Credit',
+  BANK_FEE:          'Bank Fee',
+  WRITE_OFF:         'Write-Off',
+  UNMATCHED:         'Unmatched'
+};
+
+// ── Date Range Parser (for VMI PO fields like "5500000093-06/24/24-06/30/24") ─
+var DateRangeMatcher = {
+  // Parse a PO field that contains embedded date ranges
+  // Returns { poBase, startDate, endDate } or null
+  parsePODateRange: function(poField){
+    if(!poField) return null;
+    var s = String(poField).trim();
+    // Pattern: PONUMBER-MM/DD/YY-MM/DD/YY or PONUMBER-MM/DD/YYYY-MM/DD/YYYY
+    var m = s.match(/^(.+?)-(\d{1,2}\/\d{1,2}\/\d{2,4})-(\d{1,2}\/\d{1,2}\/\d{2,4})$/);
+    if(!m) return null;
+    var _parseD = function(ds){
+      var parts = ds.split('/');
+      if(parts.length!==3) return null;
+      var yr = parseInt(parts[2]); if(yr<100) yr+=2000;
+      return new Date(yr, parseInt(parts[0])-1, parseInt(parts[1]));
+    };
+    var d1 = _parseD(m[2]);
+    var d2 = _parseD(m[3]);
+    if(!d1||!d2||isNaN(d1)||isNaN(d2)) return null;
+    return { poBase:m[1], startDate:d1, endDate:d2 };
+  },
+  // Parse a VMI "Purchase Order" field like "VC;;04/28/2026"
+  parseVMIPO: function(po){
+    if(!po) return null;
+    var s = String(po).trim();
+    var m = s.match(/^VC;+\s*(\d{1,2}\/\d{1,2}\/\d{4})$/);
+    if(!m) return null;
+    var parts = m[1].split('/');
+    var d = new Date(parseInt(parts[2]), parseInt(parts[0])-1, parseInt(parts[1]));
+    return isNaN(d) ? null : d;
+  },
+  // Check if a transaction date falls within a date range
+  isInRange: function(txDate, startDate, endDate){
+    if(!txDate||!startDate||!endDate) return false;
+    var t = (txDate instanceof Date) ? txDate : new Date(txDate);
+    if(isNaN(t)) return false;
+    return t >= startDate && t <= endDate;
+  }
+};
+
+// ── ERS Self-Billing Parser ────────────────────────────────────────────────
+// Parses ERS line detail files (XML Spreadsheet 2003 or XLSX).
+// Normalizes into: [{deliveryDate, deliveryNote, poNumber, poLineItem,
+//   description, quantity, uom, price, amount, currency, taxStatus,
+//   invoiceRef, sheetName, sourceFile}]
+var ERSParser = {
+  parseXMLSpreadsheet: function(xmlText, fileName){
+    var results = [];
+    try{
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(xmlText, 'text/xml');
+      var NS = 'urn:schemas-microsoft-com:office:spreadsheet';
+      var sheets = doc.getElementsByTagNameNS(NS, 'Worksheet');
+      for(var si=0;si<sheets.length;si++){
+        var sheetName = sheets[si].getAttributeNS(NS,'Name')||sheets[si].getAttribute('ss:Name')||'Sheet'+(si+1);
+        var table = sheets[si].getElementsByTagNameNS(NS,'Table')[0];
+        if(!table) continue;
+        var rows = table.getElementsByTagNameNS(NS,'Row');
+        if(rows.length<2) continue;
+        // Parse header from first row
+        var hdrCells = rows[0].getElementsByTagNameNS(NS,'Cell');
+        var hdrs = [];
+        for(var hi=0;hi<hdrCells.length;hi++){
+          var d = hdrCells[hi].getElementsByTagNameNS(NS,'Data')[0];
+          hdrs.push(d ? (d.textContent||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'') : '');
+        }
+        // Map columns
+        var ci = function(name){
+          for(var k=0;k<hdrs.length;k++){ if(hdrs[k].indexOf(name)>=0) return k; }
+          return -1;
+        };
+        // Parse data rows
+        for(var ri=1;ri<rows.length;ri++){
+          var cells = rows[ri].getElementsByTagNameNS(NS,'Cell');
+          var vals = [];
+          for(var vi=0;vi<cells.length;vi++){
+            var dd = cells[vi].getElementsByTagNameNS(NS,'Data')[0];
+            vals.push(dd ? (dd.textContent||'').trim() : '');
+          }
+          var amt = parseFloat((vals[ci('amount')]||'0').replace(/[^0-9.\-]/g,''))||0;
+          if(amt===0) continue;
+          results.push({
+            deliveryDate:  vals[ci('deliverydate')]||vals[ci('date')]||'',
+            deliveryNote:  vals[ci('deliverynote')]||vals[ci('delivery')]||'',
+            poNumber:      vals[ci('ponumber')]||vals[ci('purchaseorder')]||'',
+            poLineItem:    vals[ci('polineitem')]||vals[ci('item')]||'',
+            description:   vals[ci('description')]||'',
+            quantity:      parseFloat((vals[ci('quantity')]||'0').replace(/[^0-9.\-]/g,''))||0,
+            uom:           vals[ci('uom')]||'',
+            price:         parseFloat((vals[ci('price')]||vals[ci('unitprice')]||'0').replace(/[^0-9.\-]/g,''))||0,
+            amount:        amt,
+            currency:      vals[ci('currency')]||'USD',
+            taxStatus:     vals[ci('taxstatus')]||'',
+            invoiceRef:    vals[ci('invoicereferencingnumber')]||vals[ci('invoiceref')]||vals[ci('vcinvoice')]||'',
+            sheetName:     sheetName,
+            sourceFile:    fileName||'',
+            _type:         'ERS'
+          });
+        }
+      }
+    }catch(e){ console.warn('[ERSParser]',e.message); }
+    return results;
+  },
+  // Group ERS lines by PO and compute totals
+  groupByPO: function(lines){
+    var groups = {};
+    lines.forEach(function(l){
+      var k = (l.poNumber||'_none').trim();
+      if(!groups[k]) groups[k] = { poNumber:k, lines:[], total:0, deliveryNotes:[], invoiceRefs:[] };
+      groups[k].lines.push(l);
+      groups[k].total += l.amount;
+      if(l.deliveryNote && groups[k].deliveryNotes.indexOf(l.deliveryNote)<0) groups[k].deliveryNotes.push(l.deliveryNote);
+      if(l.invoiceRef && groups[k].invoiceRefs.indexOf(l.invoiceRef)<0) groups[k].invoiceRefs.push(l.invoiceRef);
+    });
+    return Object.values(groups);
+  },
+  // Group ERS lines by sheet (each sheet = one ERS invoice date)
+  groupBySheet: function(lines){
+    var groups = {};
+    lines.forEach(function(l){
+      var k = l.sheetName||'_default';
+      if(!groups[k]) groups[k] = { sheetName:k, lines:[], total:0, poNumbers:[], invoiceRef:'' };
+      groups[k].lines.push(l);
+      groups[k].total += l.amount;
+      if(l.poNumber && groups[k].poNumbers.indexOf(l.poNumber)<0) groups[k].poNumbers.push(l.poNumber);
+      if(l.invoiceRef && !groups[k].invoiceRef) groups[k].invoiceRef = l.invoiceRef;
+    });
+    return Object.values(groups);
+  }
+};
+
+// ── VMI/Consignment Parser ─────────────────────────────────────────────────
+// Same XML Spreadsheet format, different column structure.
+var VMIParser = {
+  parseXMLSpreadsheet: function(xmlText, fileName){
+    var results = [];
+    try{
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(xmlText, 'text/xml');
+      var NS = 'urn:schemas-microsoft-com:office:spreadsheet';
+      var sheets = doc.getElementsByTagNameNS(NS, 'Worksheet');
+      for(var si=0;si<sheets.length;si++){
+        var sheetName = sheets[si].getAttributeNS(NS,'Name')||sheets[si].getAttribute('ss:Name')||'Sheet'+(si+1);
+        var table = sheets[si].getElementsByTagNameNS(NS,'Table')[0];
+        if(!table) continue;
+        var rows = table.getElementsByTagNameNS(NS,'Row');
+        if(rows.length<2) continue;
+        var hdrCells = rows[0].getElementsByTagNameNS(NS,'Cell');
+        var hdrs = [];
+        for(var hi=0;hi<hdrCells.length;hi++){
+          var d = hdrCells[hi].getElementsByTagNameNS(NS,'Data')[0];
+          hdrs.push(d ? (d.textContent||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'') : '');
+        }
+        var ci = function(name){ for(var k=0;k<hdrs.length;k++){ if(hdrs[k].indexOf(name)>=0) return k; } return -1; };
+        for(var ri=1;ri<rows.length;ri++){
+          var cells = rows[ri].getElementsByTagNameNS(NS,'Cell');
+          var vals = [];
+          for(var vi=0;vi<cells.length;vi++){
+            var dd = cells[vi].getElementsByTagNameNS(NS,'Data')[0];
+            vals.push(dd ? (dd.textContent||'').trim() : '');
+          }
+          var amt = parseFloat((vals[ci('totalamount')]||vals[ci('amount')]||'0').replace(/[^0-9.\-]/g,''))||0;
+          if(amt===0) continue;
+          var poRaw = vals[ci('purchaseorder')]||vals[ci('po')]||'';
+          var vcDate = DateRangeMatcher.parseVMIPO(poRaw);
+          results.push({
+            vendor:        vals[ci('vendor')]||'',
+            txDate:        vals[ci('date')]||'',
+            vcInvoice:     vals[ci('vcinvoice')]||'',
+            poRaw:         poRaw,
+            vcDate:        vcDate,
+            item:          vals[ci('item')]||'',
+            materialDoc:   vals[ci('childmaterialdocument')]||vals[ci('materialdocument')]||'',
+            partNo:        vals[ci('partno')]||vals[ci('partnumber')]||vals[ci('material')]||'',
+            quantity:      parseFloat((vals[ci('quantity')]||'0').replace(/[^0-9.\-]/g,''))||0,
+            uom:           vals[ci('uom')]||'',
+            unitPrice:     parseFloat((vals[ci('unitprice')]||vals[ci('price')]||'0').replace(/[^0-9.\-]/g,''))||0,
+            amount:        amt,
+            currency:      vals[ci('currency')]||'USD',
+            sheetName:     sheetName,
+            sourceFile:    fileName||'',
+            _type:         'VMI'
+          });
+        }
+      }
+    }catch(e){ console.warn('[VMIParser]',e.message); }
+    return results;
+  },
+  // Group VMI lines whose dates fall within an invoice's PO date range
+  matchToInvoiceDateRange: function(vmiLines, invoicePO){
+    var dr = DateRangeMatcher.parsePODateRange(invoicePO);
+    if(!dr) return null;
+    var matched = [];
+    var total = 0;
+    vmiLines.forEach(function(v){
+      var txD = v.vcDate || (v.txDate ? new Date(v.txDate.replace(/(\d{2})\.(\d{2})\.(\d{4})/,'$3-$2-$1')) : null);
+      if(txD && DateRangeMatcher.isInRange(txD, dr.startDate, dr.endDate)){
+        matched.push(v);
+        total += v.amount;
+      }
+    });
+    return matched.length>0 ? { lines:matched, total:total, dateRange:dr } : null;
+  },
+  // Group by VC invoice
+  groupByVCInvoice: function(lines){
+    var groups = {};
+    lines.forEach(function(l){
+      var k = l.vcInvoice||l.sheetName||'_default';
+      if(!groups[k]) groups[k] = { vcInvoice:k, lines:[], total:0 };
+      groups[k].lines.push(l);
+      groups[k].total += l.amount;
+    });
+    return Object.values(groups);
+  }
+};
+
+// ── Deduction Handler ──────────────────────────────────────────────────────
+// Routes early customer deductions (DZ/debit memos) to correct workflow.
+var DeductionHandler = {
+  // Parse FBL5N Text field for embedded references
+  // Example: "5101099588 4507342394 2100956921 price diff"
+  parseTextRefs: function(text){
+    if(!text) return {};
+    var refs = {};
+    var tokens = String(text).split(/[\s,;|]+/);
+    tokens.forEach(function(t){
+      var d = t.replace(/[^0-9]/g,'');
+      if(d.length>=9){
+        if(d.startsWith('510'))      refs.invoiceNumber = refs.invoiceNumber || d;
+        else if(d.startsWith('210')) refs.salesOrder = refs.salesOrder || d;
+        else if(d.startsWith('710')) refs.deliveryNumber = refs.deliveryNumber || d;
+        else if(d.startsWith('310')) refs.creditMemo = refs.creditMemo || d;
+        else if(d.startsWith('410')) refs.debitMemo = refs.debitMemo || d;
+        else if(d.startsWith('450')||d.startsWith('452')||d.startsWith('477'))
+                                     refs.poNumber = refs.poNumber || d;
+        else if(d.startsWith('422')) refs.documentNumber = refs.documentNumber || d;
+      }
+    });
+    // Extract description text (non-numeric tokens at end)
+    var desc = tokens.filter(function(t){ return !/^\d+$/.test(t.replace(/[^0-9]/g,'')); }).join(' ').trim();
+    if(desc) refs.description = desc;
+    return refs;
+  },
+  // Classify a deduction row
+  classify: function(amount, textRefs, docType){
+    if(docType==='DZ' || docType==='DA' || docType==='DR'){
+      var desc = (textRefs.description||'').toLowerCase();
+      if(desc.includes('price diff')) return { type:'Price Difference', action:'Pending Customer Credit' };
+      if(desc.includes('tax'))        return { type:'Tax Adjustment', action:'Pending Customer Credit' };
+      if(desc.includes('freight'))    return { type:'Freight Claim', action:'Pending Customer Credit' };
+      if(desc.includes('shortage'))   return { type:'Shortage Claim', action:'Needs Attention' };
+      if(desc.includes('return'))     return { type:'Return Credit', action:'Pending Customer Credit' };
+      if(desc.includes('discount'))   return { type:'Discount Taken', action:'Review Discount Terms' };
+      return { type:'Customer Deduction', action:'Pending Customer Credit' };
+    }
+    return { type:'Unknown', action:'Needs Attention' };
+  }
+};
+
+// ── Multi-Invoice Allocator ────────────────────────────────────────────────
+// Allocates a single payment across multiple invoices.
+var MultiInvoiceAllocator = {
+  // Given a payment amount and list of open invoices, find the best allocation.
+  // Returns { allocated:[], total:number, remaining:number }
+  allocate: function(paymentAmount, invoices, tolerance){
+    tolerance = tolerance || 5;
+    var sorted = invoices.slice().sort(function(a,b){ return b.amt - a.amt; }); // largest first
+    var allocated = [];
+    var remaining = paymentAmount;
+
+    // Pass 1: exact matches
+    sorted.forEach(function(inv){
+      if(inv.s) return; // already matched
+      if(Math.abs(inv.amt - remaining) <= tolerance){
+        allocated.push(inv);
+        remaining -= inv.amt;
+      }
+    });
+    if(Math.abs(remaining)<=tolerance) return { allocated:allocated, total:paymentAmount-remaining, remaining:remaining };
+
+    // Pass 2: greedy allocation (largest invoices first)
+    allocated = [];
+    remaining = paymentAmount;
+    sorted.forEach(function(inv){
+      if(inv.s) return;
+      if(inv.amt <= remaining + tolerance && inv.amt > 0){
+        allocated.push(inv);
+        remaining -= inv.amt;
+      }
+    });
+
+    return { allocated:allocated, total:paymentAmount-remaining, remaining:remaining };
+  }
+};
+
+// ── QA / Training Validator ────────────────────────────────────────────────
+// Compares ARMP match results against a manually prepared allocation file.
+// The manual file is NOT used as a production input — only for validation.
+var QAValidator = {
+  // Parse a Payment Allocation file into expected results
+  // Returns [{account, invoice, po, so, amount, type, gl, document, comment}]
+  parseAllocationFile: function(rows){
+    var results = [];
+    rows.forEach(function(r){
+      if(!r || !r.some(Boolean)) return;
+      var acct = String(r[0]||'').trim();
+      var inv  = String(r[1]||'').trim();
+      var po   = String(r[2]||'').trim();
+      var so   = String(r[3]||'').trim();
+      var amt  = parseFloat(String(r[4]||'0').replace(/[^0-9.\-]/g,''))||0;
+      var typ  = String(r[5]||'').trim();
+      var gl   = String(r[6]||'').trim();
+      var doc  = String(r[7]||'').trim();
+      var cmt  = String(r[8]||'').trim();
+      if(acct && (inv || amt)) results.push({account:acct, invoice:inv, po:po, so:so, amount:amt, type:typ, gl:gl, document:doc, comment:cmt});
+    });
+    return results;
+  },
+  // Compare ARMP results (RES[]) against expected allocations
+  // Returns { matched, missed, extra, accuracy }
+  validate: function(armpResults, expected){
+    var matched = 0;
+    var missed = [];
+    var extra = [];
+    var _armpInvs = new Set();
+    armpResults.forEach(function(r){ if(r.i) _armpInvs.add(norm(r.i)); });
+
+    expected.forEach(function(exp){
+      if(!exp.invoice) return; // skip COA/header rows
+      if(_armpInvs.has(norm(exp.invoice))){ matched++; }
+      else { missed.push(exp); }
+    });
+
+    armpResults.forEach(function(r){
+      if(!r.i) return;
+      var _found = expected.some(function(exp){ return norm(exp.invoice)===norm(r.i); });
+      if(!_found) extra.push(r);
+    });
+
+    var total = expected.filter(function(e){return e.invoice;}).length;
+    return {
+      matched: matched,
+      missed: missed,
+      extra: extra,
+      total: total,
+      accuracy: total>0 ? Math.round(matched/total*100) : 0
+    };
+  }
+};
+
+// ── ERS/VMI Global Storage ─────────────────────────────────────────────────
+// Parsed ERS and VMI lines stored globally for use by matching engine.
+var ERS_LINES = []; // normalized ERS self-billing line items
+var VMI_LINES = []; // normalized VMI/consignment line items
+var QA_EXPECTED = []; // manual allocation expected results (QA only)
+
+// ── XML Spreadsheet File Handler ───────────────────────────────────────────
+// Detects XML Spreadsheet 2003 (.XLS) format and routes to ERS or VMI parser.
+function handleXMLSpreadsheet(file, importType){
+  return new Promise(function(resolve, reject){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var text = e.target.result;
+      var isXML = text.trim().startsWith('<?xml') || text.includes('urn:schemas-microsoft-com:office:spreadsheet');
+      if(!isXML){ resolve(null); return; }
+
+      if(importType==='ers' || file.name.toLowerCase().includes('ers') || text.includes('ERS')){
+        var lines = ERSParser.parseXMLSpreadsheet(text, file.name);
+        ERS_LINES = ERS_LINES.concat(lines);
+        resolve({ type:'ERS', lines:lines, groups:ERSParser.groupBySheet(lines) });
+      } else if(importType==='vmi' || file.name.toLowerCase().includes('vmi') || file.name.toLowerCase().includes('consignment') || text.includes('VC Invoice')){
+        var lines = VMIParser.parseXMLSpreadsheet(text, file.name);
+        VMI_LINES = VMI_LINES.concat(lines);
+        resolve({ type:'VMI', lines:lines, groups:VMIParser.groupByVCInvoice(lines) });
+      } else {
+        // Try both parsers — use whichever gets more rows
+        var ersLines = ERSParser.parseXMLSpreadsheet(text, file.name);
+        var vmiLines = VMIParser.parseXMLSpreadsheet(text, file.name);
+        if(ersLines.length >= vmiLines.length && ersLines.length > 0){
+          ERS_LINES = ERS_LINES.concat(ersLines);
+          resolve({ type:'ERS', lines:ersLines, groups:ERSParser.groupBySheet(ersLines) });
+        } else if(vmiLines.length > 0){
+          VMI_LINES = VMI_LINES.concat(vmiLines);
+          resolve({ type:'VMI', lines:vmiLines, groups:VMIParser.groupByVCInvoice(vmiLines) });
+        } else {
+          resolve(null);
+        }
+      }
+    };
+    reader.onerror = function(){ reject(new Error('File read error')); };
+    reader.readAsText(file);
+  });
+}
+
+// ── Enhanced ERS/VMI matching in processChunk ──────────────────────────────
+// Called per payment: tries to match using ERS grouped totals or VMI date ranges.
+function matchERSGrouped(payAmount, custAccount, idx, tol){
+  if(!ERS_LINES.length) return null;
+  var groups = ERSParser.groupBySheet(ERS_LINES);
+  var matched = [];
+  var total = 0;
+  groups.forEach(function(g){
+    if(Math.abs(g.total)<=0.01) return;
+    // Find invoice whose amount matches this ERS group total
+    var gPOs = g.poNumbers;
+    gPOs.forEach(function(po){
+      if(!idx.byPO) return;
+      var invList = idx.byPO.get(norm(po))||[];
+      invList.forEach(function(inv){
+        if(inv.s) return;
+        if(Math.abs(inv.amt-g.total)<=tol && !matched.find(function(x){return x.i===inv.i;})){
+          matched.push(inv);
+          total += inv.amt;
+        }
+      });
+    });
+  });
+  return matched.length>0 ? { matched:matched, total:total, scenario:'ERS_GROUP' } : null;
+}
+
+function matchVMIDateRange(payAmount, custAccount, idx, tol){
+  if(!VMI_LINES.length || !INV || !INV.length) return null;
+  var matched = [];
+  var total = 0;
+  // Find invoices with date-range PO fields and match VMI lines
+  INV.forEach(function(inv){
+    if(inv.s) return;
+    if(!inv.po) return;
+    var dr = DateRangeMatcher.parsePODateRange(inv.po);
+    if(!dr) return;
+    var vmiMatch = VMIParser.matchToInvoiceDateRange(VMI_LINES, inv.po);
+    if(vmiMatch && Math.abs(vmiMatch.total - inv.amt)<=tol){
+      if(!matched.find(function(x){return x.i===inv.i;})){
+        matched.push(inv);
+        total += inv.amt;
+      }
+    }
+  });
+  return matched.length>0 ? { matched:matched, total:total, scenario:'VMI_DATERANGE' } : null;
+}
+
+// ── Customer Name Normalizer ───────────────────────────────────────────────
+// Normalizes payer names from bank text for fuzzy matching against AR records.
+// "APPLIED MATERIAL EDI PAYMTS" → "APPLIED MATERIAL"
+// "TK FUJIKIN CORPORATION" → "TK FUJIKIN"
+var CustomerNormalizer = {
+  // Strip common suffixes and clean for comparison
+  normalize: function(name){
+    if(!name) return '';
+    return String(name).toUpperCase().trim()
+      .replace(/\s*(EDI\s*PAYM[A-Z]*|EDI\s*PMT|PAYMENT[S]?|PAYM[A-Z]*|PMT|INC\.?|LLC|LTD|CORP\.?|CORPORATION|CO\.?|COMPANY)\s*/gi,' ')
+      .replace(/\s+/g,' ').trim();
+  },
+  // Check if two names likely refer to the same company
+  isSameEntity: function(a, b){
+    if(!a||!b) return false;
+    var na = CustomerNormalizer.normalize(a);
+    var nb = CustomerNormalizer.normalize(b);
+    if(!na||!nb) return false;
+    if(na===nb) return true;
+    // Substring match (first 10 significant chars)
+    var sa = na.replace(/[\s\-_]/g,'').slice(0,10);
+    var sb = nb.replace(/[\s\-_]/g,'').slice(0,10);
+    if(sa.length>=6 && sb.length>=6 && (sa.indexOf(sb.slice(0,6))>=0 || sb.indexOf(sa.slice(0,6))>=0)) return true;
+    return false;
+  }
+};
+
+// ── Multi-Source Allocator ─────────────────────────────────────────────────
+// Allocates a bank payment against open invoices using ALL available sources:
+//   ERS detail → PO match → invoice
+//   VMI detail → date range match → invoice
+//   Direct invoice refs from bank/remittance text
+//   Fallback: multi-invoice amount allocation
+// Returns: { matched:INV[], total, remaining, chains:[] }
+function allocateMultiSource(payment, invIndex, tolerance){
+  tolerance = tolerance || 5;
+  var matched = [];
+  var chains = [];
+  var total = 0;
+  var _resSet = new Set(); // deduplicate
+
+  function _add(inv, chain){
+    if(!inv || inv.s || _resSet.has(inv.i)) return false;
+    _resSet.add(inv.i);
+    matched.push(inv);
+    chains.push(chain);
+    total += inv.amt;
+    return true;
+  }
+
+  // ── Source 1: ERS grouped PO matching ──────────────────────────────────
+  if(ERS_LINES.length > 0 && invIndex.byPO){
+    var ersGroups = ERSParser.groupBySheet(ERS_LINES);
+    ersGroups.forEach(function(g){
+      g.poNumbers.forEach(function(po){
+        var invList = invIndex.byPO.get(norm(po)) || [];
+        invList.forEach(function(inv){
+          if(!inv.s && !_resSet.has(inv.i)){
+            // Verify amount proximity between ERS group and invoice
+            // For PO match, accept if invoice exists with that PO
+            _add(inv, 'ERS PO:'+po+'→Inv:'+inv.i+' ($'+$f(inv.amt)+')');
+          }
+        });
+      });
+    });
+  }
+
+  // ── Source 2: VMI date-range matching ──────────────────────────────────
+  if(VMI_LINES.length > 0 && INV && INV.length > 0){
+    INV.forEach(function(inv){
+      if(inv.s || _resSet.has(inv.i)) return;
+      if(!inv.po) return;
+      var dr = DateRangeMatcher.parsePODateRange(inv.po);
+      if(!dr) return;
+      var vmiMatch = VMIParser.matchToInvoiceDateRange(VMI_LINES, inv.po);
+      if(vmiMatch && Math.abs(vmiMatch.total - inv.amt) <= tolerance){
+        _add(inv, 'VMI range:'+inv.po+'→Inv:'+inv.i+' ($'+$f(inv.amt)+')');
+      }
+    });
+  }
+
+  // ── Source 3: Direct invoice refs from bank detail text ────────────────
+  if(payment.extractedInvoices && payment.extractedInvoices.length && invIndex.byInv){
+    payment.extractedInvoices.forEach(function(invNo){
+      var inv = invIndex.byInv.get(norm(invNo));
+      if(inv) _add(inv, 'Bank ref→Inv:'+invNo);
+    });
+  }
+
+  // ── Source 4: Remittance detail refs ───────────────────────────────────
+  if(payment._remLines && payment._remLines.length){
+    payment._remLines.forEach(function(rl){
+      if(rl.invNo && invIndex.byInv){
+        var inv = invIndex.byInv.get(norm(rl.invNo));
+        if(inv) _add(inv, 'Rem inv:'+rl.invNo);
+      }
+      if(rl.poNo && invIndex.byPO){
+        var poList = invIndex.byPO.get(norm(rl.poNo))||[];
+        poList.forEach(function(inv){ _add(inv, 'Rem PO:'+rl.poNo+'→Inv:'+inv.i); });
+      }
+    });
+  }
+
+  // ── Source 5: Multi-invoice amount allocation (greedy) ─────────────────
+  // Only if we haven't matched enough yet and there are remaining open invoices
+  var _remaining = payment.amt - total;
+  if(_remaining > tolerance && INV){
+    // Get all open invoices that belong to accounts we've already matched against
+    var _matchedAccts = new Set();
+    matched.forEach(function(inv){ if(inv.a) _matchedAccts.add(inv.a); });
+    if(_matchedAccts.size > 0){
+      var _candidates = INV.filter(function(inv){
+        return !inv.s && !_resSet.has(inv.i) && _matchedAccts.has(inv.a) && inv.amt > 0;
+      }).sort(function(a,b){ return b.amt - a.amt; }); // largest first
+
+      _candidates.forEach(function(inv){
+        if(inv.amt <= _remaining + tolerance){
+          _add(inv, 'Amount alloc→Inv:'+inv.i+' ($'+$f(inv.amt)+')');
+          _remaining -= inv.amt;
+        }
+      });
+    }
+  }
+
+  return {
+    matched: matched,
+    chains: chains,
+    total: total,
+    remaining: payment.amt - total
+  };
+}
+
 async function runMatch(){
   if(!INV.length){toast('Import invoices first','warn');return;}
   if(!PAY.length){toast('Import remittance first','warn');return;}
@@ -13407,7 +14078,8 @@ async function runMatch(){
                          _pc_norm.indexOf(_hc_norm.slice(0,8))>=0;
           if(_acctOk&&_nameOk){
             const vr=p.amt-_h.amt,st=Math.abs(vr)<=tol?'Exact':vr<0?'Short pay':'Overpay';
-            _h.s=st;RES.push({c:_h.c,a:_h.a||p.a,i:_h.i,po:_h.po,so:_h.so,d:_h.d,oa:_h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:''});
+            var _p1conf = ConfidenceScorer.score({invoiceMatch:true, amountMatch:Math.abs(vr)<=tol, customerMatch:_nameOk&&!!_pc_norm});
+            _h.s=st;RES.push({c:_h.c,a:_h.a||p.a,i:_h.i,po:_h.po,so:_h.so,d:_h.d,oa:_h.amt,pd:p.amt,vr,st,m:'Direct invoice',n:Math.abs(vr)>tol?`Variance ${$f(vr)}`:'',confidence:_p1conf.score,matchReasons:_p1conf.reasons,scenario:'INV_EXACT'});
             if(st!=='Exact')EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||_h.a,c:p.c||_h.c,amt:p.amt,ref:p.i,type:st,detail:`Payment ${$f(p.amt)} vs invoice ${$f(_h.amt)} — variance ${$f(vr)}`,action:st==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});
             matched=true;
           }
@@ -13515,6 +14187,44 @@ async function runMatch(){
       }catch(_fbErr){}
       if(matched)continue;
 
+      // PRIORITY 6: ERS self-billing grouped match
+      // Group ERS lines by PO → compare total to invoice amounts
+      if(!matched && ERS_LINES.length>0){
+        var _ersResult = matchERSGrouped(p.amt, p.a, _idx, tol);
+        if(_ersResult && _ersResult.matched.length>0){
+          _ersResult.matched.forEach(function(inv){
+            if(inv.s) return;
+            inv.s='ERS Match';
+            var _conf = ConfidenceScorer.score({ersMatch:true, amountMatch:true, poMatch:true, customerMatch:!!p.a});
+            RES.push({c:inv.c,a:inv.a,i:inv.i,po:inv.po,so:inv.so,d:inv.d,
+              oa:inv.amt,pd:inv.amt,vr:0,st:'Exact',m:'ERS grouped match',
+              n:'ERS PO total · confidence: '+_conf.score+'%',
+              confidence:_conf.score, matchReasons:_conf.reasons, scenario:'ERS_GROUP'});
+          });
+          matched=true;
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY 7: VMI/consignment date-range match
+      // Match VMI detail rows whose dates fall within invoice PO date range
+      if(!matched && VMI_LINES.length>0){
+        var _vmiResult = matchVMIDateRange(p.amt, p.a, _idx, tol);
+        if(_vmiResult && _vmiResult.matched.length>0){
+          _vmiResult.matched.forEach(function(inv){
+            if(inv.s) return;
+            inv.s='VMI Match';
+            var _conf = ConfidenceScorer.score({vmiMatch:true, dateRangeMatch:true, amountMatch:true});
+            RES.push({c:inv.c,a:inv.a,i:inv.i,po:inv.po,so:inv.so,d:inv.d,
+              oa:inv.amt,pd:inv.amt,vr:0,st:'Exact',m:'VMI date-range match',
+              n:'VMI date range · confidence: '+_conf.score+'%',
+              confidence:_conf.score, matchReasons:_conf.reasons, scenario:'VMI_DATERANGE'});
+          });
+          matched=true;
+        }
+      }
+      if(matched)continue;
+
       // PRIORITY 8: Credit Memo / Debit Memo offset (from remittance details)
       if(!matched && p._creditMemo){
         var _cmHit = _idx.byInv && _idx.byInv.get(norm(p._creditMemo));
@@ -13591,6 +14301,64 @@ async function runMatch(){
                 notes:'Invoice total exceeds payment.'
               });
             }
+          }
+        }
+      }
+      if(matched)continue;
+
+      // PRIORITY MULTI-SRC: Multi-source allocation (ERS + VMI + bank refs)
+      // When ERS/VMI detail files are loaded, allocate payment across all matched invoices.
+      // Uses PO matching (ERS), date-range matching (VMI), direct refs, and amount allocation.
+      if(!matched && (ERS_LINES.length>0 || VMI_LINES.length>0 || (p.extractedInvoices&&p.extractedInvoices.length))){
+        var _msResult = allocateMultiSource(p, _idx, tol);
+        if(_msResult && _msResult.matched.length>0){
+          var _msCust = p.c || (_msResult.matched[0]&&_msResult.matched[0].c)||'';
+          _msResult.matched.forEach(function(inv, _mi){
+            inv.s='Exact';
+            var _chain = _msResult.chains[_mi]||'Multi-source';
+            var _conf = ConfidenceScorer.score({
+              poMatch:    _chain.indexOf('PO:')>=0,
+              ersMatch:   _chain.indexOf('ERS')>=0,
+              vmiMatch:   _chain.indexOf('VMI')>=0,
+              invoiceMatch:_chain.indexOf('Inv:')>=0 && _chain.indexOf('→Inv:')<0,
+              dateRangeMatch:_chain.indexOf('range')>=0,
+              amountMatch:_chain.indexOf('Amount')>=0,
+              customerMatch:!!p.a
+            });
+            RES.push({
+              c:inv.c||_msCust, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
+              oa:inv.amt, pd:inv.amt, vr:0,
+              st:'Exact', m:'Multi-source allocation',
+              n:_chain, bridgeChain:_chain,
+              confidence:_conf.score, matchReasons:_conf.reasons,
+              scenario:_chain.indexOf('ERS')>=0?'ERS_GROUP':_chain.indexOf('VMI')>=0?'VMI_DATERANGE':'MULTI_INV'
+            });
+          });
+          matched=true;
+          // COA for remainder
+          if(_msResult.remaining > tol){
+            EXC.push({
+              id:'EXC-COA-'+String(ec++).padStart(3,'0'),
+              a:p.a, c:_msCust, amt:_msResult.remaining,
+              ref:p.txId||p.bankRef||'—',
+              type:'Partially Applied',
+              detail:'Multi-source match: '+_msResult.matched.length+' invoice(s) · $'+$f(_msResult.total)+
+                     ' applied · Remaining: $'+$f(_msResult.remaining)+' → Cash on Account',
+              action:'Post remaining $'+$f(_msResult.remaining)+' as Cash on Account',
+              dec:'Cash on Account', s:'Open',
+              notes:'Bank $'+$f(p.amt)+' · Matched '+_msResult.matched.length+' inv · Sources: '+
+                    (ERS_LINES.length>0?'ERS ':'')+(VMI_LINES.length>0?'VMI ':'')+'bank refs'
+            });
+          } else if(_msResult.remaining < -tol){
+            EXC.push({
+              id:'EXC-'+String(ec++).padStart(3,'0'),
+              a:p.a, c:_msCust, amt:Math.abs(_msResult.remaining),
+              ref:p.txId||p.bankRef||'—',
+              type:'Variance',
+              detail:'Matched invoice total $'+$f(_msResult.total)+' exceeds payment $'+$f(p.amt),
+              action:'Review with customer',
+              dec:'', s:'Open', notes:''
+            });
           }
         }
       }
@@ -13862,6 +14630,28 @@ async function handleFile(inp){
       } else {
         await parsePDFRemittance(f);
       }
+    } else if(ext==='xls'){
+      // Try XML Spreadsheet 2003 format (ERS / VMI self-billing detail files)
+      try{
+        showProgress('Checking file format…',20);
+        var _xmlRes = await handleXMLSpreadsheet(f, IMP_TYPE);
+        if(_xmlRes){
+          hideProgress();
+          var _xLineCount = _xmlRes.lines.length;
+          var _xGroupCount = _xmlRes.groups.length;
+          var _xTotalAmt = _xmlRes.lines.reduce(function(s,l){return s+(l.amount||0);},0);
+          addAudit(_xmlRes.type+' file imported', _xLineCount+' lines · '+_xGroupCount+' groups · $'+$f(_xTotalAmt));
+          toast('Imported '+_xLineCount+' '+_xmlRes.type+' detail lines ('+_xGroupCount+' groups) · Total: $'+$f(_xTotalAmt));
+          try{_updateUploadStatus();}catch(e){}
+          try{armpUpdateSetupState();}catch(e){}
+          var _xmo=document.getElementById('imp-modal');if(_xmo)_xmo.classList.remove('open');
+          return;
+        }
+        // Not XML Spreadsheet — fall through to standard XLSX handling
+        hideProgress();
+      }catch(_xErr){ hideProgress(); }
+      // Standard .xls → treat as text/CSV
+      const _xt=await f.text();const _xta=document.getElementById('mo-ta');if(_xta)_xta.value=_xt;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else {
       const t=await f.text();const _mt5=document.getElementById('mo-ta');if(_mt5)_mt5.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     }
@@ -14172,6 +14962,8 @@ function _bankNormalize(raw, bankName, fileName, page){
     unapplied:  false,
     dp:         false,
     trackingNo: refs.extractedTrackingNumbers[0]||'',
+    originatorId: raw.originatorId||'',
+    receiverId:   raw.receiverId||'',
     sourceFormat: bankName.toLowerCase().replace(/\s/g,'')+'-pdf',
     // Extended schema fields
     bankName:             bankName,
@@ -14228,11 +15020,10 @@ async function _bankExtractPDFText(file, progressCb){
 
 // ── MUFG Bank parser ──────────────────────────────────────────────────────
 function _parseMUFGText(allText, fileName){
-  const lc = allText.toLowerCase();
   const lines = allText.split('\n').map(function(l){return l.trim();}).filter(Boolean);
   const payments = [];
 
-  // Account number
+  // Account number from header
   var _acctM = allText.match(/(?:Account\s*(?:Number|#|No\.?)?:?\s*)([0-9\-]{6,20})/i);
   var _acctNo = _acctM ? _acctM[1].trim() : '';
   var _bankIdM = allText.match(/(?:ABA|Routing|Bank\s*ID):?\s*([0-9]{9})/i);
@@ -14259,32 +15050,62 @@ function _parseMUFGText(allText, fileName){
       const _am = line.match(_bankReAmt);
       const _dt = line.match(_bankReDate);
       const _m = lc2.includes('wire')||lc2.includes('fedwire')?'Wire':lc2.includes('ach')?'ACH':lc2.includes('lockbox')?'Lockbox':'Credit';
+      // Extract ACC-XXXXXXX reference from the transaction header line
+      var _accRef = line.match(/ACC[\-\s]?(\d{5,12})/i);
       _cur = {
         bankName:'MUFG', accountNumber:_acctNo, bankId:_bankId,
         postingDate:_dt?_dt[1]:'', transactionDate:_dt?_dt[1]:'',
         transactionType:line.split('\t')[0]||'Credit',
         paymentMethod:_m,
-        customerReference:'', bankReference:'', traceNumber:'', referenceNumber:'',
+        customerReference:'', bankReference:'', traceNumber:_accRef?_accRef[0]:'',
+        referenceNumber:_accRef?_accRef[0]:'',
         payerName:'', detailText:line, currency:'USD',
         amount:_am?parseFloat(_am[1].replace(/,/g,'')):0,
+        originatorId:'', receiverId:'',
         sourcePage:_pageNum, sourceFileName:fileName, parserConfidence:0.85
       };
       return;
     }
 
+    // Accumulate detail lines for the current transaction
     if(_cur){
       _cur.detailText += ' | '+line;
-      // Customer/originator name
-      var _nmM = line.match(/(?:originator|remitter|payer|from|sender|company\s*name)\s*[:\-]\s*(.+)/i);
-      if(_nmM && !_cur.payerName) _cur.payerName = _nmM[1].trim().slice(0,80);
-      // References
-      var _refM = line.match(/(?:ref(?:erence)?|bank\s*ref|cust(?:omer)?\s*ref)[^\w]*([\w\-]{6,})/i);
-      if(_refM){
-        if(/bank\s*ref/i.test(line) && !_cur.bankReference) _cur.bankReference=_refM[1];
-        else if(!_cur.customerReference) _cur.customerReference=_refM[1];
-        if(!_cur.traceNumber) _cur.traceNumber=_refM[1];
+
+      // ── MUFG ACH detail field extraction ────────────────────────────────
+      // NAME:ORIG:APPLIED MATERIAL EDI PAYMTS
+      var _origName = line.match(/NAME:ORIG:(.+)/i);
+      if(_origName && !_cur.payerName) _cur.payerName = _origName[1].trim().slice(0,80);
+
+      // R.REF ACC0671336/
+      var _rref = line.match(/R\.REF\s+([A-Z0-9]+)/i);
+      if(_rref && !_cur.bankReference) _cur.bankReference = _rref[1];
+
+      // ORIG ID:7941655526
+      var _origId = line.match(/ORIG\s*ID:?\s*([A-Z0-9]+)/i);
+      if(_origId) _cur.originatorId = _origId[1];
+
+      // RCVR ID:5182862 or ID:5182862
+      var _rcvrId = line.match(/RCVR\s*ID:?\s*([A-Z0-9]+)/i);
+      if(_rcvrId) _cur.receiverId = _rcvrId[1];
+      // Standalone ID: (when RCVR is on previous line)
+      if(!_cur.receiverId && /^\s*ID:\s*\d+/.test(line)){
+        var _idM = line.match(/ID:\s*([0-9]+)/);
+        if(_idM) _cur.receiverId = _idM[1];
       }
-      // Amount if not set
+
+      // Generic originator/payer fallback (non-MUFG-specific)
+      if(!_cur.payerName){
+        var _nmM = line.match(/(?:originator|remitter|payer|from|sender|company\s*name)\s*[:\-]\s*(.+)/i);
+        if(_nmM) _cur.payerName = _nmM[1].trim().slice(0,80);
+      }
+
+      // Generic reference extraction fallback
+      if(!_cur.customerReference){
+        var _refM = line.match(/(?:cust(?:omer)?\s*ref)[^\w]*([\w\-]{6,})/i);
+        if(_refM) _cur.customerReference = _refM[1];
+      }
+
+      // Amount if still zero (sometimes on a separate line)
       if(_cur.amount===0){
         var _am2=line.match(_bankReAmt);
         if(_am2) _cur.amount=parseFloat(_am2[1].replace(/,/g,''));
@@ -14780,12 +15601,14 @@ function processImport(){
           i:r[col(
             'invoice','inv','invoicenum','invoicenumber','invoiceno',
             'customerinvoice','invoiceid',
+            'billingdocument','billingdocumentinvoice',
             'documentnumber','docnumber','documentno','belnr','referencedocument',
             'refdocno','refdoc','reference','invoicedocument',
             'docno','invoicereference','invoiceref',
             'tranid','transactionnumber','invoicenumber2','externaldocnum'
           )]||'',
           po:r[col(
+            'paymentreference','paymentreferencepurchaseo',
             'customerpo','ponumber','purchaseordernumber','poref','purchaseorder','po',
             'purchaseordernumber','ponumber','ponum','ebeln',
             'purchaseorderno','purchaseref','assignment','zuonr',
@@ -14804,8 +15627,31 @@ function processImport(){
           d:r[col('document','docnum','documentnumber','clearingdocument','augbl','clearedwith','referencedocno','xblnr')]||'',
           t:r[col('tracking','trk','trackingnumber','trackingno')]||'',
           dl:r[col('delivery','del','deliverynumber','deliveryno','vbeln2')]||'',
+          // FBL5N-specific fields
+          refKey3:r[col('referencekey3','refkey3','referencekey','xblnr')]||'',
+          specialGL:r[col('specialglind','specialgl','sglind','umskz')]||'',
+          fbl5nText:r[col('text','txt','itemtext','sgtxt','linetext','memo','narration','comment')]||'',
           s:''
         });
+        // ── Parse FBL5N Text field for embedded references ────────────────
+        // DZ rows often have text like "5101099588 4507342394 2100956921 price diff"
+        var _lastInv = INV[INV.length-1];
+        if(_lastInv && _lastInv.fbl5nText){
+          var _textRefs = DeductionHandler.parseTextRefs(_lastInv.fbl5nText);
+          // Enrich invoice row with any extracted refs not already populated
+          if(_textRefs.invoiceNumber && !_lastInv.i)  _lastInv.i  = _textRefs.invoiceNumber;
+          if(_textRefs.poNumber      && !_lastInv.po) _lastInv.po = _textRefs.poNumber;
+          if(_textRefs.salesOrder    && !_lastInv.so) _lastInv.so = _textRefs.salesOrder;
+          if(_textRefs.deliveryNumber&& !_lastInv.dl) _lastInv.dl = _textRefs.deliveryNumber;
+          if(_textRefs.documentNumber&& !_lastInv.d)  _lastInv.d  = _textRefs.documentNumber;
+          _lastInv._textRefs = _textRefs;
+          // Classify deduction type for DZ/DR rows
+          if(_lastInv.dt==='DZ'||_lastInv.dt==='DA'||_lastInv.dt==='DR'){
+            var _deductionInfo = DeductionHandler.classify(_lastInv.amt, _textRefs, _lastInv.dt);
+            _lastInv._deductionType = _deductionInfo.type;
+            _lastInv._deductionAction = _deductionInfo.action;
+          }
+        }
       });
       _invChunkIdx++;
       setTimeout(_processInvChunk, 0);
