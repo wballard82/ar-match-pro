@@ -2351,6 +2351,9 @@ body.app-active #app {
   100% { box-shadow: 0 0 0 0 rgba(20,168,216,0), 0 0 0 0 rgba(18,184,134,0);     transform: scale(1); filter: brightness(1); }
 }
 .armp-setup-step[data-state="active"] .armp-setup-step-cta {
+  /* Active but NOT pulsing — just shown and clickable */
+}
+.armp-setup-step.armp-step-recommended .armp-setup-step-cta {
   animation: armpFlashPulse 1.6s ease-in-out infinite;
 }
 /* Subtle 1s pulse on workflow CTA when state transitions */
@@ -2721,7 +2724,7 @@ body.app-active #app {
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
           <div class="armp-setup-step-label">Upload Bank File</div>
-          <div class="armp-setup-step-sub">MUFG, US Bank, BAI2, CSV, Excel, or PDF bank payment file</div>
+          <div class="armp-setup-step-sub">BAI2, CSV, Excel, PDF, or bank summary</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Upload Bank File</button>
       </div>
@@ -9044,7 +9047,7 @@ function armpUpdateSetupState(){
     var steps = [
       {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
       {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:DELIV.length.toLocaleString()+' delivery rows loaded',                              sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
-      {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                      sub_pending:'MUFG, US Bank, BAI2, CSV, Excel, PDF, or screenshot'},
+      {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                      sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
       {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines', sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
     ];
     for(var si=0;si<steps.length;si++){
@@ -9052,6 +9055,9 @@ function armpUpdateSetupState(){
       if(!el) continue;
       el.style.display='';
       el.setAttribute('data-state', steps[si].done ? 'done' : 'active');
+      // Only the RECOMMENDED step gets the pulsing animation
+      el.classList.remove('armp-step-recommended');
+      if(!steps[si].done && ws.activeStep===(si+1)) el.classList.add('armp-step-recommended');
       var subEl=el.querySelector('.armp-setup-step-sub');
       if(subEl) subEl.textContent = steps[si].done ? steps[si].sub_done : steps[si].sub_pending;
     }
@@ -10334,7 +10340,7 @@ function openImportBank(){
     const title=document.getElementById('imp-title');
     if(title)title.textContent='Import Bank File';
     const lbl=document.getElementById('imp-lbl');
-    if(lbl)lbl.textContent='Upload MUFG, US Bank, BAI2, CAMT.053, bank CSV, or bank summary PDF';
+    if(lbl)lbl.textContent='Upload BAI2, CSV, Excel, PDF, or bank summary';
     const dzt=document.querySelector('#dz .drop-zone-t');
     if(dzt)dzt.textContent='Drop bank file here or click to browse';
     const dzs=document.querySelector('#dz .drop-zone-s');
@@ -14550,6 +14556,17 @@ function delRemRow(idx){if(PAY.length<=1&&!confirm('Delete the last row?'))retur
 // ══════════════════════════════════════════════════════════
 // IMPORT / FILE HANDLING
 // ══════════════════════════════════════════════════════════
+// ── XML Spreadsheet 2003 detection ────────────────────────────────────────
+// Reads first 500 bytes of a .XLS file to check if it's XML Spreadsheet format
+// (not binary BIFF). Returns true for XML Spreadsheet, false for standard .xls.
+async function _isXMLSpreadsheet(file){
+  try{
+    var slice = file.slice(0, 500);
+    var text = await slice.text();
+    return text.trimStart().startsWith('<?xml') || text.includes('urn:schemas-microsoft-com:office:spreadsheet');
+  }catch(e){ return false; }
+}
+
 async function handleFile(inp){
   const f=inp.files[0];if(!f)return;
   window._lastImportFileName=f.name||'';
@@ -14561,7 +14578,7 @@ async function handleFile(inp){
   showProgress('Reading '+f.name+'…',10);
   await new Promise(r=>setTimeout(r,60)); // yield to browser to render UI
   try{
-    if(ext==='xlsx'||ext==='xls'){
+    if(ext==='xlsx'||(ext==='xls'&&!await _isXMLSpreadsheet(f))){
       if(typeof XLSX==='undefined'){hideProgress();toast('Excel parsing: include SheetJS for .xlsx support','warn');const t=await f.text();const _mt8=document.getElementById('mo-ta');if(_mt8)_mt8.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);return;}
       showProgress('Parsing Excel — large files may take a moment…',40);
       await new Promise(r=>setTimeout(r,50));
@@ -14625,11 +14642,36 @@ async function handleFile(inp){
     } else if(ext==='xml'){
       const t=await f.text();const rows=parseCAMT(t);const _mt3=document.getElementById('mo-ta');if(_mt3)_mt3.value=rows;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='pdf'){
-      // Fix 3: Route PDF based on import type
-      // Bank file mode: parse as bank summary PDF (MUFG or US Bank) → extract payments
-      // Remittance mode: parse as remittance advice → extract invoice refs
+      // Smart PDF routing: detect content type before choosing parser
+      // Bank file mode → bank summary parser UNLESS content is ERS/VMI
+      // Remittance mode → remittance parser
       if(IMP_TYPE==='rem' || IMP_BANK_MODE){
-        await parseBankSummaryPDF(f);
+        // Quick content check: peek at PDF text to see if it's ERS/VMI vs bank summary
+        try{
+          if(typeof pdfjsLib!=='undefined'){
+            var _peekBuf = await f.arrayBuffer();
+            var _peekPdf = await pdfjsLib.getDocument({data:_peekBuf}).promise;
+            var _peekPage = await _peekPdf.getPage(1);
+            var _peekTc = await _peekPage.getTextContent();
+            var _peekText = _peekTc.items.map(function(i){return i.str;}).join(' ').toLowerCase();
+            // If the PDF contains ERS/VMI/self-billing keywords, route to remittance parser instead
+            if(_peekText.includes('self-billing')||_peekText.includes('selfbilling')||
+               _peekText.includes('ers ')||_peekText.includes('vmi ')||_peekText.includes('vc invoice')||
+               _peekText.includes('delivery note')||_peekText.includes('po number')||
+               _peekText.includes('delivery date')){
+              // Reset file for re-read
+              var _newFile = new File([_peekBuf], f.name, {type:f.type});
+              await parsePDFRemittance(_newFile);
+            } else {
+              var _newFile2 = new File([_peekBuf], f.name, {type:f.type});
+              await parseBankSummaryPDF(_newFile2);
+            }
+          } else {
+            await parseBankSummaryPDF(f);
+          }
+        }catch(_pdfRouteErr){
+          await parseBankSummaryPDF(f);
+        }
       } else {
         await parsePDFRemittance(f);
       }
@@ -14661,10 +14703,12 @@ async function handleFile(inp){
       if(!window._imageImports) window._imageImports=[];
       window._imageImports.push({fileName:f.name,fileSize:f.size,fileType:f.type||'image/'+ext,importType:IMP_TYPE,importedAt:new Date().toISOString(),status:'accepted',ocrStatus:'pending'});
       addAudit('Image accepted',f.name+' ('+Math.round(f.size/1024)+'KB) — queued for OCR');
+      if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
       try{_updateUploadStatus();}catch(e){}
       try{armpUpdateSetupState();}catch(e){}
       var _imgMo=document.getElementById('imp-modal');if(_imgMo)_imgMo.classList.remove('open');
-      toast('📷 Image accepted: '+f.name+' — OCR/template parsing available in a future release.','info');
+      var _imgCat = IMP_TYPE==='rem'||IMP_BANK_MODE ? 'Bank summary' : IMP_TYPE==='remdetail' ? 'Remittance' : IMP_TYPE==='inv' ? 'Invoice' : 'Supporting';
+      toast(_imgCat+' image accepted: '+f.name+' — manual review may be required.','info');
     } else {
       const t=await f.text();const _mt5=document.getElementById('mo-ta');if(_mt5)_mt5.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     }
