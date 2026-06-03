@@ -9038,7 +9038,7 @@ function _updateWorkflowState(){
   workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0) || !!workflowState._invoiceSkipped;
   workflowState.deliveryReportLoaded  = !!(typeof DELIV!=='undefined' && DELIV.length>0) || !!workflowState._deliverySkipped;
   workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0) || !!workflowState._bankImagePending || !!workflowState._bankSkipped;
-  workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0) || !!workflowState._remittanceSkipped || !!workflowState._remittanceImagePending;
+  workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0) || !!(typeof ERS_LINES!=='undefined' && ERS_LINES.length>0) || !!(typeof VMI_LINES!=='undefined' && VMI_LINES.length>0) || !!workflowState._remittanceSkipped || !!workflowState._remittanceImagePending;
   workflowState.autoMatchRun          = autoMatchHasRun;
   // Sequential: 1→2→3→4→5→6. Optional steps (2,4) skippable but still shown.
   if(!workflowState.invoiceReportLoaded)         workflowState.activeStep = 1;
@@ -9057,7 +9057,7 @@ function armpUpdateSetupState(){
       {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:ws._invoiceSkipped?'Skipped — upload anytime':INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
       {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped — upload anytime':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
       {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:(PAY.length>0?PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded':(ws._bankImagePending?'Image uploaded — extraction pending':(ws._bankSkipped?'Skipped — upload anytime':'Pending'))), sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
-      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(ws._remittanceImagePending?'Screenshot uploaded — extraction pending':(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines'), sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
+      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(ws._remittanceImagePending?'Screenshot uploaded — extraction pending':((typeof ERS_LINES!=='undefined'&&ERS_LINES.length>0?ERS_LINES.length+' ERS':'')+(typeof VMI_LINES!=='undefined'&&VMI_LINES.length>0?(ERS_LINES.length>0?' + ':'')+VMI_LINES.length+' VMI':'')+(REM_DETAIL&&REM_DETAIL.length?((ERS_LINES.length||VMI_LINES.length)?' + ':'')+REM_DETAIL.length+' remittance':''))+' lines loaded'), sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
     ];
     for(var si=0;si<steps.length;si++){
       var el=document.getElementById(steps[si].id);
@@ -13709,9 +13709,12 @@ function allocateMultiSource(payment, invIndex, tolerance){
   var chains = [];
   var total = 0;
   var _resSet = new Set(); // deduplicate
+  var _payAmt = payment.amt || 0; // payment amount cap
 
   function _add(inv, chain){
     if(!inv || inv.s || _resSet.has(inv.i)) return false;
+    // STOP if we've already matched enough to cover the payment (with tolerance)
+    if(total >= _payAmt + tolerance && _payAmt > 0) return false;
     _resSet.add(inv.i);
     matched.push(inv);
     chains.push(chain);
@@ -13723,12 +13726,13 @@ function allocateMultiSource(payment, invIndex, tolerance){
   if(ERS_LINES.length > 0 && invIndex.byPO){
     var ersGroups = ERSParser.groupBySheet(ERS_LINES);
     ersGroups.forEach(function(g){
+      if(total >= _payAmt + tolerance) return; // cap reached
       g.poNumbers.forEach(function(po){
+        if(total >= _payAmt + tolerance) return; // cap reached
         var invList = invIndex.byPO.get(norm(po)) || [];
         invList.forEach(function(inv){
+          if(total >= _payAmt + tolerance) return; // cap reached
           if(!inv.s && !_resSet.has(inv.i)){
-            // Verify amount proximity between ERS group and invoice
-            // For PO match, accept if invoice exists with that PO
             _add(inv, 'ERS PO:'+po+'→Inv:'+inv.i+' ($'+$f(inv.amt)+')');
           }
         });
@@ -13739,6 +13743,7 @@ function allocateMultiSource(payment, invIndex, tolerance){
   // ── Source 2: VMI date-range matching ──────────────────────────────────
   if(VMI_LINES.length > 0 && INV && INV.length > 0){
     INV.forEach(function(inv){
+      if(total >= _payAmt + tolerance) return; // cap reached
       if(inv.s || _resSet.has(inv.i)) return;
       if(!inv.po) return;
       var dr = DateRangeMatcher.parsePODateRange(inv.po);
@@ -14434,6 +14439,23 @@ async function runMatch(){
         var _msResult = allocateMultiSource(p, _idx, tol);
         if(_msResult && _msResult.matched.length>0){
           var _msCust = p.c || (_msResult.matched[0]&&_msResult.matched[0].c)||'';
+          var _overMatch = _msResult.total > p.amt * 1.10; // matched more than 110% of payment
+          if(_overMatch){
+            // Over-matched — route ALL to Needs Attention, don't auto-approve
+            _msResult.matched.forEach(function(inv){ inv.s=''; }); // un-mark
+            EXC.push({
+              id:'EXC-'+String(ec++).padStart(3,'0'),
+              a:p.a, c:_msCust, amt:p.amt,
+              ref:p.txId||p.bankRef||'—',
+              type:'Multi-source over-match',
+              detail:'Matched '+_msResult.matched.length+' invoices totaling $'+$f(_msResult.total)+
+                     ' against payment of $'+$f(p.amt)+' — review allocation manually',
+              action:'Review invoice selection',
+              dec:'', s:'Open',
+              notes:'Sources: '+(ERS_LINES.length>0?'ERS ':'')+(VMI_LINES.length>0?'VMI ':'')+'bank refs'
+            });
+            matched=true;
+          } else {
           _msResult.matched.forEach(function(inv, _mi){
             inv.s='Exact';
             var _chain = _msResult.chains[_mi]||'Multi-source';
@@ -14481,6 +14503,7 @@ async function runMatch(){
               dec:'', s:'Open', notes:''
             });
           }
+          } // close else (non-over-match)
         }
       }
       if(matched)continue;
