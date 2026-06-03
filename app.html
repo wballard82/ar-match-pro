@@ -13593,26 +13593,33 @@ function handleXMLSpreadsheet(file, importType){
 // Called per payment: tries to match using ERS grouped totals or VMI date ranges.
 function matchERSGrouped(payAmount, custAccount, idx, tol){
   if(!ERS_LINES.length) return null;
-  var groups = ERSParser.groupByPO(ERS_LINES); // group by PO, not by sheet
+  var groups = ERSParser.groupByPO(ERS_LINES); // group by PO
   var matched = [];
   var total = 0;
-  var _cap = payAmount + (tol||5); // don't exceed payment amount
+  var _cap = payAmount + (tol||5);
 
   groups.forEach(function(g){
     if(total >= _cap) return;
     if(Math.abs(g.total)<=0.01) return;
     var po = g.poNumber;
     if(!po || !idx.byPO) return;
-    var invList = idx.byPO.get(norm(po))||[];
-    invList.forEach(function(inv){
-      if(total >= _cap) return;
-      if(inv.s || inv.amt <= 0) return;
-      if(inv.dt === 'DZ' || inv.dt === 'BE') return;
-      if(!matched.find(function(x){return x.i===inv.i;})){
-        matched.push(inv);
-        total += inv.amt;
-      }
+    var invList = (idx.byPO.get(norm(po))||[]).filter(function(inv){
+      return !inv.s && inv.amt > 0 && inv.dt !== 'DZ' && inv.dt !== 'BE' && !matched.find(function(x){return x.i===inv.i;});
     });
+    if(invList.length === 0) return;
+    if(invList.length === 1){
+      // Single invoice for this PO — match it
+      if(total + invList[0].amt <= _cap){ matched.push(invList[0]); total += invList[0].amt; }
+    } else {
+      // Multiple invoices share this PO — pick the one whose amount best matches
+      // the ERS PO group total (disambiguation). Avoids grabbing wrong large invoices.
+      var _best = null, _bestDiff = Infinity;
+      invList.forEach(function(inv){
+        var diff = Math.abs(inv.amt - g.total);
+        if(diff < _bestDiff){ _bestDiff = diff; _best = inv; }
+      });
+      if(_best && total + _best.amt <= _cap){ matched.push(_best); total += _best.amt; }
+    }
   });
   return matched.length>0 ? { matched:matched, total:total, scenario:'ERS_GROUP' } : null;
 }
@@ -14420,7 +14427,7 @@ async function runMatch(){
           var _tiesExact = Math.abs(_allocTotal - _boundary) <= tol;
 
           if(_tiesExact && _alloc.length > 0){
-            // Allocation ties to payment exactly — apply invoices
+            // Allocation ties to payment exactly — apply invoices (high confidence)
             _alloc.forEach(function(c){
               var inv=c.inv;
               inv.s = 'ERS/VMI Match';
@@ -14436,16 +14443,44 @@ async function runMatch(){
                 scenario:c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE'});
             });
             matched = true;
+          } else if(_alloc.length > 0){
+            // Candidates found but don't tie exactly → SUGGESTED match for review.
+            // Apply within boundary, mark as Suggested (not auto-confirmed), flag variance.
+            _alloc.forEach(function(c){
+              var inv=c.inv;
+              inv.s = 'Suggested';
+              var _conf = ConfidenceScorer.score({
+                ersMatch:c.src==='ERS', vmiMatch:c.src==='VMI',
+                customerMatch:!!p.c, poMatch:true
+              });
+              RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
+                oa:inv.amt, pd:inv.amt, vr:0, st:'Suggested',
+                m:c.src+' remittance candidate',
+                n:'Remittance tie-out · '+c.src+' PO match · REVIEW REQUIRED · confidence: '+_conf.score+'%',
+                confidence:Math.min(_conf.score, 75), matchReasons:_conf.reasons,
+                scenario:c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE'});
+            });
+            matched = true;
+            // Variance line for the unallocated remainder
+            var _remVar = p.amt - _allocTotal;
+            if(Math.abs(_remVar) > tol){
+              EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
+                a:p.a, c:p.c||'', amt:Math.abs(_remVar),
+                ref:p.txId||p.bankRef||'—',
+                type:'Remittance Tie-Out — Partial Allocation',
+                detail:'Customer/remittance tie-out confirmed ($'+$f(_remTotal)+' = payment $'+$f(p.amt)+') · '+
+                       _alloc.length+' candidate invoices suggested ($'+$f(_allocTotal)+') · $'+$f(_remVar)+' requires review',
+                action:'Review suggested invoices in Review tab',
+                dec:'', s:'Open',
+                notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · '+_alloc.length+' invoices suggested for review'});
+            }
           } else {
-            // Cannot tie exactly within boundary — route to Needs Attention.
-            // DO NOT apply any invoices (no over-application).
+            // No candidate invoices found at all — Needs Attention with tie-out noted
             EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
               a:p.a, c:p.c||'', amt:p.amt,
               ref:p.txId||p.bankRef||'—',
               type:'Remittance Tie-Out — Allocation Review',
-              detail:'Customer/remittance tie-out found ($'+$f(_remTotal)+' = payment $'+$f(p.amt)+') but invoice allocation requires review · '+
-                     _cands.length+' candidate invoices total $'+$f(_candTotal)+
-                     (_candTotal > _boundary ? ' (exceeds payment — no exact subset ties out)' : ' (under payment)'),
+              detail:'Customer/remittance tie-out found ($'+$f(_remTotal)+' = payment $'+$f(p.amt)+') but no matching open invoices located · manual allocation required',
               action:'Review invoice allocation manually',
               dec:'', s:'Open',
               notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · Invoice-level allocation pending'});
