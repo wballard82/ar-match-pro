@@ -3458,7 +3458,7 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
               <button class="btn btn-outline btn-sm" onclick="openImportDelivery()" title="Upload delivery/tracking report to map Tracking # and Delivery # to invoices">+ Delivery Report</button>
               <button class="btn btn-outline btn-sm" onclick="openImportRemDetail()" title="Upload remittance advice / remittance details (e.g. supplier remittance with invoice references, PO#, tracking#, amounts)" style="color:var(--pu-t)">+ Remittance Details</button>
-              <button class="btn btn-p btn-sm" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px">⚡ Auto match</button>
+              <button class="btn btn-p btn-sm armp-setup-step-cta" id="btn-auto-match" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px;min-width:200px;text-align:center;justify-content:center">⚡ Auto match</button>
               
             </div>
           </div>
@@ -9096,6 +9096,12 @@ function armpUpdateSetupState(){
       if(ws.activeStep>=5) skipBtn.style.display='none'; // nothing to skip — use Close
       else { skipBtn.style.display=''; skipBtn.textContent='Skip Step '+ws.activeStep; }
     }
+    // Pulse the main Auto Match button when all uploads are done and match hasn't run yet
+    var _amBtn=document.getElementById('btn-auto-match');
+    if(_amBtn){
+      if(ws.activeStep===5 && !ws.autoMatchRun) _amBtn.classList.add('armp-step-recommended');
+      else _amBtn.classList.remove('armp-step-recommended');
+    }
   }catch(e){ console.warn('[armpUpdateSetupState]',e); }
 }
 function armpOpenSetupModal(){
@@ -13691,16 +13697,72 @@ var CustomerNormalizer = {
 // Adds _suggestedCustomer and _customerConfidence to each PAY entry.
 function _normalizePayCustomers(){
   if(!PAY||!PAY.length) return;
+  _ensureInvIndexes();
   PAY.forEach(function(p){
-    if(!p.c) return;
-    var suggestion = CustomerNormalizer.suggest(p.c);
-    if(suggestion){
-      p._rawPayer = p._rawPayer || p.c; // preserve original
-      p._suggestedCustomer = suggestion.canonical;
-      p._customerConfidence = suggestion.confidence;
-      p._customerSource = suggestion.source;
-      // Apply canonical name if confidence is high enough
-      if(suggestion.confidence >= 80) p.c = suggestion.canonical;
+    // ── Case 1: Customer name exists — normalize it ───────────────────────
+    if(p.c && p.c.length > 2){
+      var suggestion = CustomerNormalizer.suggest(p.c);
+      if(suggestion){
+        p._rawPayer = p._rawPayer || p.c;
+        p._suggestedCustomer = suggestion.canonical;
+        p._customerConfidence = suggestion.confidence;
+        p._customerSource = suggestion.source;
+        if(suggestion.confidence >= 80) p.c = suggestion.canonical;
+      }
+      return;
+    }
+
+    // ── Case 2: Customer name is empty — try to identify from ERS/VMI+FBL5N ─
+    // Cross-reference ERS PO numbers against FBL5N to find which accounts they belong to
+    var _foundAccts = new Map(); // acct → count of PO matches
+    if(ERS_LINES && ERS_LINES.length > 0 && _INV_IDX && _INV_IDX.byPO){
+      ERS_LINES.forEach(function(el){
+        if(!el.poNumber) return;
+        var invList = _INV_IDX.byPO.get(norm(el.poNumber));
+        if(invList){
+          invList.forEach(function(inv){
+            if(inv.a) _foundAccts.set(inv.a, (_foundAccts.get(inv.a)||0)+1);
+          });
+        }
+      });
+    }
+    // Also check VMI
+    if(VMI_LINES && VMI_LINES.length > 0 && INV){
+      INV.forEach(function(inv){
+        if(!inv.po || inv.amt <= 0) return;
+        var dr = DateRangeMatcher.parsePODateRange(inv.po);
+        if(!dr) return;
+        var vmiMatch = VMIParser.matchToInvoiceDateRange(VMI_LINES, inv.po);
+        if(vmiMatch && vmiMatch.lines.length > 0 && inv.a){
+          _foundAccts.set(inv.a, (_foundAccts.get(inv.a)||0)+5);
+        }
+      });
+    }
+
+    // If we found matching accounts, use the most common one
+    if(_foundAccts.size > 0){
+      var _bestAcct = '';
+      var _bestCount = 0;
+      _foundAccts.forEach(function(count, acct){
+        if(count > _bestCount){ _bestAcct = acct; _bestCount = count; }
+      });
+      if(_bestAcct){
+        p.a = p.a || _bestAcct;
+        // Find customer name from INV rows with this account
+        var _custName = '';
+        for(var i=0; i<INV.length; i++){
+          if(INV[i].a === _bestAcct && INV[i].c){
+            _custName = INV[i].c;
+            break;
+          }
+        }
+        // If no customer name in INV, use "Account: XXXXX"
+        p.c = _custName || ('Account '+_bestAcct);
+        p._suggestedCustomer = p.c;
+        p._customerConfidence = 75;
+        p._customerSource = 'ers_vmi_po_crossref';
+        p._suggestedAccounts = Array.from(_foundAccts.keys());
+      }
     }
   });
 }
@@ -13853,6 +13915,8 @@ async function runMatch(){
 
   // ── Build/refresh lookup indexes ──
   _buildInvIndexes();
+  // Re-run customer normalization with latest data (ERS/VMI may have been loaded after bank import)
+  try{ _normalizePayCustomers(); }catch(e){}
   await new Promise(r=>setTimeout(r,60));upd(15,0,0);
 
   RES=[];EXC=[];INV.forEach(v=>v.s='');
@@ -14754,6 +14818,7 @@ async function _isXMLSpreadsheet(file){
 
 async function handleFile(inp){
   const f=inp.files[0];if(!f)return;
+  window._lastImportFileName = f.name; // store for customer name extraction
   window._lastImportFileName=f.name||'';
   const ext=f.name.split('.').pop().toLowerCase();
   // Show filename immediately so user knows file was accepted
@@ -15888,6 +15953,24 @@ function processImport(){
           saveToStorage();
           addAudit('Invoices imported', INV.length+' rows · '+_invMs+'ms');
           try{StorageManager.save('setup_seen','true');}catch(e){}
+          // If INV rows have no customer name (e.g. FBL5N without Customer column),
+          // try to extract customer name from the import filename
+          try{
+            var _noNameCount = INV.filter(function(v){return !v.c;}).length;
+            if(_noNameCount > INV.length * 0.8 && window._lastImportFileName){
+              // Extract customer name from filename: "Applied_Materials_Aging_Detail_FBL5N..." → "Applied Materials"
+              var _fnClean = window._lastImportFileName
+                .replace(/\.[^.]+$/, '')                    // remove extension
+                .replace(/[-_]/g, ' ')                      // underscores/dashes to spaces
+                .replace(/\b(Aging|Detail|FBL5N|Report|Open|Items|Invoice|Invoices|AR|\d{2}[\s_]\d{2}[\s_]\d{4})\b/gi, '') // remove common report words
+                .replace(/\d{4,}/g, '')                     // remove long numbers
+                .replace(/\s+/g, ' ').trim();
+              if(_fnClean.length >= 4){
+                INV.forEach(function(v){ if(!v.c) v.c = _fnClean; });
+                _invalidateInvIndexes();
+              }
+            }
+          }catch(e){}
           if(INV.length>2000){ toast('Imported '+INV.length.toLocaleString()+' invoices ('+_invMs+'ms) — large dataset, lazy rendering active'); }
           else { toast('Imported '+INV.length+' invoices ('+_invMs+'ms)'); }
           try{renderFbl5n('ca-open-items-body','','');}catch(e){}
