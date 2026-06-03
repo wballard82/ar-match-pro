@@ -9038,7 +9038,7 @@ function _updateWorkflowState(){
   workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0) || !!workflowState._invoiceSkipped;
   workflowState.deliveryReportLoaded  = !!(typeof DELIV!=='undefined' && DELIV.length>0) || !!workflowState._deliverySkipped;
   workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0) || !!workflowState._bankImagePending || !!workflowState._bankSkipped;
-  workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0) || !!workflowState._remittanceSkipped;
+  workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0) || !!workflowState._remittanceSkipped || !!workflowState._remittanceImagePending;
   workflowState.autoMatchRun          = autoMatchHasRun;
   // Sequential: 1→2→3→4→5→6. Optional steps (2,4) skippable but still shown.
   if(!workflowState.invoiceReportLoaded)         workflowState.activeStep = 1;
@@ -9057,7 +9057,7 @@ function armpUpdateSetupState(){
       {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:ws._invoiceSkipped?'Skipped — upload anytime':INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
       {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped — upload anytime':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
       {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:(PAY.length>0?PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded':(ws._bankImagePending?'Image uploaded — extraction pending':(ws._bankSkipped?'Skipped — upload anytime':'Pending'))), sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
-      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines', sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
+      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(ws._remittanceImagePending?'Screenshot uploaded — extraction pending':(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines'), sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
     ];
     for(var si=0;si<steps.length;si++){
       var el=document.getElementById(steps[si].id);
@@ -10781,9 +10781,10 @@ function normalizeRemitterName(name){
 }
 function getDisplayCustomerName(p){
   if(!p)return'';
+  // Use _suggestedCustomer from CustomerNormalizer if available (highest priority)
+  if(p._suggestedCustomer && p._customerConfidence>=60) return p._suggestedCustomer;
   var existing=p.customerName||p.customer||p.remitterName||p.remitter||p.payerName||p.c||'';
   var raw=p.rawDetail||p.rawText||p.bankDetail||p.addenda||p.n||p.memo||existing||'';
-  // Only clean if existing looks like raw bank ref (contains T.REF or AMT USD)
   if(/T\.?REF|AMT\s+USD|ACH\s+CR|INWARD/i.test(existing)){
     var fromRaw=normalizeRemitterName(extractCleanRemitterName(raw));
     var fromExisting=normalizeRemitterName(extractCleanRemitterName(existing));
@@ -12567,9 +12568,12 @@ function renderPayQueue(){
     const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':p.coa||p.unapplied?'var(--cy)':'var(--t3)';
     const stateLabel=matched?'Applied':exc?(p.st==='Unapplied Cash'||p.unapplied?'Unapplied':'Exception'):p.dp?'Down Pay':p.coa||p.unapplied?'Unapplied':'Unmatched';
     const bankTag=p.bank?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--pg);color:var(--pd);font-weight:700;margin-left:4px">${p.bank}</span>`:'';
+    const _displayCust=getDisplayCustomerName(p)||p.a||'Unknown';
+    const _rawPSub=p._rawPayer&&p._rawPayer!==p.c?`<div style="font-size:9.5px;color:var(--t3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escapeAttr(p._rawPayer)}">Raw: ${_escapeHtml(p._rawPayer.slice(0,40))}</div>`:'';
+    const _custStatus=p._needsManualReview?'<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(245,158,11,.1);color:var(--am-t);margin-left:4px">manual review</span>':'';
     return`<div class="pq-item${isActive?' active':''}${matched?' pq-applied':''}" onclick="engLoadPaymentFromQueue(${i})">
       <div class="pq-state-indicator" style="background:${stateColor}"></div>
-      <div class="pq-item-top"><div class="pq-item-cust">${getDisplayCustomerName(p)||p.a||'Unknown'}${bankTag}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
+      <div class="pq-item-top"><div class="pq-item-cust">${_escapeHtml(_displayCust)}${bankTag}${_custStatus}${_rawPSub}</div><div class="pq-item-amt">${$f(p.amt)}</div></div>
       <div class="pq-item-bot">
         <div class="pq-item-ref">${p.i||p.po||p.txId||'—'}</div>
         <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
@@ -13599,27 +13603,110 @@ function matchVMIDateRange(payAmount, custAccount, idx, tol){
 // "APPLIED MATERIAL EDI PAYMTS" → "APPLIED MATERIAL"
 // "TK FUJIKIN CORPORATION" → "TK FUJIKIN"
 var CustomerNormalizer = {
-  // Strip common suffixes and clean for comparison
+  // ── Alias memory (persisted per tenant) ─────────────────────────────────
+  // Stores confirmed alias→canonical mappings in localStorage.
+  _aliasCache: null,
+  _loadAliases: function(){
+    if(this._aliasCache) return this._aliasCache;
+    try{ this._aliasCache = JSON.parse(StorageManager.get('customer_aliases','{}'))||{}; }
+    catch(e){ this._aliasCache={}; }
+    return this._aliasCache;
+  },
+  saveAlias: function(rawName, canonical){
+    var aliases = this._loadAliases();
+    var key = String(rawName).toUpperCase().trim();
+    if(key && canonical) aliases[key] = canonical;
+    this._aliasCache = aliases;
+    try{ StorageManager.save('customer_aliases', JSON.stringify(aliases)); }catch(e){}
+  },
+  getAlias: function(rawName){
+    var aliases = this._loadAliases();
+    return aliases[String(rawName).toUpperCase().trim()] || null;
+  },
+
+  // ── Normalization ───────────────────────────────────────────────────────
+  // Strip EDI wording, numeric suffixes, common corp suffixes
   normalize: function(name){
     if(!name) return '';
     return String(name).toUpperCase().trim()
-      .replace(/\s*(EDI\s*PAYM[A-Z]*|EDI\s*PMT|PAYMENT[S]?|PAYM[A-Z]*|PMT|INC\.?|LLC|LTD|CORP\.?|CORPORATION|CO\.?|COMPANY)\s*/gi,' ')
+      // Strip EDI payment wording
+      .replace(/\s*EDI\s*PAYM[A-Z]*/gi,' ')
+      .replace(/\s*EDI\s*PMT\b/gi,' ')
+      // Strip numeric run codes like "0719"
+      .replace(/\s+\d{3,4}\s+/g,' ')
+      .replace(/\s+\d{3,4}$/g,'')
+      // Strip corporate suffixes
+      .replace(/\s*(PAYMENT[S]?|PAYM[A-Z]*|PMT|INC\.?|LLC|LTD|CORP\.?|CORPORATION|CO\.?|COMPANY)\s*/gi,' ')
       .replace(/\s+/g,' ').trim();
   },
-  // Check if two names likely refer to the same company
+
+  // ── Fuzzy entity comparison ─────────────────────────────────────────────
   isSameEntity: function(a, b){
     if(!a||!b) return false;
     var na = CustomerNormalizer.normalize(a);
     var nb = CustomerNormalizer.normalize(b);
     if(!na||!nb) return false;
     if(na===nb) return true;
-    // Substring match (first 10 significant chars)
+    // Substring: first 8 stripped chars match
     var sa = na.replace(/[\s\-_]/g,'').slice(0,10);
     var sb = nb.replace(/[\s\-_]/g,'').slice(0,10);
     if(sa.length>=6 && sb.length>=6 && (sa.indexOf(sb.slice(0,6))>=0 || sb.indexOf(sa.slice(0,6))>=0)) return true;
     return false;
+  },
+
+  // ── Suggest canonical customer name ─────────────────────────────────────
+  // Given a raw payer text (from bank), returns { canonical, confidence, source }
+  // Checks: 1) stored aliases, 2) INV customer names, 3) fuzzy match
+  suggest: function(rawPayer){
+    if(!rawPayer) return null;
+    var raw = String(rawPayer).trim();
+
+    // 1. Check stored alias memory
+    var alias = this.getAlias(raw);
+    if(alias) return { canonical:alias, confidence:95, source:'alias' };
+
+    // 2. Normalize and check against INV customer names
+    var norm = this.normalize(raw);
+    if(!norm) return null;
+    if(typeof INV!=='undefined' && INV.length>0){
+      // Build unique customer names from INV
+      var seen = {};
+      for(var i=0;i<INV.length;i++){
+        var ic = INV[i].c;
+        if(!ic || seen[ic]) continue;
+        seen[ic] = true;
+        if(this.isSameEntity(raw, ic)){
+          return { canonical:ic, confidence:88, source:'invoice_match' };
+        }
+      }
+    }
+
+    // 3. Fuzzy: just return normalized form as suggestion
+    if(norm.length>=4){
+      return { canonical:norm.charAt(0)+norm.slice(1).toLowerCase(), confidence:60, source:'normalized' };
+    }
+    return null;
   }
 };
+
+// ── Post-import customer normalization ─────────────────────────────────────
+// Runs after any bank file import to normalize PAY.c using CustomerNormalizer.
+// Adds _suggestedCustomer and _customerConfidence to each PAY entry.
+function _normalizePayCustomers(){
+  if(!PAY||!PAY.length) return;
+  PAY.forEach(function(p){
+    if(!p.c) return;
+    var suggestion = CustomerNormalizer.suggest(p.c);
+    if(suggestion){
+      p._rawPayer = p._rawPayer || p.c; // preserve original
+      p._suggestedCustomer = suggestion.canonical;
+      p._customerConfidence = suggestion.confidence;
+      p._customerSource = suggestion.source;
+      // Apply canonical name if confidence is high enough
+      if(suggestion.confidence >= 80) p.c = suggestion.canonical;
+    }
+  });
+}
 
 // ── Multi-Source Allocator ─────────────────────────────────────────────────
 // Allocates a bank payment against open invoices using ALL available sources:
@@ -14684,6 +14771,7 @@ async function handleFile(inp){
           hideProgress();
           const _yyAccts=[...new Set(_yyPays.map(p=>p.bankAcct).filter(Boolean))];
           addAudit('Bank/MUFG import',_yyPays.length+' payments · accounts: '+_yyAccts.join(', '));
+          try{_normalizePayCustomers();}catch(e){}
           try{StorageManager.save('setup_seen','true');}catch(e){}
           toast('Imported '+_yyPays.length+' bank payments · '+_yyAccts.length+' account(s)');
           autoMatchHasRun = false; RES = []; EXC = [];
@@ -14819,10 +14907,11 @@ async function handleFile(inp){
         workflowState._bankImagePending = false; // actual PAY record created
         toast(_fnAmt>0
           ? 'Bank payment created from image: $'+$f(_fnAmt)+' — verify details in Payment Queue.'
+        try{_normalizePayCustomers();}catch(e){}
           : 'Bank image accepted: '+f.name+' — enter payment details in Payment Queue.','info');
       } else {
-        if(IMP_TYPE==='rem'||IMP_BANK_MODE) workflowState._bankImagePending=true;
-        toast((IMP_TYPE==='remdetail'?'Remittance':'Supporting')+' image accepted: '+f.name+' — manual review may be required.','info');
+        if(IMP_TYPE==='remdetail') workflowState._remittanceImagePending=true;
+        toast('Remittance screenshot accepted: '+f.name+' — extraction pending or manual review may be required.','info');
       }
       if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
       try{_updateUploadStatus();}catch(e){}
@@ -15509,6 +15598,7 @@ async function parseBankSummaryPDF(file){
     try{armpUpdateSetupState();}catch(e){}
     var _mo=document.getElementById('imp-modal');if(_mo)_mo.classList.remove('open');
     addAudit('Bank PDF import', _payments.length+' payments · bank: '+_bankName+' · acct: '+_acctDisplay);
+    try{_normalizePayCustomers();}catch(e){}
     try{StorageManager.save('setup_seen','true');}catch(e){}
     toast('Imported '+_payments.length+' payments from '+_bankName+' bank summary PDF · acct: '+_acctDisplay);
 
