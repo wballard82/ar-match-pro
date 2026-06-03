@@ -9034,6 +9034,27 @@ var workflowState = {
   activeStep: 1,
   newDataSinceLastMatch: false
 };
+// Centralized workflow reset — clears ALL onboarding/upload/skip/flash state.
+function _resetWorkflowState(){
+  workflowState.invoiceReportLoaded = false;
+  workflowState.deliveryReportLoaded = false;
+  workflowState.bankFileLoaded = false;
+  workflowState.remittanceDetailsLoaded = false;
+  workflowState.autoMatchRun = false;
+  workflowState.activeStep = 1;
+  workflowState.newDataSinceLastMatch = false;
+  // Clear skip flags and pending flags
+  workflowState._invoiceSkipped = false;
+  workflowState._deliverySkipped = false;
+  workflowState._bankSkipped = false;
+  workflowState._remittanceSkipped = false;
+  workflowState._bankImagePending = false;
+  workflowState._remittanceImagePending = false;
+  // Clear upload metadata caches
+  try{ window._imageImports = []; window._lastImportFileName = ''; }catch(e){}
+  // Clear flashing/pulse state on Auto Match button
+  try{ var _b=document.getElementById('btn-auto-match'); if(_b) _b.classList.remove('armp-step-recommended'); }catch(e){}
+}
 function _updateWorkflowState(){
   workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0) || !!workflowState._invoiceSkipped;
   workflowState.deliveryReportLoaded  = !!(typeof DELIV!=='undefined' && DELIV.length>0) || !!workflowState._deliverySkipped;
@@ -10588,7 +10609,10 @@ function clearAllData(){
   clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
   showConfirm('Clear ALL data?\n\nInvoices, payments, matches, and exceptions will be permanently removed.\nThis cannot be undone.',function(){
     INV=[];PAY=[];RES=[];EXC=[];
+    try{ DELIV=[]; REM_DETAIL=[]; ERS_LINES=[]; VMI_LINES=[]; }catch(e){}
     autoMatchHasRun=false;
+    _resetWorkflowState();
+    try{_invalidateInvIndexes();}catch(e){}
     rAll();
     try{renderFbl5n('ca-open-items-body','','');}catch(e){}
     try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
@@ -10602,6 +10626,15 @@ function clearAllData(){
     ['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});
     addAudit('Cleared all data');
     toast('All data cleared');
+    // Fully reset onboarding UI — reopen Let's Get Started at Step 1
+    try{
+      StorageManager.remove('setup_seen');
+      _updateWorkflowState();
+      if(typeof armpUpdateSetupState==='function') armpUpdateSetupState();
+      setTimeout(function(){
+        if(typeof armpOpenSetupModal==='function') armpOpenSetupModal();
+      }, 250);
+    }catch(e){}
   },'Clear all data','btn-r');
 }
 function resetAllData(){
@@ -10610,6 +10643,8 @@ function resetAllData(){
 }
 function _doResetAll(){
   INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];autoMatchHasRun=false;
+  try{ ERS_LINES=[]; VMI_LINES=[]; }catch(e){}
+  _resetWorkflowState();
   _invalidateInvIndexes();
   rAll();updDash();updTop();setStatus('ready');
   // Clear user-scoped transactional keys
@@ -13798,40 +13833,10 @@ function allocateMultiSource(payment, invIndex, tolerance){
     return true;
   }
 
-  // ── Source 1: ERS grouped PO matching ──────────────────────────────────
-  if(ERS_LINES.length > 0 && invIndex.byPO){
-    var ersGroups = ERSParser.groupBySheet(ERS_LINES);
-    ersGroups.forEach(function(g){
-      if(total >= _payAmt + tolerance) return;
-      g.poNumbers.forEach(function(po){
-        if(total >= _payAmt + tolerance) return;
-        var invList = invIndex.byPO.get(norm(po)) || [];
-        invList.forEach(function(inv){
-          if(total >= _payAmt + tolerance) return;
-          // Only match positive open invoices (RV), not unapplied cash (DZ) or adjustments (BE)
-          if(!inv.s && !_resSet.has(inv.i) && inv.amt > 0 && inv.dt !== 'DZ' && inv.dt !== 'BE'){
-            _add(inv, 'ERS PO:'+po+'→Inv:'+inv.i+' ($'+$f(inv.amt)+')');
-          }
-        });
-      });
-    });
-  }
-
-  // ── Source 2: VMI date-range matching ──────────────────────────────────
-  if(VMI_LINES.length > 0 && INV && INV.length > 0){
-    INV.forEach(function(inv){
-      if(total >= _payAmt + tolerance) return;
-      if(inv.s || _resSet.has(inv.i)) return;
-      if(!inv.po || inv.amt <= 0) return; // only positive invoices
-      if(inv.dt === 'DZ' || inv.dt === 'BE') return; // DZ=unapplied cash, BE=adjustments
-      var dr = DateRangeMatcher.parsePODateRange(inv.po);
-      if(!dr) return;
-      var vmiMatch = VMIParser.matchToInvoiceDateRange(VMI_LINES, inv.po);
-      if(vmiMatch && Math.abs(vmiMatch.total - inv.amt) <= tolerance){
-        _add(inv, 'VMI range:'+inv.po+'→Inv:'+inv.i+' ($'+$f(inv.amt)+')');
-      }
-    });
-  }
+  // ── Sources 1 & 2 (ERS/VMI) REMOVED ────────────────────────────────────
+  // ERS/VMI matching is now handled exclusively by Priority 5c (remittance
+  // correlation), which gates on ERS+VMI total tying to the payment amount.
+  // Matching ERS/VMI here (ungated) caused cross-payment over-application.
 
   // ── Source 3: Direct invoice refs from bank detail text ────────────────
   if(payment.extractedInvoices && payment.extractedInvoices.length && invIndex.byInv){
@@ -13857,24 +13862,11 @@ function allocateMultiSource(payment, invIndex, tolerance){
 
   // ── Source 5: Multi-invoice amount allocation (greedy) ─────────────────
   // Only if we haven't matched enough yet and there are remaining open invoices
-  var _remaining = payment.amt - total;
-  if(_remaining > tolerance && INV){
-    // Get all open invoices that belong to accounts we've already matched against
-    var _matchedAccts = new Set();
-    matched.forEach(function(inv){ if(inv.a) _matchedAccts.add(inv.a); });
-    if(_matchedAccts.size > 0){
-      var _candidates = INV.filter(function(inv){
-        return !inv.s && !_resSet.has(inv.i) && _matchedAccts.has(inv.a) && inv.amt > 0 && inv.dt !== 'DZ' && inv.dt !== 'BE';
-      }).sort(function(a,b){ return b.amt - a.amt; }); // largest first
-
-      _candidates.forEach(function(inv){
-        if(inv.amt <= _remaining + tolerance){
-          _add(inv, 'Amount alloc→Inv:'+inv.i+' ($'+$f(inv.amt)+')');
-          _remaining -= inv.amt;
-        }
-      });
-    }
-  }
+  // ── Source 5 (greedy amount allocation) REMOVED ────────────────────────
+  // Per spec: amount-only matches cannot be high confidence. Selecting customer
+  // invoices purely because they sum near the payment caused over-application
+  // of the wrong invoices. Payments with only amount as a signal now route to
+  // Needs Attention instead of auto-allocating.
 
   return {
     matched: matched,
@@ -14463,43 +14455,11 @@ async function runMatch(){
       }
       if(matched) continue;
 
-      // PRIORITY 6: ERS self-billing grouped match
-      // Group ERS lines by PO → compare total to invoice amounts
-      if(!matched && ERS_LINES.length>0){
-        var _ersResult = matchERSGrouped(p.amt, p.a, _idx, tol);
-        if(_ersResult && _ersResult.matched.length>0){
-          _ersResult.matched.forEach(function(inv){
-            if(inv.s) return;
-            inv.s='ERS Match';
-            var _conf = ConfidenceScorer.score({ersMatch:true, amountMatch:true, poMatch:true, customerMatch:!!p.a});
-            RES.push({c:inv.c,a:inv.a,i:inv.i,po:inv.po,so:inv.so,d:inv.d,
-              oa:inv.amt,pd:inv.amt,vr:0,st:'Exact',m:'ERS grouped match',
-              n:'ERS PO total · confidence: '+_conf.score+'%',
-              confidence:_conf.score, matchReasons:_conf.reasons, scenario:'ERS_GROUP'});
-          });
-          matched=true;
-        }
-      }
-      if(matched)continue;
-
-      // PRIORITY 7: VMI/consignment date-range match
-      // Match VMI detail rows whose dates fall within invoice PO date range
-      if(!matched && VMI_LINES.length>0){
-        var _vmiResult = matchVMIDateRange(p.amt, p.a, _idx, tol);
-        if(_vmiResult && _vmiResult.matched.length>0){
-          _vmiResult.matched.forEach(function(inv){
-            if(inv.s) return;
-            inv.s='VMI Match';
-            var _conf = ConfidenceScorer.score({vmiMatch:true, dateRangeMatch:true, amountMatch:true});
-            RES.push({c:inv.c,a:inv.a,i:inv.i,po:inv.po,so:inv.so,d:inv.d,
-              oa:inv.amt,pd:inv.amt,vr:0,st:'Exact',m:'VMI date-range match',
-              n:'VMI date range · confidence: '+_conf.score+'%',
-              confidence:_conf.score, matchReasons:_conf.reasons, scenario:'VMI_DATERANGE'});
-          });
-          matched=true;
-        }
-      }
-      if(matched)continue;
+      // NOTE: Standalone ERS/VMI matching removed. ERS/VMI data is global and
+      // shared across all payments — matching it without a remittance tie-out
+      // caused over-application (e.g. $686K payment grabbing $232K payment's ERS
+      // invoices). ERS/VMI now ONLY drives matching through Priority 5c above,
+      // which requires ERS+VMI total to tie to the payment amount first.
 
       // PRIORITY 8: Credit Memo / Debit Memo offset (from remittance details)
       if(!matched && p._creditMemo){
@@ -14582,10 +14542,11 @@ async function runMatch(){
       }
       if(matched)continue;
 
-      // PRIORITY MULTI-SRC: Multi-source allocation (ERS + VMI + bank refs)
-      // When ERS/VMI detail files are loaded, allocate payment across all matched invoices.
-      // Uses PO matching (ERS), date-range matching (VMI), direct refs, and amount allocation.
-      if(!matched && (ERS_LINES.length>0 || VMI_LINES.length>0 || (p.extractedInvoices&&p.extractedInvoices.length))){
+      // PRIORITY MULTI-SRC: Multi-source allocation (direct bank/remittance refs)
+      // Only fires when the payment itself carries invoice/PO references (not ERS/VMI,
+      // which are handled by gated Priority 5c). Combines bank-detail invoice refs +
+      // remittance line refs into a constrained allocation.
+      if(!matched && ((p.extractedInvoices&&p.extractedInvoices.length) || (p._remLines&&p._remLines.length))){
         var _msResult = allocateMultiSource(p, _idx, tol);
         if(_msResult && _msResult.matched.length>0){
           var _msCust = p.c || (_msResult.matched[0]&&_msResult.matched[0].c)||'';
