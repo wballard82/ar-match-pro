@@ -9030,7 +9030,7 @@ var workflowState = {
 function _updateWorkflowState(){
   workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0);
   workflowState.deliveryReportLoaded  = !!(typeof DELIV!=='undefined' && DELIV.length>0) || !!workflowState._deliverySkipped;
-  workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0);
+  workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0) || !!workflowState._bankImagePending;
   workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0) || !!workflowState._remittanceSkipped;
   workflowState.autoMatchRun          = autoMatchHasRun;
   // Sequential: 1→2→3→4→5→6. Optional steps (2,4) skippable but still shown.
@@ -9049,7 +9049,7 @@ function armpUpdateSetupState(){
     var steps = [
       {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
       {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
-      {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                      sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
+      {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:(PAY.length>0?PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded':(ws._bankImagePending?'Image uploaded — extraction pending':'Pending')), sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
       {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped':(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines', sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
     ];
     for(var si=0;si<steps.length;si++){
@@ -9085,7 +9085,7 @@ function armpUpdateSetupState(){
     var doneEl=document.getElementById('armp-setup-done');
     if(doneEl) doneEl.style.display='none';
     var skipBtn=document.getElementById('armp-setup-skip-btn');
-    if(skipBtn) skipBtn.textContent = ws.autoMatchRun ? 'Close' : 'Continue without completing';
+    if(skipBtn) skipBtn.textContent = ws.autoMatchRun ? 'Close' : 'Skip';
   }catch(e){ console.warn('[armpUpdateSetupState]',e); }
 }
 function armpOpenSetupModal(){
@@ -14577,20 +14577,19 @@ async function handleFiles(inp){
   if(!inp||!inp.files||!inp.files.length) return;
   var files = Array.from(inp.files);
   if(files.length===1){
-    // Single file — use direct handler
     await handleFile(inp);
     return;
   }
-  // Multi-file: queue and process one at a time
+  // Multi-file: queue and process one at a time with proper yielding
   var _total = files.length;
   var _success = 0;
   var _failed = [];
   for(var fi=0; fi<files.length; fi++){
     var _f = files[fi];
     showProgress('Processing file '+(fi+1)+'/'+_total+': '+_f.name+'…', Math.round(fi/_total*100));
-    await new Promise(function(r){setTimeout(r,50);}); // yield to browser
+    // Yield to browser between files — prevents freezing
+    await new Promise(function(r){setTimeout(r,80);});
     try{
-      // Create a mock input object for handleFile
       await handleFile({files:[_f], value:_f.name, name:_f.name});
       _success++;
     }catch(e){
@@ -14599,6 +14598,9 @@ async function handleFiles(inp){
   }
   inp.value='';
   hideProgress();
+  // Single deferred status update after all files processed (performance)
+  try{_updateUploadStatus();}catch(e){}
+  try{armpUpdateSetupState();}catch(e){}
   if(_failed.length>0){
     toast(_success+' file(s) imported, '+_failed.length+' failed: '+_failed.map(function(f){return f.name;}).join(', '),'warn');
   } else if(_success>1){
@@ -14646,18 +14648,15 @@ async function handleFile(inp){
           PAY=_yyPays;
           saveToStorage();
           if(typeof refreshBankAccountOptions==='function')setTimeout(function(){refreshBankAccountOptions();},100);
-          if(typeof rRem==='function')rRem();
-          if(typeof updDash==='function')updDash();if(typeof updTop==='function')updTop();
-          if(typeof rAll==='function')rAll();
+          // Performance: do NOT call rAll/rRem/updDash during import — defer to tab activation
           hideProgress();
           const _yyAccts=[...new Set(_yyPays.map(p=>p.bankAcct).filter(Boolean))];
           addAudit('Bank/MUFG import',_yyPays.length+' payments · accounts: '+_yyAccts.join(', '));
           toast('Imported '+_yyPays.length+' bank payments · '+_yyAccts.length+' account(s)');
-          // Fix 1: New bank file means previous match results are stale
           autoMatchHasRun = false; RES = []; EXC = [];
           try{_updateUploadStatus();}catch(e){}
           if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
-    try{armpUpdateSetupState();}catch(e){}
+          try{armpUpdateSetupState();}catch(e){}
           const modal=document.getElementById('imp-modal');if(modal)modal.classList.remove('open');
         }catch(yyErr){hideProgress();toast('Bank file parse error: '+yyErr.message,'warn');console.error('BankParse:',yyErr);}
         return;
@@ -14753,12 +14752,14 @@ async function handleFile(inp){
       if(!window._imageImports) window._imageImports=[];
       window._imageImports.push({fileName:f.name,fileSize:f.size,fileType:f.type||'image/'+ext,importType:IMP_TYPE,importedAt:new Date().toISOString(),status:'accepted',ocrStatus:'pending'});
       addAudit('Image accepted',f.name+' ('+Math.round(f.size/1024)+'KB) — queued for OCR');
+      // If bank image uploaded, mark workflow step as pending-extraction so it can advance
+      if(IMP_TYPE==='rem'||IMP_BANK_MODE) workflowState._bankImagePending=true;
       if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
       try{_updateUploadStatus();}catch(e){}
       try{armpUpdateSetupState();}catch(e){}
       var _imgMo=document.getElementById('imp-modal');if(_imgMo)_imgMo.classList.remove('open');
       var _imgCat = IMP_TYPE==='rem'||IMP_BANK_MODE ? 'Bank summary' : IMP_TYPE==='remdetail' ? 'Remittance' : IMP_TYPE==='inv' ? 'Invoice' : 'Supporting';
-      toast(_imgCat+' image accepted: '+f.name+' — manual review may be required.','info');
+      toast(_imgCat+' image accepted: '+f.name+' — upload CSV or Excel for automatic extraction, or proceed with manual review.','info');
     } else {
       const t=await f.text();const _mt5=document.getElementById('mo-ta');if(_mt5)_mt5.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     }
@@ -15345,16 +15346,20 @@ async function parseBankSummaryPDF(file){
     // Check for scanned / no-text PDF
     if(allText.replace(/[\s\-_|]/g,'').length < 100){
       hideProgress();
-      showModal('PDF Text Extraction Issue',
+      // Still advance workflow — user can re-upload or use CSV/Excel alternative
+      if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
+      try{armpUpdateSetupState();}catch(e){}
+      var _mo4=document.getElementById('imp-modal');if(_mo4)_mo4.classList.remove('open');
+      showModal('PDF Text Could Not Be Extracted',
         '<div style="padding:12px 0">'+
-        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">Text could not be extracted from this PDF. The file may be scanned/image-based.</p>'+
-        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">Try one of these alternatives:</p>'+
+        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This PDF appears to be scanned or image-based. Text extraction returned insufficient content.</p>'+
+        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">To import bank payments, try one of these:</p>'+
         '<ul style="color:var(--t3);font-size:12px;margin:0 0 10px;padding-left:20px">'+
+          '<li>Export from your bank portal as <strong>CSV</strong> or <strong>Excel</strong></li>'+
           '<li>Upload a searchable (text-layer) PDF</li>'+
-          '<li>Export from your bank portal as CSV or Excel</li>'+
-          '<li>Upload a screenshot — we\'ll accept it for manual review</li>'+
+          '<li>Re-upload the file — some PDFs require a second attempt</li>'+
         '</ul>'+
-        '<p style="color:var(--t3);font-size:11px">Pages detected: '+numPages+' · Characters extracted: '+allText.replace(/[\s\-_|]/g,'').length+'</p>'+
+        '<p style="color:var(--t3);font-size:11px">Pages: '+numPages+' · Extracted chars: '+allText.replace(/[\s\-_|]/g,'').length+'</p>'+
         '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button></div>'
       );
       return;
@@ -15391,12 +15396,21 @@ async function parseBankSummaryPDF(file){
 
     if(!_rawPayments.length){
       hideProgress();
-      showModal('No Payments Found',
+      // Still advance workflow so user isn't stuck
+      if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
+      try{armpUpdateSetupState();}catch(e){}
+      var _mo5=document.getElementById('imp-modal');if(_mo5)_mo5.classList.remove('open');
+      showModal('No Bank Payments Extracted',
         '<div style="padding:12px 0">'+
-        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">No credit transactions were found in this bank summary PDF.</p>'+
-        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">The PDF may be image-only, or the transaction format is not recognized.</p>'+
-        '<p style="color:var(--t3);font-size:12px">Bank detected: <strong>'+_escapeHtml(_bankName)+'</strong> · Pages: '+numPages+'</p>'+
-        '<p style="color:var(--t3);font-size:12px">Try uploading a CSV, Excel, or BAI2 export instead.</p>'+
+        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">No incoming credit transactions were found in this PDF.</p>'+
+        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">Bank detected: <strong>'+_escapeHtml(_bankName)+'</strong> · Pages: '+numPages+'</p>'+
+        '<p style="color:var(--t3);font-size:12px;margin:0 0 6px">This may happen when:</p>'+
+        '<ul style="color:var(--t3);font-size:12px;margin:0 0 10px;padding-left:20px">'+
+          '<li>The PDF is scanned/image-based (no text layer)</li>'+
+          '<li>The report contains only debits or internal transfers</li>'+
+          '<li>The file is an ERS/VMI detail file (upload in Step 4 instead)</li>'+
+        '</ul>'+
+        '<p style="color:var(--t3);font-size:12px">Try CSV or Excel export from your bank portal.</p>'+
         '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button></div>'
       );
       return;
@@ -15414,9 +15428,9 @@ async function parseBankSummaryPDF(file){
     hideProgress();
     saveToStorage();
     try{if(typeof refreshBankAccountOptions==='function') refreshBankAccountOptions();}catch(e){}
-    try{rRem();}catch(e){}
-    try{updDash();updTop();}catch(e){}
+    // Performance: lightweight status update only — defer full rerenders to tab activation
     try{_updateUploadStatus();}catch(e){}
+    if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
     try{armpUpdateSetupState();}catch(e){}
     var _mo=document.getElementById('imp-modal');if(_mo)_mo.classList.remove('open');
     addAudit('Bank PDF import', _payments.length+' payments · bank: '+_bankName+' · acct: '+_acctDisplay);
