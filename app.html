@@ -2719,7 +2719,6 @@ body.app-active #app {
           <div class="armp-setup-step-sub">Delivery, tracking, bill of lading, logistics memo, PO, and sales order bridge — XLSX, CSV</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload Delivery Report</button>
-        <button class="btn btn-outline btn-xs" onclick="workflowState._deliverySkipped=true;armpUpdateSetupState()" style="font-size:11px;padding:5px 12px;margin-left:4px;color:var(--t3)">Skip</button>
       </div>
       <div class="armp-setup-step" id="armp-setup-step-3" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
@@ -2736,7 +2735,6 @@ body.app-active #app {
           <div class="armp-setup-step-sub">Customer remittance with invoice, tracking, PO, and delivery references — XLSX, CSV, PDF</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Remittance Details</button>
-        <button class="btn btn-outline btn-xs" onclick="workflowState._remittanceSkipped=true;armpUpdateSetupState()" style="font-size:11px;padding:5px 12px;margin-left:4px;color:var(--t3)">Skip</button>
       </div>
       <!-- Dynamic recommendation area -->
       <div id="armp-setup-recommendation" style="display:none;padding:0 4px"></div>
@@ -2748,7 +2746,8 @@ body.app-active #app {
       </div>
     </div>
     <div class="mo-footer">
-      <button class="btn btn-outline btn-sm" onclick="armpCloseSetupModal()" id="armp-setup-skip-btn">Skip for now</button>
+      <button class="btn btn-outline btn-sm" onclick="armpSkipCurrentStep()" id="armp-setup-skip-btn">Skip</button>
+      <button class="btn btn-outline btn-xs" onclick="armpCloseSetupModal()" style="color:var(--t3);font-size:11px;margin-left:4px">✕ Close</button>
     </div>
   </div>
 </div>
@@ -9028,9 +9027,9 @@ var workflowState = {
   newDataSinceLastMatch: false
 };
 function _updateWorkflowState(){
-  workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0);
+  workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0) || !!workflowState._invoiceSkipped;
   workflowState.deliveryReportLoaded  = !!(typeof DELIV!=='undefined' && DELIV.length>0) || !!workflowState._deliverySkipped;
-  workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0) || !!workflowState._bankImagePending;
+  workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0) || !!workflowState._bankImagePending || !!workflowState._bankSkipped;
   workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0) || !!workflowState._remittanceSkipped;
   workflowState.autoMatchRun          = autoMatchHasRun;
   // Sequential: 1→2→3→4→5→6. Optional steps (2,4) skippable but still shown.
@@ -9047,10 +9046,10 @@ function armpUpdateSetupState(){
     var ws = workflowState;
     // Steps 1-4: file uploads — each independently done/active, NEVER locked
     var steps = [
-      {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
-      {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
-      {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:(PAY.length>0?PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded':(ws._bankImagePending?'Image uploaded — extraction pending':'Pending')), sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
-      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped':(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines', sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
+      {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:ws._invoiceSkipped?'Skipped — upload anytime':INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
+      {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped — upload anytime':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
+      {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:(PAY.length>0?PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded':(ws._bankImagePending?'Image uploaded — extraction pending':(ws._bankSkipped?'Skipped — upload anytime':'Pending'))), sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
+      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines', sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
     ];
     for(var si=0;si<steps.length;si++){
       var el=document.getElementById(steps[si].id);
@@ -9085,7 +9084,10 @@ function armpUpdateSetupState(){
     var doneEl=document.getElementById('armp-setup-done');
     if(doneEl) doneEl.style.display='none';
     var skipBtn=document.getElementById('armp-setup-skip-btn');
-    if(skipBtn) skipBtn.textContent = ws.autoMatchRun ? 'Close' : 'Skip';
+    if(skipBtn){
+      if(ws.activeStep>=5) skipBtn.style.display='none'; // nothing to skip — use Close
+      else { skipBtn.style.display=''; skipBtn.textContent='Skip Step '+ws.activeStep; }
+    }
   }catch(e){ console.warn('[armpUpdateSetupState]',e); }
 }
 function armpOpenSetupModal(){
@@ -9106,10 +9108,24 @@ function armpCloseSetupModal(){
   if(!modal) return;
   modal.classList.remove('open');
   modal.style.display = 'none';
-  // Set permanent dismissal flag
   try{ StorageManager.save('setup_seen','true'); }catch(e){}
-  // Show inline banner as workflow guidance
   setTimeout(function(){ armpShowBannerIfNeeded(); }, 200);
+}
+// Skip the current recommended step and advance to the next one.
+// Modal stays open. Only the skipped step is marked done.
+function armpSkipCurrentStep(){
+  _updateWorkflowState();
+  var step = workflowState.activeStep;
+  if(step===1) workflowState._invoiceSkipped=true;
+  else if(step===2) workflowState._deliverySkipped=true;
+  else if(step===3) workflowState._bankSkipped=true;
+  else if(step===4) workflowState._remittanceSkipped=true;
+  else if(step>=5){
+    // Nothing left to skip — close modal
+    armpCloseSetupModal();
+    return;
+  }
+  armpUpdateSetupState();
 }
 function armpSetupClickStep(n){
   try{
