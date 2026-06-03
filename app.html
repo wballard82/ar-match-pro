@@ -9138,29 +9138,17 @@ function armpSkipCurrentStep(){
 function armpSetupClickStep(n){
   try{
     if(n===1){
-      // Step 1: Upload Invoice Report — direct file picker, no secondary modal
-      IMP_TYPE='inv'; IMP_BANK_MODE=false;
-      var _fi=document.getElementById('fi');
-      if(_fi){ _fi.accept='.csv,.txt,.xlsx,.xls,.png,.jpg,.jpeg,.webp'; _fi.onchange=function(){handleFiles(_fi);}; _fi.click(); }
-      else if(typeof openImport==='function') openImport('inv');
+      // Step 1: Upload Invoice Report — open import modal with correct type
+      openImport('inv');
     } else if(n===2){
-      // Step 2: Upload Delivery Report — direct file picker
-      IMP_TYPE='del'; IMP_BANK_MODE=false;
-      var _fi2=document.getElementById('fi');
-      if(_fi2){ _fi2.accept='.csv,.txt,.xlsx,.xls,.png,.jpg,.jpeg,.webp'; _fi2.onchange=function(){handleFiles(_fi2);}; _fi2.click(); }
-      else if(typeof openImportDelivery==='function') openImportDelivery();
+      // Step 2: Upload Delivery Report
+      openImportDelivery();
     } else if(n===3){
-      // Step 3: Upload Bank File / Bank Summary PDF — direct file picker
-      IMP_TYPE='rem'; IMP_BANK_MODE=true;
-      var _fi3=document.getElementById('fi');
-      if(_fi3){ _fi3.accept='.csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf,.png,.jpg,.jpeg,.webp'; _fi3.onchange=function(){handleFiles(_fi3);}; _fi3.click(); }
-      else if(typeof openImportBank==='function') openImportBank();
+      // Step 3: Upload Bank File / Bank Summary
+      openImportBank();
     } else if(n===4){
-      // Step 4: Upload Remittance Details — direct file picker
-      IMP_TYPE='remdetail'; IMP_BANK_MODE=false;
-      var _fi4=document.getElementById('fi');
-      if(_fi4){ _fi4.accept='.csv,.txt,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp'; _fi4.onchange=function(){handleFiles(_fi4);}; _fi4.click(); }
-      else if(typeof openImport==='function') openImport('remdetail');
+      // Step 4: Upload Remittance Details
+      openImportRemDetail();
     }
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
 }
@@ -14905,9 +14893,9 @@ async function handleFile(inp){
           saveToStorage();
         }
         workflowState._bankImagePending = false; // actual PAY record created
+        try{_normalizePayCustomers();}catch(e){}
         toast(_fnAmt>0
           ? 'Bank payment created from image: $'+$f(_fnAmt)+' — verify details in Payment Queue.'
-        try{_normalizePayCustomers();}catch(e){}
           : 'Bank image accepted: '+f.name+' — enter payment details in Payment Queue.','info');
       } else {
         if(IMP_TYPE==='remdetail') workflowState._remittanceImagePending=true;
