@@ -13361,8 +13361,10 @@ var VMIParser = {
   }
 };
 
-// ── Deduction Handler ──────────────────────────────────────────────────────
-// Routes early customer deductions (DZ/debit memos) to correct workflow.
+// ── Payment Document Handler ───────────────────────────────────────────────
+// Handles DZ (unapplied cash / customer payments) and related document types.
+// DZ rows in FBL5N represent payments already received but not yet applied.
+// Their Text field often contains embedded invoice/PO/SO references.
 var DeductionHandler = {
   // Parse FBL5N Text field for embedded references
   // Example: "5101099588 4507342394 2100956921 price diff"
@@ -13390,15 +13392,22 @@ var DeductionHandler = {
   },
   // Classify a deduction row
   classify: function(amount, textRefs, docType){
-    if(docType==='DZ' || docType==='DA' || docType==='DR'){
+    if(docType==='DZ'){
+      // DZ = Customer payment / unapplied cash — classify by text context
       var desc = (textRefs.description||'').toLowerCase();
-      if(desc.includes('price diff')) return { type:'Price Difference', action:'Pending Customer Credit' };
-      if(desc.includes('tax'))        return { type:'Tax Adjustment', action:'Pending Customer Credit' };
-      if(desc.includes('freight'))    return { type:'Freight Claim', action:'Pending Customer Credit' };
+      if(desc.includes('price diff')) return { type:'Price Difference', action:'Review Variance' };
+      if(desc.includes('tax'))        return { type:'Tax Adjustment', action:'Review Variance' };
+      if(desc.includes('freight'))    return { type:'Freight Claim', action:'Review Variance' };
       if(desc.includes('shortage'))   return { type:'Shortage Claim', action:'Needs Attention' };
-      if(desc.includes('return'))     return { type:'Return Credit', action:'Pending Customer Credit' };
+      if(desc.includes('return'))     return { type:'Return Credit', action:'Review Variance' };
       if(desc.includes('discount'))   return { type:'Discount Taken', action:'Review Discount Terms' };
+      return { type:'Unapplied Cash', action:'Apply to Invoice' };
+    }
+    if(docType==='DA' || docType==='DR'){
       return { type:'Customer Deduction', action:'Pending Customer Credit' };
+    }
+    if(docType==='BE'){
+      return { type:'Batch Adjustment', action:'Review Adjustment' };
     }
     return { type:'Unknown', action:'Needs Attention' };
   }
@@ -13726,13 +13735,14 @@ function allocateMultiSource(payment, invIndex, tolerance){
   if(ERS_LINES.length > 0 && invIndex.byPO){
     var ersGroups = ERSParser.groupBySheet(ERS_LINES);
     ersGroups.forEach(function(g){
-      if(total >= _payAmt + tolerance) return; // cap reached
+      if(total >= _payAmt + tolerance) return;
       g.poNumbers.forEach(function(po){
-        if(total >= _payAmt + tolerance) return; // cap reached
+        if(total >= _payAmt + tolerance) return;
         var invList = invIndex.byPO.get(norm(po)) || [];
         invList.forEach(function(inv){
-          if(total >= _payAmt + tolerance) return; // cap reached
-          if(!inv.s && !_resSet.has(inv.i)){
+          if(total >= _payAmt + tolerance) return;
+          // Only match positive open invoices (RV), not unapplied cash (DZ) or adjustments (BE)
+          if(!inv.s && !_resSet.has(inv.i) && inv.amt > 0 && inv.dt !== 'DZ' && inv.dt !== 'BE'){
             _add(inv, 'ERS PO:'+po+'→Inv:'+inv.i+' ($'+$f(inv.amt)+')');
           }
         });
@@ -13743,9 +13753,10 @@ function allocateMultiSource(payment, invIndex, tolerance){
   // ── Source 2: VMI date-range matching ──────────────────────────────────
   if(VMI_LINES.length > 0 && INV && INV.length > 0){
     INV.forEach(function(inv){
-      if(total >= _payAmt + tolerance) return; // cap reached
+      if(total >= _payAmt + tolerance) return;
       if(inv.s || _resSet.has(inv.i)) return;
-      if(!inv.po) return;
+      if(!inv.po || inv.amt <= 0) return; // only positive invoices
+      if(inv.dt === 'DZ' || inv.dt === 'BE') return; // DZ=unapplied cash, BE=adjustments
       var dr = DateRangeMatcher.parsePODateRange(inv.po);
       if(!dr) return;
       var vmiMatch = VMIParser.matchToInvoiceDateRange(VMI_LINES, inv.po);
@@ -13786,7 +13797,7 @@ function allocateMultiSource(payment, invIndex, tolerance){
     matched.forEach(function(inv){ if(inv.a) _matchedAccts.add(inv.a); });
     if(_matchedAccts.size > 0){
       var _candidates = INV.filter(function(inv){
-        return !inv.s && !_resSet.has(inv.i) && _matchedAccts.has(inv.a) && inv.amt > 0;
+        return !inv.s && !_resSet.has(inv.i) && _matchedAccts.has(inv.a) && inv.amt > 0 && inv.dt !== 'DZ' && inv.dt !== 'BE';
       }).sort(function(a,b){ return b.amt - a.amt; }); // largest first
 
       _candidates.forEach(function(inv){
@@ -14894,7 +14905,7 @@ async function handleFile(inp){
         var _fnDateM = f.name.match(/(\d{1,2}[\-\/]\d{1,2}[\-\/]\d{2,4})/);
         var _imgPay = {
           bankAcct:'', bankId:'', a:'',
-          c:f.name.replace(/\.[^.]+$/,'').replace(/[\$\d,._\-]/g,' ').replace(/\s+/g,' ').trim().slice(0,60)||'Image upload',
+          c:'', // empty — don't use filename as customer; let normalizer/matching identify
           amt:_fnAmt,
           i:'', po:'', so:'',
           m:'Image', baiCode:'', txId:'',
@@ -14906,11 +14917,11 @@ async function handleFile(inp){
           coa:false, unapplied:_fnAmt===0, dp:false,
           sourceFormat:'image',
           _imageSource:f.name,
-          _needsManualReview:_fnAmt===0
+          _needsManualReview:true
         };
-        // Dedupe check
-        var _imgKey = (_imgPay.payDate||'')+'|'+(_imgPay.amt||0)+'|'+(_imgPay.c||'');
-        var _imgDup = PAY.some(function(p){ return (p.payDate||'')+'|'+(p.amt||0)+'|'+(p.c||'')===_imgKey && p.amt>0; });
+        // Dedupe check — use amount + source file since customer may be empty
+        var _imgKey = (_imgPay.payDate||'')+'|'+(_imgPay.amt||0)+'|'+(_imgPay._imageSource||'');
+        var _imgDup = PAY.some(function(p){ return p._imageSource===_imgPay._imageSource && Math.abs((p.amt||0)-(_imgPay.amt||0))<0.01; });
         if(!_imgDup){
           PAY.push(_imgPay);
           saveToStorage();
