@@ -14393,59 +14393,70 @@ async function runMatch(){
       }catch(_fbErr){}
       if(matched)continue;
 
-      // PRIORITY 5c: REMITTANCE CORRELATION — ERS + VMI total tie-out
-      // Check if combined ERS + VMI totals equal this payment amount
+      // PRIORITY 5c: REMITTANCE-CONSTRAINED ALLOCATION
+      // Bank Payment → Customer → Remittance grouping → Payment boundary → Constrained invoice selection
       if(!matched && (ERS_LINES.length>0 || VMI_LINES.length>0)){
         var _ersTotal = ERS_LINES.reduce(function(s,l){return s+(l.amount||0);},0);
         var _vmiTotal = VMI_LINES.reduce(function(s,l){return s+(l.amount||0);},0);
         var _remTotal = _ersTotal + _vmiTotal;
-        // Check if remittance total ties to this payment
+        // Remittance total ties to this payment → LOCK allocation boundary
         if(Math.abs(_remTotal - p.amt) <= tol && _remTotal > 0){
-          // Remittance tie-out found — attempt invoice-level allocation
+          var _boundary = p.amt; // hard allocation cap — never exceed
+
+          // Build candidate pool from ERS PO matches + VMI date-range matches
           var _ersMatch = matchERSGrouped(p.amt, p.a, _idx, tol);
           var _vmiMatch = matchVMIDateRange(p.amt, p.a, _idx, tol);
-          var _allMatched = [];
-          if(_ersMatch) _allMatched = _allMatched.concat(_ersMatch.matched);
-          if(_vmiMatch) _allMatched = _allMatched.concat(_vmiMatch.matched);
-          var _allocTotal = _allMatched.reduce(function(s,inv){return s+inv.amt;},0);
+          var _candMap = new Map(); // dedupe by invoice id
+          if(_ersMatch) _ersMatch.matched.forEach(function(inv){ _candMap.set(inv.i, {inv:inv, src:'ERS'}); });
+          if(_vmiMatch) _vmiMatch.matched.forEach(function(inv){ if(!_candMap.has(inv.i)) _candMap.set(inv.i, {inv:inv, src:'VMI'}); });
+          var _cands = Array.from(_candMap.values());
 
-          if(_allMatched.length > 0){
-            _allMatched.forEach(function(inv){
+          // Sort: invoices with remittance ref/PO first, then smallest amount (better packing)
+          _cands.sort(function(a,b){ return a.inv.amt - b.inv.amt; });
+
+          // CONSTRAINED allocation — accumulate up to boundary, never over
+          var _alloc = [];
+          var _allocTotal = 0;
+          _cands.forEach(function(c){
+            if(_allocTotal + c.inv.amt <= _boundary + tol){
+              _alloc.push(c);
+              _allocTotal += c.inv.amt;
+            }
+          });
+
+          var _candTotal = _cands.reduce(function(s,c){return s+c.inv.amt;},0);
+          var _tiesExact = Math.abs(_allocTotal - _boundary) <= tol;
+
+          if(_tiesExact && _alloc.length > 0){
+            // Allocation ties to payment exactly — apply invoices
+            _alloc.forEach(function(c){
+              var inv=c.inv;
               inv.s = 'ERS/VMI Match';
               var _conf = ConfidenceScorer.score({
-                ersMatch:!!_ersMatch, vmiMatch:!!_vmiMatch,
-                amountMatch:Math.abs(_allocTotal-p.amt)<=tol,
-                customerMatch:!!p.c, poMatch:true
+                ersMatch:c.src==='ERS', vmiMatch:c.src==='VMI',
+                amountMatch:true, customerMatch:!!p.c, poMatch:true
               });
               RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
                 oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
-                m:'ERS/VMI remittance match',
-                n:'Remittance tie-out · confidence: '+_conf.score+'%',
+                m:c.src+' remittance match',
+                n:'Remittance-constrained tie-out · confidence: '+_conf.score+'%',
                 confidence:_conf.score, matchReasons:_conf.reasons,
-                scenario:_ersMatch?'ERS_GROUP':'VMI_DATERANGE'});
+                scenario:c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE'});
             });
             matched = true;
-            // Handle variance between allocated invoices and payment
-            var _remVar = p.amt - _allocTotal;
-            if(Math.abs(_remVar) > tol){
-              EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
-                a:p.a, c:p.c||'', amt:Math.abs(_remVar),
-                ref:p.txId||p.bankRef||'—',
-                type:_remVar>0?'Partially Applied':'Over-applied',
-                detail:'Remittance total $'+$f(_remTotal)+' ties to payment · '+_allMatched.length+' invoices allocated ($'+$f(_allocTotal)+') · Variance: $'+$f(_remVar),
-                action:_remVar>0?'Route $'+$f(_remVar)+' to Cash on Account':'Review over-application',
-                dec:'', s:'Open', notes:'ERS: $'+$f(_ersTotal)+' · VMI: $'+$f(_vmiTotal)});
-            }
           } else {
-            // Remittance ties but no invoices found — send to Needs Attention
+            // Cannot tie exactly within boundary — route to Needs Attention.
+            // DO NOT apply any invoices (no over-application).
             EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
               a:p.a, c:p.c||'', amt:p.amt,
               ref:p.txId||p.bankRef||'—',
-              type:'Remittance Tie-Out',
-              detail:'Customer identified · ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') = $'+$f(_remTotal)+' ties to payment $'+$f(p.amt)+' · Invoice allocation requires review',
-              action:'Review invoice allocation',
+              type:'Remittance Tie-Out — Allocation Review',
+              detail:'Customer/remittance tie-out found ($'+$f(_remTotal)+' = payment $'+$f(p.amt)+') but invoice allocation requires review · '+
+                     _cands.length+' candidate invoices total $'+$f(_candTotal)+
+                     (_candTotal > _boundary ? ' (exceeds payment — no exact subset ties out)' : ' (under payment)'),
+              action:'Review invoice allocation manually',
               dec:'', s:'Open',
-              notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS+VMI tie-out · Invoice allocation pending'});
+              notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · Invoice-level allocation pending'});
             matched = true;
           }
         }
