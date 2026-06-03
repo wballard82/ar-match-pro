@@ -8707,15 +8707,21 @@ function sp(id){
   if(pid==='cash-app'){engRefreshSel();renderPayQueue();}
   if(pid==='audit')initAuditTbl();
 
-  // Item 1: First-time setup modal on Cash Application click
+  // Show setup guidance on first visit to Cash Application — but NOT when user
+  // already has data (they're past onboarding and navigating to a specific panel)
   try{
     if(id==='cash-app'){
+      var _hasAnyData = (typeof INV!=='undefined'&&INV.length>0)||(typeof PAY!=='undefined'&&PAY.length>0);
+      if(!_hasAnyData){
+        setTimeout(function(){
+          if(typeof armpMaybeShowSetupOnCashApp==='function') armpMaybeShowSetupOnCashApp();
+        }, 80);
+      }
       setTimeout(function(){
-        if(typeof armpMaybeShowSetupOnCashApp==='function') armpMaybeShowSetupOnCashApp();
         if(typeof armpShowBannerIfNeeded==='function') armpShowBannerIfNeeded();
       }, 80);
     }
-  }catch(e){console.warn('[sp setup hook]',e);}
+  }catch(e){}
 
   // Item 5: Refresh timezone label when settings opens
   try{
@@ -9433,7 +9439,7 @@ function updWorkflow(){
         'import':{label:'Import data',show:false},
         'match':{label:'Run Auto Match',show:hasPay&&hasInv,action:'match'},
         'review':{label:'Review matches',show:true,action:'review'},
-        'attention':{label:'Resolve exceptions',show:true,action:'attention'},
+        'attention':{label:'Resolve Needs Attention',show:true,action:'attention'},
         'reconcile':{label: exportedAll?'Workflow complete':'Approve Reconciliation', show: !exportedAll, action:'reconcile'},
         'export':{label: allReconciled?'Approve All & Export':'Export to ERP', show:true, action: allReconciled?'approve_all':'export'}
       };
@@ -14663,13 +14669,22 @@ async function handleFile(inp){
         try{
           const _yyPays=parseYayPayExcel(wb);
           if(!_yyPays.length){hideProgress();toast('No credit transactions found in bank file','warn');return;}
-          PAY=_yyPays;
+          // Append to existing PAY (don't overwrite prior bank payments)
+          // Dedupe by date+amount+reference+payer
+          var _existingKeys = new Set();
+          PAY.forEach(function(p){ _existingKeys.add((p.payDate||'')+'|'+(p.amt||0)+'|'+(p.txId||p.bankRef||'')+'|'+(p.c||'')); });
+          var _newPays = _yyPays.filter(function(p){
+            var k=(p.payDate||'')+'|'+(p.amt||0)+'|'+(p.txId||p.bankRef||'')+'|'+(p.c||'');
+            return !_existingKeys.has(k);
+          });
+          PAY = PAY.concat(_newPays);
           saveToStorage();
           if(typeof refreshBankAccountOptions==='function')setTimeout(function(){refreshBankAccountOptions();},100);
           // Performance: do NOT call rAll/rRem/updDash during import — defer to tab activation
           hideProgress();
           const _yyAccts=[...new Set(_yyPays.map(p=>p.bankAcct).filter(Boolean))];
           addAudit('Bank/MUFG import',_yyPays.length+' payments · accounts: '+_yyAccts.join(', '));
+          try{StorageManager.save('setup_seen','true');}catch(e){}
           toast('Imported '+_yyPays.length+' bank payments · '+_yyAccts.length+' account(s)');
           autoMatchHasRun = false; RES = []; EXC = [];
           try{_updateUploadStatus();}catch(e){}
@@ -14765,19 +14780,54 @@ async function handleFile(inp){
       // Standard .xls → treat as text/CSV
       const _xt=await f.text();const _xta=document.getElementById('mo-ta');if(_xta)_xta.value=_xt;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     } else if(ext==='png'||ext==='jpg'||ext==='jpeg'||ext==='webp'||ext==='gif'||ext==='bmp'||ext==='tiff'){
-      // Image file acceptance — accepted and stored for future OCR
+      // Image file acceptance — attempt to create payment record from filename clues
       hideProgress();
       if(!window._imageImports) window._imageImports=[];
       window._imageImports.push({fileName:f.name,fileSize:f.size,fileType:f.type||'image/'+ext,importType:IMP_TYPE,importedAt:new Date().toISOString(),status:'accepted',ocrStatus:'pending'});
-      addAudit('Image accepted',f.name+' ('+Math.round(f.size/1024)+'KB) — queued for OCR');
-      // If bank image uploaded, mark workflow step as pending-extraction so it can advance
-      if(IMP_TYPE==='rem'||IMP_BANK_MODE) workflowState._bankImagePending=true;
+      addAudit('Image accepted',f.name+' ('+Math.round(f.size/1024)+'KB)');
+
+      // For bank images: create a preliminary payment record from filename metadata
+      if(IMP_TYPE==='rem'||IMP_BANK_MODE){
+        // Try to extract amount from filename (e.g. "$686,725.50" or "686725.50")
+        var _fnAmtM = f.name.match(/\$?([\d,]+\.\d{2})/);
+        var _fnAmt = _fnAmtM ? parseFloat(_fnAmtM[1].replace(/,/g,'')) : 0;
+        // Try to extract date
+        var _fnDateM = f.name.match(/(\d{1,2}[\-\/]\d{1,2}[\-\/]\d{2,4})/);
+        var _imgPay = {
+          bankAcct:'', bankId:'', a:'',
+          c:f.name.replace(/\.[^.]+$/,'').replace(/[\$\d,._\-]/g,' ').replace(/\s+/g,' ').trim().slice(0,60)||'Image upload',
+          amt:_fnAmt,
+          i:'', po:'', so:'',
+          m:'Image', baiCode:'', txId:'',
+          bankRef:'', custRef:'',
+          payDate:_fnDateM?_fnDateM[1]:'',
+          ccy:'USD',
+          n:'From image: '+f.name,
+          st:_fnAmt>0?'Unapplied Cash':'Manual entry required',
+          coa:false, unapplied:_fnAmt===0, dp:false,
+          sourceFormat:'image',
+          _imageSource:f.name,
+          _needsManualReview:_fnAmt===0
+        };
+        // Dedupe check
+        var _imgKey = (_imgPay.payDate||'')+'|'+(_imgPay.amt||0)+'|'+(_imgPay.c||'');
+        var _imgDup = PAY.some(function(p){ return (p.payDate||'')+'|'+(p.amt||0)+'|'+(p.c||'')===_imgKey && p.amt>0; });
+        if(!_imgDup){
+          PAY.push(_imgPay);
+          saveToStorage();
+        }
+        workflowState._bankImagePending = false; // actual PAY record created
+        toast(_fnAmt>0
+          ? 'Bank payment created from image: $'+$f(_fnAmt)+' — verify details in Payment Queue.'
+          : 'Bank image accepted: '+f.name+' — enter payment details in Payment Queue.','info');
+      } else {
+        if(IMP_TYPE==='rem'||IMP_BANK_MODE) workflowState._bankImagePending=true;
+        toast((IMP_TYPE==='remdetail'?'Remittance':'Supporting')+' image accepted: '+f.name+' — manual review may be required.','info');
+      }
       if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
       try{_updateUploadStatus();}catch(e){}
       try{armpUpdateSetupState();}catch(e){}
       var _imgMo=document.getElementById('imp-modal');if(_imgMo)_imgMo.classList.remove('open');
-      var _imgCat = IMP_TYPE==='rem'||IMP_BANK_MODE ? 'Bank summary' : IMP_TYPE==='remdetail' ? 'Remittance' : IMP_TYPE==='inv' ? 'Invoice' : 'Supporting';
-      toast(_imgCat+' image accepted: '+f.name+' — upload CSV or Excel for automatic extraction, or proceed with manual review.','info');
     } else {
       const t=await f.text();const _mt5=document.getElementById('mo-ta');if(_mt5)_mt5.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     }
@@ -15441,7 +15491,14 @@ async function parseBankSummaryPDF(file){
     var _acctDisplay = (_payments[0]&&_payments[0].accountNumber)||'—';
 
     // Stage payments — do NOT trigger Auto Match or populate Review
-    PAY = _payments;
+    // Append to existing PAY (don't overwrite prior bank payments)
+    var _existingKeys2 = new Set();
+    PAY.forEach(function(p){ _existingKeys2.add((p.payDate||'')+'|'+(p.amt||0)+'|'+(p.txId||p.bankRef||'')+'|'+(p.c||'')); });
+    var _newPays2 = _payments.filter(function(p){
+      var k=(p.payDate||'')+'|'+(p.amt||0)+'|'+(p.txId||p.bankRef||'')+'|'+(p.c||'');
+      return !_existingKeys2.has(k);
+    });
+    PAY = PAY.concat(_newPays2);
     autoMatchHasRun = false; RES = []; EXC = [];
     hideProgress();
     saveToStorage();
@@ -15452,6 +15509,7 @@ async function parseBankSummaryPDF(file){
     try{armpUpdateSetupState();}catch(e){}
     var _mo=document.getElementById('imp-modal');if(_mo)_mo.classList.remove('open');
     addAudit('Bank PDF import', _payments.length+' payments · bank: '+_bankName+' · acct: '+_acctDisplay);
+    try{StorageManager.save('setup_seen','true');}catch(e){}
     toast('Imported '+_payments.length+' payments from '+_bankName+' bank summary PDF · acct: '+_acctDisplay);
 
     // Show field-mapping review prompt for unrecognized bank
@@ -15717,6 +15775,7 @@ function processImport(){
           setStatus('loaded');
           saveToStorage();
           addAudit('Invoices imported', INV.length+' rows · '+_invMs+'ms');
+          try{StorageManager.save('setup_seen','true');}catch(e){}
           if(INV.length>2000){ toast('Imported '+INV.length.toLocaleString()+' invoices ('+_invMs+'ms) — large dataset, lazy rendering active'); }
           else { toast('Imported '+INV.length+' invoices ('+_invMs+'ms)'); }
           try{renderFbl5n('ca-open-items-body','','');}catch(e){}
