@@ -2719,6 +2719,7 @@ body.app-active #app {
           <div class="armp-setup-step-sub">Delivery, tracking, bill of lading, logistics memo, PO, and sales order bridge — XLSX, CSV</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload Delivery Report</button>
+        <button class="btn btn-outline btn-xs" onclick="workflowState._deliverySkipped=true;armpUpdateSetupState()" style="font-size:11px;padding:5px 12px;margin-left:4px;color:var(--t3)">Skip</button>
       </div>
       <div class="armp-setup-step" id="armp-setup-step-3" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
@@ -2735,6 +2736,7 @@ body.app-active #app {
           <div class="armp-setup-step-sub">Customer remittance with invoice, tracking, PO, and delivery references — XLSX, CSV, PDF</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Remittance Details</button>
+        <button class="btn btn-outline btn-xs" onclick="workflowState._remittanceSkipped=true;armpUpdateSetupState()" style="font-size:11px;padding:5px 12px;margin-left:4px;color:var(--t3)">Skip</button>
       </div>
       <!-- Dynamic recommendation area -->
       <div id="armp-setup-recommendation" style="display:none;padding:0 4px"></div>
@@ -2981,7 +2983,7 @@ body.app-active #app {
 
       <!-- File picker button — primary action -->
       <div id="imp-file-area">
-        <input type="file" id="fi" accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFile(this)">
+        <input type="file" id="fi" multiple accept=".csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf,.png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFiles(this)">
         <button class="btn btn-p" style="width:100%;padding:14px;font-size:15px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="document.getElementById('fi').click()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2M8 2v8M5 7l3 3 3-3"/></svg>
           Select file to import
@@ -9027,17 +9029,17 @@ var workflowState = {
 };
 function _updateWorkflowState(){
   workflowState.invoiceReportLoaded   = !!(typeof INV!=='undefined' && INV.length>0);
-  workflowState.deliveryReportLoaded  = !!(typeof DELIV!=='undefined' && DELIV.length>0);
+  workflowState.deliveryReportLoaded  = !!(typeof DELIV!=='undefined' && DELIV.length>0) || !!workflowState._deliverySkipped;
   workflowState.bankFileLoaded        = !!(typeof PAY!=='undefined' && PAY.length>0);
-  workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0);
+  workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0) || !!workflowState._remittanceSkipped;
   workflowState.autoMatchRun          = autoMatchHasRun;
-  // Flexible: recommend next BEST action, don't force linear order
-  var _ready = workflowState.invoiceReportLoaded && workflowState.bankFileLoaded;
-  workflowState.activeStep =
-    _ready && !workflowState.autoMatchRun ? 5 :
-    !workflowState.invoiceReportLoaded    ? 1 :
-    !workflowState.bankFileLoaded         ? 3 :
-    workflowState.autoMatchRun            ? 6 : 5;
+  // Sequential: 1→2→3→4→5→6. Optional steps (2,4) skippable but still shown.
+  if(!workflowState.invoiceReportLoaded)         workflowState.activeStep = 1;
+  else if(!workflowState.deliveryReportLoaded)   workflowState.activeStep = 2;
+  else if(!workflowState.bankFileLoaded)          workflowState.activeStep = 3;
+  else if(!workflowState.remittanceDetailsLoaded) workflowState.activeStep = 4;
+  else if(!workflowState.autoMatchRun)            workflowState.activeStep = 5;
+  else                                            workflowState.activeStep = 6;
 }
 function armpUpdateSetupState(){
   try{
@@ -9046,9 +9048,9 @@ function armpUpdateSetupState(){
     // Steps 1-4: file uploads — each independently done/active, NEVER locked
     var steps = [
       {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
-      {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:DELIV.length.toLocaleString()+' delivery rows loaded',                              sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
+      {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
       {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded',                      sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
-      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines', sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
+      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped':(REM_DETAIL&&REM_DETAIL.length?REM_DETAIL.length.toLocaleString():0)+' remittance lines', sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
     ];
     for(var si=0;si<steps.length;si++){
       var el=document.getElementById(steps[si].id);
@@ -9115,41 +9117,35 @@ function armpSetupClickStep(n){
       // Step 1: Upload Invoice Report — direct file picker, no secondary modal
       IMP_TYPE='inv'; IMP_BANK_MODE=false;
       var _fi=document.getElementById('fi');
-      if(_fi){ _fi.accept='.csv,.txt,.xlsx,.xls,.png,.jpg,.jpeg,.webp'; _fi.onchange=function(){handleFile(_fi);}; _fi.click(); }
+      if(_fi){ _fi.accept='.csv,.txt,.xlsx,.xls,.png,.jpg,.jpeg,.webp'; _fi.onchange=function(){handleFiles(_fi);}; _fi.click(); }
       else if(typeof openImport==='function') openImport('inv');
     } else if(n===2){
       // Step 2: Upload Delivery Report — direct file picker
       IMP_TYPE='del'; IMP_BANK_MODE=false;
       var _fi2=document.getElementById('fi');
-      if(_fi2){ _fi2.accept='.csv,.txt,.xlsx,.xls,.png,.jpg,.jpeg,.webp'; _fi2.onchange=function(){handleFile(_fi2);}; _fi2.click(); }
+      if(_fi2){ _fi2.accept='.csv,.txt,.xlsx,.xls,.png,.jpg,.jpeg,.webp'; _fi2.onchange=function(){handleFiles(_fi2);}; _fi2.click(); }
       else if(typeof openImportDelivery==='function') openImportDelivery();
     } else if(n===3){
       // Step 3: Upload Bank File / Bank Summary PDF — direct file picker
       IMP_TYPE='rem'; IMP_BANK_MODE=true;
       var _fi3=document.getElementById('fi');
-      if(_fi3){ _fi3.accept='.csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf,.png,.jpg,.jpeg,.webp'; _fi3.onchange=function(){handleFile(_fi3);}; _fi3.click(); }
+      if(_fi3){ _fi3.accept='.csv,.txt,.xlsx,.xls,.bai,.bai2,.xml,.pdf,.png,.jpg,.jpeg,.webp'; _fi3.onchange=function(){handleFiles(_fi3);}; _fi3.click(); }
       else if(typeof openImportBank==='function') openImportBank();
     } else if(n===4){
       // Step 4: Upload Remittance Details — direct file picker
       IMP_TYPE='remdetail'; IMP_BANK_MODE=false;
       var _fi4=document.getElementById('fi');
-      if(_fi4){ _fi4.accept='.csv,.txt,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp'; _fi4.onchange=function(){handleFile(_fi4);}; _fi4.click(); }
+      if(_fi4){ _fi4.accept='.csv,.txt,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp'; _fi4.onchange=function(){handleFiles(_fi4);}; _fi4.click(); }
       else if(typeof openImport==='function') openImport('remdetail');
     }
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
 }
 function armpMaybeShowSetupOnCashApp(){
-  // Show modal only when user is genuinely in onboarding (no data yet, hasn't dismissed)
+  // Show setup modal if user hasn't explicitly dismissed it.
+  // Having data does NOT mean onboarding is complete — user may still need to upload more files.
   try{
-    if(StorageManager.get('setup_seen',null) === 'true') return;
-    // FIX (v16 follow-up): if user has ANY meaningful state, they're past onboarding.
-    // Skip the modal AND mark seen so it doesn't reopen unprompted.
-    var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
-    var hasInv = (typeof INV!=='undefined') && INV.length > 0;
-    var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
-    if(hasPay || hasInv || hasMatched){
-      try{ StorageManager.save('setup_seen','true'); }catch(e){}
-      // Still show the inline banner if helpful (for partial completion)
+    if(StorageManager.get('setup_seen',null) === 'true'){
+      // User previously dismissed — show inline banner instead
       setTimeout(function(){ if(typeof armpShowBannerIfNeeded==='function') armpShowBannerIfNeeded(); }, 100);
       return;
     }
@@ -10295,7 +10291,25 @@ function launchApp(user){
 
   setTimeout(navToWorklist, 0);
 
-  // Dispatch to correct panel if user deep-linked a specific route
+  // ── Show "Let's Get Started" setup modal immediately after login ──────
+  // User should see the onboarding workflow FIRST, not Today's Work.
+  // The modal only shows if the user hasn't explicitly dismissed it.
+  // Once dismissed via X or "Continue", it won't reappear.
+  setTimeout(function(){
+    try{
+      if(typeof armpOpenSetupModal==='function'){
+        // Always show on first login. Only skip if user previously dismissed.
+        var _setupSeen = false;
+        try{ _setupSeen = StorageManager.get('setup_seen',null)==='true'; }catch(e){}
+        if(!_setupSeen){
+          armpOpenSetupModal();
+        } else {
+          // User already dismissed — show inline banner instead
+          if(typeof armpShowBannerIfNeeded==='function') armpShowBannerIfNeeded();
+        }
+      }
+    }catch(e){}
+  }, 200);
   try{
     var _initRoute = window.location.pathname;
     if(_initRoute==='/review'){
@@ -14556,6 +14570,42 @@ function delRemRow(idx){if(PAY.length<=1&&!confirm('Delete the last row?'))retur
 // ══════════════════════════════════════════════════════════
 // IMPORT / FILE HANDLING
 // ══════════════════════════════════════════════════════════
+// ── Multi-file upload queue ────────────────────────────────────────────────
+// Processes multiple selected files sequentially to avoid freezing.
+// Failed files don't stop remaining files.
+async function handleFiles(inp){
+  if(!inp||!inp.files||!inp.files.length) return;
+  var files = Array.from(inp.files);
+  if(files.length===1){
+    // Single file — use direct handler
+    await handleFile(inp);
+    return;
+  }
+  // Multi-file: queue and process one at a time
+  var _total = files.length;
+  var _success = 0;
+  var _failed = [];
+  for(var fi=0; fi<files.length; fi++){
+    var _f = files[fi];
+    showProgress('Processing file '+(fi+1)+'/'+_total+': '+_f.name+'…', Math.round(fi/_total*100));
+    await new Promise(function(r){setTimeout(r,50);}); // yield to browser
+    try{
+      // Create a mock input object for handleFile
+      await handleFile({files:[_f], value:_f.name, name:_f.name});
+      _success++;
+    }catch(e){
+      _failed.push({name:_f.name, error:e.message||'Unknown error'});
+    }
+  }
+  inp.value='';
+  hideProgress();
+  if(_failed.length>0){
+    toast(_success+' file(s) imported, '+_failed.length+' failed: '+_failed.map(function(f){return f.name;}).join(', '),'warn');
+  } else if(_success>1){
+    toast('All '+_success+' files imported successfully.');
+  }
+}
+
 // ── XML Spreadsheet 2003 detection ────────────────────────────────────────
 // Reads first 500 bytes of a .XLS file to check if it's XML Spreadsheet format
 // (not binary BIFF). Returns true for XML Spreadsheet, false for standard .xls.
@@ -15056,19 +15106,26 @@ async function _bankExtractPDFText(file, progressCb){
     if(progressCb) progressCb(p, numPages);
     const page = await pdf.getPage(p);
     const tc = await page.getTextContent();
-    // Preserve layout: same-y items joined with tab, different-y with newline
-    const _items = tc.items.slice().sort(function(a,b){
-      const dy = Math.round(b.transform[5]) - Math.round(a.transform[5]);
-      return dy !== 0 ? dy : a.transform[4] - b.transform[4];
-    });
-    let lastY=null, lineText='', pageText='';
-    _items.forEach(function(item){
-      const y=Math.round(item.transform[5]);
-      if(lastY!==null&&Math.abs(y-lastY)>3){pageText+=lineText+'\n';lineText='';}
-      lineText+=(lineText?'\t':'')+item.str.trim();
-      lastY=y;
-    });
-    if(lineText) pageText+=lineText+'\n';
+    // Try sorted layout-preserving extraction first
+    var pageText = '';
+    try{
+      const _items = tc.items.slice().sort(function(a,b){
+        const dy = Math.round(b.transform[5]) - Math.round(a.transform[5]);
+        return dy !== 0 ? dy : a.transform[4] - b.transform[4];
+      });
+      let lastY=null, lineText='';
+      _items.forEach(function(item){
+        const y=Math.round(item.transform[5]);
+        if(lastY!==null&&Math.abs(y-lastY)>3){pageText+=lineText+'\n';lineText='';}
+        lineText+=(lineText?'\t':'')+item.str.trim();
+        lastY=y;
+      });
+      if(lineText) pageText+=lineText+'\n';
+    }catch(e){}
+    // Fallback: simple concatenation if sorted extraction produced nothing
+    if(pageText.replace(/\s/g,'').length < 20 && tc.items.length > 0){
+      pageText = tc.items.map(function(item){ return item.str; }).join(' ') + '\n';
+    }
     pageTexts.push(pageText);
     allText+=pageText+'\n---PAGE---\n';
   }
@@ -15288,10 +15345,16 @@ async function parseBankSummaryPDF(file){
     // Check for scanned / no-text PDF
     if(allText.replace(/[\s\-_|]/g,'').length < 100){
       hideProgress();
-      showModal('PDF Could Not Be Read',
+      showModal('PDF Text Extraction Issue',
         '<div style="padding:12px 0">'+
-        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">This PDF could not be read. Please upload a searchable PDF, CSV, Excel, or BAI2 export.</p>'+
-        '<p style="color:var(--t3);font-size:12px">Scanned / image-only PDFs do not contain extractable text.</p>'+
+        '<p style="color:var(--t2);font-size:13px;margin:0 0 10px">Text could not be extracted from this PDF. The file may be scanned/image-based.</p>'+
+        '<p style="color:var(--t3);font-size:12px;margin:0 0 10px">Try one of these alternatives:</p>'+
+        '<ul style="color:var(--t3);font-size:12px;margin:0 0 10px;padding-left:20px">'+
+          '<li>Upload a searchable (text-layer) PDF</li>'+
+          '<li>Export from your bank portal as CSV or Excel</li>'+
+          '<li>Upload a screenshot — we\'ll accept it for manual review</li>'+
+        '</ul>'+
+        '<p style="color:var(--t3);font-size:11px">Pages detected: '+numPages+' · Characters extracted: '+allText.replace(/[\s\-_|]/g,'').length+'</p>'+
         '<button class="btn btn-p btn-sm" onclick="closeModal()" style="margin-top:8px">OK</button></div>'
       );
       return;
@@ -16217,7 +16280,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(dz){
     ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over');}));
     ['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev,()=>dz.classList.remove('over')));
-    dz.addEventListener('drop',async e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f)await handleFile({files:[f],value:'',name:''});});
+    dz.addEventListener('drop',async e=>{e.preventDefault();dz.classList.remove('over');const fs=e.dataTransfer.files;if(fs&&fs.length)await handleFiles({files:fs,value:'',name:''});});
   }
 });
 
