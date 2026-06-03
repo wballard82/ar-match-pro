@@ -13558,23 +13558,25 @@ function handleXMLSpreadsheet(file, importType){
 // Called per payment: tries to match using ERS grouped totals or VMI date ranges.
 function matchERSGrouped(payAmount, custAccount, idx, tol){
   if(!ERS_LINES.length) return null;
-  var groups = ERSParser.groupBySheet(ERS_LINES);
+  var groups = ERSParser.groupByPO(ERS_LINES); // group by PO, not by sheet
   var matched = [];
   var total = 0;
+  var _cap = payAmount + (tol||5); // don't exceed payment amount
+
   groups.forEach(function(g){
+    if(total >= _cap) return;
     if(Math.abs(g.total)<=0.01) return;
-    // Find invoice whose amount matches this ERS group total
-    var gPOs = g.poNumbers;
-    gPOs.forEach(function(po){
-      if(!idx.byPO) return;
-      var invList = idx.byPO.get(norm(po))||[];
-      invList.forEach(function(inv){
-        if(inv.s) return;
-        if(Math.abs(inv.amt-g.total)<=tol && !matched.find(function(x){return x.i===inv.i;})){
-          matched.push(inv);
-          total += inv.amt;
-        }
-      });
+    var po = g.poNumber;
+    if(!po || !idx.byPO) return;
+    var invList = idx.byPO.get(norm(po))||[];
+    invList.forEach(function(inv){
+      if(total >= _cap) return;
+      if(inv.s || inv.amt <= 0) return;
+      if(inv.dt === 'DZ' || inv.dt === 'BE') return;
+      if(!matched.find(function(x){return x.i===inv.i;})){
+        matched.push(inv);
+        total += inv.amt;
+      }
     });
   });
   return matched.length>0 ? { matched:matched, total:total, scenario:'ERS_GROUP' } : null;
@@ -13584,14 +13586,17 @@ function matchVMIDateRange(payAmount, custAccount, idx, tol){
   if(!VMI_LINES.length || !INV || !INV.length) return null;
   var matched = [];
   var total = 0;
-  // Find invoices with date-range PO fields and match VMI lines
+  var _cap = payAmount + (tol||5);
   INV.forEach(function(inv){
-    if(inv.s) return;
+    if(total >= _cap) return;
+    if(inv.s || inv.amt <= 0) return;
+    if(inv.dt === 'DZ' || inv.dt === 'BE') return;
     if(!inv.po) return;
     var dr = DateRangeMatcher.parsePODateRange(inv.po);
     if(!dr) return;
     var vmiMatch = VMIParser.matchToInvoiceDateRange(VMI_LINES, inv.po);
-    if(vmiMatch && Math.abs(vmiMatch.total - inv.amt)<=tol){
+    // Accept if VMI lines exist in the date range (don't require exact amount match)
+    if(vmiMatch && vmiMatch.lines.length > 0){
       if(!matched.find(function(x){return x.i===inv.i;})){
         matched.push(inv);
         total += inv.amt;
@@ -14387,6 +14392,65 @@ async function runMatch(){
         }
       }catch(_fbErr){}
       if(matched)continue;
+
+      // PRIORITY 5c: REMITTANCE CORRELATION — ERS + VMI total tie-out
+      // Check if combined ERS + VMI totals equal this payment amount
+      if(!matched && (ERS_LINES.length>0 || VMI_LINES.length>0)){
+        var _ersTotal = ERS_LINES.reduce(function(s,l){return s+(l.amount||0);},0);
+        var _vmiTotal = VMI_LINES.reduce(function(s,l){return s+(l.amount||0);},0);
+        var _remTotal = _ersTotal + _vmiTotal;
+        // Check if remittance total ties to this payment
+        if(Math.abs(_remTotal - p.amt) <= tol && _remTotal > 0){
+          // Remittance tie-out found — attempt invoice-level allocation
+          var _ersMatch = matchERSGrouped(p.amt, p.a, _idx, tol);
+          var _vmiMatch = matchVMIDateRange(p.amt, p.a, _idx, tol);
+          var _allMatched = [];
+          if(_ersMatch) _allMatched = _allMatched.concat(_ersMatch.matched);
+          if(_vmiMatch) _allMatched = _allMatched.concat(_vmiMatch.matched);
+          var _allocTotal = _allMatched.reduce(function(s,inv){return s+inv.amt;},0);
+
+          if(_allMatched.length > 0){
+            _allMatched.forEach(function(inv){
+              inv.s = 'ERS/VMI Match';
+              var _conf = ConfidenceScorer.score({
+                ersMatch:!!_ersMatch, vmiMatch:!!_vmiMatch,
+                amountMatch:Math.abs(_allocTotal-p.amt)<=tol,
+                customerMatch:!!p.c, poMatch:true
+              });
+              RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
+                oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
+                m:'ERS/VMI remittance match',
+                n:'Remittance tie-out · confidence: '+_conf.score+'%',
+                confidence:_conf.score, matchReasons:_conf.reasons,
+                scenario:_ersMatch?'ERS_GROUP':'VMI_DATERANGE'});
+            });
+            matched = true;
+            // Handle variance between allocated invoices and payment
+            var _remVar = p.amt - _allocTotal;
+            if(Math.abs(_remVar) > tol){
+              EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
+                a:p.a, c:p.c||'', amt:Math.abs(_remVar),
+                ref:p.txId||p.bankRef||'—',
+                type:_remVar>0?'Partially Applied':'Over-applied',
+                detail:'Remittance total $'+$f(_remTotal)+' ties to payment · '+_allMatched.length+' invoices allocated ($'+$f(_allocTotal)+') · Variance: $'+$f(_remVar),
+                action:_remVar>0?'Route $'+$f(_remVar)+' to Cash on Account':'Review over-application',
+                dec:'', s:'Open', notes:'ERS: $'+$f(_ersTotal)+' · VMI: $'+$f(_vmiTotal)});
+            }
+          } else {
+            // Remittance ties but no invoices found — send to Needs Attention
+            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
+              a:p.a, c:p.c||'', amt:p.amt,
+              ref:p.txId||p.bankRef||'—',
+              type:'Remittance Tie-Out',
+              detail:'Customer identified · ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') = $'+$f(_remTotal)+' ties to payment $'+$f(p.amt)+' · Invoice allocation requires review',
+              action:'Review invoice allocation',
+              dec:'', s:'Open',
+              notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS+VMI tie-out · Invoice allocation pending'});
+            matched = true;
+          }
+        }
+      }
+      if(matched) continue;
 
       // PRIORITY 6: ERS self-billing grouped match
       // Group ERS lines by PO → compare total to invoice amounts
