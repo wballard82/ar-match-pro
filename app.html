@@ -1990,7 +1990,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
   height: 100%; border-radius: 4px;
   transition: width .8s cubic-bezier(.34,1.56,.64,1);
 }
-.cfo-bar-val { font-size: 12.5px; font-weight: 800; font-family: var(--mono); color: var(--t1); width: 60px; text-align: right; flex-shrink: 0; }
+.cfo-bar-val { font-size: 12.5px; font-weight: 800; font-family: var(--mono); color: var(--t1); width: 110px; text-align: right; flex-shrink: 0; }
 
 .cfo-savings-callout {
   background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(16,185,129,.04));
@@ -8707,6 +8707,7 @@ function sp(id){
   if(pid==='settings'){try{cfgRenderAll();}catch(e){}}
   if(pid==='cash-app'){engRefreshSel();renderPayQueue();}
   if(pid==='audit')initAuditTbl();
+  if(pid==='cfo'){try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}}
 
   // Show setup guidance on first visit to Cash Application — but NOT when user
   // already has data (they're past onboarding and navigating to a specific panel)
@@ -18029,7 +18030,7 @@ function buildWorklist(){
     var totalAmt=exportReady.reduce(function(s,r){return s+r.pd;},0);
     var byCust2={};exportReady.forEach(function(r){ var k=r.c||r.a; if(!byCust2[k])byCust2[k]={c:r.c,a:r.a,rows:[],total:0}; byCust2[k].rows.push(r); byCust2[k].total+=r.pd; });
     var custSum=Object.values(byCust2).slice(0,3).map(function(cg){return cg.c||cg.a;}).join(', ');
-    exportList.innerHTML='<div class="wl-item ok" onclick="wlGoPosting()"><div class="wl-item-icon">📤</div><div class="wl-item-body"><div class="wl-item-title">'+exportReady.length+' record'+(exportReady.length>1?'s':'')+' ready for ERP posting</div><div class="wl-item-sub">'+custSum+(Object.keys(byCust2).length>3?' and '+(Object.keys(byCust2).length-3)+' more':'')+' · Download posting file (SAP · NetSuite · CSV)</div></div><div class="wl-item-amount">$'+$fk(totalAmt)+'</div><div class="wl-item-cta">Export →</div></div>';
+    exportList.innerHTML='<div class="wl-item ok" onclick="wlGoPosting()"><div class="wl-item-icon">📤</div><div class="wl-item-body"><div class="wl-item-title">'+exportReady.length+' record'+(exportReady.length>1?'s':'')+' ready for ERP posting</div><div class="wl-item-sub">'+custSum+(Object.keys(byCust2).length>3?' and '+(Object.keys(byCust2).length-3)+' more':'')+' · Download posting file (SAP · NetSuite · CSV)</div></div><div class="wl-item-amount">'+$fk(totalAmt)+'</div><div class="wl-item-cta">Export →</div></div>';
   } else if(exportList){
     exportList.innerHTML='<div class="wl-empty-state"><div class="wl-empty-icon">📋</div><div class="wl-empty-title">Nothing ready to export</div><div class="wl-empty-sub">Approve allocations in the Cash Application workspace.</div></div>';
   }
@@ -18043,7 +18044,7 @@ function buildWorklist(){
   if(doneSection) doneSection.style.display=done.length?'block':'none';
   if(done.length&&doneList){
     var byCust3={};done.forEach(function(r){ var k=r.c||r.a; if(!byCust3[k])byCust3[k]={c:r.c,a:r.a,rows:[],total:0}; byCust3[k].rows.push(r); byCust3[k].total+=r.pd; });
-    doneList.innerHTML=Object.values(byCust3).slice(0,4).map(function(cg){ return '<div class="wl-item ok" onclick="wlGoReview()"><div class="wl-item-icon">✅</div><div class="wl-item-body"><div class="wl-item-title">'+cg.c+'</div><div class="wl-item-sub">'+cg.rows.length+' invoice'+(cg.rows.length>1?'s':'')+' matched exactly</div></div><div class="wl-item-amount">$'+$fk(cg.total)+'</div><div class="wl-item-cta" style="background:var(--g-bg);border-color:rgba(16,185,129,.2);color:var(--g-t)">✓ Done</div></div>'; }).join('');
+    doneList.innerHTML=Object.values(byCust3).slice(0,4).map(function(cg){ return '<div class="wl-item ok" onclick="wlGoReview()"><div class="wl-item-icon">✅</div><div class="wl-item-body"><div class="wl-item-title">'+cg.c+'</div><div class="wl-item-sub">'+cg.rows.length+' invoice'+(cg.rows.length>1?'s':'')+' matched exactly</div></div><div class="wl-item-amount">'+$fk(cg.total)+'</div><div class="wl-item-cta" style="background:var(--g-bg);border-color:rgba(16,185,129,.2);color:var(--g-t)">✓ Done</div></div>'; }).join('');
   }
 
   // Summary pills
@@ -18269,14 +18270,19 @@ function updateCfoSummary(){
   // ROI multiple = labor savings / Pro plan cost ($1,399/mo annual)
   var roiMultiple = dollarsSaved > 0 ? (dollarsSaved/1399).toFixed(1)+'x' : '—';
   setEl('cfo-roi-multiple', roiMultiple);
-  setEl('cfo-bar-auto-val',autoCount);
-  setEl('cfo-bar-exc-val',EXC.length);
-  setEl('cfo-bar-unapp-val',PAY.filter(function(p){return p.coa;}).length);
-  var total=Math.max(autoCount+EXC.length+PAY.filter(function(p){return p.coa;}).length,1);
+  // Bar values show actual dollar amounts (count + total in parens)
+  var coaCount = PAY.filter(function(p){return p.coa;}).length;
+  var coaTotal = EXC.filter(function(e){return e.dec==='Cash on Account'||e.type==='Cash on Account';}).reduce(function(s,e){return s+e.amt;},0);
+  var excTotal = EXC.filter(function(e){return e.type!=='Cash on Account';}).reduce(function(s,e){return s+e.amt;},0);
+  setEl('cfo-bar-auto-val',$fk(ma)+(autoCount>0?' ('+autoCount+')':''));
+  setEl('cfo-bar-exc-val',$fk(excTotal)+(EXC.length>0?' ('+EXC.length+')':''));
+  setEl('cfo-bar-unapp-val',$fk(coaTotal)+(coaCount>0?' ('+coaCount+')':''));
+  // Bar widths reflect dollar-share, not count-share
+  var totalDollars = Math.max(ma + excTotal + coaTotal, 1);
   setTimeout(function(){
-    setW('cfo-bar-auto',(autoCount/total*100).toFixed(1)+'%');
-    setW('cfo-bar-exc',(EXC.length/total*100).toFixed(1)+'%');
-    setW('cfo-bar-unapp',(PAY.filter(function(p){return p.coa;}).length/total*100).toFixed(1)+'%');
+    setW('cfo-bar-auto',(ma/totalDollars*100).toFixed(1)+'%');
+    setW('cfo-bar-exc',(excTotal/totalDollars*100).toFixed(1)+'%');
+    setW('cfo-bar-unapp',(coaTotal/totalDollars*100).toFixed(1)+'%');
   },100);
   // Match breakdown
   var cn={};RES.forEach(function(r){cn[r.st]=(cn[r.st]||0)+1;});
