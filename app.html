@@ -13598,6 +13598,14 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
   var total = 0;
   var _cap = payAmount + (tol||5);
 
+  // Tiebreaker: when two invoices match exactly, prefer the older one (FIFO clearing
+  // mirrors typical SAP behavior — oldest open item is cleared first).
+  function _olderFirst(a,b){
+    var da = a.dt2 ? new Date(a.dt2).getTime() : Infinity;
+    var db = b.dt2 ? new Date(b.dt2).getTime() : Infinity;
+    return da - db;
+  }
+
   groups.forEach(function(g){
     if(total >= _cap) return;
     if(Math.abs(g.total)<=0.01) return;
@@ -13614,15 +13622,14 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
     }
 
     // Multiple invoices share this PO. Disambiguation order:
-    // 1. Single invoice whose amount equals ERS PO total
-    var exact = invList.filter(function(inv){ return Math.abs(inv.amt - g.total) <= 1; });
+    // 1. Invoice(s) whose amount equals ERS PO total — prefer oldest by date
+    var exact = invList.filter(function(inv){ return Math.abs(inv.amt - g.total) <= 1; }).sort(_olderFirst);
     if(exact.length > 0){
       if(total + exact[0].amt <= _cap){ matched.push(exact[0]); total += exact[0].amt; }
       return;
     }
 
     // 2. Subset of invoices summing to ERS PO total (handles split invoices)
-    // Try pairs and triples
     var found = false;
     for(var i=0; i<invList.length && !found; i++){
       for(var j=i+1; j<invList.length && !found; j++){
@@ -13635,41 +13642,115 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
         }
       }
     }
-    if(found) return;
-
-    // 3. Fallback: pick the invoice whose amount is closest to ERS PO total
-    var _best = null, _bestDiff = Infinity;
-    invList.forEach(function(inv){
-      var diff = Math.abs(inv.amt - g.total);
-      if(diff < _bestDiff){ _bestDiff = diff; _best = inv; }
-    });
-    if(_best && total + _best.amt <= _cap){ matched.push(_best); total += _best.amt; }
+    // Triples
+    if(!found){
+      for(var i=0; i<invList.length && !found; i++){
+        for(var j=i+1; j<invList.length && !found; j++){
+          for(var k=j+1; k<invList.length && !found; k++){
+            if(Math.abs(invList[i].amt + invList[j].amt + invList[k].amt - g.total) <= 1){
+              if(total + invList[i].amt + invList[j].amt + invList[k].amt <= _cap){
+                matched.push(invList[i]); matched.push(invList[j]); matched.push(invList[k]);
+                total += invList[i].amt + invList[j].amt + invList[k].amt;
+                found = true;
+              }
+            }
+          }
+        }
+      }
+    }
+    // 3. No exact or subset match → leave PO unmatched. The ERS amount for this PO
+    //    naturally becomes part of the variance/COA. This avoids picking a wrong
+    //    invoice via closest-amount heuristic.
   });
   return matched.length>0 ? { matched:matched, total:total, scenario:'ERS_GROUP' } : null;
 }
 
 function matchVMIDateRange(payAmount, custAccount, idx, tol){
   if(!VMI_LINES.length || !INV || !INV.length) return null;
-  var matched = [];
-  var total = 0;
   var _cap = payAmount + (tol||5);
+  var _tol = tol || 5;
+
+  // Target: total of all VMI line amounts
+  var _vmiTotal = VMI_LINES.reduce(function(s,l){return s+(l.amount||0);},0);
+
+  // Find payment's customer context for filtering
+  var _payCust = '';
+  if(PAY && PAY.length){
+    // Use the customer of the payment being matched against this allocation
+    for(var i=0;i<PAY.length;i++){ if(PAY[i].amt===payAmount){ _payCust = PAY[i].c||''; break; } }
+  }
+  var _payCustNorm = _payCust.toUpperCase().replace(/[^A-Z]/g,'').slice(0,12);
+
+  // Build candidate pool: date-range PO invoices that
+  //   (a) belong to same customer family as payment (fuzzy match on customer name)
+  //   (b) have a date range overlapping ANY VMI line date
+  var _cands = [];
   INV.forEach(function(inv){
-    if(total >= _cap) return;
     if(inv.s || inv.amt <= 0) return;
     if(inv.dt === 'DZ' || inv.dt === 'BE') return;
     if(!inv.po) return;
     var dr = DateRangeMatcher.parsePODateRange(inv.po);
     if(!dr) return;
-    var vmiMatch = VMIParser.matchToInvoiceDateRange(VMI_LINES, inv.po);
-    // Accept if VMI lines exist in the date range (don't require exact amount match)
-    if(vmiMatch && vmiMatch.lines.length > 0){
-      if(!matched.find(function(x){return x.i===inv.i;})){
-        matched.push(inv);
-        total += inv.amt;
-      }
+    // Customer filter — strip non-letters, check first 10 chars match
+    if(_payCustNorm){
+      var _invCustNorm = String(inv.c||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,12);
+      if(!_invCustNorm || _invCustNorm.indexOf(_payCustNorm.slice(0,10))<0 && _payCustNorm.indexOf(_invCustNorm.slice(0,10))<0) return;
     }
+    // Date overlap check — does any VMI line fall in this PO's date range?
+    var _hasOverlap = false;
+    for(var i=0;i<VMI_LINES.length;i++){
+      var v = VMI_LINES[i];
+      var txD = v.vcDate || (v.txDate ? new Date(String(v.txDate).replace(/(\d{2})\.(\d{2})\.(\d{4})/,'$3-$2-$1')) : null);
+      if(txD && DateRangeMatcher.isInRange(txD, dr.startDate, dr.endDate)){ _hasOverlap = true; break; }
+    }
+    if(_hasOverlap) _cands.push(inv);
   });
-  return matched.length>0 ? { matched:matched, total:total, scenario:'VMI_DATERANGE' } : null;
+
+  if(_cands.length === 0) return null;
+
+  // Subset-sum: find a subset of _cands whose amounts sum to _vmiTotal (within tol)
+  // Try size 1, 2, 3, 4 — covers typical VMI allocations (usually 1-4 invoices)
+  function findSubset(cands, target){
+    var n = cands.length;
+    // size 1
+    for(var i=0;i<n;i++){ if(Math.abs(cands[i].amt - target)<=_tol) return [cands[i]]; }
+    // size 2
+    for(var i=0;i<n;i++){ for(var j=i+1;j<n;j++){
+      if(Math.abs(cands[i].amt + cands[j].amt - target)<=_tol) return [cands[i],cands[j]];
+    }}
+    // size 3
+    for(var i=0;i<n;i++){ for(var j=i+1;j<n;j++){ for(var k=j+1;k<n;k++){
+      if(Math.abs(cands[i].amt + cands[j].amt + cands[k].amt - target)<=_tol) return [cands[i],cands[j],cands[k]];
+    }}}
+    // size 4
+    if(n<=25){
+      for(var i=0;i<n;i++){ for(var j=i+1;j<n;j++){ for(var k=j+1;k<n;k++){ for(var l=k+1;l<n;l++){
+        if(Math.abs(cands[i].amt + cands[j].amt + cands[k].amt + cands[l].amt - target)<=_tol)
+          return [cands[i],cands[j],cands[k],cands[l]];
+      }}}}
+    }
+    return null;
+  }
+
+  var _exactSubset = _vmiTotal > 0 ? findSubset(_cands, _vmiTotal) : null;
+
+  var matched = [];
+  var total = 0;
+  if(_exactSubset){
+    // Found exact subset matching VMI total
+    _exactSubset.forEach(function(inv){
+      if(total + inv.amt <= _cap){ matched.push(inv); total += inv.amt; }
+    });
+  } else {
+    // Fallback: return all customer-filtered candidates (constrained allocator will pick)
+    _cands.forEach(function(inv){
+      if(total + inv.amt <= _cap && !matched.find(function(x){return x.i===inv.i;})){
+        matched.push(inv); total += inv.amt;
+      }
+    });
+  }
+
+  return matched.length>0 ? { matched:matched, total:total, scenario:'VMI_DATERANGE', exactSubset:!!_exactSubset } : null;
 }
 
 // ── Customer Name Normalizer ───────────────────────────────────────────────
