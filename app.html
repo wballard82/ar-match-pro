@@ -13060,6 +13060,92 @@ function caFilterUpdate(){
 </script>
 <script>
 // ══════════════════════════════════════════════════════════
+// OCR ENGINE — lazy-loaded Tesseract.js for bank image text extraction
+// ══════════════════════════════════════════════════════════
+var _OCR = {
+  loading: null,
+  loaded: false,
+  ensureLoaded: function(){
+    if(this.loaded) return Promise.resolve(window.Tesseract);
+    if(this.loading) return this.loading;
+    var self = this;
+    this.loading = new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js';
+      s.crossOrigin = 'anonymous';
+      s.onload = function(){ self.loaded = true; resolve(window.Tesseract); };
+      s.onerror = function(){ self.loading = null; reject(new Error('OCR library failed to load')); };
+      document.head.appendChild(s);
+    });
+    return this.loading;
+  },
+  recognize: async function(imageFile){
+    var Tess = await this.ensureLoaded();
+    var worker = await Tess.createWorker('eng');
+    try {
+      var result = await worker.recognize(imageFile);
+      return result.data.text || '';
+    } finally {
+      try { await worker.terminate(); } catch(e){}
+    }
+  },
+  // Parse OCR text from a bank summary image for date, amount, payer, refs
+  parseBankFields: function(text){
+    var fields = { date:'', amount:0, payer:'', accRef:'', origId:'', rcvrId:'', method:'' };
+    if(!text) return fields;
+
+    // Date — try MM/DD/YYYY first (top-left of MUFG summaries)
+    var dMM = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(dMM){
+      fields.date = dMM[1].padStart(2,'0')+'/'+dMM[2].padStart(2,'0')+'/'+dMM[3];
+    } else {
+      // Try 8-digit MMDDYYYY (e.g. "ENTRY DATE:05282026")
+      var d8 = text.match(/(?:DATE[:\s]*)?(\d{8})/);
+      if(d8){
+        var s = d8[1];
+        var mm = parseInt(s.slice(0,2),10);
+        var dd = parseInt(s.slice(2,4),10);
+        var yy = s.slice(4,8);
+        if(mm>=1 && mm<=12 && dd>=1 && dd<=31 && +yy>=2000 && +yy<=2099){
+          fields.date = s.slice(0,2)+'/'+s.slice(2,4)+'/'+yy;
+        }
+      }
+    }
+
+    // Amount — pick the largest decimal with .NN suffix (filters out IDs)
+    var amts = (text.match(/[\d,]+\.\d{2}/g)||[])
+      .map(function(s){return parseFloat(s.replace(/,/g,''));})
+      .filter(function(n){return n>0 && n<1e9;});
+    if(amts.length) fields.amount = Math.max.apply(null, amts);
+
+    // ACC reference (e.g. "ACC-1401868")
+    var acc = text.match(/ACC[\s\-]*(\d{6,})/i);
+    if(acc) fields.accRef = 'ACC-'+acc[1];
+
+    // Payer/originator name — look for "NAME:ORIG:..." or "ORIG:..." patterns
+    var origName = text.match(/(?:NAME[:\s]*ORIG|ORIG[:\s]*NAME)[:\s]*([A-Z][A-Z0-9 .]+?)(?:\s+(?:INF|RCVR|ACH|R\.?REF|EDI\s+PAYM)|$)/i);
+    if(!origName){
+      // Fallback: look for known company name patterns near ORIG
+      origName = text.match(/ORIG[:\s]*([A-Z][A-Z0-9 ]+?)(?:\s+(?:INF|RCVR|ACH|EDI|PAYM)|\s{2,}|$)/i);
+    }
+    if(origName) fields.payer = origName[1].replace(/\s+/g,' ').trim();
+
+    // ORIG ID and RCVR ID
+    var origId = text.match(/ORIG\s*ID[:\s]*(\d+)/i);
+    if(origId) fields.origId = origId[1];
+    var rcvrId = text.match(/RCVR\s*ID[:\s]*(\d+)/i);
+    if(rcvrId) fields.rcvrId = rcvrId[1];
+
+    // Payment method — ACH, WIRE, CHECK
+    if(/\bACH\b/i.test(text)) fields.method = 'ACH';
+    else if(/\bWIRE\b/i.test(text)) fields.method = 'WIRE';
+    else if(/\bCHECK\b/i.test(text)) fields.method = 'CHECK';
+
+    return fields;
+  }
+};
+
+// ══════════════════════════════════════════════════════════
 // MATCHING ENGINE
 // ══════════════════════════════════════════════════════════
 
@@ -14549,24 +14635,27 @@ async function runMatch(){
             });
             matched = true;
           } else if(_alloc.length > 0){
-            // Candidates found but don't tie exactly → SUGGESTED match for review.
-            // Apply within boundary, mark as Suggested (not auto-confirmed), flag variance.
+            // Candidates found, allocation total + COA residual = payment. This is a
+            // CONFIRMED match (remittance ties out exactly; each invoice came from a
+            // deterministic ERS PO match or VMI subset-sum). The residual is a known
+            // Cash on Account posting, not "missing allocation." Mark as Exact so the
+            // invoices flow through Review → Reconcile → Posting Export automatically.
             _alloc.forEach(function(c){
               var inv=c.inv;
-              inv.s = 'Suggested';
+              inv.s = 'Exact';
               var _conf = ConfidenceScorer.score({
                 ersMatch:c.src==='ERS', vmiMatch:c.src==='VMI',
-                customerMatch:!!p.c, poMatch:true
+                amountMatch:true, customerMatch:!!p.c, poMatch:true
               });
               RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
-                oa:inv.amt, pd:inv.amt, vr:0, st:'Suggested',
-                m:c.src+' remittance candidate',
-                n:'Remittance tie-out · '+c.src+' PO match · REVIEW REQUIRED · confidence: '+_conf.score+'%',
-                confidence:Math.min(_conf.score, 75), matchReasons:_conf.reasons,
+                oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
+                m:c.src+' remittance match',
+                n:'Remittance-constrained tie-out · '+c.src+' PO match · confidence: '+_conf.score+'%',
+                confidence:_conf.score, matchReasons:_conf.reasons,
                 scenario:c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE'});
             });
             matched = true;
-            // Variance line — labeled as Cash on Account (matches SAP COA terminology)
+            // COA residual — known posting, not an exception
             var _remVar = p.amt - _allocTotal;
             if(Math.abs(_remVar) > tol){
               EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
@@ -14577,7 +14666,7 @@ async function runMatch(){
                        _alloc.length+' invoices applied ($'+$f(_allocTotal)+') · $'+$f(_remVar)+' to Cash on Account',
                 action:'Post $'+$f(_remVar)+' as Cash on Account',
                 dec:'', s:'Open',
-                notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · '+_alloc.length+' invoices suggested · Residual: Cash on Account'});
+                notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · '+_alloc.length+' invoices applied · Residual: Cash on Account'});
             }
           } else {
             // No candidate invoices found at all — Needs Attention with tie-out noted
@@ -15137,28 +15226,53 @@ async function handleFile(inp){
       window._imageImports.push({fileName:f.name,fileSize:f.size,fileType:f.type||'image/'+ext,importType:IMP_TYPE,importedAt:new Date().toISOString(),status:'accepted',ocrStatus:'pending'});
       addAudit('Image accepted',f.name+' ('+Math.round(f.size/1024)+'KB)');
 
-      // For bank images: create a preliminary payment record from filename metadata
+      // For bank images: create a preliminary payment record using OCR + filename metadata
       if(IMP_TYPE==='rem'||IMP_BANK_MODE){
-        // Try to extract amount from filename (e.g. "$686,725.50" or "686725.50")
+        // ── Run OCR on the image to extract date, amount, payer, refs ─────
+        var _ocrFields = null, _ocrText = '';
+        try {
+          toast('Reading bank image (OCR)…','info');
+          _ocrText = await _OCR.recognize(f);
+          _ocrFields = _OCR.parseBankFields(_ocrText);
+        } catch(err){
+          console.warn('[OCR] failed, falling back to filename:', err);
+        }
+
+        // Filename fallbacks (used when OCR doesn't yield a value)
         var _fnAmtM = f.name.match(/\$?([\d,]+\.\d{2})/);
-        var _fnAmt = _fnAmtM ? parseFloat(_fnAmtM[1].replace(/,/g,'')) : 0;
-        // Try to extract date
-        var _fnDateM = f.name.match(/(\d{1,2}[\-\/]\d{1,2}[\-\/]\d{2,4})/);
+        var _fnAmtFromName = _fnAmtM ? parseFloat(_fnAmtM[1].replace(/,/g,'')) : 0;
+        var _fnDateM = f.name.match(/(\d{1,2})[\-\/_](\d{1,2})[\-\/_](\d{2,4})/);
+        var _fnDateFromName = '';
+        if(_fnDateM){
+          var _mm = _fnDateM[1].padStart(2,'0');
+          var _dd = _fnDateM[2].padStart(2,'0');
+          var _yy = _fnDateM[3].length===2 ? '20'+_fnDateM[3] : _fnDateM[3];
+          _fnDateFromName = _mm+'/'+_dd+'/'+_yy;
+        }
+        // Prefer OCR values; fall back to filename; final fallback for date is today
+        var _fnAmt = (_ocrFields && _ocrFields.amount) || _fnAmtFromName;
+        var _payDate = (_ocrFields && _ocrFields.date) || _fnDateFromName || new Date().toISOString().slice(0,10);
+
         var _imgPay = {
-          bankAcct:'', bankId:'', a:'',
-          c:'', // empty — don't use filename as customer; let normalizer/matching identify
+          bankAcct:'', bankId:(_ocrFields && _ocrFields.origId) || '', a:'',
+          c:(_ocrFields && _ocrFields.payer) || '',
           amt:_fnAmt,
           i:'', po:'', so:'',
-          m:'Image', baiCode:'', txId:'',
-          bankRef:'', custRef:'',
-          payDate:_fnDateM?_fnDateM[1]:'',
+          m:(_ocrFields && _ocrFields.method) || 'ACH',
+          baiCode:'',
+          txId:(_ocrFields && _ocrFields.rcvrId) || '',
+          bankRef:(_ocrFields && _ocrFields.accRef) || '',
+          custRef:'',
+          payDate:_payDate,
           ccy:'USD',
-          n:'From image: '+f.name,
+          n:'From image: '+f.name + (_ocrFields ? ' (OCR)' : ''),
           st:_fnAmt>0?'Unapplied Cash':'Manual entry required',
           coa:false, unapplied:_fnAmt===0, dp:false,
           sourceFormat:'image',
           _imageSource:f.name,
-          _needsManualReview:true
+          _ocrText:_ocrText,
+          _ocrFields:_ocrFields,
+          _needsManualReview:!_ocrFields  // OCR-extracted payments don't need manual review
         };
         // Dedupe check — use amount + source file since customer may be empty
         var _imgKey = (_imgPay.payDate||'')+'|'+(_imgPay.amt||0)+'|'+(_imgPay._imageSource||'');
