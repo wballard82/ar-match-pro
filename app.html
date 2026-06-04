@@ -5178,8 +5178,8 @@ function renderWsExcPremium(){
       
     </div>`;return;
   }
-  const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
-  const typeSev={'Short pay':'med','Unapplied payment':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
+  const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Cash on Account':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
+  const typeSev={'Short pay':'med','Unapplied payment':'low','Cash on Account':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
   list.innerHTML=items.map(ex=>{
     const realIdx=EXC.indexOf(ex);
     const isResV=ex.s==='Resolved'||ex.s==='Resolved — rejected';
@@ -5274,9 +5274,9 @@ function renderWsReview(){
     list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records to review</div><div class="empty-s">${(typeof PAY!=='undefined'&&PAY.length>0&&typeof INV!=='undefined'&&INV.length>0)?'All allocations approved. Ready for the next step.':'Import payments and invoices to begin.'}</div>${(typeof PAY!=='undefined'&&PAY.length>0&&typeof INV!=='undefined'&&INV.length>0)?`<div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp('cash-app');setTimeout(function(){setCaTab('recon',document.getElementById('ca-tab-recon'));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div>`:''}</div>`;return;
   }
   
-  const stColor={Exact:'var(--g)','Subset exact':'var(--p)','Short pay':'var(--am)',Overpay:'var(--am)',Resolved:'var(--g)','Amount match':'var(--pu)',Partial:'var(--am)'};
-  const stBadge={Exact:'badge-g','Subset exact':'badge-p','Short pay':'badge-am',Overpay:'badge-am',Resolved:'badge-g','Amount match':'badge-pu',Partial:'badge-am'};
-  const wsBadge={Exact:'Ready for Export','Subset exact':'Ready for Export',Resolved:'Awaiting Export','Amount match':'Review Recommended','Short pay':'Requires Review',Overpay:'Requires Review'};
+  const stColor={Exact:'var(--g)','Subset exact':'var(--p)','Short pay':'var(--am)',Overpay:'var(--am)',Resolved:'var(--g)','Amount match':'var(--pu)',Partial:'var(--am)','Cash on account':'var(--cy)'};
+  const stBadge={Exact:'badge-g','Subset exact':'badge-p','Short pay':'badge-am',Overpay:'badge-am',Resolved:'badge-g','Amount match':'badge-pu',Partial:'badge-am','Cash on account':'badge-cy'};
+  const wsBadge={Exact:'Ready for Export','Subset exact':'Ready for Export',Resolved:'Awaiting Export','Amount match':'Review Recommended','Short pay':'Requires Review',Overpay:'Requires Review','Cash on account':'Ready for Export'};
   
   list.innerHTML = groups.map(function(g){
     var items=g.items;
@@ -8083,6 +8083,7 @@ function armpGetSuggestedResolution(ex){
     'Debit Memo':         { action:'apply_to_invoice',   label:'Apply Debit Memo',   rationale:'Debit memo offset — apply against matched invoice.',      confidence:85 },
     'Duplicate':          { action:'duplicate_reject',   label:'Duplicate — Reject',  rationale:'Amount and reference match an existing matched payment.',        confidence:92 },
     'Unapplied payment':  { action:'cash_on_account',    label:'Cash on Account',     rationale:'No invoice reference. Post as unapplied credit until invoice is provided.', confidence:80 },
+    'Cash on Account':    { action:'cash_on_account',    label:'Cash on Account',     rationale:'Remittance tie-out confirmed; residual is the customer-instructed Cash on Account amount. Post as unapplied credit.', confidence:92 },
     'Short pay':          { action:'chase_customer',     label:'Chase Customer',      rationale:'Payment is less than invoiced amount. Contact customer for balance.', confidence:75 },
     'Overpay':            { action:'cash_on_account',    label:'Cash on Account',     rationale:'Payment exceeds invoice. Hold overpayment as credit or return to customer.', confidence:72 },
     'Bank fee':           { action:'bank_fee',           label:'Bank Fee',            rationale:'Small variance typical of wire/ACH bank charges. Post as bank fee.', confidence:85 },
@@ -13946,6 +13947,27 @@ function _normalizePayCustomers(){
         p._customerConfidence = suggestion.confidence;
         p._customerSource = suggestion.source;
         if(suggestion.confidence >= 80) p.c = suggestion.canonical;
+      }
+      // Also resolve account number if missing — cross-reference ERS POs to find
+      // which account this customer's remittance maps to.
+      if(!p.a){
+        var _ca_accts = new Map();
+        if(ERS_LINES && ERS_LINES.length > 0 && _INV_IDX && _INV_IDX.byPO){
+          ERS_LINES.forEach(function(el){
+            if(!el.poNumber) return;
+            var invList = _INV_IDX.byPO.get(norm(el.poNumber));
+            if(invList) invList.forEach(function(inv){
+              if(inv.a) _ca_accts.set(inv.a, (_ca_accts.get(inv.a)||0)+1);
+            });
+          });
+        }
+        if(_ca_accts.size > 0){
+          var _bestA = '', _bestC = 0;
+          _ca_accts.forEach(function(count, acct){
+            if(count > _bestC){ _bestA = acct; _bestC = count; }
+          });
+          if(_bestA){ p.a = _bestA; p._suggestedAccounts = Array.from(_ca_accts.keys()); }
+        }
       }
       return;
     }
