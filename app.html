@@ -13593,7 +13593,7 @@ function handleXMLSpreadsheet(file, importType){
 // Called per payment: tries to match using ERS grouped totals or VMI date ranges.
 function matchERSGrouped(payAmount, custAccount, idx, tol){
   if(!ERS_LINES.length) return null;
-  var groups = ERSParser.groupByPO(ERS_LINES); // group by PO
+  var groups = ERSParser.groupByPO(ERS_LINES);
   var matched = [];
   var total = 0;
   var _cap = payAmount + (tol||5);
@@ -13607,19 +13607,43 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
       return !inv.s && inv.amt > 0 && inv.dt !== 'DZ' && inv.dt !== 'BE' && !matched.find(function(x){return x.i===inv.i;});
     });
     if(invList.length === 0) return;
+
     if(invList.length === 1){
-      // Single invoice for this PO — match it
       if(total + invList[0].amt <= _cap){ matched.push(invList[0]); total += invList[0].amt; }
-    } else {
-      // Multiple invoices share this PO — pick the one whose amount best matches
-      // the ERS PO group total (disambiguation). Avoids grabbing wrong large invoices.
-      var _best = null, _bestDiff = Infinity;
-      invList.forEach(function(inv){
-        var diff = Math.abs(inv.amt - g.total);
-        if(diff < _bestDiff){ _bestDiff = diff; _best = inv; }
-      });
-      if(_best && total + _best.amt <= _cap){ matched.push(_best); total += _best.amt; }
+      return;
     }
+
+    // Multiple invoices share this PO. Disambiguation order:
+    // 1. Single invoice whose amount equals ERS PO total
+    var exact = invList.filter(function(inv){ return Math.abs(inv.amt - g.total) <= 1; });
+    if(exact.length > 0){
+      if(total + exact[0].amt <= _cap){ matched.push(exact[0]); total += exact[0].amt; }
+      return;
+    }
+
+    // 2. Subset of invoices summing to ERS PO total (handles split invoices)
+    // Try pairs and triples
+    var found = false;
+    for(var i=0; i<invList.length && !found; i++){
+      for(var j=i+1; j<invList.length && !found; j++){
+        if(Math.abs(invList[i].amt + invList[j].amt - g.total) <= 1){
+          if(total + invList[i].amt + invList[j].amt <= _cap){
+            matched.push(invList[i]); matched.push(invList[j]);
+            total += invList[i].amt + invList[j].amt;
+            found = true;
+          }
+        }
+      }
+    }
+    if(found) return;
+
+    // 3. Fallback: pick the invoice whose amount is closest to ERS PO total
+    var _best = null, _bestDiff = Infinity;
+    invList.forEach(function(inv){
+      var diff = Math.abs(inv.amt - g.total);
+      if(diff < _bestDiff){ _bestDiff = diff; _best = inv; }
+    });
+    if(_best && total + _best.amt <= _cap){ matched.push(_best); total += _best.amt; }
   });
   return matched.length>0 ? { matched:matched, total:total, scenario:'ERS_GROUP' } : null;
 }
