@@ -5246,7 +5246,7 @@ function renderWsReview(){
     if(ct) ct.textContent='Auto Match not yet run';
     return;
   }
-  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
+  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Suggested'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
   
   // ── Item 6: Group RES entries by payment ──────────────────────────
   // Grouping key: r.d (transaction id, often payment.txId) is most reliable.
@@ -12652,7 +12652,7 @@ function _legacy_renderWsReview(){
   const list=document.getElementById('review-list');
   const ct=document.getElementById('review-ct');
   if(!list)return;
-  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
+  const ap=RES.filter(r=>r.st==='Exact'||r.st==='Subset exact'||r.st==='Suggested'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay');
   if(ct)ct.textContent=ap.length+' matched record'+(ap.length!==1?'s':'');
   if(!ap.length){list.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records</div><div class="empty-s">Auto match or approve allocations from the To Be Matched tab.</div></div>';return;}
   const d=new Date().toISOString().split('T')[0];
@@ -14566,18 +14566,18 @@ async function runMatch(){
                 scenario:c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE'});
             });
             matched = true;
-            // Variance line for the unallocated remainder
+            // Variance line — labeled as Cash on Account (matches SAP COA terminology)
             var _remVar = p.amt - _allocTotal;
             if(Math.abs(_remVar) > tol){
               EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
                 a:p.a, c:p.c||'', amt:Math.abs(_remVar),
                 ref:p.txId||p.bankRef||'—',
-                type:'Remittance Tie-Out — Partial Allocation',
-                detail:'Customer/remittance tie-out confirmed ($'+$f(_remTotal)+' = payment $'+$f(p.amt)+') · '+
-                       _alloc.length+' candidate invoices suggested ($'+$f(_allocTotal)+') · $'+$f(_remVar)+' requires review',
-                action:'Review suggested invoices in Review tab',
+                type:'Cash on Account',
+                detail:'Remittance tie-out confirmed ($'+$f(_remTotal)+' = payment $'+$f(p.amt)+') · '+
+                       _alloc.length+' invoices applied ($'+$f(_allocTotal)+') · $'+$f(_remVar)+' to Cash on Account',
+                action:'Post $'+$f(_remVar)+' as Cash on Account',
                 dec:'', s:'Open',
-                notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · '+_alloc.length+' invoices suggested for review'});
+                notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · '+_alloc.length+' invoices suggested · Residual: Cash on Account'});
             }
           } else {
             // No candidate invoices found at all — Needs Attention with tie-out noted
