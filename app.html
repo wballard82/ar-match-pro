@@ -2429,13 +2429,15 @@ body.app-active #app {
 .armp-banner-step[data-state="pending"] .armp-banner-step-label { color: var(--t3); font-weight: 600; }
 .armp-banner-step-cta {
   flex-shrink: 0;
-  padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer;
-  font-size: 11.5px; font-weight: 700; line-height: 1;
+  min-width: 130px;
+  padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 12.5px; font-weight: 700; line-height: 1;
+  text-align: center; white-space: nowrap;
   background: var(--armp-grad, linear-gradient(135deg, #14A8D8 0%, #12B886 100%));
   color: #fff;
-  transition: filter .15s;
+  transition: filter .15s, transform .12s;
 }
-.armp-banner-step-cta:hover { filter: brightness(1.08); }
+.armp-banner-step-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .armp-banner-step[data-state="pending"] .armp-banner-step-cta {
   background: var(--surface2); color: var(--t3); cursor: not-allowed; pointer-events: none;
 }
@@ -3458,7 +3460,7 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
               <button class="btn btn-outline btn-sm" onclick="openImportDelivery()" title="Upload delivery/tracking report to map Tracking # and Delivery # to invoices">+ Delivery Report</button>
               <button class="btn btn-outline btn-sm" onclick="openImportRemDetail()" title="Upload remittance advice / remittance details (e.g. supplier remittance with invoice references, PO#, tracking#, amounts)" style="color:var(--pu-t)">+ Remittance Details</button>
-              <button class="btn btn-p btn-sm armp-setup-step-cta" id="btn-auto-match" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px;min-width:200px;text-align:center;justify-content:center">⚡ Auto match</button>
+              <button class="btn btn-p btn-sm armp-setup-step-cta" id="btn-auto-match" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px;min-width:200px;text-align:center;justify-content:center">⚡ Auto Match</button>
               
             </div>
           </div>
@@ -3906,7 +3908,7 @@ body.app-active #app {
                   <div class="armp-banner-step-text">
                     <div class="armp-banner-step-label">Run Auto Match</div>
                   </div>
-                  <button class="armp-banner-step-cta" onclick="runMatch()">Run</button>
+                  <button class="armp-banner-step-cta" onclick="runMatch()">⚡ Auto Match</button>
                 </div>
               </div>
 
@@ -4407,7 +4409,7 @@ body.app-active #app {
                 </div>
               </div>
               <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6">
-                * 8 minutes is the industry average for manual invoice-to-payment matching. Labor cost assumes $65/hr fully-loaded AR specialist rate. ROI multiple = labor cost saved ÷ Pro plan cost (starting at $1,399/mo annual). Actual results will vary.
+                * 8 minutes is the industry average for manual invoice-to-payment matching. Labor cost assumes $<span id="roi-rate-value-3">65</span>/hr fully-loaded AR specialist rate. ROI multiple = labor cost saved ÷ Pro plan cost (starting at $1,399/mo annual). Actual results will vary.
               </div>
             </div>
           </div>
@@ -5240,7 +5242,7 @@ function renderWsReview(){
       '<div class="empty-t">Upload required files, then click Auto Match</div>'+
       '<div class="empty-s">Files are staged and indexed. Review results will appear here after Auto Match runs.</div>'+
       '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center">'+
-        '<button class="btn btn-p btn-sm" onclick="runMatch()" style="font-size:13px;padding:9px 20px">⚡ Run Auto Match</button>'+
+        '<button class="btn btn-p btn-sm armp-setup-step-cta" onclick="runMatch()" style="font-size:13px;padding:10px 18px;min-width:200px">⚡ Auto Match</button>'+
       '</div>'+
     '</div>';
     if(ct) ct.textContent='Auto Match not yet run';
@@ -5355,6 +5357,7 @@ function renderWsReview(){
           '</div>'+
           '<div style="text-align:right;font-family:var(--mono);font-size:13px;color:var(--t1);font-weight:600">$'+$f(r.pd)+'</div>'+
           '<div style="text-align:right;color:var(--t3);font-size:11px">of $'+$f(r.oa)+'</div>'+
+          '<button class="btn btn-outline btn-xs" onclick="event.stopPropagation();revertSingleResultItem('+RES.indexOf(r)+')" title="Revert this invoice" style="margin-left:8px;font-size:10.5px;padding:3px 8px">↩ Revert</button>'+
         '</div>';
       }).join('');
     }
@@ -7326,7 +7329,7 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
     tkDiagHtml + varHtml+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
       '<div style="font-size:12.5px;color:var(--t2)"><strong>'+lines.length+'</strong> lines · $'+$f(remTotal)+'  · '+classSummary+'</div>'+
-      '<button class="btn btn-p btn-sm" onclick="closeModal();runMatch()">⚡ Auto Match Now</button>'+
+      '<button class="btn btn-p btn-sm" onclick="closeModal();runMatch()">⚡ Auto Match</button>'+
     '</div>'+
     '<div style="overflow-x:auto;max-height:320px;overflow-y:auto;border:1px solid var(--bdr);border-radius:8px">'+
     '<table class="fbl5n-tbl" style="min-width:640px"><thead><tr>'+
@@ -9102,12 +9105,12 @@ function armpUpdateSetupState(){
           '✓ <strong>Ready for Auto Match</strong>'+
           (ws.deliveryReportLoaded?'':' · Delivery report enhances bridge matching')+
           (ws.remittanceDetailsLoaded?'':' · Remittance improves results')+
-          '<button class="btn btn-p btn-xs" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)" style="margin-left:auto">⚡ Run</button></div>';
+          '<button class="btn btn-p btn-xs" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)" style="margin-left:auto">⚡ Auto Match</button></div>';
         recEl.style.display='';
       } else if(ws.autoMatchRun && ws.newDataSinceLastMatch){
         recEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.08);border:1px solid rgba(20,168,216,.2);font-size:12px;color:var(--p);margin-top:8px">'+
           '🔄 <strong>New data detected.</strong> Re-run Auto Match for enhanced matching?'+
-          '<button class="btn btn-p btn-xs" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)" style="margin-left:auto">⚡ Re-run</button></div>';
+          '<button class="btn btn-p btn-xs" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)" style="margin-left:auto">⚡ Auto Match</button></div>';
         recEl.style.display='';
       } else { recEl.style.display='none'; }
     }
@@ -12709,11 +12712,17 @@ function approveResultGroup(idxs){
   if(typeof toast==='function')toast('Approved '+n+' allocation'+(n===1?'':'s'));
   renderWsReview();
 }
+// Revert a single invoice from a multi-invoice payment group
+function revertSingleResultItem(idx){
+  if(typeof idx !== 'number' || idx < 0) return;
+  if(!RES[idx]) return;
+  revertResultGroup([idx]);
+}
+
 function revertResultGroup(idxs){
   if(!Array.isArray(idxs)||!idxs.length)return;
   // Sort descending so splices don't mess up subsequent indices
-  var sortedIdxs=idxs.slice().sort(function(a,b){return b-a;});
-  var n=0;
+  var sortedIdxs=idxs.slice().sort(function(a,b){return b-a;});  var n=0;
   var removed=[];
   sortedIdxs.forEach(function(i){
     var r=RES[i];
@@ -13972,6 +13981,31 @@ function _normalizePayCustomers(){
           });
           if(_bestA){ p.a = _bestA; p._suggestedAccounts = Array.from(_ca_accts.keys()); }
         }
+        // Fallback: no ERS crossref → look up account by customer name in INV.
+        // For Applied Materials $686K payment that has no remittance, this still
+        // identifies the customer's account (the most-frequent account on rows
+        // whose customer name matches the payment customer).
+        if(!p.a && p.c && INV && INV.length){
+          var _byName = new Map();
+          for(var i=0; i<INV.length; i++){
+            var iv = INV[i];
+            if(!iv.a || !iv.c) continue;
+            if(CustomerNormalizer.isSameEntity(p.c, iv.c)){
+              _byName.set(iv.a, (_byName.get(iv.a)||0)+1);
+            }
+          }
+          if(_byName.size > 0){
+            var _bestA2 = '', _bestC2 = 0;
+            _byName.forEach(function(count, acct){
+              if(count > _bestC2){ _bestA2 = acct; _bestC2 = count; }
+            });
+            if(_bestA2){
+              p.a = _bestA2;
+              p._suggestedAccounts = Array.from(_byName.keys());
+              p._customerSource = p._customerSource || 'name_match';
+            }
+          }
+        }
       }
       return;
     }
@@ -14615,60 +14649,50 @@ async function runMatch(){
         var _ersTotal = ERS_LINES.reduce(function(s,l){return s+(l.amount||0);},0);
         var _vmiTotal = VMI_LINES.reduce(function(s,l){return s+(l.amount||0);},0);
         var _remTotal = _ersTotal + _vmiTotal;
-        // Remittance total ties to this payment → LOCK allocation boundary
-        if(Math.abs(_remTotal - p.amt) <= tol && _remTotal > 0){
-          var _boundary = p.amt; // hard allocation cap — never exceed
+        // ────────────────────────────────────────────────────────────────────
+        // PRIORITY 5c — REMITTANCE TIE-OUT MATCHING
+        // ────────────────────────────────────────────────────────────────────
+        // Fires when ERS + VMI remittance total is "close" to the payment within
+        // a reasonable COA variance (5% / $25K). Two real cases this covers:
+        //   $232K case: ERS+VMI = $232,050 = payment exactly. COA emerges from
+        //               an unmatched ERS PO (e.g. PO 4521570557 $2,750).
+        //   $686K case: ERS+VMI = $690,275.50 vs payment $686,725.50.
+        //               $3,550 variance is the legitimate Short Pay / deduction.
+        //
+        // Algorithm: deterministically match every ERS PO to invoices (via PO
+        // disambiguation: single-invoice, exact-amount, subset-sum) and every
+        // VMI date-range to invoices (via subset-sum on VMI total). Apply ALL
+        // matched candidates as 'Exact' — each was tied to a customer-supplied
+        // remittance source, so confidence is high. Variance from payment then
+        // posts as:
+        //   - Cash on Account (matched_total < payment): unapplied credit
+        //   - Short Pay / Deduction (matched_total > payment): post deduction
+        //
+        // The earlier constrained-allocator approach (cap at payment + tol) was
+        // dropping legitimate large invoices when ERS contained a few extra POs
+        // — e.g. the $168,750 invoice 5105185941 for $686K. Applying all matched
+        // items lets the user revert any wrong picks individually if needed,
+        // which is fewer manual actions than re-adding a dropped large invoice.
+        var _remDiff = Math.abs(_remTotal - p.amt);
+        var _maxRemVariance = Math.min(p.amt * 0.05, 25000);
+        if(_remTotal > 0 && _remDiff <= Math.max(tol, _maxRemVariance)){
 
-          // Build candidate pool from ERS PO matches + VMI date-range matches
+          // Build candidate pool — ERS PO matches + VMI subset-sum matches
           var _ersMatch = matchERSGrouped(p.amt, p.a, _idx, tol);
           var _vmiMatch = matchVMIDateRange(p.amt, p.a, _idx, tol);
-          var _candMap = new Map(); // dedupe by invoice id
+          var _candMap = new Map();
           if(_ersMatch) _ersMatch.matched.forEach(function(inv){ _candMap.set(inv.i, {inv:inv, src:'ERS'}); });
           if(_vmiMatch) _vmiMatch.matched.forEach(function(inv){ if(!_candMap.has(inv.i)) _candMap.set(inv.i, {inv:inv, src:'VMI'}); });
           var _cands = Array.from(_candMap.values());
 
-          // Sort: invoices with remittance ref/PO first, then smallest amount (better packing)
-          _cands.sort(function(a,b){ return a.inv.amt - b.inv.amt; });
-
-          // CONSTRAINED allocation — accumulate up to boundary, never over
-          var _alloc = [];
-          var _allocTotal = 0;
-          _cands.forEach(function(c){
-            if(_allocTotal + c.inv.amt <= _boundary + tol){
-              _alloc.push(c);
-              _allocTotal += c.inv.amt;
-            }
-          });
-
-          var _candTotal = _cands.reduce(function(s,c){return s+c.inv.amt;},0);
-          var _tiesExact = Math.abs(_allocTotal - _boundary) <= tol;
-
-          if(_tiesExact && _alloc.length > 0){
-            // Allocation ties to payment exactly — apply invoices (high confidence)
-            _alloc.forEach(function(c){
-              var inv=c.inv;
-              inv.s = 'ERS/VMI Match';
-              var _conf = ConfidenceScorer.score({
-                ersMatch:c.src==='ERS', vmiMatch:c.src==='VMI',
-                amountMatch:true, customerMatch:!!p.c, poMatch:true
-              });
-              RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:p.txId||p.bankRef||p.i||('PAY-'+Math.round(p.amt)),
-                oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
-                m:c.src+' remittance match',
-                n:'Remittance-constrained tie-out · confidence: '+_conf.score+'%',
-                confidence:_conf.score, matchReasons:_conf.reasons,
-                scenario:c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE'});
-            });
-            matched = true;
-          } else if(_alloc.length > 0){
-            // Candidates found, allocation total + COA residual = payment. This is a
-            // CONFIRMED match (remittance ties out exactly; each invoice came from a
-            // deterministic ERS PO match or VMI subset-sum). The residual is a known
-            // Cash on Account posting, not "missing allocation." Mark as Exact so the
-            // invoices flow through Review → Reconcile → Posting Export automatically.
-            _alloc.forEach(function(c){
-              var inv=c.inv;
+          if(_cands.length > 0){
+            // Apply ALL matched candidates as 'Exact' — each was confirmed by
+            // a customer remittance source (ERS PO or VMI subset-sum)
+            var _allocTotal = 0;
+            _cands.forEach(function(c){
+              var inv = c.inv;
               inv.s = 'Exact';
+              _allocTotal += inv.amt;
               var _conf = ConfidenceScorer.score({
                 ersMatch:c.src==='ERS', vmiMatch:c.src==='VMI',
                 amountMatch:true, customerMatch:!!p.c, poMatch:true
@@ -14676,34 +14700,50 @@ async function runMatch(){
               RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:p.txId||p.bankRef||p.i||('PAY-'+Math.round(p.amt)),
                 oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
                 m:c.src+' remittance match',
-                n:'Remittance-constrained tie-out · '+c.src+' PO match · confidence: '+_conf.score+'%',
+                n:'Remittance tie-out · '+c.src+' '+(c.src==='ERS'?'PO':'subset-sum')+' match · confidence: '+_conf.score+'%',
                 confidence:_conf.score, matchReasons:_conf.reasons,
                 scenario:c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE'});
             });
             matched = true;
-            // COA residual — known posting, not an exception
-            var _remVar = p.amt - _allocTotal;
-            if(Math.abs(_remVar) > tol){
-              EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
-                a:p.a, c:p.c||'', amt:Math.abs(_remVar),
-                ref:p.txId||p.bankRef||'—',
-                type:'Cash on Account',
-                detail:'Remittance tie-out confirmed ($'+$f(_remTotal)+' = payment $'+$f(p.amt)+') · '+
-                       _alloc.length+' invoices applied ($'+$f(_allocTotal)+') · $'+$f(_remVar)+' to Cash on Account',
-                action:'Post $'+$f(_remVar)+' as Cash on Account',
-                dec:'', s:'Open',
-                notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · '+_alloc.length+' invoices applied · Residual: Cash on Account'});
+
+            // Post variance as appropriate exception type
+            var _payVariance = p.amt - _allocTotal; // positive=under (COA), negative=over (deduction)
+            if(Math.abs(_payVariance) > tol){
+              if(_payVariance > 0){
+                // Customer paid more than matched invoices → unapplied credit
+                EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
+                  a:p.a, c:p.c||'', amt:_payVariance,
+                  ref:p.txId||p.bankRef||'—',
+                  type:'Cash on Account',
+                  detail:'Remittance tie-out confirmed (ERS $'+$f(_ersTotal)+' + VMI $'+$f(_vmiTotal)+' = $'+$f(_remTotal)+
+                         ') · '+_cands.length+' invoices applied ($'+$f(_allocTotal)+') · $'+$f(_payVariance)+' residual to Cash on Account',
+                  action:'Post $'+$f(_payVariance)+' as Cash on Account',
+                  dec:'', s:'Open',
+                  notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS+VMI tie-out · '+_cands.length+' invoices applied · Residual: Cash on Account'});
+              } else {
+                // Matched invoices total exceeds payment → short pay / deduction
+                var _ovr = Math.abs(_payVariance);
+                EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
+                  a:p.a, c:p.c||'', amt:_ovr,
+                  ref:p.txId||p.bankRef||'—',
+                  type:'Short pay',
+                  detail:'Remittance tie-out confirmed (ERS $'+$f(_ersTotal)+' + VMI $'+$f(_vmiTotal)+' = $'+$f(_remTotal)+
+                         ') · '+_cands.length+' invoices applied ($'+$f(_allocTotal)+') · $'+$f(_ovr)+' short-pay/deduction',
+                  action:'Post $'+$f(_ovr)+' as deduction / write-off',
+                  dec:'', s:'Open',
+                  notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS+VMI tie-out · '+_cands.length+' invoices applied · Variance: Short Pay/Deduction'});
+              }
             }
           } else {
-            // No candidate invoices found at all — Needs Attention with tie-out noted
+            // No candidate invoices found — Needs Attention with tie-out noted
             EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
               a:p.a, c:p.c||'', amt:p.amt,
               ref:p.txId||p.bankRef||'—',
               type:'Remittance Tie-Out — Allocation Review',
-              detail:'Customer/remittance tie-out found ($'+$f(_remTotal)+' = payment $'+$f(p.amt)+') but no matching open invoices located · manual allocation required',
+              detail:'Customer/remittance tie-out found (ERS $'+$f(_ersTotal)+' + VMI $'+$f(_vmiTotal)+') but no matching open invoices located · manual allocation required',
               action:'Review invoice allocation manually',
               dec:'', s:'Open',
-              notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS ($'+$f(_ersTotal)+') + VMI ($'+$f(_vmiTotal)+') tie-out · Invoice-level allocation pending'});
+              notes:'✓ Customer: '+(p.c||'—')+' · ✓ Remittance tie-out · Invoice-level allocation pending'});
             matched = true;
           }
         }
@@ -14906,10 +14946,23 @@ async function runMatch(){
       }
       if(matched)continue;
 
-      // Exception: duplicate check or unmatched
+      // Exception: duplicate check, customer-identified-no-remittance, or fully unmatched
       const dupChk=PAY.filter((q,qi)=>qi!==pi&&Math.abs(q.amt-p.amt)<0.01&&(q.txId===p.txId||q.i===p.i)&&q.payDate===p.payDate);
-      const excType=dupChk.length?'Duplicate':'Unmatched';
-      EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:excType,detail:dupChk.length?`Possible duplicate — ${dupChk.length} matching payment(s) found`:'No matching invoice, PO, SO, Tracking, or Delivery found',action:dupChk.length?'Review for duplicate posting':'Contact customer for invoice reference',dec:'',s:'Open'});
+      var excType, excDetail, excAction;
+      if(dupChk.length){
+        excType='Duplicate'; excDetail='Possible duplicate — '+dupChk.length+' matching payment(s) found'; excAction='Review for duplicate posting';
+      } else if(p.c && p.a){
+        // Customer + account identified, but no remittance/invoice signal to allocate.
+        // (e.g. $686K Applied Materials payment with no ERS/VMI detail provided.)
+        excType='Cash on Account';
+        excDetail='Customer identified ('+p.c+' · account '+p.a+'). No invoice reference or remittance detail provided — post as unapplied credit until detail is received.';
+        excAction='Post '+ '$'+$f(p.amt)+' as Cash on Account';
+      } else {
+        excType='Unmatched';
+        excDetail='No matching invoice, PO, SO, Tracking, or Delivery found';
+        excAction='Contact customer for invoice reference';
+      }
+      EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:excType,detail:excDetail,action:excAction,dec:'',s:'Open'});
     }// end for
 
     if(end<PAY.length){
@@ -18118,8 +18171,10 @@ function roiApplyRateVisibility(){
   // Update display values
   var v1=document.getElementById('roi-rate-value');
   var v2=document.getElementById('roi-rate-value-2');
+  var v3=document.getElementById('roi-rate-value-3');
   if(v1) v1.textContent=Math.round(AR_HOURLY_RATE);
   if(v2) v2.textContent=Math.round(AR_HOURLY_RATE);
+  if(v3) v3.textContent=Math.round(AR_HOURLY_RATE);
 }
 function roiEditRate(){
   if(!roiCanEditRate()){
