@@ -9556,6 +9556,7 @@ function approveAllReviewItems(){
   try{if(typeof rPost==='function')rPost();}catch(e){}
   try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
   try{updDash();updTop();}catch(e){}
+  try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
   try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
   try{addAudit('Approve all review items',toApprove.length+' allocations');}catch(e){}
   if(typeof toast==='function')toast('Approved '+toApprove.length+' allocation'+(toApprove.length===1?'':'s'));
@@ -9639,6 +9640,8 @@ function approveAllReconciled(){
   try{saveToStorage();}catch(e){}
   try{if(typeof addAudit==='function')addAudit('Approve all reconciled', reconciled.length+' payments approved for posting');}catch(e){}
   try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{updDash();updTop();}catch(e){}
+  try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
   try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
   if(typeof toast==='function')toast(reconciled.length+' payment'+(reconciled.length===1?'':'s')+' approved — opening Posting Export');
   setTimeout(function(){sp('posting');},250);
@@ -14917,6 +14920,7 @@ async function runMatch(){
     upd(95,RES.length,EXC.length);await new Promise(r=>setTimeout(r,300));upd(100,RES.length,EXC.length);await new Promise(r=>setTimeout(r,300));
     if(overlay){overlay.classList.remove('show');overlay.style.display='none';setTimeout(function(){if(overlay)overlay.style.display='';},50);}
     setStatus('ready');rAll();updDash();updTop();saveToStorage();
+    try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
     if(typeof renderWsExcPremium==='function')renderWsExcPremium();
     if(typeof renderWsReview==='function')renderWsReview();
     try{if(typeof sp==='function'){sp('cash-app');}}catch(e){}
