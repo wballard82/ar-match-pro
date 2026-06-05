@@ -14649,7 +14649,7 @@ async function runMatch(){
                 ersMatch:c.src==='ERS', vmiMatch:c.src==='VMI',
                 amountMatch:true, customerMatch:!!p.c, poMatch:true
               });
-              RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
+              RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:p.txId||p.bankRef||p.i||('PAY-'+Math.round(p.amt)),
                 oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
                 m:c.src+' remittance match',
                 n:'Remittance-constrained tie-out · confidence: '+_conf.score+'%',
@@ -14670,7 +14670,7 @@ async function runMatch(){
                 ersMatch:c.src==='ERS', vmiMatch:c.src==='VMI',
                 amountMatch:true, customerMatch:!!p.c, poMatch:true
               });
-              RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
+              RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:p.txId||p.bankRef||p.i||('PAY-'+Math.round(p.amt)),
                 oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
                 m:c.src+' remittance match',
                 n:'Remittance-constrained tie-out · '+c.src+' PO match · confidence: '+_conf.score+'%',
