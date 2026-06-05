@@ -9096,21 +9096,39 @@ function armpUpdateSetupState(){
       var subEl=el.querySelector('.armp-setup-step-sub');
       if(subEl) subEl.textContent = steps[si].done ? steps[si].sub_done : steps[si].sub_pending;
     }
-    // Dynamic recommendation area
+    // Dynamic recommendation area — renders the Auto Match CTA using the same
+    // armp-setup-step row structure as the four upload steps above, so the button
+    // is the same size, padding, font, radius, and gradient as Upload Invoice
+    // Report / Upload Delivery Report / Upload Bank File / Upload Remittance
+    // Details, and aligns into the same vertical column.
     var recEl = document.getElementById('armp-setup-recommendation');
     if(recEl){
       var _ready = ws.invoiceReportLoaded && ws.bankFileLoaded;
       if(_ready && !ws.autoMatchRun){
-        recEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(18,184,134,.08);border:1px solid rgba(18,184,134,.2);font-size:12px;color:var(--g-t);margin-top:8px">'+
-          '✓ <strong>Ready for Auto Match</strong>'+
-          (ws.deliveryReportLoaded?'':' · Delivery report enhances bridge matching')+
-          (ws.remittanceDetailsLoaded?'':' · Remittance improves results')+
-          '<button class="btn btn-p btn-xs" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)" style="margin-left:auto">⚡ Auto Match</button></div>';
+        var _subParts = [];
+        if(!ws.deliveryReportLoaded) _subParts.push('Delivery report enhances bridge matching');
+        if(!ws.remittanceDetailsLoaded) _subParts.push('Remittance improves results');
+        var _sub = _subParts.length ? _subParts.join(' · ') : 'All inputs loaded — ready to match';
+        recEl.innerHTML =
+          '<div class="armp-setup-step armp-step-recommended" data-state="active" style="margin-top:6px">'+
+            '<div class="armp-setup-step-circle"><span class="armp-setup-step-num">5</span><span class="armp-setup-step-check">✓</span></div>'+
+            '<div class="armp-setup-step-text">'+
+              '<div class="armp-setup-step-label">Ready for Auto Match</div>'+
+              '<div class="armp-setup-step-sub">'+_escapeHtml(_sub)+'</div>'+
+            '</div>'+
+            '<button class="armp-setup-step-cta" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)">⚡ Auto Match</button>'+
+          '</div>';
         recEl.style.display='';
       } else if(ws.autoMatchRun && ws.newDataSinceLastMatch){
-        recEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.08);border:1px solid rgba(20,168,216,.2);font-size:12px;color:var(--p);margin-top:8px">'+
-          '🔄 <strong>New data detected.</strong> Re-run Auto Match for enhanced matching?'+
-          '<button class="btn btn-p btn-xs" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)" style="margin-left:auto">⚡ Auto Match</button></div>';
+        recEl.innerHTML =
+          '<div class="armp-setup-step armp-step-recommended" data-state="active" style="margin-top:6px">'+
+            '<div class="armp-setup-step-circle"><span class="armp-setup-step-num">5</span><span class="armp-setup-step-check">✓</span></div>'+
+            '<div class="armp-setup-step-text">'+
+              '<div class="armp-setup-step-label">New data detected</div>'+
+              '<div class="armp-setup-step-sub">Re-run Auto Match for enhanced matching with the new inputs</div>'+
+            '</div>'+
+            '<button class="armp-setup-step-cta" onclick="armpCloseSetupModal();setTimeout(function(){runMatch()},200)">⚡ Auto Match</button>'+
+          '</div>';
         recEl.style.display='';
       } else { recEl.style.display='none'; }
     }
