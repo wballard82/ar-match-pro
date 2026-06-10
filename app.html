@@ -728,9 +728,14 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 /* ── Modals ── */
 .mo-overlay {
   position:fixed; inset:0; z-index:100;
-  background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+  /* Solid darker backdrop instead of backdrop-filter:blur(6px) — the blur was
+     forcing the browser to re-rasterize the entire page (KPI cards, sidebar,
+     review table) on every animation frame, causing 100-200ms freezes when
+     opening upload modals. Solid rgba is GPU-cheap and visually equivalent. */
+  background:rgba(0,0,0,.82);
   display:flex; align-items:center; justify-content:center;
   opacity:0; pointer-events:none; transition:opacity .2s;
+  will-change:opacity;
 }
 .mo-overlay.open { opacity:1; pointer-events:all; }
 .mo-box {
@@ -738,9 +743,12 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
   border-radius:20px; box-shadow:var(--shadow-xl);
   width:540px; max-width:96vw; max-height:90vh; overflow:hidden;
   display:flex; flex-direction:column;
-  transform:scale(.94) translateY(10px); transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+  /* Promote to GPU compositor layer so scale animation doesn't re-paint */
+  transform:scale(.94) translateY(10px) translateZ(0);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+  will-change:transform;
 }
-.mo-overlay.open .mo-box { transform:scale(1) translateY(0); }
+.mo-overlay.open .mo-box { transform:scale(1) translateY(0) translateZ(0); }
 .mo-box.wide { width:720px; }
 .mo-header {
   padding:20px 22px; border-bottom:1px solid var(--bdr);
@@ -817,8 +825,9 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 /* Match progress */
 #match-progress {
   position:fixed; inset:0; z-index:150;
-  background:rgba(0,0,0,.8); backdrop-filter:blur(8px);
+  background:rgba(0,0,0,.85);
   display:none; align-items:center; justify-content:center;
+  will-change:opacity;
 }
 #match-progress.show { display:flex; }
 .mp-card {
@@ -1092,7 +1101,7 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 .tip-wrap:hover .tip { display:block; }
 
 /* Exception modal */
-#exc-modal-overlay { position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+#exc-modal-overlay { position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.82); display:none; align-items:center; justify-content:center; will-change:opacity; }
 #exc-modal-overlay.open { display:flex; }
 #exc-modal-inner { background:var(--surface); border:1px solid var(--bdr2); border-radius:20px; box-shadow:var(--shadow-xl); width:500px; max-width:96vw; animation:moIn .25s cubic-bezier(.34,1.56,.64,1); }
 @keyframes moIn { from{opacity:0;transform:scale(.93) translateY(10px);}to{opacity:1;transform:none;} }
@@ -1328,7 +1337,8 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 .topnav {
   background: var(--surface);
   border-bottom: 1px solid var(--bdr);
-  backdrop-filter: blur(12px);
+  /* Removed backdrop-filter:blur(12px) — was causing scroll jank because the
+     browser had to re-blur the content scrolling underneath the fixed bar */
 }
 
 /* ── KPI strip upgrades ── */
@@ -4691,7 +4701,7 @@ body.app-active #app {
   </div><!-- end .app-body -->
 
 <!-- ══ INACTIVITY WARNING MODAL ══ -->
-<div id="inactivity-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+<div id="inactivity-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.78);align-items:center;justify-content:center">
   <div style="background:var(--surface);border-radius:16px;padding:36px 32px;max-width:400px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.35);border:1px solid var(--bdr)">
     <div style="font-size:36px;margin-bottom:12px">⏱</div>
     <div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.2px">Still there?</div>
@@ -4810,7 +4820,7 @@ function stopInactivityWatch(){
 }
 </script>
 <!-- ══ SEND FEEDBACK MODAL ══ -->
-<div id="feedback-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+<div id="feedback-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.78);align-items:center;justify-content:center">
   <div style="background:var(--surface);border-radius:16px;padding:32px;max-width:480px;width:92%;box-shadow:0 24px 64px rgba(0,0,0,.32);border:1px solid var(--bdr)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
@@ -19701,7 +19711,7 @@ async function sendContactMsg(){
 
 </script>
 
-<div id="contact-modal-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+<div id="contact-modal-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.82);align-items:center;justify-content:center">
   <div style="background:var(--surface);border-radius:18px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);overflow:hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
       <div><div style="font-size:15px;font-weight:800;color:var(--t1)">💬 Contact AR Match Pro</div><div style="font-size:12px;color:var(--t3);margin-top:2px">Support · Questions · Feature requests</div></div>
@@ -19721,7 +19731,7 @@ async function sendContactMsg(){
 </div>
 
 <!-- ── IN-APP MANUAL ── -->
-<div id="help-modal-overlay" style="display:none;position:fixed;inset:0;z-index:210;background:rgba(0,0,0,.6);align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+<div id="help-modal-overlay" style="display:none;position:fixed;inset:0;z-index:210;background:rgba(0,0,0,.82);align-items:center;justify-content:center">
   <div style="background:var(--surface);border-radius:20px;width:780px;max-width:96vw;height:88vh;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.4);overflow:hidden">
 
     <!-- Header -->
