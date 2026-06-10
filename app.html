@@ -11188,8 +11188,13 @@ function exportPost(){
   if(!ap.length){toast('No approved results','warn');return;}
   const d=new Date().toISOString().split('T')[0];
   const typeMap={'Direct invoice':'Invoice','PO group':'Invoice','PO subset':'Invoice','SO match':'Invoice','Amount match':'Invoice','Cash Application':'Payment','Apply to invoice':'Payment','Cash on Account':'Payment','Write off':'Adjustment','Bank fee':'Adjustment','Wire transfer':'Payment'};
-  const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Type','Document','Post Amount','Write-off','Bank Fee'];
-  const rows=ap.map(r=>{const inv=INV.find(v=>v.i===r.i)||{};return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(r.writeOff||0).toFixed(2),(r.bankFee||0).toFixed(2)];});
+  const PH=['Account','Customer','Payment Date','Invoice','PO','Sales Order','Delivery','Bridge Reason','Type','Document','Post Amount','Write-off','Bank Fee'];
+  const rows=ap.map(r=>{
+    const inv=INV.find(v=>v.i===r.i)||{};
+    const _bridge = r.bridgeRefs || '';
+    const _bridgeWhy = _bridge ? 'SAP Delivery → SO → Invoice' : (r.scenario==='ERS_GROUP' ? 'ERS PO match' : (r.scenario==='VMI_DATERANGE' ? 'VMI subset-sum' : ''));
+    return[r.a||'',r.c||'',d,r.i||'—',inv.po||r.po||'—',inv.so||r.so||'—',_bridge||'—',_bridgeWhy||'—',typeMap[r.m]||'Invoice',r.d||r.id||'—',r.pd.toFixed(2),(r.writeOff||0).toFixed(2),(r.bankFee||0).toFixed(2)];
+  });
   csvDL([PH,...rows],'posting_'+d+'.csv');
   addAudit('Posting export downloaded',ap.length+' rows');
   ap.forEach(function(r){r.exported=true;});try{if(typeof rPost==="function")rPost();}catch(e){}
@@ -13277,6 +13282,7 @@ var ConfidenceScorer = {
     var s = 0;
     var reasons = [];
     if(fields.invoiceMatch)     { s+=40; reasons.push('✓ Invoice #'); }
+    if(fields.deliveryBridge)   { s+=18; reasons.push('✓ Delivery Bridge (SAP)'); }
     if(fields.documentMatch)    { s+=38; reasons.push('✓ Document #'); }
     if(fields.poMatch)          { s+=25; reasons.push('✓ PO #'); }
     if(fields.soMatch)          { s+=25; reasons.push('✓ Sales Order'); }
@@ -13734,8 +13740,133 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
     });
     if(invList.length === 0) return;
 
+    // ════════════════════════════════════════════════════════════════════
+    // PRIORITY 0 — SAP DELIVERY BRIDGE (deterministic, highest confidence)
+    // For each ERS line in this PO group, look up the matching delivery row
+    // by {poNo + amount}. Each matching delivery resolves to a Sales Order
+    // which maps to one or more aging invoices. When SO maps to multiple
+    // invoices (consolidated billing), narrow by billing-date proximity.
+    // If multiple ERS lines map to the same invoice (the typical consolidated
+    // case — e.g. PO 4522118692 where two deliveries totaling $11,895 became
+    // one invoice), their amounts are summed and applied to that invoice
+    // (full pay if sum=invoice amount, partial otherwise).
+    //
+    // Bridge match is short-circuit: if it covers the PO total, we skip the
+    // subset-sum and FIFO fallbacks entirely. Per-line partial coverage is
+    // allowed; uncovered portions fall through to legacy logic.
+    // ════════════════════════════════════════════════════════════════════
+    var _bridgeApplied = false;
+    if(DELIV && DELIV.length && window._DELIV_BRIDGE && idx.bySO){
+      // For each ERS line, find matching delivery rows (by PO + amount)
+      var _invAccumulator = new Map(); // invoiceId → { inv, summedLineAmt, bridgedDeliveries:[] }
+      g.lines.forEach(function(ersLine){
+        if(!ersLine.poNumber || !ersLine.amount) return;
+        var _ersPO = norm(ersLine.poNumber);
+        var _ersAmt = ersLine.amount;
+        // Search DELIV for {poNo + amount} match
+        var _matchingDelivs = DELIV.filter(function(d){
+          if(!d.salesOrder) return false;
+          if(!d.poNo || norm(d.poNo) !== _ersPO) return false;
+          var _dAmt = (typeof d.amount === 'number') ? d.amount : parseFloat(d.amount||0);
+          return Math.abs(_dAmt - _ersAmt) <= 1;
+        });
+        if(_matchingDelivs.length === 0) return;
+        // Pick the best delivery row (typically there's just one; if multiple,
+        // prefer the one whose billing status is 'C' (completed) and whose
+        // billing date is most recent)
+        var _bestDeliv = _matchingDelivs.sort(function(a,b){
+          var _aC = (String(a.billingStatus||'').toUpperCase() === 'C') ? 0 : 1;
+          var _bC = (String(b.billingStatus||'').toUpperCase() === 'C') ? 0 : 1;
+          if(_aC !== _bC) return _aC - _bC;
+          var _aD = a.billingDate ? new Date(a.billingDate).getTime() : 0;
+          var _bD = b.billingDate ? new Date(b.billingDate).getTime() : 0;
+          return _bD - _aD;
+        })[0];
+        // Find candidate invoices via Sales Order index
+        var _invsBySO = idx.bySO.get(norm(_bestDeliv.salesOrder));
+        if(!_invsBySO || _invsBySO.length === 0) return;
+        // Account validation: if delivery's sold-to account is known, the invoice
+        // must match (prevents cross-account misrouting like Inc. ↔ SE Asia)
+        var _candidates = _invsBySO.filter(function(inv){
+          if(_bestDeliv.custAcct && inv.a && _bestDeliv.custAcct !== inv.a) return false;
+          if(inv.s) return false;
+          if(matched.find(function(x){return x.i === inv.i;})) return false;
+          return true;
+        });
+        if(_candidates.length === 0) return;
+        // Multi-invoice SO: narrow by billing-date proximity to delivery's billing date
+        var _chosen = _candidates[0];
+        if(_candidates.length > 1 && _bestDeliv.billingDate){
+          var _drT = new Date(_bestDeliv.billingDate).getTime();
+          _chosen = _candidates.slice().sort(function(a,b){
+            var aD = a.dt2 ? Math.abs(new Date(a.dt2).getTime() - _drT) : 1e15;
+            var bD = b.dt2 ? Math.abs(new Date(b.dt2).getTime() - _drT) : 1e15;
+            return aD - bD;
+          })[0];
+        }
+        // Accumulate this ERS line under the chosen invoice
+        if(!_invAccumulator.has(_chosen.i)){
+          _invAccumulator.set(_chosen.i, { inv:_chosen, summedLineAmt:0, bridgedDeliveries:[] });
+        }
+        var _entry = _invAccumulator.get(_chosen.i);
+        _entry.summedLineAmt += _ersAmt;
+        _entry.bridgedDeliveries.push(_bestDeliv.deliveryNo);
+      });
+      // Apply the accumulated bridge matches
+      if(_invAccumulator.size > 0){
+        _invAccumulator.forEach(function(entry){
+          var _inv = entry.inv;
+          var _sumLines = entry.summedLineAmt;
+          if(Math.abs(_sumLines - _inv.amt) <= 1){
+            // Full match — one or multiple ERS lines summing to invoice amount
+            if(total + _inv.amt <= _cap){
+              _inv._deliveryBridge = true;
+              _inv._bridgedDeliveries = entry.bridgedDeliveries;
+              matched.push(_inv);
+              total += _inv.amt;
+              _bridgeApplied = true;
+            }
+          } else if(_sumLines < _inv.amt - 1){
+            // Partial pay via delivery bridge — apply summed ERS amount,
+            // residual stays open on the invoice
+            if(total + _sumLines <= _cap){
+              var _ppInv = Object.assign({}, _inv, {
+                _partialPayAmt: _sumLines,
+                _deliveryBridge: true,
+                _bridgedDeliveries: entry.bridgedDeliveries
+              });
+              matched.push(_ppInv);
+              total += _sumLines;
+              _bridgeApplied = true;
+            }
+          }
+        });
+      }
+      // If bridge fully covered the PO total, skip the legacy priorities
+      if(_bridgeApplied && Math.abs(total - g.total) <= 1) return;
+      // If bridge covered some but not all, leave the rest for legacy logic
+      // (but mark already-bridged invoices so subset-sum doesn't re-pick them)
+    }
+
     if(invList.length === 1){
-      if(total + invList[0].amt <= _cap){ matched.push(invList[0]); total += invList[0].amt; }
+      var _onlyInv = invList[0];
+      if(Math.abs(_onlyInv.amt - g.total) <= 1){
+        // Full pay — single invoice matches ERS PO total exactly
+        if(total + _onlyInv.amt <= _cap){ matched.push(_onlyInv); total += _onlyInv.amt; }
+      } else if(g.total < _onlyInv.amt - 1){
+        // Partial pay — customer is paying $g.total against a $_onlyInv.amt invoice.
+        // Apply the ERS amount, not the full invoice. Mark _partialPayAmt so the
+        // caller posts pd=ERS amount with oa=invoice amount (leaves residual open).
+        // Without this branch, a $19,470 ERS line against a $31,625 single invoice
+        // would over-apply by $12,155 (the 4521689046 case).
+        if(total + g.total <= _cap){
+          var _ppInv = Object.assign({}, _onlyInv, {_partialPayAmt: g.total});
+          matched.push(_ppInv); total += g.total;
+        }
+      } else {
+        // Edge case: ERS amount > single invoice amount. Apply the invoice amount.
+        if(total + _onlyInv.amt <= _cap){ matched.push(_onlyInv); total += _onlyInv.amt; }
+      }
       return;
     }
 
@@ -13776,9 +13907,57 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
         }
       }
     }
-    // 3. No exact or subset match → leave PO unmatched. The ERS amount for this PO
-    //    naturally becomes part of the variance/COA. This avoids picking a wrong
-    //    invoice via closest-amount heuristic.
+    // 3. FIFO partial-pay fallback for multi-invoice POs where no subset ties.
+    //    Real SAP scenario: PO has multiple open invoices (e.g. 4522118692 has
+    //    $3,920 + $5,880 + $975 + $11,895 = $22,670 outstanding) but the
+    //    customer's ERS line ($7,975 for one delivery) doesn't sum to any
+    //    invoice subset. Standard SAP behavior is to clear oldest invoices
+    //    first (FIFO), partial-pay the next, leave residuals open.
+    //
+    //    Safety check: only fire if ERS amount is at least 5% of the largest
+    //    invoice (avoids meaningless $1 partial-pays). Otherwise leave the
+    //    PO unmatched — the variance flows to COA where the user can decide.
+    if(!found){
+      var _sortedOld = invList.slice().sort(_olderFirst);
+      var _maxInvAmt = invList.reduce(function(m,iv){return Math.max(m, iv.amt);}, 0);
+      var _meaningful = g.total >= Math.max(50, _maxInvAmt * 0.05);
+      if(_meaningful){
+        var _rem = g.total;
+        var _wouldExceed = false;
+        // First pass: dry run to check boundary won't be violated
+        var _dryTotal = 0;
+        for(var z=0; z<_sortedOld.length && _rem > 0.01; z++){
+          var _ivAmt = _sortedOld[z].amt;
+          var _applyAmt = (_ivAmt <= _rem) ? _ivAmt : _rem;
+          if(total + _dryTotal + _applyAmt > _cap){ _wouldExceed = true; break; }
+          _dryTotal += _applyAmt;
+          _rem -= _applyAmt;
+        }
+        // Second pass: apply for real if dry run cleared
+        if(!_wouldExceed){
+          _rem = g.total;
+          for(var z=0; z<_sortedOld.length && _rem > 0.01; z++){
+            var _iv = _sortedOld[z];
+            if(_iv.amt <= _rem + 0.01){
+              // Apply this invoice fully
+              matched.push(_iv);
+              total += _iv.amt;
+              _rem -= _iv.amt;
+            } else {
+              // Partial-pay this invoice
+              var _ppInv = Object.assign({}, _iv, {_partialPayAmt: _rem, _fifoPartial:true});
+              matched.push(_ppInv);
+              total += _rem;
+              _rem = 0;
+            }
+          }
+          found = true;
+        }
+      }
+      // If still not found (ERS amount tiny relative to invoices, or boundary
+      // hit), leave PO unmatched — variance flows to the COA EXC where the
+      // user can review and apply manually.
+    }
   });
   return matched.length>0 ? { matched:matched, total:total, scenario:'ERS_GROUP' } : null;
 }
@@ -13855,17 +14034,17 @@ function matchVMIDateRange(payAmount, custAccount, idx, tol){
   var matched = [];
   var total = 0;
   if(_exactSubset){
-    // Found exact subset matching VMI total
+    // Found exact subset matching VMI total — apply
     _exactSubset.forEach(function(inv){
       if(total + inv.amt <= _cap){ matched.push(inv); total += inv.amt; }
     });
   } else {
-    // Fallback: return all customer-filtered candidates (constrained allocator will pick)
-    _cands.forEach(function(inv){
-      if(total + inv.amt <= _cap && !matched.find(function(x){return x.i===inv.i;})){
-        matched.push(inv); total += inv.amt;
-      }
-    });
+    // No subset of candidates ties exactly to VMI total. Do NOT fall back to
+    // "include all candidates" — that path over-applies invoices that aren't
+    // actually in the remittance (e.g. $107,897 invoice 5105236679 grabbed
+    // for a $64,184 VMI total). Instead, return null so Priority 5c routes
+    // the VMI portion to Needs Attention for manual allocation.
+    return {matched:[], total:0, vmiTotal:_vmiTotal, subsetFound:false};
   }
 
   return matched.length>0 ? { matched:matched, total:total, scenario:'VMI_DATERANGE', exactSubset:!!_exactSubset } : null;
@@ -14702,30 +14881,70 @@ async function runMatch(){
           if(_ersMatch) _ersMatch.matched.forEach(function(inv){ _candMap.set(inv.i, {inv:inv, src:'ERS'}); });
           if(_vmiMatch) _vmiMatch.matched.forEach(function(inv){ if(!_candMap.has(inv.i)) _candMap.set(inv.i, {inv:inv, src:'VMI'}); });
           var _cands = Array.from(_candMap.values());
+          // Track whether VMI subset-sum found a clean match. If not, the VMI portion
+          // is allocated manually (see EXC routing at end of this block).
+          var _vmiSubsetFound = _vmiMatch && _vmiMatch.subsetFound !== false && _vmiMatch.matched && _vmiMatch.matched.length > 0;
 
           if(_cands.length > 0){
-            // Apply ALL matched candidates as 'Exact' — each was confirmed by
-            // a customer remittance source (ERS PO or VMI subset-sum)
+            // Apply matched candidates as 'Exact' — each was tied to a customer
+            // remittance source (ERS PO match or VMI subset-sum hit). For ERS
+            // single-invoice partial-pay (inv.amt > ERS PO total), post the ERS
+            // amount via _partialPayAmt rather than the full invoice amount.
             var _allocTotal = 0;
             _cands.forEach(function(c){
               var inv = c.inv;
-              inv.s = 'Exact';
-              _allocTotal += inv.amt;
+              var _postAmt = (typeof inv._partialPayAmt === 'number') ? inv._partialPayAmt : inv.amt;
+              var _isPartial = (_postAmt < inv.amt - 0.01);
+              var _isBridge = !!inv._deliveryBridge;
+              inv.s = _isPartial ? 'Partial' : 'Exact';
+              _allocTotal += _postAmt;
               var _conf = ConfidenceScorer.score({
                 ersMatch:c.src==='ERS', vmiMatch:c.src==='VMI',
-                amountMatch:true, customerMatch:!!p.c, poMatch:true
+                deliveryBridge: _isBridge,
+                amountMatch:!_isPartial, customerMatch:!!p.c, poMatch:true,
+                soMatch: _isBridge
               });
+              // Format the bridge reference for the explainability pill and posting export
+              var _bridgeRefs = (inv._bridgedDeliveries||[]).filter(Boolean).join(', ');
+              var _matchMethod = _isBridge
+                ? (c.src + (_isBridge?' + Delivery Bridge':'')+' match')
+                : (c.src + ' remittance match');
+              var _explanation = _isBridge
+                ? ('SAP Delivery Bridge · '+c.src+' line → Delivery '+_bridgeRefs+
+                   ' → SO '+(inv.so||'—')+' → Invoice'+
+                   (_isPartial?' (partial pay $'+$f(_postAmt)+' of $'+$f(inv.amt)+')':''))
+                : ('Remittance tie-out · '+c.src+' '+(c.src==='ERS'?'PO':'subset-sum')+' match'+
+                   (_isPartial?' · partial pay ($'+$f(_postAmt)+' of $'+$f(inv.amt)+')':''));
               RES.push({c:inv.c||p.c, a:inv.a||p.a, i:inv.i, po:inv.po, so:inv.so, d:p.txId||p.bankRef||p.i||('PAY-'+Math.round(p.amt)),
-                oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
-                m:c.src+' remittance match',
-                n:'Remittance tie-out · '+c.src+' '+(c.src==='ERS'?'PO':'subset-sum')+' match · confidence: '+_conf.score+'%',
+                oa:inv.amt, pd:_postAmt, vr:_isPartial?(inv.amt-_postAmt):0,
+                st: _isPartial ? 'Partial' : 'Exact',
+                m: _matchMethod + (_isPartial?' (partial pay)':''),
+                n: _explanation + ' · confidence: '+_conf.score+'%',
                 confidence:_conf.score, matchReasons:_conf.reasons,
-                scenario:c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE'});
+                bridgeRefs: _bridgeRefs || null,
+                scenario: _isBridge ? 'DELIVERY_BRIDGE' : (c.src==='ERS'?'ERS_GROUP':'VMI_DATERANGE')});
             });
             matched = true;
 
-            // Post variance as appropriate exception type
-            var _payVariance = p.amt - _allocTotal; // positive=under (COA), negative=over (deduction)
+            // If VMI subset-sum failed, record the VMI portion as a separate EXC
+            // (NOT applied to specific invoices, which would over-apply).
+            if(VMI_LINES.length > 0 && _vmiTotal > 0 && !_vmiSubsetFound){
+              EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
+                a:p.a, c:p.c||'', amt:_vmiTotal,
+                ref:p.txId||p.bankRef||'—',
+                type:'VMI Allocation — Manual Review',
+                detail:'VMI total $'+$f(_vmiTotal)+' could not be tied to a specific subset of date-range invoices · manual allocation required',
+                action:'Review VMI line allocation manually',
+                dec:'', s:'Open',
+                notes:'✓ ERS portion applied · VMI subset-sum did not find a clean tie · Manual review needed for $'+$f(_vmiTotal)});
+            }
+
+            // Post variance as appropriate exception type. When VMI routed to a
+            // separate "Manual Review" EXC, count it as already accounted for
+            // so we don't double-post the same gap. Variance here represents
+            // ONLY the ERS portion that couldn't tie to specific invoices.
+            var _accountedFor = _allocTotal + (_vmiSubsetFound ? 0 : _vmiTotal);
+            var _payVariance = p.amt - _accountedFor; // positive=under (COA), negative=over (deduction)
             if(Math.abs(_payVariance) > tol){
               if(_payVariance > 0){
                 // Customer paid more than matched invoices → unapplied credit
