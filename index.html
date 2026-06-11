@@ -688,16 +688,18 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="eyebrow" style="color:#7DD3FC;border-color:rgba(125,211,252,.25);background:rgba(20,168,216,.1);margin-bottom:16px;display:inline-flex">▶ Product Overview</div>
       <h2 style="font-size:clamp(28px,4vw,42px);font-weight:800;color:#fff;letter-spacing:-.5px;margin:12px 0 12px;line-height:1.2">See AR Match Pro in action</h2>
       <p style="font-size:15px;color:#7DD3FC;font-weight:600;margin-bottom:8px">"Match remittance to invoices in minutes — no ERP integration required."</p>
-      <p style="font-size:15px;color:rgba(255,255,255,.45);max-width:460px;margin:0 auto 28px;line-height:1.65">Watch how AR Match Pro automates remittance matching — from problem to results. With narration.</p>
+      <p style="font-size:15px;color:rgba(255,255,255,.45);max-width:520px;margin:0 auto 28px;line-height:1.65">Watch how AR Match Pro automates remittance matching from problem to results in under 60 seconds. Narrated walkthrough.</p>
 
-      <!-- Embedded video player (inline iframe-style) -->
+      <!-- Embedded video player -->
       <div style="position:relative;width:100%;aspect-ratio:16/9;max-width:880px;margin:0 auto;background:#050D1A;border-radius:8px;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,.4),0 24px 80px rgba(0,0,0,.6)">
         <iframe src="video.html" style="position:absolute;inset:0;width:100%;height:100%;border:none" loading="lazy" title="AR Match Pro product video" allow="autoplay"></iframe>
       </div>
 
-      <div style="margin-top:20px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-
+      <div style="margin-top:28px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <a href="#" onclick="event.preventDefault();openLeadModal()" style="padding:13px 26px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;box-shadow:0 8px 20px rgba(20,168,216,.3);transition:.18s;display:inline-flex;align-items:center;gap:8px" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 28px rgba(20,168,216,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 20px rgba(20,168,216,.3)'">▶ Start 60-day free trial</a>
+        <a href="#pricing" style="padding:13px 26px;background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.16);border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.borderColor='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.16)'">View pricing</a>
       </div>
+      <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.35)">Credit card required · cancel anytime in Settings</div>
     </div>
   </section>
 
@@ -827,10 +829,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:16px">SMB accounting &amp; AR teams · 1–2 users</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
           <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,.45)">Starting at</span>
-          <span id="price-starter" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$799</span>
+          <span id="price-starter" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$1,999</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-starter-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Annual · month-to-month starting at $999/mo</div>
+        <div id="price-starter-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Annual · month-to-month starting at $2,399/mo</div>
         <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Up to 5,000 rows/month</div>
@@ -858,10 +860,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px">Growing AR teams · mid-market finance</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
           <span style="font-size:13px;font-weight:700;color:rgba(125,211,252,.65)">Starting at</span>
-          <span id="price-pro" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$1,399</span>
+          <span id="price-pro" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$3,999</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Annual · month-to-month starting at $1,599/mo</div>
+        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Annual · month-to-month starting at $4,599/mo</div>
         <div style="height:1px;background:rgba(20,168,216,.25);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Starter, plus:</div>
@@ -1105,7 +1107,7 @@ function qfPick(val,nextState){
         msg=`Sounds like AR Match Pro would solve your biggest pain points. The live demo takes 5 minutes — no signup, real matching with sample data.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else {
-        msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter starting at $799/month annual or Pro starting at $1,399/month annual. Try the demo first, no commitment.`;
+        msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter starting at $1,999/month annual or Pro starting at $3,999/month annual. Try the demo first, no commitment.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Start free demo</a>`;
       }
       addBotQMsg(msg+'<br>'+cta);
@@ -1123,11 +1125,11 @@ function setBilling(type){
   document.getElementById('bill-annual').style.background = monthly ? 'transparent' : '#fff';
   document.getElementById('bill-annual').style.color = monthly ? 'rgba(255,255,255,.55)' : '#0F172A';
   // Correct prices: Annual is lower (the default shown), Monthly is higher
-  document.getElementById('price-starter').textContent = monthly ? '$999' : '$799';
-  document.getElementById('price-pro').textContent = monthly ? '$1,599' : '$1,399';
+  document.getElementById('price-starter').textContent = monthly ? '$2,399' : '$1,999';
+  document.getElementById('price-pro').textContent = monthly ? '$4,599' : '$3,999';
   // Team is "Custom" — not toggled by annual/monthly. Pricing handled in sales conversation.
-  document.getElementById('price-starter-annual').textContent = monthly ? 'Month-to-month · starting at $999/mo' : 'Annual · month-to-month starting at $999/mo';
-  document.getElementById('price-pro-annual').textContent = monthly ? 'Month-to-month · starting at $1,599/mo' : 'Annual · month-to-month starting at $1,599/mo';
+  document.getElementById('price-starter-annual').textContent = monthly ? 'Month-to-month · starting at $2,399/mo' : 'Annual · month-to-month starting at $2,399/mo';
+  document.getElementById('price-pro-annual').textContent = monthly ? 'Month-to-month · starting at $4,599/mo' : 'Annual · month-to-month starting at $4,599/mo';
 }
 setBilling('annual');
 function dismissCookie(){
@@ -1434,9 +1436,9 @@ const LP_FAQ={
   "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP or NetSuite, import it into AR Match Pro, run the match, and export a posting-ready file back. No integration, no IT approval, no setup time.",
   "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
   "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
-  "Which plan?":"Starter (starting at $799/mo annual) covers Invoice, PO, and amount matching for up to 5,000 rows/month with persistent delivery index, keyboard shortcuts, and match confidence pills — best for 1–2 user AR teams. AI Remittance Parser includes 50 free parses/month, then $0.05/parse. Pro (starting at $1,399/mo annual) adds unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, customer learning, historical trends dashboard, SAP/NetSuite exports, CFO dashboards, and unlimited AI Remittance Parser. Team / Custom (contact sales for pricing) adds multi-user collaboration, roles, approval workflows, custom integrations, and dedicated onboarding — sized to your team and volume.",
+  "Which plan?":"Starter (starting at $1,999/mo annual) covers Invoice, PO, and amount matching for up to 5,000 rows/month with persistent delivery index, keyboard shortcuts, and match confidence pills — best for 1–2 user AR teams. AI Remittance Parser includes 50 free parses/month, then $0.05/parse. Pro (starting at $3,999/mo annual) adds unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, customer learning, historical trends dashboard, SAP/NetSuite exports, CFO dashboards, and unlimited AI Remittance Parser. Team / Custom (contact sales for pricing) adds multi-user collaboration, roles, approval workflows, custom integrations, and dedicated onboarding — sized to your team and volume.",
   "Book demo?":"Click 'Try free demo' on this page to start a 7-day free trial — full access, no credit card required. Or email info@armatchpro.com to schedule a live walkthrough.",
-  "Pricing?":"Starter starts at $799/month annual (month-to-month from $999/mo). Pro starts at $1,399/month annual (month-to-month from $1,599/mo). Team / Custom is sized to your team — contact info@armatchpro.com for a quote. All prices are starting prices — customized add-ons may increase pricing."
+  "Pricing?":"Starter starts at $1,999/month annual (month-to-month from $2,399/mo). Pro starts at $3,999/month annual (month-to-month from $4,599/mo). Team / Custom is sized to your team — contact info@armatchpro.com for a quote. All prices are starting prices — customized add-ons may increase pricing."
 };
 let lpChatOpen=false;
 function toggleLpChat(){

@@ -123,26 +123,45 @@ const _LINKS = {
   team:    'https://buy.stripe.com/14AaEY2sk3tw062grhcAo00'
 };
 const _PLANS = {
-  starter:{name:'Starter Plan',price:'$799',mo:'$799/mo',feats:['1–2 users · Up to 5,000 rows/mo','Invoice, PO & Amount matching','Match confidence pills','Persistent delivery index','Keyboard shortcuts (J/K nav, A approve)','AI Remittance Parser · 50 free/mo then $0.05/parse','Basic posting exports (CSV)','Audit trail','Standard support']},
-  pro:    {name:'Pro Plan',    price:'$1,599',mo:'$1,599/mo',feats:['Everything in Starter','Unlimited rows processed','Multi-invoice allocation','SAP Delivery Bridge (deterministic matching)','ERS / VMI consolidated payment support','Per-line Cash on Account postings','SAP F-28 + NetSuite exports','Unlimited AI Remittance Parser','Customer learning & profiles','Historical trends dashboard','Per-source confidence calibration','Bulk-approve actions','Reconciliation workspace','CFO dashboards','Multiple bank accounts','Priority support']},
-  team:   {name:'Team Plan',  price:'$2,999',mo:'$2,999/mo',feats:['Everything in Pro','Multi-user collaboration','Role-based permissions','Advanced approval workflows','Custom export mapping','Enterprise workflow configuration','Dedicated onboarding','Custom implementation support','SLA support options','Priority feature access']}
+  starter:{name:'Starter Plan',price:'$1,999',mo:'$1,999/mo',feats:['1–2 users · Up to 5,000 rows/mo','Invoice, PO & Amount matching','Match confidence pills','Persistent delivery index','Keyboard shortcuts (J/K nav, A approve)','AI Remittance Parser · 50 free/mo then $0.05/parse','Basic posting exports (CSV)','Audit trail','Standard support']},
+  pro:    {name:'Pro Plan',    price:'$3,999',mo:'$3,999/mo',feats:['Everything in Starter','Unlimited rows processed','Multi-invoice allocation','SAP Delivery Bridge (deterministic matching)','ERS / VMI consolidated payment support','Per-line Cash on Account postings','SAP F-28 + NetSuite exports','Unlimited AI Remittance Parser','Customer learning & profiles','Historical trends dashboard','Per-source confidence calibration','Bulk-approve actions','Reconciliation workspace','CFO dashboards','Multiple bank accounts','Priority support']},
+  team:   {name:'Team Plan',  price:'Custom',mo:'Contact us',feats:['Everything in Pro','Multi-user collaboration','Role-based permissions','Advanced approval workflows','Custom export mapping','Enterprise workflow configuration','Dedicated onboarding','Custom implementation support','SLA support options','Priority feature access','Volume-based pricing']}
 };
 
 const params=new URLSearchParams(window.location.search);
 const planKey=(params.get('plan')||'pro').toLowerCase();
 const plan=_PLANS[planKey]||_PLANS.pro;
 
+// ════════════════════════════════════════════════════════════════════════
+// ⚠️  STRIPE PRICE UPDATE REQUIRED
+// The pricing in _PLANS above has been updated to the new tiers:
+//   Starter $1,999/mo  ·  Pro $3,999/mo  ·  Team Custom
+// You MUST update the actual prices in your Stripe dashboard at the
+// Payment Link URLs below, or customers will be charged the old amounts.
+// Go to: https://dashboard.stripe.com/payment-links
+// ════════════════════════════════════════════════════════════════════════
 // Populate UI
 document.getElementById('hdr-badge').textContent=plan.name;
 document.getElementById('plan-name').textContent=plan.name;
-document.getElementById('plan-price').innerHTML=plan.price+'<span>/month</span>';
-document.getElementById('btn-price-label').textContent=plan.mo;
+// For Team (Custom), don't append /month suffix
+if(planKey === 'team' || plan.price === 'Custom'){
+  document.getElementById('plan-price').innerHTML=plan.price;
+  document.getElementById('btn-price-label').textContent='Contact Sales';
+} else {
+  document.getElementById('plan-price').innerHTML=plan.price+'<span>/month</span>';
+  document.getElementById('btn-price-label').textContent=plan.mo;
+}
 document.getElementById('plan-feats').innerHTML=plan.feats.map(f=>`<div class="plan-feat">${f}</div>`).join('');
 document.title='AR Match Pro — '+plan.name;
 
-// Wire the payment link to the button
-document.getElementById('btn-price-label').textContent=plan.mo;
-document.getElementById('stripe-btn').href=_LINKS[planKey]||_LINKS.pro;
+// Wire the payment link to the button (or contact sales for Team)
+if(planKey === 'team'){
+  // Team is Custom — open email instead of Stripe checkout
+  document.getElementById('stripe-btn').href='mailto:info@armatchpro.com?subject=Team%20%2F%20Custom%20Plan%20Inquiry&body=Hi%2C%20I%27d%20like%20to%20learn%20more%20about%20the%20Team%20%2F%20Custom%20plan%20for%20AR%20Match%20Pro.%0A%0ATeam%20size%3A%20%0AInvoice%20volume%2Fmonth%3A%20%0AERP%20system%3A%20%0APreferred%20call%20time%3A%20%0A%0AThanks%21';
+  document.getElementById('stripe-btn').removeAttribute('target');
+} else {
+  document.getElementById('stripe-btn').href=_LINKS[planKey]||_LINKS.pro;
+}
 
 function showManual(){document.getElementById('stripe-section').style.display='none';document.getElementById('manual-section').style.display='block';}
 function showStripe(){document.getElementById('manual-section').style.display='none';document.getElementById('stripe-section').style.display='block';}

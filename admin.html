@@ -260,7 +260,7 @@ tr:hover td{background:rgba(20,168,216,.03)}
             </div>
             <div class="form-row">
               <div><div class="f-label">Temporary password</div><input class="f-input" type="text" id="cu-pass" placeholder="Min 6 characters"></div>
-              <div><div class="f-label">Plan</div><select class="f-select" id="cu-plan"><option value="starter">Starter — Starting at $799/mo</option><option value="pro" selected>Pro — Starting at $1,399/mo</option><option value="team">Team / Custom — Starting at $2,699/mo</option><option value="demo">Demo (7-day free)</option></select></div>
+              <div><div class="f-label">Plan</div><select class="f-select" id="cu-plan"><option value="starter">Starter — Starting at $1,999/mo</option><option value="pro" selected>Pro — Starting at $3,999/mo</option><option value="team">Team / Custom — Contact sales</option><option value="demo">Demo (7-day free)</option></select></div>
             </div>
             <div style="display:flex;gap:8px"><button class="btn btn-p" onclick="createUser()">Create account</button><button class="btn btn-outline" onclick="clearCreateForm()">Clear</button></div>
             <div style="font-size:11.5px;color:var(--t3);margin-top:12px;line-height:1.6">ℹ️ User can sign in immediately. Send them their email + password securely.</div>
@@ -385,12 +385,12 @@ tr:hover td{background:rgba(20,168,216,.03)}
             <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">10:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Exceptions + decisions (3 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Instead of chasing these manually, your team makes a decision and it flows into your SAP posting file automatically."</div></div>
             <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">13:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Reporting (2 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Your CFO sees this every morning — cash matched, what's stuck, and why." DSO and STP rate land with controllers.</div></div>
             <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">15:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Privacy (1 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Your invoice and payment data never leaves your browser. Nothing is uploaded. No IT approval needed." Watch the tension leave the room.</div></div>
-            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">16:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Pricing + close (4 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Most teams start on Pro — that's the multi-invoice allocation you just saw. Starting at $1,399/month annual, if your team saves 10 hours a week, you're already ahead week one." Then be quiet. Let them talk.</div></div>
+            <div style="font-size:11px;font-weight:700;color:var(--t3);padding-top:2px">16:00</div><div><div style="font-size:13.5px;font-weight:700;margin-bottom:4px">Pricing + close (4 min)</div><div style="font-size:13px;color:var(--t2);line-height:1.7">"Most teams start on Pro — that's the multi-invoice allocation you just saw. Starting at $3,999/month annual, if your team saves 10 hours a week, you're already ahead week one." Then be quiet. Let them talk.</div></div>
           </div>
         </div>
         <div class="card">
           <div class="card-h"><div class="card-t">Founding rate close</div></div>
-          <div style="padding:16px;font-size:13.5px;line-height:1.8;color:var(--t1);background:var(--bg);margin:0;border-radius:0 0 9px 9px">"We're in early access with our first 10 customers. I can offer you the founding rate — locked at <strong>$1,399/month</strong> for Pro (annual), for life. We're at <strong style="color:var(--r)" id="slot-display">? of 10</strong> slots — want me to hold one?" <input type="number" id="slot-input" value="10" min="0" max="10" style="width:50px;margin:0 6px;padding:3px 7px;border:1.5px solid var(--bdr);border-radius:5px;font-family:var(--mono);font-size:13px" oninput="document.getElementById('slot-display').textContent=this.value+' of 10'"> slots remaining</div>
+          <div style="padding:16px;font-size:13.5px;line-height:1.8;color:var(--t1);background:var(--bg);margin:0;border-radius:0 0 9px 9px">"We're in early access with our first 10 customers. I can offer you the founding rate — <strong>$2,999/month</strong> for Pro, locked for life. No annual commitment required, and your price never goes up even when our list rate does. We're at <strong style="color:var(--r)" id="slot-display">? of 10</strong> slots — want me to hold one?" <input type="number" id="slot-input" value="10" min="0" max="10" style="width:50px;margin:0 6px;padding:3px 7px;border:1.5px solid var(--bdr);border-radius:5px;font-family:var(--mono);font-size:13px" oninput="document.getElementById('slot-display').textContent=this.value+' of 10'"> slots remaining</div>
         </div>
       </div>
 </div>
@@ -508,7 +508,7 @@ function renderSubscriptions(){
   const tbody=document.getElementById('subs-tbody');
   if(!tbody)return;
   if(!users.length){tbody.innerHTML='<tr><td colspan="10"><div class="em"><div class="em-icon">💳</div><div class="em-t">No paid subscriptions yet</div></div></td></tr>';return;}
-  const PRICING={starter:{annual:'Starting at $799/mo',monthly:'Starting at $999/mo'},pro:{annual:'Starting at $1,399/mo',monthly:'Starting at $1,599/mo'},team:{annual:'Starting at $2,699/mo',monthly:'Starting at $2,999/mo'}};
+  const PRICING={starter:{annual:'Starting at $1,999/mo',monthly:'Starting at $2,399/mo'},pro:{annual:'Starting at $3,999/mo',monthly:'Starting at $4,599/mo'},team:{annual:'Custom',monthly:'Custom'}};
   tbody.innerHTML=users.map(([email,u])=>{
     const planKey=u.plan||'starter';
     // Read billing record (new structure) with fallbacks
@@ -808,7 +808,7 @@ Would a 10-minute look be worth it?
 
 Just wanted to leave the door open. If unapplied cash comes up in a team meeting, keep us in mind.
 
-We're offering a founding rate ($799/mo for Pro, locked for life) to our first 10 customers. Happy to hold a slot.
+We're offering a founding rate ($2,999/mo for Pro, locked for life) to our first 10 customers. Happy to hold a slot.
 
 Demo: armatchpro.com/app?demo=true
 
@@ -866,7 +866,7 @@ Worth a look?
 — Tre`},
     {touch:'Follow-up DM',subj:'The ROI math',body:`Hi {{FirstName}},
 
-If your team spends 10 hours/week on manual cash application, that's ~$3,000/month in labor. AR Match Pro Pro is $999/month.
+If your team spends 10+ hours/week per AR specialist on manual cash application — for a 3-person team that's ~$10,000/month in labor cost. AR Match Pro Pro is $2,999/month (founding rate, locked for life).
 
 The math usually closes itself.
 
@@ -900,7 +900,7 @@ Live demo (no login): armatchpro.com/app?demo=true
 
 I'll keep this short — if manual remittance matching isn't a priority right now, totally understand.
 
-Founding rate: $799/month for Pro, locked for life. 3 slots remaining.
+Founding rate: $2,999/month for Pro, locked for life. 3 slots remaining.
 
 Demo: armatchpro.com/app?demo=true
 
@@ -929,7 +929,7 @@ Demo: armatchpro.com/app?demo=true
 — Tre`},
     {touch:'Touch 3 — Day 12',subj:'Last note on this',body:`Hi {{FirstName}},
 
-Wrapping up my outreach. Founding pricing ($799/mo, locked) for our first 10 customers. 3 slots left.
+Wrapping up my outreach. Founding pricing ($2,999/mo, locked) for our first 10 customers. 3 slots left.
 
 Demo: armatchpro.com/app?demo=true
 
@@ -1018,7 +1018,7 @@ Current state (manual):
 Automated state:
 • Same team, 80% of payments apply automatically
 • Manual review: 2 hrs/week instead of 20
-• Tool cost: $999/month
+• Tool cost: $2,999/month (founding rate, locked for life)
 • Error rate: <2%
 
 Net savings: $2,000+/month. Payback period: immediate.
@@ -1087,11 +1087,11 @@ If manual: "That's exactly our sweet spot. What we replace is the manual researc
 If automated: "What are you using? Most tools only handle simple invoice matching. We specifically handle PO-based and multi-invoice — the messy stuff that kills match rates."`},
   {q:"It's too expensive.",a:`"Let me ask — what does your team currently spend on this process?
 
-If analysts spend 8-10 hours/week on manual matching, that's ~$3,000/month in labor. AR Match Pro Pro is $999/month.
+If analysts spend 8-10 hours/week each on manual matching — for a team of 3, that's ~$10,000/month in labor cost. AR Match Pro Pro is $2,999/month (founding rate, locked for life).
 
 You're not spending money — you're reallocating it.
 
-Alternative: Founding rate is $799/month for Pro, locked for life. 3 slots left."`},
+Alternative: Founding rate is $2,999/month for Pro, locked for life. 3 slots left."`},
   {q:"We need IT to approve any new tools.",a:`"That's usually the blocker — and it's why we built this the way we did.
 
 AR Match Pro runs entirely in the browser. No installation. No server. No ERP connection. Your team downloads an invoice aging CSV from SAP, drags it in, and runs the match. Nothing touches your systems.
