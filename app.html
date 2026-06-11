@@ -3037,6 +3037,80 @@ body.app-active #app {
   </div>
 </div>
 
+<!-- ─── AI Remittance Parser modal ─────────────────────────────────────
+     Lets users paste unstructured remittance text (emails, PDF extracts,
+     vendor portals) and have Claude extract structured remittance lines
+     — invoice numbers, amounts, PO refs, notes — into REM_DETAIL.
+     Requires a user-provided Anthropic API key stored in localStorage
+     (keys never leave the user's browser; calls go directly to api.anthropic.com).
+─────────────────────────────────────────────────────────────────────── -->
+<div class="mo-overlay" id="ai-parse-modal">
+  <div class="mo-box wide" style="width:680px;max-width:96vw">
+    <div class="mo-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">🤖</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--t1)">AI Remittance Parser</div>
+          <div style="font-size:11.5px;color:var(--t3);margin-top:1px">Paste an email, drop a PDF, or upload a scan — AI extracts structured remittance lines</div>
+        </div>
+      </div>
+      <div class="mo-close" onclick="closeAIRemittanceParser()">×</div>
+    </div>
+    <div class="mo-body" style="padding:20px 24px">
+      <div id="ai-parse-step-input">
+        <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Paste remittance text</div>
+        <textarea id="ai-parse-input" rows="10" placeholder="Paste the unstructured remittance text here — e.g. an email from your customer:&#10;&#10;&quot;Hi, please find our payment of $50,000.00 attached. We're applying:&#10;- Invoice 5105123456: $12,500&#10;- Invoice 5105123457: $20,000&#10;- PO 4521000123: $17,750 (less $250 short pay for damaged goods)&#10;&#10;Wire ref: 1234567890. Let us know if any questions.&quot;" style="width:100%;padding:12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:11px;color:var(--t3)">
+          <span>or</span>
+          <button class="btn btn-outline btn-xs" onclick="document.getElementById('ai-parse-file').click()">📎 Upload PDF / image</button>
+          <input type="file" id="ai-parse-file" accept=".pdf,.png,.jpg,.jpeg" style="display:none" onchange="_aiHandleFile(event)">
+          <span id="ai-parse-file-name" style="color:var(--t2)"></span>
+        </div>
+        <div id="ai-parse-key-warn" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 12px;margin-top:14px;font-size:12px;color:var(--am-t)">
+          ⚠️ No API key configured. <a href="#" onclick="_showAIKeySetting();return false;" style="color:var(--am-t);font-weight:700;text-decoration:underline">Add your Anthropic API key</a> to enable AI parsing. Keys are stored locally in your browser only.
+        </div>
+        <div id="ai-parse-key-area" style="display:none;background:var(--surface2);border:1px solid var(--bdr);border-radius:8px;padding:14px;margin-top:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">Anthropic API key</div>
+          <input type="password" id="ai-key-input" placeholder="sk-ant-..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;background:var(--surface);color:var(--t1);outline:none;box-sizing:border-box;font-family:var(--mono)">
+          <div style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.5">Get a key at <a href="https://console.anthropic.com/" target="_blank" style="color:var(--p)">console.anthropic.com</a>. Stored in this browser only; never sent to any server other than api.anthropic.com.</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-p btn-sm" onclick="_saveAIKey()">Save key</button>
+            <button class="btn btn-outline btn-sm" onclick="_hideAIKeySetting()">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div id="ai-parse-step-loading" style="display:none;text-align:center;padding:40px 20px">
+        <div class="spinner" style="margin:0 auto 16px;width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--cy);border-radius:50%;animation:spin .8s linear infinite"></div>
+        <div style="font-size:13px;color:var(--t2);font-weight:600">Parsing with Claude…</div>
+        <div style="font-size:11.5px;color:var(--t3);margin-top:4px">Usually takes 3-8 seconds</div>
+      </div>
+      <div id="ai-parse-step-results" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12.5px;color:var(--g-t);font-weight:700">✓ Parsed <span id="ai-parse-count">0</span> remittance lines</div>
+          <button class="btn btn-outline btn-xs" onclick="_aiResetParser()">← Try another</button>
+        </div>
+        <div id="ai-parse-summary" style="font-size:11.5px;color:var(--t2);background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:10px"></div>
+        <div id="ai-parse-results-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--bdr);border-radius:8px;font-size:12px"></div>
+      </div>
+    </div>
+    <div class="mo-footer" style="display:flex;gap:8px;justify-content:space-between;padding:14px 24px;border-top:1px solid var(--bdr);background:var(--surface)">
+      <div>
+        <button class="btn btn-ghost btn-sm" onclick="_showAIKeySetting()" id="ai-parse-key-btn">⚙️ API key</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="closeAIRemittanceParser()">Cancel</button>
+        <button class="btn btn-p btn-sm" onclick="_aiParseRemittance()" id="ai-parse-go-btn">🤖 Parse with AI</button>
+        <button class="btn btn-p btn-sm" onclick="_aiApplyResults()" id="ai-parse-apply-btn" style="display:none">✓ Add to Remittance</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { will-change: transform; }
+</style>
+
 <div id="exc-modal-overlay">
   <div id="exc-modal-inner">
     <div class="exc-modal-hdr">
@@ -3478,6 +3552,7 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
               <button class="btn btn-outline btn-sm" onclick="openImportDelivery()" title="Upload delivery/tracking report to map Tracking # and Delivery # to invoices">+ Delivery Report</button>
               <button class="btn btn-outline btn-sm" onclick="openImportRemDetail()" title="Upload remittance advice / remittance details (e.g. supplier remittance with invoice references, PO#, tracking#, amounts)" style="color:var(--pu-t)">+ Remittance Details</button>
+              <button class="btn btn-outline btn-sm" onclick="openAIRemittanceParser()" title="Parse unstructured remittance — paste email text, drop a PDF, or upload a scan. AI extracts structured invoice references and amounts." style="color:var(--cy-t);background:linear-gradient(135deg, rgba(6,182,212,.08), rgba(99,102,241,.06))">🤖 AI Parse</button>
               <button class="btn btn-p btn-sm armp-setup-step-cta" id="btn-auto-match" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px;min-width:200px;text-align:center;justify-content:center">⚡ Auto Match</button>
               
             </div>
@@ -4289,6 +4364,47 @@ body.app-active #app {
               </div>
             </div>
           </div>
+
+          <!-- ─── Historical Trends Section ─────────────────────────────
+               Reads from ArmpDB.listMatchHistory() which persists every
+               Auto Match run. Empty state shows when there's no history yet
+               (first session). Charts auto-update after each match.
+          ─────────────────────────────────────────────────────────────── -->
+          <div id="cfo-trends-section" style="margin:24px 0 32px;display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div>
+                <div style="font-size:15px;font-weight:800;color:var(--t1)">📈 Historical Trends</div>
+                <div style="font-size:11.5px;color:var(--t3);margin-top:2px" id="cfo-trends-meta">Across all Auto Match runs in this session</div>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <select id="cfo-trends-range" onchange="renderTrendsDashboard()" style="font-size:11px;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surface);color:var(--t1)">
+                  <option value="10">Last 10 runs</option>
+                  <option value="30" selected>Last 30 runs</option>
+                  <option value="90">Last 90 runs</option>
+                </select>
+                <button class="btn btn-outline btn-xs" onclick="_clearMatchHistory()" title="Clear all persisted match history">Clear</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+              <!-- Match rate trend chart -->
+              <div class="cfo-trend-card" style="background:var(--surface);border:1px solid var(--bdr);border-radius:12px;padding:18px">
+                <div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:14px">Match Rate Trend</div>
+                <div id="cfo-trend-chart-match" style="width:100%;height:160px"></div>
+                <div id="cfo-trend-stats" style="display:flex;gap:18px;margin-top:10px;font-size:11.5px;color:var(--t3);flex-wrap:wrap"></div>
+              </div>
+              <!-- Exception mix -->
+              <div class="cfo-trend-card" style="background:var(--surface);border:1px solid var(--bdr);border-radius:12px;padding:18px">
+                <div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:14px">Exception Mix (last run)</div>
+                <div id="cfo-trend-chart-exc" style="width:100%"></div>
+              </div>
+            </div>
+            <!-- Top customers / payment volume by customer -->
+            <div class="cfo-trend-card" style="background:var(--surface);border:1px solid var(--bdr);border-radius:12px;padding:18px;margin-top:16px">
+              <div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:14px">Customer Profiles — Learned Patterns</div>
+              <div id="cfo-cust-profiles" style="font-size:12.5px;color:var(--t2)"></div>
+            </div>
+          </div>
+
 
           <!-- Key metrics grid -->
           <div class="cfo-grid">
@@ -5377,6 +5493,19 @@ function renderWsReview(){
     var ws = wsBadge[headerStatus]||'Review';
     var wsClass = headerStatus==='Exact'||headerStatus==='Resolved'||headerStatus==='Subset exact'?'ws-badge-ready':headerStatus==='Short pay'||headerStatus==='Overpay'?'ws-badge-review':'ws-badge-pending';
     
+    // Detect if any PAY record for this customer carries a learned profile
+    var _hasLearnedProfile = false;
+    var _learnedProfileEnc = 0;
+    try {
+      if(typeof PAY !== 'undefined' && Array.isArray(PAY) && g.c){
+        var _pf = PAY.find(function(p){ return p.c === g.c && p._learnedProfile; });
+        if(_pf && _pf._learnedProfile){
+          _hasLearnedProfile = true;
+          _learnedProfileEnc = _pf._learnedProfile.encounterCount || 0;
+        }
+      }
+    } catch(e){}
+
     // Build header row
     var headerHtml = '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border-bottom:'+(isMulti?'1px solid var(--bdr)':'none')+'">'+
       '<div style="width:4px;height:44px;border-radius:2px;background:'+(stColor[headerStatus]||'var(--p)')+';flex-shrink:0"></div>'+
@@ -5386,6 +5515,7 @@ function renderWsReview(){
           '<span class="badge '+(stBadge[headerStatus]||'badge-gray')+'">'+headerStatus+'</span>'+
           '<span class="ws-badge '+wsClass+'" style="font-size:10.5px;padding:2px 8px"><span class="ws-dot"></span>'+ws+'</span>'+
           (isMulti?'<span style="font-size:11px;color:var(--pd);font-weight:700;background:rgba(99,102,241,.10);padding:2px 8px;border-radius:10px">'+items.length+' invoices</span>':'')+
+          (_hasLearnedProfile?'<span title="ARMP recognized this customer from prior sessions ('+_learnedProfileEnc+' previous encounters)" style="font-size:10.5px;font-weight:700;background:linear-gradient(135deg, rgba(168,85,247,.12), rgba(99,102,241,.12));color:var(--pu-t);padding:2px 8px;border-radius:10px;border:1px solid rgba(168,85,247,.25)">🧠 Profile loaded · '+_learnedProfileEnc+'×</span>':'')+
         '</div>'+
         '<div style="display:flex;align-items:center;gap:14px;font-size:12px;color:var(--t2);flex-wrap:wrap">'+
           '<span>Acct: <strong style="color:var(--t1)">'+(g.a||'—')+'</strong></span>'+
@@ -5753,7 +5883,7 @@ window._DELIV_BY_PO_AMT = null;    // Map<poNo + '|' + amount, DELIV[]>  — eve
 //   meta             — { key, value } — last-updated timestamps, schema version.
 var ArmpDB = (function(){
   var DB_NAME = 'armp_v1';
-  var DB_VER  = 1;
+  var DB_VER  = 2;  // v2: added match_history store
   var _db = null;
   var _pending = null;
 
@@ -5781,6 +5911,11 @@ var ArmpDB = (function(){
         }
         if(!db.objectStoreNames.contains('meta')){
           db.createObjectStore('meta', { keyPath:'key' });
+        }
+        // v2: persistent log of Auto Match runs for trend analytics
+        if(!db.objectStoreNames.contains('match_history')){
+          var h = db.createObjectStore('match_history', { keyPath:'id' });
+          h.createIndex('byDate', 'date', { unique:false });
         }
       };
     });
@@ -5901,6 +6036,50 @@ var ArmpDB = (function(){
             else { resolve(out); }
           };
           req.onerror = function(){ resolve(out); };
+        });
+      });
+    },
+    // ── Match history (for trend analytics) ──────────────────────────
+    logMatchRun: function(summary){
+      // summary: { paymentCount, matchedCount, exceptionCount, totalAmount,
+      //           matchedAmount, matchRate, breakdown: {...}, customerSplit: [...] }
+      var now = new Date();
+      var record = Object.assign({
+        id: now.getTime(),
+        date: now.toISOString(),
+        dateLocal: now.toLocaleString()
+      }, summary || {});
+      return _tx('match_history','readwrite').then(function(store){
+        return new Promise(function(resolve, reject){
+          var req = store.put(record);
+          req.onsuccess = function(){ resolve(record); };
+          req.onerror = function(){ reject(req.error); };
+        });
+      });
+    },
+    listMatchHistory: function(limit){
+      limit = limit || 90;
+      return _tx('match_history','readonly').then(function(store){
+        return new Promise(function(resolve){
+          var out = [];
+          // openCursor with prev direction so we get newest first
+          var idx = store.index('byDate');
+          var req = idx.openCursor(null, 'prev');
+          req.onsuccess = function(e){
+            var c = e.target.result;
+            if(c && out.length < limit){ out.push(c.value); c.continue(); }
+            else { resolve(out.reverse()); } // chronological for charts
+          };
+          req.onerror = function(){ resolve(out); };
+        });
+      });
+    },
+    clearMatchHistory: function(){
+      return _tx('match_history','readwrite').then(function(store){
+        return new Promise(function(resolve, reject){
+          var req = store.clear();
+          req.onsuccess = function(){ resolve(true); };
+          req.onerror = function(){ reject(req.error); };
         });
       });
     },
@@ -6221,7 +6400,7 @@ function enrichOpenItemsWithDeliveryReport(){
 // Architecture:
 //   RemittanceParser.parse(rows, hdrs, fileName, opts) → normalized schema
 //   ParserLearningProfile  — localStorage per-customer learning store
-//   HORIBA_PARSER_PROFILE  — pilot customer document prefix classifier
+//   SAP_DOC_PARSER_PROFILE  — pilot customer document prefix classifier
 //
 // Normalized output schema per row:
 //   { custName, custAcct, paymentDate, paymentRef, bankRef,
@@ -6331,10 +6510,10 @@ function runTKFujikinValidation(){
   var badge  = document.getElementById('tk-val-status-badge');
   if(!panel||!body||!badge) return;
 
-  // Show for TK-Fujikin (supplierName=HORIBA) or any session with all four sources loaded
+  // Show for TK-Fujikin/SAP-supplier format or any session with all four sources loaded
   var _isTkF = REM_DETAIL && REM_DETAIL.length>0 &&
                REM_DETAIL[0] && REM_DETAIL[0].supplierName &&
-               String(REM_DETAIL[0].supplierName).toUpperCase().indexOf('HORIBA')>=0;
+               (REM_DETAIL[0].isSapSupplierFormat === true || REM_DETAIL[0].isHoriba === true);
   if(!_isTkF && !(REM_DETAIL&&REM_DETAIL.length>0&&PAY&&PAY.length>0&&DELIV&&DELIV.length>0)) return;
   panel.style.display='';
   badge.textContent='Validating…';
@@ -6430,7 +6609,7 @@ function runTKFujikinValidation(){
           });
         }
 
-        // PASS B: DHL from notes field (pure 10-digit numeric, not HORIBA doc prefix)
+        // PASS B: DHL from notes field (pure 10-digit numeric, not SAP doc prefix)
         if(_notesNorm && /^\d{10}$/.test(_notesNorm) && !/^(510|710|210|310|410)\d{7}$/.test(_notesNorm)){
           var _dhlArr = window._TRK_BRIDGE ? (window._TRK_BRIDGE.get(_notesNorm)||[]) : [];
           _dhlArr.forEach(function(dr){
@@ -6809,12 +6988,13 @@ var RM_FIELD_MAPS = {
 };
 
 // ════════════════════════════════════════════════════════════════════════════
-// HORIBA PILOT CUSTOMER — document number prefix classifier
+// SAP DOCUMENT NUMBER PREFIX CLASSIFIER
+// Standard SAP convention used across all SAP shops (not customer-specific):
 // Invoice: 510xxxxxxx | Sales Order: 210xxxxxxx | Delivery: 710xxxxxxx
 // Credit Memo: 310xxxxxxx | Debit Memo: 410xxxxxxx
 // ════════════════════════════════════════════════════════════════════════════
-var HORIBA_PARSER_PROFILE = {
-  custMatch: ['HORIBA','HORIBA INSTRUMENTS','HII','TK-FUJIKIN','TK FUJIKIN','FUJIKIN'],
+var SAP_DOC_PARSER_PROFILE = {
+  custMatch: ['TK-FUJIKIN','TK FUJIKIN','FUJIKIN'],
   docPrefixes: {
     '510': 'invNo',
     '210': 'soNo',
@@ -6824,11 +7004,13 @@ var HORIBA_PARSER_PROFILE = {
   },
   strPrefixes: {            // string (non-numeric) prefix rules
     '1Z':  'trkNo',         // UPS tracking numbers
-    'SS':  'poNo'           // Shipment/PO references like SS260312-DS1(TK-F)
+    'SS':  'poNo'           // Shipment/PO references
   },
   docLength: 10,
   confidence: 0.92
 };
+// Backward-compat alias (do not remove until all references migrated)
+/* SAP_DOC_PARSER_PROFILE was renamed to SAP_DOC_PARSER_PROFILE — see below */
 
 // ── Smart prefix detector helper functions ────────────────────────────────
 // All use lightweight regex — no repeated full-row scans.
@@ -6874,7 +7056,7 @@ function detectDHLTracking(val){
   // "3/12/2026 DHL 5213011672" or "DHL 5213011672" or embedded DHL ref in memo
   var m=s.match(/(?:DHL\s+)(\d{7,12})/i);
   if(m) return m[1];
-  // Pure 10-digit numeric that is NOT a HORIBA doc prefix (510/710/210/310/410)
+  // Pure 10-digit numeric that is NOT a SAP doc prefix (510/710/210/310/410)
   // and appears in a BOL/logistics context (passed via detectLogisticsReference)
   return '';
 }
@@ -6916,7 +7098,7 @@ function _classifyDocRef(val, prefixMap){
   // Numeric prefix checks
   var s = raw.replace(/[^0-9]/g,'');
   if(s.length < 6) return null;
-  var candidates = prefixMap || HORIBA_PARSER_PROFILE.docPrefixes;
+  var candidates = prefixMap || SAP_DOC_PARSER_PROFILE.docPrefixes;
   for(var prefix in candidates){
     if(s.indexOf(prefix)===0 && s.length >= 9){
       return { field: candidates[prefix], value: s, confidence: 0.9, method: 'prefix:'+prefix };
@@ -6927,11 +7109,13 @@ function _classifyDocRef(val, prefixMap){
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// TK-FUJIKIN / HORIBA HARDCODED REMITTANCE PROFILE
+// TK-FUJIKIN HARDCODED REMITTANCE PROFILE
 // When exact TK-Fujikin headers are detected (Supplier|Date|INV DATE|INV No.|Remarks|Amount)
 // this profile bypasses confidence scoring and forces 100% confidence.
-// Column D ("INV No.") may contain: SS refs (→ poNo), 510-prefix (→ invNo), 710-prefix (→ delNo)
-// Column E ("Remarks") may contain: 1Z tracking (→ trkNo) or 10-digit refs
+// Column A is the SUPPLIER name (their supplier — discovered dynamically from
+// the data, not hardcoded). Column D ("INV No.") may contain: SS refs (→ poNo),
+// 510-prefix (→ invNo), 710-prefix (→ delNo). Column E ("Remarks") may contain:
+// 1Z tracking (→ trkNo) or 10-digit refs.
 // ════════════════════════════════════════════════════════════════════════════
 var TKFUJIKIN_REM_PROFILE = {
   // Exact header pattern from real file (normalized)
@@ -6939,8 +7123,8 @@ var TKFUJIKIN_REM_PROFILE = {
   // Fixed column map indices (0-based)
   colMap: { custName:0, paymentDate:1, invDate:2, invNo:3, trkNo:4, amt:5 },
   confidence: 1.0,  // 100%
-  isHoriba: true,
-  custName: 'HORIBA Instruments, Inc.'
+  isSapSupplierFormat: true,
+  isHoriba: true  // backward-compat — downstream code references this flag
 };
 
 // Check if rows match the TK-Fujikin remittance header signature
@@ -7086,10 +7270,10 @@ var RemittanceParser = (function(){
     custNames.forEach(function(n){ freq[n]=(freq[n]||0)+1; });
     var topCust = Object.keys(freq).sort(function(a,b){return freq[b]-freq[a];})[0] || '';
 
-    // Check HORIBA profile match
+    // Check SAP supplier profile match
     var isHoriba = false;
     if(topCust){
-      HORIBA_PARSER_PROFILE.custMatch.forEach(function(m){
+      SAP_DOC_PARSER_PROFILE.custMatch.forEach(function(m){
         if(topCust.toUpperCase().indexOf(m)>=0) isHoriba=true;
       });
     }
@@ -7119,7 +7303,7 @@ var RemittanceParser = (function(){
     var invDate   = _fmtRdDate(_get('invDate'));
     var confidence= 0.5;
 
-    // ── HORIBA/TK-Fujikin per-cell prefix classification ─────────────────
+    // ── TK-Fujikin/SAP-supplier per-cell prefix classification ─────────────────
     // Run over every cell — lightweight regex, not a full rescan.
     // TK-Fujikin specifics:
     //   Col D ("INV No."): may contain SS260312-DS1(TK-F) → poNo,
@@ -7148,7 +7332,7 @@ var RemittanceParser = (function(){
         if(digits.length>=9){
           // Handle comma-separated like "5105165526, 28" → extract first 10-digit number
           var digFirst=digits.slice(0,10);
-          var cls=_classifyDocRef(digFirst, HORIBA_PARSER_PROFILE.docPrefixes);
+          var cls=_classifyDocRef(digFirst, SAP_DOC_PARSER_PROFILE.docPrefixes);
           if(cls&&cls.field!=='unclassified'){
             if(cls.field==='invNo'&&!invNo){ invNo=cls.value; confidence=Math.max(confidence,cls.confidence); }
             else if(cls.field==='soNo'&&!soNo){ soNo=cls.value; confidence=Math.max(confidence,cls.confidence); }
@@ -7214,7 +7398,7 @@ var RemittanceParser = (function(){
     var hdr = _findHeaderRow(rows);
     var dataRows = rows.slice(hdr.headerIdx+1);
 
-    // ── PRIORITY: Check for TK-Fujikin/HORIBA exact header format ────────────
+    // ── PRIORITY: Check for TK-Fujikin/SAP-supplier exact header format ────────────
     // Must run BEFORE profile lookup — bypasses any bad saved profiles.
     if(_isTkFujikinRemittance(hdr.rawHdrs)){
       return _parseTkFujikinRemittance(dataRows, hdr, fileName);
@@ -7294,7 +7478,7 @@ var RemittanceParser = (function(){
   // Col F: Amount → amt
   function _parseTkFujikinRemittance(dataRows, hdr, fileName){
     var lines = [];
-    var supplierFwd = '';  // Col A = Supplier (HORIBA) — NOT the customer/payer
+    var supplierFwd = '';  // Col A = Supplier — NOT the customer/payer
     var dateFwd = '';
     var totalAmt = 0;
 
@@ -7318,7 +7502,7 @@ var RemittanceParser = (function(){
       var colAstr = String(r[0]||'').trim();
       if(colAstr && colAstr.toLowerCase() === 'supplier') return;
 
-      // Col A = Supplier Name (HORIBA) — cascade for display only
+      // Col A = Supplier Name — cascade for display only
       if(colAstr && colAstr.length > 1) supplierFwd = colAstr;
 
       // Cascade payment date (col B)
@@ -7359,9 +7543,9 @@ var RemittanceParser = (function(){
 
       lines.push({
         // custName = the PAYER (TK-FUJIKIN CORPORATION), resolved from DELIV or PAY
-        // supplierName = col A (HORIBA Instruments, Inc.) — stored separately
+        // supplierName = col A (the SAP supplier) — stored separately
         custName:    resolvedCustName,  // TK-FUJIKIN CORPORATION (to be resolved)
-        supplierName:supplierFwd,       // HORIBA Instruments, Inc.
+        supplierName:supplierFwd,       // the SAP supplier
         custAcct:    '',
         paymentDate: dateFwd,
         invDate:     invDate,
@@ -7405,8 +7589,8 @@ var RemittanceParser = (function(){
       mappingMeta:   mappingMeta,
       headerRow:     hdr.rawHdrs,
       headerIdx:     hdr.headerIdx,
-      custName:      resolvedCustName || '',   // TK-FUJIKIN (payer), not HORIBA (supplier)
-      supplierName:  supplierFwd,              // HORIBA Instruments, Inc.
+      custName:      resolvedCustName || '',   // TK-FUJIKIN (payer), not the SAP supplier
+      supplierName:  supplierFwd,              // the SAP supplier
       isHoriba:      true,
       totalAmt:      totalAmt,
       lineSum:       lineSum,
@@ -7457,7 +7641,7 @@ function _showMappingReview(parsed, rawHdrs, fileName, matchedBankTotal){
       '</div>'
     : '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);margin-bottom:10px;font-size:12px">'+
         '<span>📋</span><div>No saved profile for <strong>'+_escapeHtml(custName)+'</strong>. Confirm mapping to build one.'+
-        (parsed.isHoriba?' <strong style="color:var(--p)">🏭 HORIBA prefix rules applied.</strong>':'')+
+        (parsed.isHoriba?' <strong style="color:var(--p)">🏭 SAP supplier prefix rules applied.</strong>':'')+
         '</div></div>';
 
   // ── Timing metrics ──────────────────────────────────────────────────────
@@ -7518,7 +7702,7 @@ function _showMappingReview(parsed, rawHdrs, fileName, matchedBankTotal){
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:8px 12px;background:var(--surface2);border-radius:8px">'+
       '<div style="font-size:12px;color:var(--t2)">'+
         '<strong>'+_escapeHtml(fileName||'File')+'</strong> · <strong>'+parsed.lines.length+'</strong> data lines · $'+$f(parsed.totalAmt)+' · Customer: <strong>'+_escapeHtml(custName)+'</strong>'+
-        (parsed.isHoriba?' 🏭 <span style="color:var(--p);font-weight:700">HORIBA</span>':'')+timingNote+
+        (parsed.isHoriba?' 🏭 <span style="color:var(--p);font-weight:700">SAP Supplier Format</span>':'')+timingNote+
       '</div>'+
       '<div style="margin-left:auto;font-size:12px;font-weight:700;color:'+confColor+'">'+confPct+'% confidence</div>'+
     '</div>'+
@@ -7710,7 +7894,7 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
     var _poCount  = lines.filter(function(l){return l.poNo;}).length;
     var _invCount = lines.filter(function(l){return l.invNo;}).length;
     tkDiagHtml = '<div style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.06);border:1px solid rgba(20,168,216,.18);margin-bottom:10px;font-size:12px">'+
-      '<div><strong style="color:var(--p)">🏭 HORIBA / TK-Fujikin Format</strong></div>'+
+      '<div><strong style="color:var(--p)">🏭 TK-Fujikin / SAP Supplier Format</strong></div>'+
       '<div style="margin-left:auto;display:flex;gap:14px;flex-wrap:wrap">'+
       '<span><strong style="color:var(--t2)">Customer / Payer:</strong> <strong>'+_escapeHtml(_custName)+'</strong></span>'+
       '<span><strong style="color:var(--t2)">Supplier:</strong> <strong>'+_escapeHtml(_supplierName)+'</strong></span>'+
@@ -14667,6 +14851,29 @@ var CustomerNormalizer = {
 function _normalizePayCustomers(){
   if(!PAY||!PAY.length) return;
   _ensureInvIndexes();
+  // ── Auto-load learned profiles ──────────────────────────────────────
+  // For each unique customer name in PAY, fetch their persisted profile
+  // (if any) from IndexedDB and surface it as p._learnedProfile so the UI
+  // can show "🧠 Profile loaded" badges. This makes ARMP visibly "remember"
+  // customers across sessions — a key differentiator vs HighRadius's
+  // opaque ML approach.
+  try {
+    if(ArmpDB && ArmpDB.available()){
+      var _uniqueCustomers = {};
+      PAY.forEach(function(p){ if(p.c && p.c.length > 2) _uniqueCustomers[p.c] = true; });
+      Object.keys(_uniqueCustomers).forEach(function(name){
+        ArmpDB.loadCustomerProfile(name).then(function(profile){
+          if(profile && profile.encounterCount > 0){
+            PAY.forEach(function(p){
+              if(p.c === name){ p._learnedProfile = profile; }
+            });
+            // Trigger UI refresh so the badge appears
+            try { if(typeof renderWsReview === 'function') renderWsReview(); } catch(e){}
+          }
+        }).catch(function(){});
+      });
+    }
+  } catch(e){ console.warn('[autoLoadProfile]', e); }
   PAY.forEach(function(p){
     // ── Case 1: Customer name exists — normalize it ───────────────────────
     if(p.c && p.c.length > 2){
@@ -14859,9 +15066,9 @@ async function runMatch(){
   autoMatchHasRun = true;
   workflowState.newDataSinceLastMatch = false;
 
-  // Fix 5: Readiness hints for HORIBA/TK-Fujikin workflow
+  // Fix 5: Readiness hints for TK-Fujikin/SAP-supplier workflow
   var _isTkFSess = REM_DETAIL&&REM_DETAIL.length>0&&REM_DETAIL[0]&&REM_DETAIL[0].supplierName&&
-                   String(REM_DETAIL[0].supplierName).toUpperCase().indexOf('HORIBA')>=0;
+                   (REM_DETAIL[0].isSapSupplierFormat === true || REM_DETAIL[0].isHoriba === true);
   if(_isTkFSess && (!DELIV||!DELIV.length||!REM_DETAIL||!REM_DETAIL.length)){
     toast('TK-Fujikin matching requires Remittance Details and Delivery Report for best results.','warn');
   } else if(!DELIV||!DELIV.length||!REM_DETAIL||!REM_DETAIL.length){
@@ -15060,7 +15267,7 @@ async function runMatch(){
       // Step 1: Link PAY to a REM_DETAIL line by bank ref or customer name.
       // For TK-Fujikin: PAY.c = "TK FUJIKIN CORPORATION" (payer from bank)
       //                 REM_DETAIL[i].custName = "TK-FUJIKIN CORPORATION" (from DELIV/resolved)
-      //                 REM_DETAIL[i].supplierName = "HORIBA Instruments, Inc." (from col A)
+      //                 REM_DETAIL[i].supplierName = "the SAP supplier" (from col A)
       // Match by custName first, then by supplierName as a known-supplier heuristic.
       var _rd=null;
       if(!_rd&&p.bankRef) _rd=_rdByRef2.get(p.bankRef)||null;
@@ -15076,15 +15283,15 @@ async function runMatch(){
                _rdn.replace(/[\s\-]/g,'').indexOf(_pUp.replace(/[\s\-]/g,'').slice(0,8))>=0) _rd=rd;
           }
         });
-        // Fallback: if remittance is TK-Fujikin format (custName empty or HORIBA supplier),
+        // Fallback: if remittance is TK-Fujikin format (custName empty or SAP supplier format),
         // link all remittance lines to this payment by recognizing the known supplier pattern
         if(!_rd && REM_DETAIL.length>0 && REM_DETAIL[0].supplierName){
-          // TK-Fujikin remittance: supplierName = HORIBA, custName = TK-FUJIKIN (payer)
+          // TK-Fujikin remittance: supplierName = SAP supplier, custName = TK-FUJIKIN (payer)
           // If PAY.c matches any known payer name that corresponds to this remittance, link them
           var _isTkFPay = _pUp.indexOf('FUJIKIN')>=0 || _pUp.indexOf('TK')>=0;
-          var _isTkFRem = REM_DETAIL[0].supplierName && String(REM_DETAIL[0].supplierName).toUpperCase().indexOf('HORIBA')>=0;
+          var _isTkFRem = REM_DETAIL[0].supplierName && (REM_DETAIL[0].isSapSupplierFormat === true || REM_DETAIL[0].isHoriba === true);
           if(_isTkFPay && _isTkFRem){
-            // This payment is TK-Fujikin paying HORIBA — link to all remittance lines
+            // This payment is TK-Fujikin paying the SAP supplier — link to all remittance lines
             _rd = REM_DETAIL[0]; // start with first; all lines apply to this payment
             // Also resolve custName on all lines if not yet set
             REM_DETAIL.forEach(function(rd){
@@ -15797,6 +16004,94 @@ async function runMatch(){
     try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
     if(typeof renderWsExcPremium==='function')renderWsExcPremium();
     if(typeof renderWsReview==='function')renderWsReview();
+
+    // ── Persist match-run summary to history (for trend dashboard) ──
+    // and update customer profiles based on what we observed in this run.
+    // Fire-and-forget; UI doesn't block on these writes.
+    try {
+      if(ArmpDB && ArmpDB.available()){
+        var _autoCt = RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact';}).length;
+        var _partCt = RES.filter(function(r){return r.st==='Partial';}).length;
+        var _coaCt  = EXC.filter(function(e){return e.type==='Cash on Account';}).length;
+        var _spCt   = EXC.filter(function(e){return e.type==='Short pay';}).length;
+        var _totalPaid = PAY.reduce(function(s,p){return s+(p.amt||0);},0);
+        var _totalMatched = RES.reduce(function(s,r){return s+(r.pd||0);},0);
+        var _bridgeMatched = RES.filter(function(r){return r.scenario==='DELIVERY_BRIDGE';}).length;
+        var _rate = _totalPaid > 0 ? (_totalMatched / _totalPaid * 100) : 0;
+        ArmpDB.logMatchRun({
+          paymentCount:    PAY.length,
+          matchedCount:    _autoCt + _partCt,
+          partialCount:    _partCt,
+          bridgeCount:     _bridgeMatched,
+          exceptionCount:  EXC.length,
+          coaCount:        _coaCt,
+          shortPayCount:   _spCt,
+          totalAmount:     _totalPaid,
+          matchedAmount:   _totalMatched,
+          matchRate:       Math.round(_rate * 10) / 10,
+          breakdown: {
+            exact:        RES.filter(function(r){return r.st==='Exact';}).length,
+            subsetExact:  RES.filter(function(r){return r.st==='Subset exact';}).length,
+            partial:      _partCt,
+            cashOnAccount:_coaCt,
+            shortPay:     _spCt
+          }
+        }).catch(function(e){ console.warn('[logMatchRun]', e); });
+
+        // Customer learning: for each unique customer in this match, observe
+        // and persist what we learned (PO formats, account family, typical
+        // amounts, encounter count). ARMP "remembers" the customer next time.
+        var _custObservations = {}; // name → observations
+        PAY.forEach(function(p){
+          if(!p.c) return;
+          var k = p.c;
+          if(!_custObservations[k]){
+            _custObservations[k] = {
+              name: k,
+              accounts: new Set(),
+              poFormats: new Set(),
+              amounts: [],
+              paymentDates: [],
+              hasERS: false,
+              hasVMI: false,
+              hasDelivery: false
+            };
+          }
+          var obs = _custObservations[k];
+          if(p.a) obs.accounts.add(p.a);
+          obs.amounts.push(p.amt);
+          if(p.dt) obs.paymentDates.push(p.dt);
+          if(p.hasERS) obs.hasERS = true;
+          if(p.hasVMI) obs.hasVMI = true;
+          if(p.hasDelivery) obs.hasDelivery = true;
+        });
+        // Observe PO formats from RES entries grouped by customer
+        RES.forEach(function(r){
+          if(!r.c || !_custObservations[r.c] || !r.po) return;
+          var poFmt = String(r.po).replace(/\d/g,'#').substr(0, 20);
+          _custObservations[r.c].poFormats.add(poFmt);
+        });
+        // Persist each customer profile (merge with prior observations)
+        Object.keys(_custObservations).forEach(function(name){
+          var obs = _custObservations[name];
+          ArmpDB.saveCustomerProfile({
+            name: name,
+            accounts: Array.from(obs.accounts),
+            observedPOFormats: Array.from(obs.poFormats).slice(0, 10),
+            avgPaymentAmount: obs.amounts.length ? (obs.amounts.reduce(function(s,a){return s+a;},0) / obs.amounts.length) : 0,
+            maxPaymentAmount: obs.amounts.length ? Math.max.apply(null, obs.amounts) : 0,
+            recentPaymentCount: obs.amounts.length,
+            paymentTypes: {
+              hasERS: obs.hasERS,
+              hasVMI: obs.hasVMI,
+              hasDelivery: obs.hasDelivery
+            }
+          }).catch(function(e){ console.warn('[saveCustomerProfile]', name, e); });
+        });
+      }
+    } catch(e){ console.warn('[match history + learning]', e); }
+    // ─────────────────────────────────────────────────────────────────
+
     try{if(typeof sp==='function'){sp('cash-app');}}catch(e){}
     setTimeout(function(){
       try{
@@ -16336,7 +16631,7 @@ function parseYayPayExcel(wb){
     if(typeof cfgIsInternalTransfer==='function'&&cfgIsInternalTransfer(rawDetail))continue;
     if(typeof cfgIsTaxPayment==='function'&&cfgIsTaxPayment(rawDetail))continue;
     var upperDetail=rawDetail.toUpperCase();
-    if(upperDetail.includes('POOLING(ZERO BALANCE)')||upperDetail.includes('REVERSE SWEEPING')||upperDetail.includes('HORIBA AMERICAS HOLDING')||upperDetail.includes('MULTINETTING')||upperDetail.includes('BOOK TRANSFER'))continue;
+    if(upperDetail.includes('POOLING(ZERO BALANCE)')||upperDetail.includes('REVERSE SWEEPING')||upperDetail.includes('MULTINETTING')||upperDetail.includes('BOOK TRANSFER'))continue;
     var postDate=iPostDate>=0?_yyDate(row[iPostDate]):'';
     var ccy=iCurrency>=0?String(row[iCurrency]||'USD').trim():'USD';
     var custRef=iCustRef>=0?String(row[iCustRef]||'').trim():'';
@@ -16445,7 +16740,7 @@ function parseCAMT(txt){
 var _bankReAmt   = /\$?\s*([\d,]+\.\d{2})/;
 var _bankReDate  = /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/;
 var _bankReRef   = /[A-Z0-9]{2,}[0-9]{4,}/;
-var _bankReInv   = /5[01]\d{8}/;          // 510/510xxxxxxx HORIBA invoice
+var _bankReInv   = /5[01]\d{8}/;          // 510/510xxxxxxx SAP invoice
 var _bankReSO    = /2[01]\d{8}/;          // 210xxxxxxx sales order
 var _bankReDel   = /7[01]\d{8}/;          // 710xxxxxxx delivery
 var _bankReCM    = /3[01]\d{8}/;          // 310xxxxxxx credit memo
@@ -19192,6 +19487,646 @@ function updateCfoSummary(){
 }
 
 function updateCfoSummaryClean(){ updateCfoSummary(); }
+
+// ────────────────────────────────────────────────────────────────────────
+// Trends Dashboard — renders historical match performance from ArmpDB
+// ────────────────────────────────────────────────────────────────────────
+// Reads ArmpDB.listMatchHistory() (auto-logged after every Auto Match run)
+// and renders three SVG charts:
+//   1. Match Rate Trend (line chart, last N runs)
+//   2. Exception Mix (donut, latest run)
+//   3. Customer Profiles (top customers by encounter count, learned patterns)
+// No external chart libs — hand-rolled SVG for zero dependencies.
+function renderTrendsDashboard(){
+  try {
+    if(!ArmpDB || !ArmpDB.available()) return;
+    var rangeEl = document.getElementById('cfo-trends-range');
+    var limit = rangeEl ? parseInt(rangeEl.value, 10) : 30;
+    Promise.all([
+      ArmpDB.listMatchHistory(limit),
+      ArmpDB.listCustomerProfiles()
+    ]).then(function(results){
+      var history = results[0] || [];
+      var profiles = results[1] || [];
+      var section = document.getElementById('cfo-trends-section');
+      if(!section) return;
+      if(history.length === 0){
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = 'block';
+      // Meta line
+      var meta = document.getElementById('cfo-trends-meta');
+      if(meta){
+        var earliest = history[0] ? new Date(history[0].date) : null;
+        var latest = history[history.length-1] ? new Date(history[history.length-1].date) : null;
+        var rangeStr = '';
+        if(earliest && latest){
+          if(earliest.toDateString() === latest.toDateString()){
+            rangeStr = 'today';
+          } else {
+            rangeStr = earliest.toLocaleDateString() + ' – ' + latest.toLocaleDateString();
+          }
+        }
+        meta.textContent = history.length + ' Auto Match run' + (history.length===1?'':'s') + ' · ' + rangeStr;
+      }
+      // 1. Match rate trend chart
+      _renderMatchRateChart(history);
+      // 2. Exception mix donut (latest run)
+      _renderExceptionMix(history[history.length-1]);
+      // 3. Customer profiles list
+      _renderCustomerProfilesPanel(profiles);
+    }).catch(function(e){ console.warn('[renderTrendsDashboard]', e); });
+  } catch(e){ console.warn('[renderTrendsDashboard]', e); }
+}
+
+function _renderMatchRateChart(history){
+  var el = document.getElementById('cfo-trend-chart-match');
+  var statsEl = document.getElementById('cfo-trend-stats');
+  if(!el) return;
+  if(history.length === 0){ el.innerHTML = '<div style="color:var(--t3);padding:40px;text-align:center;font-size:12px">No history yet — run Auto Match to see trends</div>'; return; }
+  var W = 540, H = 160, PAD_L = 30, PAD_R = 20, PAD_T = 14, PAD_B = 26;
+  var IW = W - PAD_L - PAD_R, IH = H - PAD_T - PAD_B;
+  var rates = history.map(function(h){ return Math.max(0, Math.min(100, h.matchRate||0)); });
+  var pts = rates.map(function(r, i){
+    var x = PAD_L + (history.length === 1 ? IW/2 : (i / (history.length - 1)) * IW);
+    var y = PAD_T + (1 - r/100) * IH;
+    return { x:x, y:y, r:r, run:history[i] };
+  });
+  // Compute stats
+  var avg = rates.reduce(function(s,r){return s+r;},0) / rates.length;
+  var latestRate = rates[rates.length-1];
+  var prevRate = rates.length > 1 ? rates[rates.length-2] : latestRate;
+  var trend = latestRate - prevRate;
+  // Build SVG
+  var gridY = [25,50,75,100];
+  var gridLines = gridY.map(function(g){
+    var y = PAD_T + (1 - g/100) * IH;
+    return '<line x1="'+PAD_L+'" y1="'+y+'" x2="'+(W-PAD_R)+'" y2="'+y+'" stroke="rgba(148,163,184,.15)" stroke-width="1"/>' +
+           '<text x="'+(PAD_L-6)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="rgba(148,163,184,.7)" font-family="var(--mono)">'+g+'%</text>';
+  }).join('');
+  var pathD = 'M ' + pts.map(function(p){return p.x+' '+p.y;}).join(' L ');
+  var areaD = pathD + ' L '+pts[pts.length-1].x+' '+(PAD_T+IH)+' L '+pts[0].x+' '+(PAD_T+IH)+' Z';
+  var dotsHtml = pts.map(function(p, i){
+    var c = p.r >= 90 ? 'var(--g-t)' : p.r >= 70 ? 'var(--am-t)' : 'var(--r-t)';
+    return '<circle cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="'+c+'" stroke="var(--surface)" stroke-width="1.5"><title>Run '+(i+1)+': '+p.r.toFixed(1)+'%</title></circle>';
+  }).join('');
+  el.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">'+
+    '<defs><linearGradient id="mrGrad" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="rgba(99,102,241,.35)"/><stop offset="100%" stop-color="rgba(99,102,241,0)"/>'+
+    '</linearGradient></defs>'+
+    gridLines +
+    '<path d="'+areaD+'" fill="url(#mrGrad)"/>'+
+    '<path d="'+pathD+'" fill="none" stroke="var(--p)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+    dotsHtml +
+    '</svg>';
+  if(statsEl){
+    var trendArrow = Math.abs(trend) < 0.1 ? '→' : trend > 0 ? '↑' : '↓';
+    var trendColor = Math.abs(trend) < 0.1 ? 'var(--t3)' : trend > 0 ? 'var(--g-t)' : 'var(--r-t)';
+    statsEl.innerHTML =
+      '<span><strong style="color:var(--t1)">Latest:</strong> '+latestRate.toFixed(1)+'%</span>'+
+      '<span><strong style="color:var(--t1)">Average:</strong> '+avg.toFixed(1)+'%</span>'+
+      '<span style="color:'+trendColor+'">'+trendArrow+' '+(trend>=0?'+':'')+trend.toFixed(1)+'% vs previous</span>';
+  }
+}
+
+function _renderExceptionMix(latestRun){
+  var el = document.getElementById('cfo-trend-chart-exc');
+  if(!el) return;
+  if(!latestRun){ el.innerHTML = '<div style="color:var(--t3);padding:40px;text-align:center;font-size:12px">No history yet</div>'; return; }
+  var bd = latestRun.breakdown || {};
+  var segments = [
+    { label:'Exact match',       value:bd.exact||0,         color:'var(--g)' },
+    { label:'Subset exact',      value:bd.subsetExact||0,   color:'var(--p)' },
+    { label:'Partial pay',       value:bd.partial||0,       color:'var(--am)' },
+    { label:'Cash on Account',   value:bd.cashOnAccount||0, color:'var(--cy)' },
+    { label:'Short pay',         value:bd.shortPay||0,      color:'var(--r)' }
+  ].filter(function(s){ return s.value > 0; });
+  var total = segments.reduce(function(s,seg){return s+seg.value;},0);
+  if(total === 0){
+    el.innerHTML = '<div style="color:var(--t3);padding:30px;text-align:center;font-size:12px">No items in last run</div>';
+    return;
+  }
+  // SVG donut
+  var cx = 80, cy = 80, r = 56, rin = 38, circ = 2 * Math.PI * r;
+  var cumulative = 0;
+  var arcs = segments.map(function(seg){
+    var frac = seg.value / total;
+    var offset = circ * cumulative;
+    var len = circ * frac;
+    cumulative += frac;
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.color+'" stroke-width="'+(r - rin)+'" stroke-dasharray="'+len+' '+(circ - len)+'" stroke-dashoffset="-'+offset+'" transform="rotate(-90 '+cx+' '+cy+')" opacity=".85"><title>'+seg.label+': '+seg.value+'</title></circle>';
+  }).join('');
+  var legend = segments.map(function(seg){
+    var pct = (seg.value / total * 100).toFixed(0);
+    return '<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;margin-bottom:5px">'+
+      '<span style="width:9px;height:9px;border-radius:2px;background:'+seg.color+';flex-shrink:0"></span>'+
+      '<span style="color:var(--t2);flex:1">'+seg.label+'</span>'+
+      '<span style="color:var(--t1);font-weight:700;font-family:var(--mono)">'+seg.value+' <span style="color:var(--t3)">('+pct+'%)</span></span>'+
+    '</div>';
+  }).join('');
+  el.innerHTML = '<div style="display:flex;gap:18px;align-items:center">'+
+    '<svg viewBox="0 0 160 160" style="width:120px;height:120px;flex-shrink:0">'+
+      arcs+
+      '<text x="'+cx+'" y="'+(cy-4)+'" text-anchor="middle" font-size="22" font-weight="800" fill="var(--t1)" font-family="var(--mono)">'+total+'</text>'+
+      '<text x="'+cx+'" y="'+(cy+14)+'" text-anchor="middle" font-size="9" fill="var(--t3)" letter-spacing="1">ITEMS</text>'+
+    '</svg>'+
+    '<div style="flex:1;min-width:0">'+legend+'</div>'+
+  '</div>';
+}
+
+function _renderCustomerProfilesPanel(profiles){
+  var el = document.getElementById('cfo-cust-profiles');
+  if(!el) return;
+  if(!profiles || profiles.length === 0){
+    el.innerHTML = '<div style="color:var(--t3);padding:18px;text-align:center;font-size:12px">No customer profiles learned yet — they build up automatically as ARMP processes payments from each customer</div>';
+    return;
+  }
+  // Sort by encounter count (most-seen first)
+  var sorted = profiles.slice().sort(function(a,b){ return (b.encounterCount||0) - (a.encounterCount||0); });
+  var top = sorted.slice(0, 8);
+  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">'+
+    top.map(function(p){
+      var pt = p.paymentTypes || {};
+      var badges = [];
+      if(pt.hasERS) badges.push('<span style="background:rgba(99,102,241,.12);color:var(--p);font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px">ERS</span>');
+      if(pt.hasVMI) badges.push('<span style="background:rgba(6,182,212,.12);color:var(--cy-t);font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px">VMI</span>');
+      if(pt.hasDelivery) badges.push('<span style="background:rgba(18,184,134,.12);color:var(--g-t);font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px">Delivery</span>');
+      var acctList = (p.accounts||[]).slice(0,3).join(', ') + ((p.accounts||[]).length > 3 ? '…' : '');
+      var avgAmt = p.avgPaymentAmount || 0;
+      return '<div style="background:var(--surface2);border:1px solid var(--bdr);border-radius:10px;padding:12px">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+          '<span style="font-size:13.5px;font-weight:700;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_escapeHtml(p.name||'Unknown')+'</span>'+
+          '<span style="font-size:10px;color:var(--t3);font-family:var(--mono)">'+(p.encounterCount||1)+'×</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--t3);margin-bottom:6px">Accounts: <span style="color:var(--t2);font-family:var(--mono)">'+(_escapeHtml(acctList)||'—')+'</span></div>'+
+        (avgAmt > 0 ? '<div style="font-size:11px;color:var(--t3);margin-bottom:6px">Avg payment: <span style="color:var(--t2);font-family:var(--mono)">$'+$f(avgAmt)+'</span></div>' : '')+
+        (badges.length ? '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">'+badges.join('')+'</div>' : '')+
+      '</div>';
+    }).join('')+
+  '</div>'+
+  (sorted.length > 8 ? '<div style="text-align:center;margin-top:14px;font-size:11px;color:var(--t3)">'+(sorted.length-8)+' more customer profiles learned</div>' : '');
+}
+
+function _clearMatchHistory(){
+  if(!confirm('Clear all persisted match history? Trend charts will reset.')) return;
+  ArmpDB.clearMatchHistory().then(function(){
+    if(typeof toast === 'function') toast('Match history cleared');
+    renderTrendsDashboard();
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Keyboard shortcuts — power-user navigation for AR clerks processing
+// many exceptions per session. Activates only on the Needs Attention tab.
+// ────────────────────────────────────────────────────────────────────────
+//   J / ↓      Next exception
+//   K / ↑      Previous exception
+//   A          Approve (open Apply modal pre-selected on the suggested action)
+//   X          Reject (mark as Rejected)
+//   E          Edit / Open Apply modal
+//   ?          Show shortcut help
+//   Esc        Close modal
+(function(){
+  var _kbSelectedIdx = 0; // index within currently-rendered EXC list
+
+  function _kbScrollIntoView(){
+    try {
+      var cards = document.querySelectorAll('#ws-exc-list .exc-card');
+      if(!cards || !cards.length) return;
+      cards.forEach(function(c, i){
+        c.classList.toggle('kb-selected', i === _kbSelectedIdx);
+      });
+      var sel = cards[_kbSelectedIdx];
+      if(sel) sel.scrollIntoView({ block:'nearest', behavior:'smooth' });
+    } catch(e){}
+  }
+  function _kbGetVisibleEXCs(){
+    // Match what renderWsExcPremium does — Open items only by default
+    var isResolved = (typeof WS_EXC_VIEW !== 'undefined' && WS_EXC_VIEW === 'resolved');
+    var items = EXC.filter(function(ex){
+      return isResolved ? (ex.s==='Resolved'||ex.s==='Resolved — rejected')
+                        : (ex.s!=='Resolved'&&ex.s!=='Resolved — rejected');
+    });
+    var tf = document.getElementById('ws-exc-type-filter');
+    if(tf && tf.value) items = items.filter(function(ex){return ex.type === tf.value;});
+    return items;
+  }
+  function _kbIsExceptionsTabActive(){
+    var tabPanel = document.querySelector('.ca-tab-panel.active');
+    if(!tabPanel) return false;
+    return tabPanel.id === 'ca-panel-exc' || tabPanel.querySelector('#ws-exc-list');
+  }
+  function _kbShowHelp(){
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999';
+    modal.innerHTML = '<div style="background:var(--surface);border:1px solid var(--bdr);border-radius:14px;padding:24px 28px;max-width:420px;box-shadow:var(--shadow-lg)">'+
+      '<div style="font-size:15px;font-weight:800;color:var(--t1);margin-bottom:14px">⌨️ Keyboard shortcuts</div>'+
+      '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:12.5px;color:var(--t2)">'+
+        '<kbd style="background:var(--surface2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--t1)">J</kbd><span>or <kbd style="font-family:var(--mono);font-size:11px">↓</kbd> — Next exception</span>'+
+        '<kbd style="background:var(--surface2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--t1)">K</kbd><span>or <kbd style="font-family:var(--mono);font-size:11px">↑</kbd> — Previous exception</span>'+
+        '<kbd style="background:var(--surface2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--t1)">A</kbd><span>Approve suggested action</span>'+
+        '<kbd style="background:var(--surface2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--t1)">X</kbd><span>Reject exception</span>'+
+        '<kbd style="background:var(--surface2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--t1)">E</kbd><span>Open / edit (Apply modal)</span>'+
+        '<kbd style="background:var(--surface2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--t1)">/</kbd><span>Focus filter</span>'+
+        '<kbd style="background:var(--surface2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--t1)">?</kbd><span>This help</span>'+
+        '<kbd style="background:var(--surface2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--t1)">Esc</kbd><span>Close modal / blur input</span>'+
+      '</div>'+
+      '<div style="text-align:right;margin-top:18px"><button class="btn btn-p btn-sm" onclick="this.closest(\'[style*=fixed]\').remove()">Got it</button></div>'+
+    '</div>';
+    modal.onclick = function(e){ if(e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+  }
+
+  document.addEventListener('keydown', function(e){
+    // Don't interfere with input focus
+    var tag = (e.target && e.target.tagName || '').toUpperCase();
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable){
+      if(e.key === 'Escape') e.target.blur();
+      return;
+    }
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+
+    // ? — Help (works anywhere)
+    if(e.key === '?'){ e.preventDefault(); _kbShowHelp(); return; }
+
+    // / — Focus filter
+    if(e.key === '/' && _kbIsExceptionsTabActive()){
+      e.preventDefault();
+      var tf = document.getElementById('ws-exc-type-filter');
+      if(tf) tf.focus();
+      return;
+    }
+
+    if(!_kbIsExceptionsTabActive()) return;
+
+    var items = _kbGetVisibleEXCs();
+    if(!items.length) return;
+
+    if(e.key === 'j' || e.key === 'ArrowDown'){
+      e.preventDefault();
+      _kbSelectedIdx = Math.min(_kbSelectedIdx + 1, items.length - 1);
+      _kbScrollIntoView();
+    } else if(e.key === 'k' || e.key === 'ArrowUp'){
+      e.preventDefault();
+      _kbSelectedIdx = Math.max(_kbSelectedIdx - 1, 0);
+      _kbScrollIntoView();
+    } else if(e.key === 'a' || e.key === 'A'){
+      e.preventDefault();
+      var ex = items[_kbSelectedIdx];
+      if(!ex) return;
+      try {
+        if(typeof openExcActionModal === 'function'){
+          var realIdx = EXC.indexOf(ex);
+          openExcActionModal(realIdx);
+        }
+      } catch(err){ console.warn('[kb:approve]', err); }
+    } else if(e.key === 'x' || e.key === 'X'){
+      e.preventDefault();
+      var ex = items[_kbSelectedIdx];
+      if(!ex) return;
+      ex.s = 'Resolved — rejected'; ex.dec = 'rejected';
+      if(typeof renderWsExcPremium === 'function') renderWsExcPremium();
+      if(typeof toast === 'function') toast('✗ Exception rejected');
+    } else if(e.key === 'e' || e.key === 'E'){
+      e.preventDefault();
+      var ex = items[_kbSelectedIdx];
+      if(!ex) return;
+      try {
+        if(typeof openExcActionModal === 'function'){
+          var realIdx = EXC.indexOf(ex);
+          openExcActionModal(realIdx);
+        }
+      } catch(err){}
+    }
+  });
+
+  // Re-apply selection highlight after each render
+  var _origRender = window.renderWsExcPremium;
+  if(typeof _origRender === 'function'){
+    window.renderWsExcPremium = function(){
+      var r = _origRender.apply(this, arguments);
+      setTimeout(_kbScrollIntoView, 20);
+      return r;
+    };
+  }
+})();
+
+// CSS for keyboard-selected card
+(function(){
+  var style = document.createElement('style');
+  style.textContent = '.exc-card.kb-selected { outline: 2px solid var(--p); outline-offset: -1px; box-shadow: 0 0 0 4px rgba(99,102,241,.15); }';
+  document.head.appendChild(style);
+})();
+
+// ────────────────────────────────────────────────────────────────────────
+// AI Remittance Parser — calls Claude API to extract structured remittance
+// from unstructured input (email text, PDF, scanned image). API key lives
+// in localStorage only; calls go directly browser → api.anthropic.com.
+// ────────────────────────────────────────────────────────────────────────
+var _AI_PARSE_RESULTS = null;
+var _AI_PARSE_PENDING_TEXT = '';
+
+function openAIRemittanceParser(){
+  var modal = document.getElementById('ai-parse-modal');
+  if(!modal) return;
+  _aiResetParser();
+  // Check if API key configured
+  var hasKey = !!_getAIKey();
+  document.getElementById('ai-parse-key-warn').style.display = hasKey ? 'none' : 'block';
+  modal.classList.add('open');
+}
+function closeAIRemittanceParser(){
+  var modal = document.getElementById('ai-parse-modal');
+  if(modal) modal.classList.remove('open');
+}
+function _aiResetParser(){
+  document.getElementById('ai-parse-step-input').style.display = 'block';
+  document.getElementById('ai-parse-step-loading').style.display = 'none';
+  document.getElementById('ai-parse-step-results').style.display = 'none';
+  document.getElementById('ai-parse-go-btn').style.display = '';
+  document.getElementById('ai-parse-apply-btn').style.display = 'none';
+  document.getElementById('ai-parse-input').value = '';
+  document.getElementById('ai-parse-file-name').textContent = '';
+  _AI_PARSE_RESULTS = null;
+  _AI_PARSE_PENDING_TEXT = '';
+}
+function _getAIKey(){ try { return localStorage.getItem('armp_anthropic_key') || ''; } catch(e){ return ''; } }
+function _showAIKeySetting(){
+  document.getElementById('ai-parse-key-area').style.display = 'block';
+  document.getElementById('ai-parse-key-warn').style.display = 'none';
+  var inp = document.getElementById('ai-key-input');
+  if(inp){ inp.value = _getAIKey(); inp.focus(); }
+}
+function _hideAIKeySetting(){ document.getElementById('ai-parse-key-area').style.display = 'none'; }
+function _saveAIKey(){
+  var k = document.getElementById('ai-key-input').value.trim();
+  if(!k){ alert('Enter your Anthropic API key (starts with sk-ant-)'); return; }
+  if(!/^sk-ant-/.test(k)){
+    if(!confirm('That doesn\'t look like an Anthropic API key (should start with sk-ant-). Save anyway?')) return;
+  }
+  try { localStorage.setItem('armp_anthropic_key', k); } catch(e){ alert('Could not save key: ' + e.message); return; }
+  _hideAIKeySetting();
+  document.getElementById('ai-parse-key-warn').style.display = 'none';
+  if(typeof toast === 'function') toast('✓ API key saved locally');
+}
+
+function _aiHandleFile(ev){
+  var file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  document.getElementById('ai-parse-file-name').textContent = file.name;
+  // Read text content. PDF → use PDF.js if available; image → pass-through to Claude vision
+  if(file.type === 'application/pdf'){
+    _aiReadPdfText(file).then(function(text){
+      document.getElementById('ai-parse-input').value = text;
+      _AI_PARSE_PENDING_TEXT = text;
+    }).catch(function(e){
+      alert('Could not extract text from PDF: ' + e.message + '\n\nTry copying the text manually into the textarea above.');
+    });
+  } else if(file.type.startsWith('image/')){
+    // Store as base64 for vision API
+    var reader = new FileReader();
+    reader.onload = function(){
+      _AI_PARSE_PENDING_TEXT = '[Image: ' + file.name + ']';
+      document.getElementById('ai-parse-input').value = '[Image attached — will be sent to Claude Vision: ' + file.name + ']';
+      _AI_PARSE_PENDING_IMAGE = { dataUrl: reader.result, mediaType: file.type };
+    };
+    reader.readAsDataURL(file);
+  } else {
+    var reader = new FileReader();
+    reader.onload = function(){
+      document.getElementById('ai-parse-input').value = reader.result;
+      _AI_PARSE_PENDING_TEXT = reader.result;
+    };
+    reader.readAsText(file);
+  }
+}
+var _AI_PARSE_PENDING_IMAGE = null;
+
+function _aiReadPdfText(file){
+  // Use existing pdf.js if loaded, else load it
+  return new Promise(function(resolve, reject){
+    var go = function(){
+      var reader = new FileReader();
+      reader.onload = function(){
+        try {
+          window.pdfjsLib.getDocument({ data: reader.result }).promise.then(function(pdf){
+            var pages = [];
+            var promises = [];
+            for(var p=1; p<=pdf.numPages; p++){
+              (function(pageNum){
+                promises.push(pdf.getPage(pageNum).then(function(page){
+                  return page.getTextContent().then(function(c){
+                    pages[pageNum-1] = c.items.map(function(it){return it.str;}).join(' ');
+                  });
+                }));
+              })(p);
+            }
+            Promise.all(promises).then(function(){ resolve(pages.join('\n\n')); }).catch(reject);
+          }).catch(reject);
+        } catch(e){ reject(e); }
+      };
+      reader.onerror = function(){ reject(reader.error); };
+      reader.readAsArrayBuffer(file);
+    };
+    if(window.pdfjsLib){ go(); return; }
+    // Lazy-load PDF.js from CDN
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = function(){
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      go();
+    };
+    s.onerror = function(){ reject(new Error('Could not load PDF.js library')); };
+    document.head.appendChild(s);
+  });
+}
+
+function _aiParseRemittance(){
+  var text = document.getElementById('ai-parse-input').value.trim();
+  if(!text && !_AI_PARSE_PENDING_IMAGE){
+    alert('Paste some remittance text or upload a file first');
+    return;
+  }
+  var key = _getAIKey();
+  if(!key){ _showAIKeySetting(); return; }
+
+  document.getElementById('ai-parse-step-input').style.display = 'none';
+  document.getElementById('ai-parse-step-loading').style.display = 'block';
+  document.getElementById('ai-parse-go-btn').style.display = 'none';
+
+  var systemPrompt =
+    "You extract structured remittance lines from unstructured customer payment communications (emails, attachments, vendor portal text). " +
+    "Return a JSON object with this exact schema:\n" +
+    "{\n" +
+    '  "customer": "string (payer name if mentioned)",\n' +
+    '  "paymentTotal": number (total payment amount if stated, else 0),\n' +
+    '  "paymentRef": "string (wire/ACH reference if mentioned)",\n' +
+    '  "paymentDate": "YYYY-MM-DD or empty",\n' +
+    '  "lines": [\n' +
+    '    {\n' +
+    '      "invoiceNo": "string (invoice number, empty if not specified)",\n' +
+    '      "poNo": "string (PO number, empty if not specified)",\n' +
+    '      "salesOrder": "string (sales order number, empty if not specified)",\n' +
+    '      "amount": number (line amount applied, REQUIRED),\n' +
+    '      "shortPay": number (deduction amount if any, else 0),\n' +
+    '      "notes": "string (any reason or comment, e.g. \'short pay for damaged goods\')"\n' +
+    '    }\n' +
+    '  ]\n' +
+    "}\n\n" +
+    "Rules:\n" +
+    "- Output ONLY the JSON object, no other text, no markdown fences.\n" +
+    "- Every line MUST have an amount. Lines without amounts should be omitted.\n" +
+    "- Don't invent data. Use empty string for unknown fields.\n" +
+    "- Recognize common AR terminology: 'short pay', 'discount', 'deduction', 'partial', 'COA', 'Cash on Account'.\n" +
+    "- Customer-PO references like '4521xxxxx' (10 digits) are PO numbers; '5105xxxxxx' (10 digits) and '510xxxxxxx' are typically invoice numbers in SAP shops.";
+
+  var userContent = [];
+  if(_AI_PARSE_PENDING_IMAGE){
+    userContent.push({
+      type: 'image',
+      source: { type:'base64', media_type:_AI_PARSE_PENDING_IMAGE.mediaType, data: _AI_PARSE_PENDING_IMAGE.dataUrl.split(',')[1] }
+    });
+  }
+  userContent.push({
+    type: 'text',
+    text: 'Extract remittance lines from this:\n\n' + (text || '(image attached)')
+  });
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userContent }]
+    })
+  }).then(function(r){
+    if(!r.ok){ return r.text().then(function(t){ throw new Error('Claude API error (' + r.status + '): ' + t); }); }
+    return r.json();
+  }).then(function(resp){
+    var textOut = (resp.content && resp.content.map(function(c){return c.text||'';}).join('\n')) || '';
+    var cleaned = textOut.replace(/```json|```/g, '').trim();
+    var parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch(e){
+      // Try to extract a JSON object from the response
+      var m = cleaned.match(/\{[\s\S]*\}/);
+      if(m){ parsed = JSON.parse(m[0]); }
+      else throw new Error('Could not parse Claude response as JSON. Raw response:\n' + textOut.substring(0, 500));
+    }
+    _AI_PARSE_RESULTS = parsed;
+    _aiShowResults(parsed);
+  }).catch(function(e){
+    document.getElementById('ai-parse-step-loading').style.display = 'none';
+    document.getElementById('ai-parse-step-input').style.display = 'block';
+    document.getElementById('ai-parse-go-btn').style.display = '';
+    alert('AI parsing failed: ' + e.message);
+    console.warn('[AI parse]', e);
+  });
+}
+
+function _aiShowResults(parsed){
+  document.getElementById('ai-parse-step-loading').style.display = 'none';
+  document.getElementById('ai-parse-step-results').style.display = 'block';
+  document.getElementById('ai-parse-apply-btn').style.display = '';
+  document.getElementById('ai-parse-count').textContent = (parsed.lines || []).length;
+
+  var summary = '';
+  if(parsed.customer) summary += '<div><strong>Customer:</strong> ' + _escapeHtml(parsed.customer) + '</div>';
+  if(parsed.paymentTotal) summary += '<div><strong>Payment total:</strong> $' + $f(parsed.paymentTotal) + '</div>';
+  if(parsed.paymentRef) summary += '<div><strong>Reference:</strong> ' + _escapeHtml(parsed.paymentRef) + '</div>';
+  if(parsed.paymentDate) summary += '<div><strong>Date:</strong> ' + _escapeHtml(parsed.paymentDate) + '</div>';
+  document.getElementById('ai-parse-summary').innerHTML = summary || '<em>No header info extracted</em>';
+
+  var lines = parsed.lines || [];
+  if(lines.length === 0){
+    document.getElementById('ai-parse-results-list').innerHTML = '<div style="padding:24px;text-align:center;color:var(--t3)">No remittance lines extracted. Try a clearer input.</div>';
+    return;
+  }
+  var lineTotal = lines.reduce(function(s,l){return s + (l.amount||0);},0);
+  var tableHtml = '<table style="width:100%;border-collapse:collapse">'+
+    '<thead><tr style="background:var(--surface2);text-align:left">'+
+      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Invoice</th>'+
+      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">PO</th>'+
+      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;text-align:right">Amount</th>'+
+      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;text-align:right">Short Pay</th>'+
+      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Notes</th>'+
+    '</tr></thead><tbody>'+
+    lines.map(function(l){
+      return '<tr style="border-top:1px solid var(--bdr)">'+
+        '<td style="padding:8px 10px;font-family:var(--mono)">'+_escapeHtml(l.invoiceNo||'—')+'</td>'+
+        '<td style="padding:8px 10px;font-family:var(--mono)">'+_escapeHtml(l.poNo||'—')+'</td>'+
+        '<td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-weight:700">$'+$f(l.amount||0)+'</td>'+
+        '<td style="padding:8px 10px;text-align:right;font-family:var(--mono);color:'+(l.shortPay?'var(--am-t)':'var(--t3)')+'">'+(l.shortPay?'-$'+$f(l.shortPay):'—')+'</td>'+
+        '<td style="padding:8px 10px;color:var(--t2);font-size:11.5px">'+_escapeHtml(l.notes||'')+'</td>'+
+      '</tr>';
+    }).join('')+
+    '<tr style="border-top:2px solid var(--bdr2);background:var(--surface2);font-weight:800">'+
+      '<td colspan="2" style="padding:8px 10px;text-align:right;color:var(--t2);text-transform:uppercase;font-size:10.5px;letter-spacing:.04em">Total</td>'+
+      '<td style="padding:8px 10px;text-align:right;font-family:var(--mono)">$'+$f(lineTotal)+'</td>'+
+      '<td colspan="2"></td>'+
+    '</tr>'+
+    '</tbody></table>';
+  document.getElementById('ai-parse-results-list').innerHTML = tableHtml;
+}
+
+function _aiApplyResults(){
+  if(!_AI_PARSE_RESULTS || !_AI_PARSE_RESULTS.lines || _AI_PARSE_RESULTS.lines.length === 0){
+    alert('No lines to apply');
+    return;
+  }
+  var lines = _AI_PARSE_RESULTS.lines;
+  var custName = _AI_PARSE_RESULTS.customer || '';
+  var payRef = _AI_PARSE_RESULTS.paymentRef || '';
+  var payDate = _AI_PARSE_RESULTS.paymentDate || '';
+  var added = 0;
+  lines.forEach(function(l){
+    REM_DETAIL.push({
+      custName: custName,
+      paymentDate: payDate,
+      invDate: '',
+      invNo: l.invoiceNo || '',
+      invRef: '',
+      poNo: l.poNo || '',
+      soNo: l.salesOrder || '',
+      delNo: '',
+      trkNo: '',
+      remarks: l.notes || '',
+      amt: l.amount || 0,
+      shortPay: l.shortPay || 0,
+      currency: 'USD',
+      paymentRef: payRef,
+      _source: 'ai_parsed'
+    });
+    added++;
+  });
+  if(typeof toast === 'function') toast('✓ Added ' + added + ' remittance lines from AI parsing');
+  closeAIRemittanceParser();
+  // Refresh UI
+  try { if(typeof rAll === 'function') rAll(); } catch(e){}
+  try { if(typeof updTop === 'function') updTop(); } catch(e){}
+}
+
+// Auto-refresh trends when the CFO page is shown
+(function(){
+  var _origSP = window.sp;
+  if(typeof _origSP === 'function'){
+    window.sp = function(target){
+      var r = _origSP.apply(this, arguments);
+      if(target === 'cfo'){
+        setTimeout(function(){ try { renderTrendsDashboard(); } catch(e){} }, 100);
+      }
+      return r;
+    };
+  }
+})();
 function refreshWlBadge(){
   // Update worklist badge count only - buildWorklist is called by updTop when panel is active
   var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
