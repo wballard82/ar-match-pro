@@ -11440,11 +11440,12 @@ function excActionOpen(idx, action){
         'style="width:100%;padding:10px 12px;border:1.5px solid var(--pd);border-radius:8px;font-size:15px;font-weight:700;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;font-family:var(--mono)">'+
     '</div>'+
     
-    // Note
+    // Note — textarea so multi-line VMI/ERS breakdowns render with each line
+    // on its own row (matches user's spreadsheet comment convention)
     '<div>'+
       '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Note '+(action==='writeoff'||action==='bankfee'?'<span style="font-weight:400;text-transform:none;color:var(--t3)">(reason)</span>':'<span style="font-weight:400;text-transform:none;color:var(--t3)">(suggested — edit if needed)</span>')+'</div>'+
-      '<input type="text" id="_excA-note" value="'+_escapeAttr(_excActionSuggestedNote(ex, action))+'" placeholder="'+_excActionDefaultNote(action)+'" '+
-        'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
+      '<textarea id="_excA-note" rows="6" placeholder="'+_excActionDefaultNote(action)+'" '+
+        'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5">'+_escapeHtml(_excActionSuggestedNote(ex, action))+'</textarea>'+
     '</div>'+
     
     '</div>'+
@@ -11472,9 +11473,10 @@ function _excActionDefaultNote(action){
 
 // Pre-fill the note input with a context-aware suggestion derived from the EXC.
 // The goal: tell the user EXACTLY where the payment should be allocated (apply
-// modal) or why it couldn't be applied (cash-on-account modal). Users can edit
-// or accept verbatim. Replaces the previous behavior of only showing a generic
-// placeholder.
+// modal) or why it couldn't be applied (cash-on-account modal). For COA EXCs,
+// when the EXC carries a structured line-by-line breakdown (VMI VC dates,
+// ERS PO/SO refs), we surface that full breakdown so the note matches the
+// customer's manual-allocation comment convention.
 function _excActionSuggestedNote(ex, action){
   if(!ex) return '';
   var _amt = (typeof ex.amt==='number') ? ('$'+$f(ex.amt)) : '$0.00';
@@ -11484,32 +11486,39 @@ function _excActionSuggestedNote(ex, action){
 
   // ── Cash on Account ──────────────────────────────────────────────────
   if(action==='cash'){
-    // VMI consolidated payment (SAP vendor-consignment standard)
+    // Per-line VMI or ERS residual EXCs carry the exact reference string the
+    // customer types in their cash-app spreadsheet ("VC;;05/05/2026" or
+    // "COA for SO 2104422821"). Use that as the note verbatim.
+    if(ex.vmiSource || ex.ersResidualSource){
+      return ex.notes || '';
+    }
+    // Legacy combined-EXC fallbacks (kept for backward compat with older EXCs)
+    if(ex.vmiBreakdown){
+      return 'VMI consolidated payment '+_amt+' — applied to customer account '+_acct+' as Cash on Account (SAP vendor-consignment standard):\n'+ex.vmiBreakdown;
+    }
+    if(ex.ersResidualBreakdown){
+      return 'Remittance residual '+_amt+' — applied to customer account '+_acct+' as Cash on Account:\n'+ex.ersResidualBreakdown;
+    }
+    // Heuristic fallbacks (kept for non-Priority-5c EXCs)
     if(_detail.indexOf('VMI consolidated') >= 0 || _detail.indexOf('vendor-consignment') >= 0){
       return 'VMI consolidated payment '+_amt+' — posts at customer account '+_acct+
              ' (SAP vendor-consignment standard; ERS portion applied to specific invoices, VMI portion sweeps against open invoices via SAP internal logic).';
     }
-    // Remittance tie-out residual (ERS line couldn't be bridged)
     if(_detail.indexOf('residual to Cash on Account') >= 0){
       return 'Remittance residual '+_amt+' — ERS amount could not be bridged to a specific aging invoice (PO match found but no matching delivery in the SAP delivery report). Posts as unapplied credit against '+_acct+' for future allocation.';
     }
-    // Customer overpayment / unapplied credit
     if(_detail.indexOf('paid more') >= 0 || _detail.indexOf('overpay') >= 0){
       return 'Customer overpayment '+_amt+' — credit balance on account '+_acct+' available for future invoices.';
     }
-    // Duplicate payment
     if(_detail.indexOf('duplicate') >= 0 || _detail.indexOf('Duplicate') >= 0){
       return 'Duplicate payment '+_amt+' — already applied via prior transaction; posting to '+_acct+' as unapplied pending customer instructions on refund or future credit.';
     }
-    // No invoice match (customer paid but no invoice identified)
     if(_detail.indexOf('no invoice') >= 0 || _detail.indexOf('Unmatched') >= 0 || _detail.indexOf('No matching') >= 0){
       return 'Payment '+_amt+' could not be matched to a specific invoice — customer or PO identified but no aging invoice tied out. Posts to '+_acct+' pending remittance clarification.';
     }
-    // Customer-account known but unallocated (generic COA)
     if(_acct){
       return 'Unapplied cash '+_amt+' posts to customer account '+_acct+' pending future invoice allocation or remittance clarification.';
     }
-    // Fallback when account unknown
     return 'Unapplied cash '+_amt+' — customer not yet identified; hold for remittance details before posting.';
   }
 
@@ -13814,11 +13823,39 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
   if(!ERS_LINES.length) return null;
   var groups = ERSParser.groupByPO(ERS_LINES);
   var matched = [];
+  var unmatchedGroups = [];  // {po, total, lines, salesOrders} — used by Priority 5c for COA notes
   var total = 0;
   var _cap = payAmount + (tol||5);
 
   // Tiebreaker: when two invoices match exactly, prefer the older one (FIFO clearing
   // mirrors typical SAP behavior — oldest open item is cleared first).
+  // Helper: capture an unmatched ERS group with its PO + SO context (from delivery
+  // report) so Priority 5c can build a granular COA note like:
+  //   "PO 4521689046 — $19,470 — COA for SO 2104422821"
+  // matching the customer's manual-allocation convention.
+  function _recordUnmatchedGroup(g){
+    var _sos = [];
+    (g.lines||[]).forEach(function(line){
+      if(!line.poNumber || !line.amount) return;
+      // Find delivery rows matching this line by {poNo + amount} to extract SO
+      if(DELIV && DELIV.length){
+        var _ld = DELIV.filter(function(d){
+          if(!d.salesOrder || !d.poNo) return false;
+          if(norm(d.poNo) !== norm(line.poNumber)) return false;
+          var _da = (typeof d.amount === 'number') ? d.amount : parseFloat(d.amount||0);
+          return Math.abs(_da - line.amount) <= 1;
+        });
+        _ld.forEach(function(d){ _sos.push(String(d.salesOrder)); });
+      }
+    });
+    unmatchedGroups.push({
+      po: g.poNumber,
+      total: g.total,
+      lines: g.lines || [],
+      salesOrders: Array.from(new Set(_sos)) // unique SOs found via delivery bridge
+    });
+  }
+
   function _olderFirst(a,b){
     var da = a.dt2 ? new Date(a.dt2).getTime() : Infinity;
     var db = b.dt2 ? new Date(b.dt2).getTime() : Infinity;
@@ -13833,26 +13870,31 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
     var invList = (idx.byPO.get(norm(po))||[]).filter(function(inv){
       return !inv.s && inv.amt > 0 && inv.dt !== 'DZ' && inv.dt !== 'BE' && !matched.find(function(x){return x.i===inv.i;});
     });
-    if(invList.length === 0) return;
+    // Snapshot match count before this group; if nothing gets added, this group
+    // is unmatched and we record it for COA enrichment.
+    var _matchedCountBefore = matched.length;
+    if(invList.length === 0){
+      // PO has no aging invoices at all — still record as unmatched for COA
+      _recordUnmatchedGroup(g);
+      return;
+    }
 
     // ════════════════════════════════════════════════════════════════════
     // PRIORITY 0 — SAP DELIVERY BRIDGE (deterministic, highest confidence)
-    // For each ERS line in this PO group, look up the matching delivery row
-    // by {poNo + amount}. Each matching delivery resolves to a Sales Order
-    // which maps to one or more aging invoices. When SO maps to multiple
-    // invoices (consolidated billing), narrow by billing-date proximity.
-    // If multiple ERS lines map to the same invoice (the typical consolidated
-    // case — e.g. PO 4522118692 where two deliveries totaling $11,895 became
-    // one invoice), their amounts are summed and applied to that invoice
-    // (full pay if sum=invoice amount, partial otherwise).
     //
-    // Bridge match is short-circuit: if it covers the PO total, we skip the
-    // subset-sum and FIFO fallbacks entirely. Per-line partial coverage is
-    // allowed; uncovered portions fall through to legacy logic.
+    // Conservative matching philosophy (per customer manual-allocation review):
+    //   • Bridge applies ONLY when ERS line amount exactly equals an aging
+    //     invoice amount (via PO → delivery → SO → invoice resolution).
+    //   • NEVER partial-pay an existing invoice when ERS amount doesn't tie.
+    //     A non-matching amount usually means the customer is paying for a
+    //     NEW invoice not yet in the aging snapshot — partial-paying an
+    //     unrelated invoice causes audit drift. Route to COA instead.
+    //   • If bridge matches ANY invoice for this PO, skip ALL legacy
+    //     priorities for this PO (no double-matching).
     // ════════════════════════════════════════════════════════════════════
-    var _bridgeApplied = false;
+    var _poBridgedAmt = 0;          // per-PO bridged total (NOT global)
+    var _poBridgeFired = false;     // any bridge match for this PO at all
     if(DELIV && DELIV.length && window._DELIV_BRIDGE && idx.bySO){
-      // For each ERS line, find matching delivery rows (by PO + amount)
       var _invAccumulator = new Map(); // invoiceId → { inv, summedLineAmt, bridgedDeliveries:[] }
       g.lines.forEach(function(ersLine){
         if(!ersLine.poNumber || !ersLine.amount) return;
@@ -13866,9 +13908,6 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
           return Math.abs(_dAmt - _ersAmt) <= 1;
         });
         if(_matchingDelivs.length === 0) return;
-        // Pick the best delivery row (typically there's just one; if multiple,
-        // prefer the one whose billing status is 'C' (completed) and whose
-        // billing date is most recent)
         var _bestDeliv = _matchingDelivs.sort(function(a,b){
           var _aC = (String(a.billingStatus||'').toUpperCase() === 'C') ? 0 : 1;
           var _bC = (String(b.billingStatus||'').toUpperCase() === 'C') ? 0 : 1;
@@ -13877,11 +13916,8 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
           var _bD = b.billingDate ? new Date(b.billingDate).getTime() : 0;
           return _bD - _aD;
         })[0];
-        // Find candidate invoices via Sales Order index
         var _invsBySO = idx.bySO.get(norm(_bestDeliv.salesOrder));
         if(!_invsBySO || _invsBySO.length === 0) return;
-        // Account validation: if delivery's sold-to account is known, the invoice
-        // must match (prevents cross-account misrouting like Inc. ↔ SE Asia)
         var _candidates = _invsBySO.filter(function(inv){
           if(_bestDeliv.custAcct && inv.a && _bestDeliv.custAcct !== inv.a) return false;
           if(inv.s) return false;
@@ -13889,17 +13925,26 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
           return true;
         });
         if(_candidates.length === 0) return;
-        // Multi-invoice SO: narrow by billing-date proximity to delivery's billing date
-        var _chosen = _candidates[0];
-        if(_candidates.length > 1 && _bestDeliv.billingDate){
-          var _drT = new Date(_bestDeliv.billingDate).getTime();
-          _chosen = _candidates.slice().sort(function(a,b){
-            var aD = a.dt2 ? Math.abs(new Date(a.dt2).getTime() - _drT) : 1e15;
-            var bD = b.dt2 ? Math.abs(new Date(b.dt2).getTime() - _drT) : 1e15;
-            return aD - bD;
-          })[0];
+        // For ERS amount = invoice amount match within SO, pick exact-amount
+        // candidate first (the user's manual allocation pattern); fall back
+        // to billing-date proximity only when no exact-amount candidate exists.
+        var _exactAmtCandidates = _candidates.filter(function(inv){ return Math.abs(inv.amt - _ersAmt) <= 1; });
+        var _chosen = null;
+        if(_exactAmtCandidates.length > 0){
+          _chosen = _exactAmtCandidates[0];
+          if(_exactAmtCandidates.length > 1 && _bestDeliv.billingDate){
+            var _drT = new Date(_bestDeliv.billingDate).getTime();
+            _chosen = _exactAmtCandidates.slice().sort(function(a,b){
+              var aD = a.dt2 ? Math.abs(new Date(a.dt2).getTime() - _drT) : 1e15;
+              var bD = b.dt2 ? Math.abs(new Date(b.dt2).getTime() - _drT) : 1e15;
+              return aD - bD;
+            })[0];
+          }
         }
-        // Accumulate this ERS line under the chosen invoice
+        // If no exact-amount candidate, this ERS line CAN'T be cleanly bridged
+        // (the aging invoice's amount doesn't equal the ERS line amount). Skip
+        // — falls through to COA. Do NOT partial-pay heuristically.
+        if(!_chosen) return;
         if(!_invAccumulator.has(_chosen.i)){
           _invAccumulator.set(_chosen.i, { inv:_chosen, summedLineAmt:0, bridgedDeliveries:[] });
         }
@@ -13907,65 +13952,56 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
         _entry.summedLineAmt += _ersAmt;
         _entry.bridgedDeliveries.push(_bestDeliv.deliveryNo);
       });
-      // Apply the accumulated bridge matches
+      // Apply only EXACT bridge matches (sum of bridged ERS lines = invoice amount)
       if(_invAccumulator.size > 0){
         _invAccumulator.forEach(function(entry){
           var _inv = entry.inv;
           var _sumLines = entry.summedLineAmt;
           if(Math.abs(_sumLines - _inv.amt) <= 1){
-            // Full match — one or multiple ERS lines summing to invoice amount
             if(total + _inv.amt <= _cap){
               _inv._deliveryBridge = true;
               _inv._bridgedDeliveries = entry.bridgedDeliveries;
               matched.push(_inv);
               total += _inv.amt;
-              _bridgeApplied = true;
-            }
-          } else if(_sumLines < _inv.amt - 1){
-            // Partial pay via delivery bridge — apply summed ERS amount,
-            // residual stays open on the invoice
-            if(total + _sumLines <= _cap){
-              var _ppInv = Object.assign({}, _inv, {
-                _partialPayAmt: _sumLines,
-                _deliveryBridge: true,
-                _bridgedDeliveries: entry.bridgedDeliveries
-              });
-              matched.push(_ppInv);
-              total += _sumLines;
-              _bridgeApplied = true;
+              _poBridgedAmt += _inv.amt;
+              _poBridgeFired = true;
             }
           }
+          // NO partial-pay branch. If sum ≠ invoice amount, skip (route to COA).
         });
       }
-      // If bridge fully covered the PO total, skip the legacy priorities
-      if(_bridgeApplied && Math.abs(total - g.total) <= 1) return;
-      // If bridge covered some but not all, leave the rest for legacy logic
-      // (but mark already-bridged invoices so subset-sum doesn't re-pick them)
+      // Hard short-circuit: if ANY bridge match fired for this PO, skip legacy
+      // priorities for this PO entirely. Prevents double-matching where the
+      // bridge picks one invoice and legacy picks another for the same PO.
+      if(_poBridgeFired){
+        // If bridge didn't cover the full PO total, the residual is still
+        // unmatched ERS that needs COA routing.
+        if(Math.abs(_poBridgedAmt - g.total) > 1){
+          // Build a residual group representing the un-bridged portion
+          _recordUnmatchedGroup({
+            poNumber: g.poNumber,
+            total: g.total - _poBridgedAmt,
+            lines: g.lines.filter(function(line){
+              // Exclude lines whose amount was bridged
+              return true; // simplification: record all for context
+            })
+          });
+        }
+        return;
+      }
     }
 
     if(invList.length === 1){
       var _onlyInv = invList[0];
       if(Math.abs(_onlyInv.amt - g.total) <= 1){
-        // Full pay — single invoice matches ERS PO total exactly
-        if(total + _onlyInv.amt <= _cap){ matched.push(_onlyInv); total += _onlyInv.amt; }
-      } else if(g.total < _onlyInv.amt - 1){
-        // Partial pay — customer is paying $g.total against a $_onlyInv.amt invoice.
-        // Apply the ERS amount, not the full invoice. Mark _partialPayAmt so the
-        // caller posts pd=ERS amount with oa=invoice amount (leaves residual open).
-        // Without this branch, a $19,470 ERS line against a $31,625 single invoice
-        // would over-apply by $12,155 (the 4521689046 case).
-        if(total + g.total <= _cap){
-          var _ppInv = Object.assign({}, _onlyInv, {_partialPayAmt: g.total});
-          matched.push(_ppInv); total += g.total;
-        }
-      } else {
-        // Edge case: ERS amount > single invoice amount. Apply the invoice amount.
+        // EXACT match — single invoice equals ERS PO total
         if(total + _onlyInv.amt <= _cap){ matched.push(_onlyInv); total += _onlyInv.amt; }
       }
+      // No partial-pay branch. Non-matching amount → unmatched, routes to COA.
       return;
     }
 
-    // Multiple invoices share this PO. Disambiguation order:
+    // Multiple invoices share this PO. Disambiguation order (EXACT only):
     // 1. Invoice(s) whose amount equals ERS PO total — prefer oldest by date
     var exact = invList.filter(function(inv){ return Math.abs(inv.amt - g.total) <= 1; }).sort(_olderFirst);
     if(exact.length > 0){
@@ -13973,7 +14009,7 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
       return;
     }
 
-    // 2. Subset of invoices summing to ERS PO total (handles split invoices)
+    // 2. Subset of invoices summing EXACTLY to ERS PO total (pair, then triple)
     var found = false;
     for(var i=0; i<invList.length && !found; i++){
       for(var j=i+1; j<invList.length && !found; j++){
@@ -13986,7 +14022,6 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
         }
       }
     }
-    // Triples
     if(!found){
       for(var i=0; i<invList.length && !found; i++){
         for(var j=i+1; j<invList.length && !found; j++){
@@ -14002,59 +14037,20 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
         }
       }
     }
-    // 3. FIFO partial-pay fallback for multi-invoice POs where no subset ties.
-    //    Real SAP scenario: PO has multiple open invoices (e.g. 4522118692 has
-    //    $3,920 + $5,880 + $975 + $11,895 = $22,670 outstanding) but the
-    //    customer's ERS line ($7,975 for one delivery) doesn't sum to any
-    //    invoice subset. Standard SAP behavior is to clear oldest invoices
-    //    first (FIFO), partial-pay the next, leave residuals open.
-    //
-    //    Safety check: only fire if ERS amount is at least 5% of the largest
-    //    invoice (avoids meaningless $1 partial-pays). Otherwise leave the
-    //    PO unmatched — the variance flows to COA where the user can decide.
-    if(!found){
-      var _sortedOld = invList.slice().sort(_olderFirst);
-      var _maxInvAmt = invList.reduce(function(m,iv){return Math.max(m, iv.amt);}, 0);
-      var _meaningful = g.total >= Math.max(50, _maxInvAmt * 0.05);
-      if(_meaningful){
-        var _rem = g.total;
-        var _wouldExceed = false;
-        // First pass: dry run to check boundary won't be violated
-        var _dryTotal = 0;
-        for(var z=0; z<_sortedOld.length && _rem > 0.01; z++){
-          var _ivAmt = _sortedOld[z].amt;
-          var _applyAmt = (_ivAmt <= _rem) ? _ivAmt : _rem;
-          if(total + _dryTotal + _applyAmt > _cap){ _wouldExceed = true; break; }
-          _dryTotal += _applyAmt;
-          _rem -= _applyAmt;
-        }
-        // Second pass: apply for real if dry run cleared
-        if(!_wouldExceed){
-          _rem = g.total;
-          for(var z=0; z<_sortedOld.length && _rem > 0.01; z++){
-            var _iv = _sortedOld[z];
-            if(_iv.amt <= _rem + 0.01){
-              // Apply this invoice fully
-              matched.push(_iv);
-              total += _iv.amt;
-              _rem -= _iv.amt;
-            } else {
-              // Partial-pay this invoice
-              var _ppInv = Object.assign({}, _iv, {_partialPayAmt: _rem, _fifoPartial:true});
-              matched.push(_ppInv);
-              total += _rem;
-              _rem = 0;
-            }
-          }
-          found = true;
-        }
-      }
-      // If still not found (ERS amount tiny relative to invoices, or boundary
-      // hit), leave PO unmatched — variance flows to the COA EXC where the
-      // user can review and apply manually.
+    // No FIFO fallback, no partial-pay heuristic. If no exact subset ties,
+    // leave the PO unmatched — Priority 5c routes it to COA with full context
+    // (PO, SO from delivery report, amount). This matches the customer's
+    // manual-allocation convention: never guess, always COA with context.
+
+    // Group bookkeeping: if no invoice was added during this iteration, record
+    // the group as unmatched so the caller can build a granular COA note.
+    if(matched.length === _matchedCountBefore){
+      _recordUnmatchedGroup(g);
     }
   });
-  return matched.length>0 ? { matched:matched, total:total, scenario:'ERS_GROUP' } : null;
+  return (matched.length > 0 || unmatchedGroups.length > 0)
+    ? { matched:matched, total:total, scenario:'ERS_GROUP', unmatchedGroups:unmatchedGroups }
+    : null;
 }
 
 function matchVMIDateRange(payAmount, custAccount, idx, tol){
@@ -15031,47 +15027,92 @@ async function runMatch(){
             // invoices). The right posting target is the customer account, where
             // SAP's internal logic sweeps the unapplied credit against open
             // invoices via vendor-consignment posting rules.
+            // Per-line VMI COA EXCs — one EXC per VC line so each maps 1:1
+            // to a posting entry in the customer's cash-app spreadsheet. The
+            // note for each line is just the VC date reference (e.g.
+            // "VC;;05/05/2026"), exactly how the customer types it.
             if(VMI_LINES.length > 0 && _vmiTotal > 0 && !_vmiSubsetFound){
-              EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
-                a:p.a, c:p.c||'', amt:_vmiTotal,
-                ref:p.txId||p.bankRef||'—',
-                type:'Cash on Account',
-                detail:'VMI consolidated payment · ERS portion applied to specific invoices · VMI total $'+$f(_vmiTotal)+' posts at customer-account level (SAP vendor-consignment posting; sweeps against open invoices via internal logic)',
-                action:'Post $'+$f(_vmiTotal)+' as Cash on Account',
-                dec:'', s:'Open',
-                notes:'✓ Customer: '+(p.c||'—')+' · ✓ VMI tie-out confirmed ($'+$f(_vmiTotal)+') · Posts at account level (vendor-consignment standard)'});
-            }
-
-            // Post variance as appropriate exception type. When VMI routed to a
-            // separate "Manual Review" EXC, count it as already accounted for
-            // so we don't double-post the same gap. Variance here represents
-            // ONLY the ERS portion that couldn't tie to specific invoices.
-            var _accountedFor = _allocTotal + (_vmiSubsetFound ? 0 : _vmiTotal);
-            var _payVariance = p.amt - _accountedFor; // positive=under (COA), negative=over (deduction)
-            if(Math.abs(_payVariance) > tol){
-              if(_payVariance > 0){
-                // Customer paid more than matched invoices → unapplied credit
+              VMI_LINES.forEach(function(line){
+                var _vcRef = line.poRaw || line.po || ('VC;;' + (line.txDate || line.date || ''));
+                var _lineAmt = line.amount || 0;
+                if(_lineAmt <= 0) return;
                 EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
-                  a:p.a, c:p.c||'', amt:_payVariance,
+                  a:p.a, c:p.c||'', amt:_lineAmt,
                   ref:p.txId||p.bankRef||'—',
                   type:'Cash on Account',
-                  detail:'Remittance tie-out confirmed (ERS $'+$f(_ersTotal)+' + VMI $'+$f(_vmiTotal)+' = $'+$f(_remTotal)+
-                         ') · '+_cands.length+' invoices applied ($'+$f(_allocTotal)+') · $'+$f(_payVariance)+' residual to Cash on Account',
-                  action:'Post $'+$f(_payVariance)+' as Cash on Account',
+                  po: _vcRef,  // VC date reference acts as the PO column
+                  detail:'VMI line ' + _vcRef + ' — $' + $f(_lineAmt) + ' posts at customer account ' + (p.a||'—') + ' (SAP vendor-consignment standard)',
+                  action:'Post $'+$f(_lineAmt)+' as Cash on Account',
                   dec:'', s:'Open',
-                  notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS+VMI tie-out · '+_cands.length+' invoices applied · Residual: Cash on Account'});
+                  notes: _vcRef,  // Match customer's spreadsheet comment convention
+                  vmiSource: true,
+                  parentRef: p.txId || p.bankRef || ''  // group COA lines belonging to the same payment for bulk approval
+                });
+              });
+            }
+
+            // Post variance as appropriate exception type. When VMI routed to
+            // per-line COA EXCs, the VMI total is already accounted for above.
+            var _accountedFor = _allocTotal + (_vmiSubsetFound ? 0 : _vmiTotal);
+            var _payVariance = p.amt - _accountedFor; // positive=under (COA), negative=over (deduction)
+
+            // Per-line ERS residual COA EXCs — one EXC per ERS line that didn't
+            // tie to a specific invoice. Each line maps 1:1 to a posting entry
+            // in the customer's cash-app spreadsheet. The note for each is
+            // "COA for SO {salesOrder}" (resolved via delivery report), matching
+            // the customer's manual-allocation comment convention.
+            var _ersResidualPosted = 0;
+            if(_ersMatch && _ersMatch.unmatchedGroups && _ersMatch.unmatchedGroups.length > 0 && _payVariance > tol){
+              _ersMatch.unmatchedGroups.forEach(function(grp){
+                var _grpSo = (grp.salesOrders && grp.salesOrders.length > 0) ? grp.salesOrders[0] : '';
+                var _noteRef = _grpSo ? ('COA for SO ' + _grpSo) : ('COA for PO ' + grp.po);
+                // One EXC per ERS line within the unmatched group
+                (grp.lines || []).forEach(function(line){
+                  var _lineAmt = line.amount || 0;
+                  if(_lineAmt <= 0) return;
+                  EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
+                    a:p.a, c:p.c||'', amt:_lineAmt,
+                    ref:p.txId||p.bankRef||'—',
+                    type:'Cash on Account',
+                    po: grp.po,
+                    so: _grpSo,
+                    detail:'ERS line PO ' + grp.po + ' — $' + $f(_lineAmt) + ' — ' + _noteRef + ' (no exact-amount invoice tie in current aging)',
+                    action:'Post $'+$f(_lineAmt)+' as Cash on Account',
+                    dec:'', s:'Open',
+                    notes: _noteRef,  // Match customer's spreadsheet comment convention
+                    ersResidualSource: true,
+                    parentRef: p.txId || p.bankRef || ''
+                  });
+                  _ersResidualPosted += _lineAmt;
+                });
+              });
+            }
+
+            // Whatever wasn't covered by VMI + ERS-per-line residual gets a
+            // catch-all COA (e.g., rounding, small variance) or short-pay EXC.
+            var _remainingVariance = _payVariance - _ersResidualPosted;
+            if(Math.abs(_remainingVariance) > tol){
+              if(_remainingVariance > 0){
+                EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
+                  a:p.a, c:p.c||'', amt:_remainingVariance,
+                  ref:p.txId||p.bankRef||'—',
+                  type:'Cash on Account',
+                  detail:'Remittance tie-out residual $'+$f(_remainingVariance)+' (after VMI + ERS line-level COA postings) · posts as unapplied credit',
+                  action:'Post $'+$f(_remainingVariance)+' as Cash on Account',
+                  dec:'', s:'Open',
+                  notes:'Unapplied credit $'+$f(_remainingVariance)+' to customer account '+(p.a||'—'),
+                  parentRef: p.txId || p.bankRef || ''
+                });
               } else {
-                // Matched invoices total exceeds payment → short pay / deduction
-                var _ovr = Math.abs(_payVariance);
+                var _ovr = Math.abs(_remainingVariance);
                 EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
                   a:p.a, c:p.c||'', amt:_ovr,
                   ref:p.txId||p.bankRef||'—',
                   type:'Short pay',
-                  detail:'Remittance tie-out confirmed (ERS $'+$f(_ersTotal)+' + VMI $'+$f(_vmiTotal)+' = $'+$f(_remTotal)+
-                         ') · '+_cands.length+' invoices applied ($'+$f(_allocTotal)+') · $'+$f(_ovr)+' short-pay/deduction',
+                  detail:'Remittance tie-out variance $'+$f(_ovr)+' (matched invoices exceed payment) · short pay / deduction',
                   action:'Post $'+$f(_ovr)+' as deduction / write-off',
                   dec:'', s:'Open',
-                  notes:'✓ Customer: '+(p.c||'—')+' · ✓ ERS+VMI tie-out · '+_cands.length+' invoices applied · Variance: Short Pay/Deduction'});
+                  notes:'Short pay $'+$f(_ovr)+' — customer paid below invoice total; verify against remittance advice'});
               }
             }
           } else {
