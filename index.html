@@ -889,11 +889,9 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Team / Custom</div>
         <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:16px">Multi-user teams · enterprise workflows</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
-          <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,.5)">Starting at</span>
-          <span id="price-team" style="font-size:40px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$2,699</span>
-          <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
+          <span id="price-team" style="font-size:40px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">Custom</span>
         </div>
-        <div id="price-team-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Annual · month-to-month starting at $2,999/mo</div>
+        <div id="price-team-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Tailored to your team size, integrations &amp; volume</div>
         <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Pro, plus:</div>
@@ -906,9 +904,9 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Custom implementation support</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SLA support options</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Priority feature access</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Custom pricing available</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Volume-based pricing</div>
         </div>
-        <button onclick="goCheckout('team')" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Get Team</button>
+        <button onclick="window.location.href='mailto:info@armatchpro.com?subject=Team%20%2F%20Custom%20Plan%20Inquiry&body=Hi%2C%20I%27d%20like%20to%20learn%20more%20about%20the%20Team%20%2F%20Custom%20plan%20for%20AR%20Match%20Pro.%0A%0ATeam%20size%3A%20%0AInvoice%20volume%2Fmonth%3A%20%0AERP%20system%3A%20%0APreferred%20call%20time%3A%20%0A%0AThanks%21'" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Contact Sales</button>
       </div>
     </div>
 
@@ -1127,10 +1125,9 @@ function setBilling(type){
   // Correct prices: Annual is lower (the default shown), Monthly is higher
   document.getElementById('price-starter').textContent = monthly ? '$999' : '$799';
   document.getElementById('price-pro').textContent = monthly ? '$1,599' : '$1,399';
-  document.getElementById('price-team').textContent = monthly ? '$2,999' : '$2,699';
+  // Team is "Custom" — not toggled by annual/monthly. Pricing handled in sales conversation.
   document.getElementById('price-starter-annual').textContent = monthly ? 'Month-to-month · starting at $999/mo' : 'Annual · month-to-month starting at $999/mo';
   document.getElementById('price-pro-annual').textContent = monthly ? 'Month-to-month · starting at $1,599/mo' : 'Annual · month-to-month starting at $1,599/mo';
-  document.getElementById('price-team-annual').textContent = monthly ? 'Month-to-month · starting at $2,999/mo' : 'Annual · month-to-month starting at $2,999/mo';
 }
 setBilling('annual');
 function dismissCookie(){
@@ -1437,9 +1434,9 @@ const LP_FAQ={
   "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP or NetSuite, import it into AR Match Pro, run the match, and export a posting-ready file back. No integration, no IT approval, no setup time.",
   "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
   "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
-  "Which plan?":"Starter (starting at $799/mo annual) covers Invoice, PO, and amount matching for up to 5,000 rows/month with persistent delivery index, keyboard shortcuts, and match confidence pills — best for 1–2 user AR teams. AI Remittance Parser includes 50 free parses/month, then $0.05/parse. Pro (starting at $1,399/mo annual) adds unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, customer learning, historical trends dashboard, SAP/NetSuite exports, CFO dashboards, and unlimited AI Remittance Parser. Team / Custom (starting at $2,699/mo annual) adds multi-user, roles, approval workflows, and dedicated onboarding.",
+  "Which plan?":"Starter (starting at $799/mo annual) covers Invoice, PO, and amount matching for up to 5,000 rows/month with persistent delivery index, keyboard shortcuts, and match confidence pills — best for 1–2 user AR teams. AI Remittance Parser includes 50 free parses/month, then $0.05/parse. Pro (starting at $1,399/mo annual) adds unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, customer learning, historical trends dashboard, SAP/NetSuite exports, CFO dashboards, and unlimited AI Remittance Parser. Team / Custom (contact sales for pricing) adds multi-user collaboration, roles, approval workflows, custom integrations, and dedicated onboarding — sized to your team and volume.",
   "Book demo?":"Click 'Try free demo' on this page to start a 7-day free trial — full access, no credit card required. Or email info@armatchpro.com to schedule a live walkthrough.",
-  "Pricing?":"Starter starts at $799/month annual (month-to-month from $999/mo). Pro starts at $1,399/month annual (month-to-month from $1,599/mo). Team / Custom starts at $2,699/month annual (month-to-month from $2,999/mo). All prices are starting prices — customized add-ons may increase pricing."
+  "Pricing?":"Starter starts at $799/month annual (month-to-month from $999/mo). Pro starts at $1,399/month annual (month-to-month from $1,599/mo). Team / Custom is sized to your team — contact info@armatchpro.com for a quote. All prices are starting prices — customized add-ons may increase pricing."
 };
 let lpChatOpen=false;
 function toggleLpChat(){
