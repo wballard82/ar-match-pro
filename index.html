@@ -474,6 +474,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   <input type="text" name="currentProcess">
   <input type="text" name="timeline">
   <input type="text" name="notes">
+  <input type="text" name="interestedPlan">
   <input type="text" name="signupAt">
   <input type="text" name="requestStatus">
   <input type="text" name="source">
@@ -938,7 +939,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.25)"><span style="flex-shrink:0">–</span>SAP / NetSuite export</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.25)"><span style="flex-shrink:0">–</span>Customer learning &amp; trends dashboard</div>
         </div>
-        <button onclick="goCheckout('starter')" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Get Starter</button>
+        <button onclick="openLeadModal('starter')" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Get Starter</button>
       </div>
 
       <!-- Pro (highlighted) -->
@@ -971,7 +972,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multiple bank accounts</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Priority support</div>
         </div>
-        <button onclick="goCheckout('pro')" style="width:100%;padding:15px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(20,168,216,.4);transition:.18s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 36px rgba(20,168,216,.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 28px rgba(20,168,216,.4)'">Get Pro</button>
+        <button onclick="openLeadModal('pro')" style="width:100%;padding:15px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(20,168,216,.4);transition:.18s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 36px rgba(20,168,216,.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 28px rgba(20,168,216,.4)'">Get Pro</button>
       </div>
 
       <!-- Team / Custom -->
@@ -1316,7 +1317,9 @@ function backfillDemoLead(accessData){
   }catch(e){}
 })();
 
-function openLeadModal(){
+var _leadInterestedPlan = '';  // tracks which plan CTA the prospect clicked
+function openLeadModal(plan){
+  _leadInterestedPlan = plan || '';
   document.getElementById('lead-overlay').classList.add('open');
   document.body.style.overflow='hidden';
   setTimeout(function(){ var el=document.getElementById('lead-name'); if(el) el.focus(); },300);
@@ -1384,6 +1387,7 @@ async function submitLead(){
     currentProcess:currentProcess,
     timeline:timeline,
     notes:notes,
+    interestedPlan:_leadInterestedPlan||'Not specified',
     signupDate:now.toISOString(),
     requestStatus:'Pending Review',
     source:'Trial Qualification Form',
@@ -1428,6 +1432,7 @@ async function submitLead(){
     'currentProcess':currentProcess,
     'timeline':timeline,
     'notes':notes,
+    'interestedPlan':_leadInterestedPlan||'Not specified',
     'signupAt':now.toISOString(),
     'requestStatus':'Pending Review',
     'source':'Trial Qualification Form'
@@ -1566,11 +1571,17 @@ function lpChatAsk(q){
 <!-- Stripe.js -->
 <script>
 // ── STRIPE PAYMENT LINKS ──
+// ════════════════════════════════════════════════════════════════════════
+// 📋 INTERNAL ONLY — Stripe Payment Links (NOT wired to any public button)
+// All public CTAs route through the qualification form (openLeadModal).
+// After reviewing a qualified prospect, email them the appropriate link.
+// ════════════════════════════════════════════════════════════════════════
 var _PAYMENT_LINKS = {
   starter: 'https://buy.stripe.com/6oUaEYgja0hk7yu0sjcAo04',  // Starter Monthly (30d trial) — LIVE
   pro:     'https://buy.stripe.com/5kQ6oI5Ewfce062fndcAo03',  // Pro Monthly (30d trial) — LIVE
   team:    'mailto:info@armatchpro.com?subject=Team%20%2F%20Custom%20Plan%20Inquiry&body=Hi%2C%20I%27d%20like%20to%20learn%20more%20about%20the%20Team%20%2F%20Custom%20plan%20for%20AR%20Match%20Pro.%0A%0ATeam%20size%3A%20%0AInvoice%20volume%2Fmonth%3A%20%0AERP%20system%3A%20%0APreferred%20call%20time%3A%20%0A%0AThanks%21'
 };
+// goCheckout retained for internal/console use — no public button calls it anymore
 function goCheckout(plan){
   var link=_PAYMENT_LINKS[plan];
   if(!link){alert('Plan not found');return;}
