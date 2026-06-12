@@ -117,14 +117,15 @@ body{font-family:var(--font);background:#F8FAFC;min-height:100vh;display:flex;fl
 
 <script>
 // ── STRIPE PAYMENT LINKS ──
+// Updated: live Stripe URLs with 30-day trial enabled on Monthly links
 const _LINKS = {
-  starter: 'https://buy.stripe.com/7sY7sM5Ewfce3ie8YPcAo02',
-  pro:     'https://buy.stripe.com/eVq9AU1ogd469GC7ULcAo01',
-  team:    'https://buy.stripe.com/14AaEY2sk3tw062grhcAo00'
+  starter: 'https://buy.stripe.com/6oUaEYgja0hk7yu0sjcAo04',  // Starter Monthly (30d trial)
+  pro:     'https://buy.stripe.com/5kQ6oI5Ewfce062fndcAo03',  // Pro Monthly (30d trial)
+  // team: removed — Team is Custom pricing, handled via mailto in checkout logic below
 };
 const _PLANS = {
   starter:{name:'Starter Plan',price:'$1,999',mo:'$1,999/mo',feats:['1–2 users · Up to 5,000 rows/mo','Invoice, PO & Amount matching','Match confidence pills','Persistent delivery index','Keyboard shortcuts (J/K nav, A approve)','AI Remittance Parser · 50 free/mo then $0.05/parse','Basic posting exports (CSV)','Audit trail','Standard support']},
-  pro:    {name:'Pro Plan',    price:'$3,999',mo:'$3,999/mo',feats:['Everything in Starter','Unlimited rows processed','Multi-invoice allocation','SAP Delivery Bridge (deterministic matching)','ERS / VMI consolidated payment support','Per-line Cash on Account postings','SAP F-28 + NetSuite exports','Unlimited AI Remittance Parser','Customer learning & profiles','Historical trends dashboard','Per-source confidence calibration','Bulk-approve actions','Reconciliation workspace','CFO dashboards','Multiple bank accounts','Priority support']},
+  pro:    {name:'Pro Plan',    price:'$3,832',mo:'$3,832/mo',feats:['Everything in Starter','Unlimited rows processed','Multi-invoice allocation','SAP Delivery Bridge (deterministic matching)','ERS / VMI consolidated payment support','Per-line Cash on Account postings','SAP F-28 + NetSuite exports','Unlimited AI Remittance Parser','Customer learning & profiles','Historical trends dashboard','Per-source confidence calibration','Bulk-approve actions','Reconciliation workspace','CFO dashboards','Multiple bank accounts','Priority support']},
   team:   {name:'Team Plan',  price:'Custom',mo:'Contact us',feats:['Everything in Pro','Multi-user collaboration','Role-based permissions','Advanced approval workflows','Custom export mapping','Enterprise workflow configuration','Dedicated onboarding','Custom implementation support','SLA support options','Priority feature access','Volume-based pricing']}
 };
 
@@ -135,7 +136,7 @@ const plan=_PLANS[planKey]||_PLANS.pro;
 // ════════════════════════════════════════════════════════════════════════
 // ⚠️  STRIPE PRICE UPDATE REQUIRED
 // The pricing in _PLANS above has been updated to the new tiers:
-//   Starter $1,999/mo  ·  Pro $3,999/mo  ·  Team Custom
+//   Starter $1,999/mo  ·  Pro $3,832/mo  ·  Team Custom
 // You MUST update the actual prices in your Stripe dashboard at the
 // Payment Link URLs below, or customers will be charged the old amounts.
 // Go to: https://dashboard.stripe.com/payment-links

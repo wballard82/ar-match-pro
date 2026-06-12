@@ -2943,7 +2943,7 @@ body.app-active #app {
         </div>
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
-          <div class="upgrade-price" style="font-size:16px">Starting at $3,999<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo annual</span></div>
+          <div class="upgrade-price" style="font-size:16px">Starting at $3,832<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo annual</span></div>
           <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 <span style="font-size:10px;color:var(--t3)">(SAP 750)</span> · NetSuite · CSV · CFO dashboards<br><span style="font-size:11px;color:var(--t3)">Month-to-month: starting at $4,599/mo</span></div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select Pro</button>
         </div>
@@ -2977,7 +2977,7 @@ body.app-active #app {
         </div>
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
-          <div class="upgrade-price" style="font-size:16px">Starting at $3,999<span style="font-size:12px;font-weight:500;color:var(--t3)">/mo annual</span></div>
+          <div class="upgrade-price" style="font-size:16px">Starting at $3,832<span style="font-size:12px;font-weight:500;color:var(--t3)">/mo annual</span></div>
           <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP F-28 · NetSuite<br>CFO dashboards · Reconcile<br><span style="font-size:11px;color:var(--t3)">Month-to-month: starting at $4,599/mo</span></div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select</button>
         </div>
@@ -8748,7 +8748,7 @@ const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action
 const PLANS={
   demo:   {name:'Demo',    level:0, rows:10000,    price:'Free (7-day)',    features:['invoice','po','amount','so','delivery','tracking','ers','vmi','multi-source']},
   starter:{name:'Starter', level:1, rows:5000,     price:'Starting at $1,999/mo', features:['invoice','po','amount','manual-queue','csv-export','audit-trail','limited-pdf']},
-  pro:    {name:'Pro',     level:2, rows:Infinity,  price:'Starting at $3,999/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports']},
+  pro:    {name:'Pro',     level:2, rows:Infinity,  price:'Starting at $3,832/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports']},
   team:   {name:'Team / Custom', level:3, rows:Infinity,  price:'Starting at Custom',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports','audit-log','roles','custom-export','onboarding','sla','priority-feature']}
 };
 let USER_PLAN='demo';
@@ -10903,7 +10903,7 @@ function launchApp(user){
           '<div style="font-size:40px;margin-bottom:12px">⏰</div>'+
           '<div style="font-size:15px;color:var(--t2);margin-bottom:20px;line-height:1.6">Your free demo expired on <strong>'+exp.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</strong>.<br>Upgrade to continue using AR Match Pro.</div>'+
           '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
-          '<button class="btn btn-p" onclick="closeModal();goToCheckout(\'pro\')">Get Pro — Starting at $3,999/mo</button>'+
+          '<button class="btn btn-p" onclick="closeModal();goToCheckout(\'pro\')">Get Pro — Starting at $3,832/mo</button>'+
           '<button class="btn btn-outline" onclick="closeModal();goToCheckout(\'starter\')">Get Starter — Starting at $1,999/mo</button>'+
           '</div>'+
           '<div style="margin-top:14px;font-size:12px;color:var(--t3)">Questions? <a href="mailto:info@armatchpro.com" style="color:var(--p)">info@armatchpro.com</a></div>'+
@@ -17914,7 +17914,7 @@ var BillingManager = (function(){
   var PRICES = {
     starter_annual:   'price_1TTbjvK5o648Z7JzPkL4QyOu', // Starting at $1,999/mo
     starter_monthly:  'price_STARTER_MONTHLY_PLACEHOLDER',// Starting at $2,399/mo
-    pro_annual:       'price_1TTbkdK5o648Z7JzuRmA4vVJ',  // Starting at $3,999/mo
+    pro_annual:       'price_1TTbkdK5o648Z7JzuRmA4vVJ',  // Starting at $3,832/mo
     pro_monthly:      'price_PRO_MONTHLY_PLACEHOLDER',    // Starting at $4,599/mo
     team_annual:      'price_1TTblGK5o648Z7Jzg4vSZT01',  // Starting at Custom
     team_monthly:     'price_TEAM_MONTHLY_PLACEHOLDER'    // Starting at Custom
@@ -18469,7 +18469,7 @@ function syncMpCheckboxes(){
 // SETTINGS PLANS
 // ═══════════════════════════════════════════════════════════
 function renderSettingsPlans(){
-  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export · Starting at $1,999/mo annual','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP F-28 · NetSuite · CSV · Starting at $3,999/mo annual','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding · Starting at Custom annual'};
+  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export · Starting at $1,999/mo annual','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP F-28 · NetSuite · CSV · Starting at $3,832/mo annual','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding · Custom — contact sales'};
   var el=document.getElementById('settings-plan-features'); if(el) el.textContent='';
   var lvl=PLANS[USER_PLAN]?PLANS[USER_PLAN].level:0;
   var ub=document.getElementById('settings-upgrade-btn'); if(ub) ub.style.display=lvl>=3?'none':'';
@@ -19346,8 +19346,8 @@ function showChangePlanModal(){
   const PLANS_DEF=[
     {key:'demo',name:'Demo',price:'Free (7-day)',desc:'Try all features with sample data. No billing.',color:'var(--t3)',features:'Sample data only · 50 rows · Invoice + PO matching'},
     {key:'starter',name:'Starter',price:'Starting at $1,999/mo annual',desc:'For SMB AR teams transitioning from spreadsheets.',color:'var(--cy)',features:'Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support · Month-to-month: starting at $2,399/mo'},
-    {key:'pro',name:'Pro',price:'Starting at $3,999/mo annual',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CFO dashboards · Reconcile · Priority support · Month-to-month: starting at $4,599/mo'},
-    {key:'team',name:'Team / Custom',price:'Starting at Custom annual',desc:'Multi-user collaboration, enterprise workflows, dedicated onboarding.',color:'var(--pu)',features:'All Pro features · Multi-user · Roles & permissions · Audit logs · Approval workflows · Custom exports · SLA · Month-to-month: starting at Custom'},
+    {key:'pro',name:'Pro',price:'Starting at $3,832/mo annual',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CFO dashboards · Reconcile · Priority support · Month-to-month: starting at $4,599/mo'},
+    {key:'team',name:'Team / Custom',price:'Custom — contact sales',desc:'Multi-user collaboration, enterprise workflows, dedicated onboarding.',color:'var(--pu)',features:'All Pro features · Multi-user · Roles & permissions · Audit logs · Approval workflows · Custom exports · SLA · Month-to-month: starting at Custom'},
   ];
   const levels={demo:0,starter:1,pro:2,team:3};
   const cur=USER_PLAN||'demo';
@@ -20953,8 +20953,8 @@ var HELP_CONTENT = {
         <table><thead><tr><th>Plan</th><th>Price</th><th>Features</th></tr></thead><tbody>
         <tr><td>Demo</td><td>Free</td><td>Sample data only · Explore all features</td></tr>
         <tr><td>Starter</td><td>Starting at $1,999/mo annual</td><td>Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support</td></tr>
-        <tr><td>Pro</td><td>Starting at $3,999/mo annual</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3)">(SAP 750)</span> · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
-        <tr><td>Team / Custom</td><td>Starting at Custom annual</td><td>All Pro + Multi-user · Roles &amp; permissions · Audit logs · Approval workflows · Custom exports · SLA</td></tr>
+        <tr><td>Pro</td><td>Starting at $3,832/mo annual</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3)">(SAP 750)</span> · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
+        <tr><td>Team / Custom</td><td>Custom — contact sales</td><td>All Pro + Multi-user · Roles &amp; permissions · Audit logs · Approval workflows · Custom exports · SLA</td></tr>
         </tbody></table>`
     },
     {

@@ -456,6 +456,30 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
 <!-- ══ NETLIFY FORM — hidden, for static detection by Netlify build bot ══ -->
 <!-- This form must exist in the HTML for Netlify to register it. AJAX submits reference it by name. -->
+<!-- Netlify Forms registration: trial-qualification (primary submission target) -->
+<form name="trial-qualification" netlify netlify-honeypot="bot-field" hidden aria-hidden="true">
+  <input type="hidden" name="form-name" value="trial-qualification">
+  <input type="text" name="bot-field">
+  <input type="text" name="fullName">
+  <input type="text" name="firstName">
+  <input type="text" name="lastName">
+  <input type="email" name="workEmail">
+  <input type="text" name="company">
+  <input type="text" name="jobTitle">
+  <input type="tel" name="phone">
+  <input type="text" name="erp">
+  <input type="text" name="invoiceVolume">
+  <input type="text" name="bankAccounts">
+  <input type="text" name="paymentTypes">
+  <input type="text" name="currentProcess">
+  <input type="text" name="timeline">
+  <input type="text" name="notes">
+  <input type="text" name="signupAt">
+  <input type="text" name="requestStatus">
+  <input type="text" name="source">
+</form>
+
+<!-- Legacy demo-leads form kept for backward compat with any existing integrations -->
 <form name="demo-leads" netlify netlify-honeypot="bot-field" hidden aria-hidden="true">
   <input type="hidden" name="form-name" value="demo-leads">
   <input type="text" name="bot-field">
@@ -616,7 +640,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
     <!-- CTA row -->
     <div class="diff-cta-row" style="text-align:center">
-      <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);margin-right:12px">▶ Try free demo</button>
+      <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);margin-right:12px">▶ Start 30-day free trial</button>
       <button onclick="window.open('https://calendly.com/armatchpro','_blank')" style="padding:15px 32px;background:#fff;color:var(--navy);border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font)">📅 Book a 30-Minute Demo</button>
     </div>
   </div>
@@ -696,7 +720,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
 
       <div style="margin-top:28px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-        <a href="#" onclick="event.preventDefault();openLeadModal()" style="padding:13px 26px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;box-shadow:0 8px 20px rgba(20,168,216,.3);transition:.18s;display:inline-flex;align-items:center;gap:8px" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 28px rgba(20,168,216,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 20px rgba(20,168,216,.3)'">▶ Start 60-day free trial</a>
+        <a href="#" onclick="event.preventDefault();openLeadModal()" style="padding:13px 26px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;box-shadow:0 8px 20px rgba(20,168,216,.3);transition:.18s;display:inline-flex;align-items:center;gap:8px" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 28px rgba(20,168,216,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 20px rgba(20,168,216,.3)'">▶ Start 30-day free trial</a>
         <a href="#pricing" style="padding:13px 26px;background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.16);border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.borderColor='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.16)'">View pricing</a>
       </div>
       <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.35)">Credit card required · cancel anytime in Settings</div>
@@ -735,7 +759,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
       <div style="text-align:center">
         <p style="color:rgba(255,255,255,.4);font-size:14px;margin-bottom:20px">See it match a real $40,000 multi-invoice payment in under 60 seconds.</p>
-        <button onclick="openLeadModal()" style="display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);transition:all .18s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">▶ Try Free Demo</button>
+        <button onclick="openLeadModal()" style="display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);transition:all .18s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">▶ Start 30-day free trial</button>
         <div style="font-size:12px;color:rgba(255,255,255,.25);margin-top:10px">No login required · Takes 60 seconds</div>
       </div>
     </div>
@@ -748,30 +772,33 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <button class="lead-close" onclick="closeLeadModal()">×</button>
     <div class="lead-header">
       <div class="lead-header-mark">AR</div>
-      <h3>Start Your 7-Day Free Trial</h3>
-      <p>Full Pro access — multi-invoice allocation, AI matching, SAP/NetSuite exports, CFO dashboards. No credit card required.</p>
+      <h3>Start Your 30-Day Pro Trial</h3>
+      <p>Tell us about your AR workflow. Our team reviews each request to ensure we can deliver a 90-100% match rate for your team — we'll email your personalized trial link within 24-48 hours.</p>
     </div>
     <div id="lead-form-wrap">
       <div class="lead-body">
         <div class="lead-err" id="lead-err">Please fill in all required fields.</div>
+
+        <!-- Contact info -->
         <div class="lead-label">Full name *</div>
         <input class="lead-input" type="text" id="lead-name" placeholder="Jane Smith" autocomplete="name">
+
         <div class="lead-label">Work email *</div>
         <input class="lead-input" type="email" id="lead-email" placeholder="you@company.com" autocomplete="email">
+
         <div class="lead-label">Company *</div>
         <input class="lead-input" type="text" id="lead-company" placeholder="Acme Corp" autocomplete="organization">
+
         <div class="lead-label">Job title *</div>
         <input class="lead-input" type="text" id="lead-title" placeholder="AR Manager, Controller, CFO…">
+
         <div class="lead-label">Phone <span style="color:#94A3B8;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
         <input class="lead-input" type="tel" id="lead-phone" placeholder="+1 555 000 0000" autocomplete="tel">
-        <div class="lead-label">Estimated monthly invoice volume *</div>
-        <select class="lead-input" id="lead-volume" style="cursor:pointer;color:#0F172A">
-          <option value="">Select volume…</option>
-          <option value="Under 100">Under 100 invoices/month</option>
-          <option value="100-500">100–500 invoices/month</option>
-          <option value="500-2000">500–2,000 invoices/month</option>
-          <option value="2000+">2,000+ invoices/month</option>
-        </select>
+
+        <!-- Qualification questions -->
+        <div style="height:1px;background:#E2E8F0;margin:18px 0 6px"></div>
+        <div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Your AR setup</div>
+
         <div class="lead-label">What ERP does your team use? *</div>
         <select class="lead-input" id="lead-erp" style="cursor:pointer;color:#0F172A">
           <option value="">Select your ERP…</option>
@@ -785,21 +812,82 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <option value="Excel / Manual">Excel / Manual</option>
           <option value="Other">Other</option>
         </select>
+
+        <div class="lead-label">Estimated monthly invoice volume *</div>
+        <select class="lead-input" id="lead-volume" style="cursor:pointer;color:#0F172A">
+          <option value="">Select volume…</option>
+          <option value="Under 500">Under 500 invoices/month</option>
+          <option value="500-2,000">500–2,000 invoices/month</option>
+          <option value="2,000-5,000">2,000–5,000 invoices/month</option>
+          <option value="5,000-20,000">5,000–20,000 invoices/month</option>
+          <option value="20,000+">20,000+ invoices/month</option>
+        </select>
+
+        <div class="lead-label">Number of bank accounts you reconcile *</div>
+        <select class="lead-input" id="lead-bank-accounts" style="cursor:pointer;color:#0F172A">
+          <option value="">Select…</option>
+          <option value="1">1 bank account</option>
+          <option value="2-5">2–5 bank accounts</option>
+          <option value="6-10">6–10 bank accounts</option>
+          <option value="11+">11+ bank accounts</option>
+        </select>
+
+        <div class="lead-label" style="margin-bottom:8px">Payment types you receive * <span style="color:#94A3B8;font-weight:400;text-transform:none;letter-spacing:0">(check all that apply)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:14px;font-size:13.5px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="ERS" style="width:16px;height:16px;cursor:pointer">ERS (self-billing)</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="VMI" style="width:16px;height:16px;cursor:pointer">VMI (vendor-managed)</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="ACH" style="width:16px;height:16px;cursor:pointer">ACH</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Wire" style="width:16px;height:16px;cursor:pointer">Wire transfer</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Check" style="width:16px;height:16px;cursor:pointer">Check</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Lockbox" style="width:16px;height:16px;cursor:pointer">Lockbox</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Credit Card" style="width:16px;height:16px;cursor:pointer">Credit card</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Other" style="width:16px;height:16px;cursor:pointer">Other</label>
+        </div>
+
+        <div class="lead-label">How are you matching remittances today? *</div>
+        <select class="lead-input" id="lead-current-process" style="cursor:pointer;color:#0F172A">
+          <option value="">Select…</option>
+          <option value="Manual Excel">Fully manual in Excel</option>
+          <option value="Mostly Manual">Mostly manual, some scripts</option>
+          <option value="Existing Tool">We have a tool but it struggles</option>
+          <option value="ERP-Native">ERP-native matching only</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <div class="lead-label">Decision timeline *</div>
+        <select class="lead-input" id="lead-timeline" style="cursor:pointer;color:#0F172A">
+          <option value="">Select…</option>
+          <option value="Immediate">Ready to start now</option>
+          <option value="30 days">Within 30 days</option>
+          <option value="90 days">Within 90 days</option>
+          <option value="Researching">Just researching</option>
+        </select>
+
+        <div class="lead-label">Anything else? <span style="color:#94A3B8;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+        <textarea class="lead-input" id="lead-notes" placeholder="Any specific pain points, integration requirements, or context about your team's AR workflow…" rows="3" style="resize:vertical;min-height:70px;font-family:'Inter',sans-serif"></textarea>
+
         <button class="lead-submit" id="lead-submit-btn" onclick="submitLead()">
-          ▶ Start 7-day free trial
+          ▶ Request my 30-day Pro trial
         </button>
         <div class="lead-privacy">
-          🔒 7-day Pro trial · Full access · No credit card required · Your data never leaves your browser.
+          🔒 We review every request within 24-48 hours · Credit card required to activate trial · No spam, ever
         </div>
       </div>
     </div>
     <div id="lead-success" class="lead-success" style="display:none">
-      <div class="lead-success-icon">🎉</div>
-      <h3>You're all set!</h3>
-      <p>Thanks <span id="lead-success-name"></span>! We'll be in touch at <span id="lead-success-email" style="font-weight:700;color:var(--ink)"></span>.<br>Loading your demo now…</p>
-      <div style="width:100%;height:4px;background:#E2E8F0;border-radius:2px;overflow:hidden">
-        <div id="lead-progress" style="height:100%;background:linear-gradient(90deg,var(--p),#12B886);border-radius:2px;width:0%;transition:width .1s linear"></div>
+      <div class="lead-success-icon">✓</div>
+      <h3>Trial request received!</h3>
+      <p style="font-size:14.5px;color:#475569;line-height:1.65;margin-bottom:16px">Thanks <span id="lead-success-name" style="font-weight:700;color:#0F172A"></span>! Our team will review your AR workflow and email your personalized 30-day Pro trial link to <span id="lead-success-email" style="font-weight:700;color:var(--p)"></span> within <strong>24–48 hours</strong>.</p>
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px 16px;margin-bottom:18px;text-align:left">
+        <div style="font-size:11.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">What happens next</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#334155;line-height:1.55">
+          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">1.</span>We review your AR setup and confirm we can deliver a 90–100% match rate.</div>
+          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">2.</span>You receive a personalized Stripe trial link via email. Credit card required.</div>
+          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">3.</span>30 days full Pro access. Auto-converts to $4,599/mo on day 31 unless cancelled.</div>
+        </div>
       </div>
+      <button onclick="closeLeadModal()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Got it</button>
+      <div style="margin-top:10px;text-align:center;font-size:12.5px;color:#94A3B8">Questions? Email <a href="mailto:info@armatchpro.com" style="color:var(--p)">info@armatchpro.com</a></div>
     </div>
   </div>
 </div>
@@ -860,7 +948,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px">Growing AR teams · mid-market finance</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
           <span style="font-size:13px;font-weight:700;color:rgba(125,211,252,.65)">Starting at</span>
-          <span id="price-pro" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$3,999</span>
+          <span id="price-pro" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$3,832</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
         <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Annual · month-to-month starting at $4,599/mo</div>
@@ -924,7 +1012,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">🌐 Secure browser-based workflow</div>
       </div>
       <div class="pricing-bottom-btns" style="display:flex;gap:12px">
-        <button onclick="openLeadModal()" style="padding:12px 22px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 20px rgba(20,168,216,.3)">▶ Try free demo</button>
+        <button onclick="openLeadModal()" style="padding:12px 22px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 20px rgba(20,168,216,.3)">▶ Start 30-day free trial</button>
       </div>
     </div>
   </div>
@@ -1045,6 +1133,33 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 </div>
 
 <script>
+// ════════════════════════════════════════════════════════════════════════
+// 📋 INTERNAL REFERENCE: Stripe Trial Payment Link URLs
+//
+// These URLs are NOT used by any public CTA on this site. The public
+// trial flow goes through the qualification form (openLeadModal).
+//
+// AFTER ARMP reviews and approves a qualified prospect, send them the
+// appropriate URL below via personalized email. The 30-day trial is
+// enabled on the Payment Link level — customer enters CC at signup,
+// trial starts immediately, auto-charges on day 31.
+//
+// To update or replace these, regenerate links at:
+// https://dashboard.stripe.com/payment-links
+// ════════════════════════════════════════════════════════════════════════
+
+// Monthly subscriptions with 30-day free trial (primary signup paths)
+const STRIPE_PRO_TRIAL_URL      = 'https://buy.stripe.com/5kQ6oI5Ewfce062fndcAo03';
+const STRIPE_STARTER_TRIAL_URL  = 'https://buy.stripe.com/6oUaEYgja0hk7yu0sjcAo04';
+
+// Annual subscriptions — no trial (customer prepays year upfront)
+const STRIPE_PRO_ANNUAL_URL     = 'https://buy.stripe.com/bJedRagjaggi5qm0sjcAo05';
+const STRIPE_STARTER_ANNUAL_URL = 'https://buy.stripe.com/14A28s8QI9RUcSO0sjcAo06';
+
+// Pro Founding Rate — $2,999/mo locked for life, first 10 customers only
+// Share this URL 1:1 with qualified founding prospects via email — NEVER expose publicly
+const STRIPE_PRO_FOUNDING_URL   = 'https://buy.stripe.com/7sY8wQd6Y9RU3ie6QHcAo07';
+
 // ── AI QUALIFICATION CHAT ──
 const QF_STATES={
   start:{msg:"Hi! Quick question before I send you to the demo — what ERP does your team use?",opts:["SAP","NetSuite","Other / Excel"]},
@@ -1107,7 +1222,7 @@ function qfPick(val,nextState){
         msg=`Sounds like AR Match Pro would solve your biggest pain points. The live demo takes 5 minutes — no signup, real matching with sample data.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else {
-        msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter starting at $1,999/month annual or Pro starting at $3,999/month annual. Try the demo first, no commitment.`;
+        msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter starting at $1,999/month annual or Pro starting at $3,832/month annual. Try the demo first, no commitment.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Start free demo</a>`;
       }
       addBotQMsg(msg+'<br>'+cta);
@@ -1126,7 +1241,7 @@ function setBilling(type){
   document.getElementById('bill-annual').style.color = monthly ? 'rgba(255,255,255,.55)' : '#0F172A';
   // Correct prices: Annual is lower (the default shown), Monthly is higher
   document.getElementById('price-starter').textContent = monthly ? '$2,399' : '$1,999';
-  document.getElementById('price-pro').textContent = monthly ? '$4,599' : '$3,999';
+  document.getElementById('price-pro').textContent = monthly ? '$4,599' : '$3,832';
   // Team is "Custom" — not toggled by annual/monthly. Pricing handled in sales conversation.
   document.getElementById('price-starter-annual').textContent = monthly ? 'Month-to-month · starting at $2,399/mo' : 'Annual · month-to-month starting at $2,399/mo';
   document.getElementById('price-pro-annual').textContent = monthly ? 'Month-to-month · starting at $4,599/mo' : 'Annual · month-to-month starting at $4,599/mo';
@@ -1222,10 +1337,21 @@ async function submitLead(){
   var phone=document.getElementById('lead-phone').value.trim();
   var erp=(document.getElementById('lead-erp')||{value:''}).value;
   var volume=(document.getElementById('lead-volume')||{value:''}).value;
+  var bankAccounts=(document.getElementById('lead-bank-accounts')||{value:''}).value;
+  var currentProcess=(document.getElementById('lead-current-process')||{value:''}).value;
+  var timeline=(document.getElementById('lead-timeline')||{value:''}).value;
+  var notes=(document.getElementById('lead-notes')||{value:''}).value.trim();
+  // Collect checked payment types
+  var pmtNodes=document.querySelectorAll('.lead-pmt:checked');
+  var paymentTypes=Array.from(pmtNodes).map(function(n){return n.value;}).join(', ');
   var errEl=document.getElementById('lead-err');
 
-  if(!name||!email||!company||!title||!erp||!volume){
+  if(!name||!email||!company||!title||!erp||!volume||!bankAccounts||!currentProcess||!timeline){
     errEl.textContent='Please fill in all required fields.';
+    errEl.style.display='block'; return;
+  }
+  if(!paymentTypes){
+    errEl.textContent='Please select at least one payment type you receive.';
     errEl.style.display='block'; return;
   }
   if(!email.includes('@')){
@@ -1235,7 +1361,7 @@ async function submitLead(){
   errEl.style.display='none';
 
   var btn=document.getElementById('lead-submit-btn');
-  btn.disabled=true; btn.textContent='Setting up your demo…';
+  btn.disabled=true; btn.textContent='Submitting your request…';
 
   // Parse name parts
   var nameParts=name.trim().split(/\s+/);
@@ -1243,7 +1369,6 @@ async function submitLead(){
   var lastName=nameParts.slice(1).join(' ')||'';
 
   var now=new Date();
-  var expiresAt=new Date(now.getTime()+7*24*60*60*1000);
 
   // Build normalized lead record
   var leadRecord={
@@ -1257,14 +1382,20 @@ async function submitLead(){
     phone:phone||'',
     erp:erp,
     invoiceVolume:volume,
+    bankAccounts:bankAccounts,
+    paymentTypes:paymentTypes,
+    currentProcess:currentProcess,
+    timeline:timeline,
+    notes:notes,
     signupDate:now.toISOString(),
-    demoStartDate:now.toISOString(),
-    demoExpiration:expiresAt.toISOString(),
-    demoStatus:'Demo Active',
-    source:'Free Demo',
+    requestStatus:'Pending Review',
+    source:'Trial Qualification Form',
+    reviewedAt:'',
+    reviewedBy:'',
+    decision:'',
     contacted:false,
     converted:false,
-    notes:''
+    adminNotes:''
   };
 
   // 1. Save to armp_demo_leads (dedup by email)
@@ -1278,37 +1409,13 @@ async function submitLead(){
   // 2. Save legacy armp_leads for backward compat
   try{
     var oldLeads=JSON.parse(localStorage.getItem('armp_leads')||'[]');
-    oldLeads.push({name:name,email:email,company:company,title:title,phone:phone,erp:erp,volume:volume,ts:now.toISOString(),source:'landing-page-demo'});
+    oldLeads.push({name:name,email:email,company:company,title:title,phone:phone,erp:erp,volume:volume,bankAccounts:bankAccounts,paymentTypes:paymentTypes,currentProcess:currentProcess,timeline:timeline,notes:notes,ts:now.toISOString(),source:'trial-qualification-form'});
     localStorage.setItem('armp_leads',JSON.stringify(oldLeads));
   }catch(e){}
 
-  // 3. Save full demo access to localStorage
-  var demoAccess={
-    enabled:true,
-    email:email,
-    firstName:firstName,
-    lastName:lastName,
-    fullName:name,
-    company:company,
-    jobTitle:title,
-    phone:phone||'',
-    erp:erp,
-    invoiceVolume:volume,
-    startedAt:now.toISOString(),
-    expiresAt:expiresAt.toISOString(),
-    plan:'pro',
-    demoTier:'pro-trial',
-    trialDays:7,
-    granted:true
-  };
-  try{
-    localStorage.setItem('armp_demo_access',JSON.stringify(demoAccess));
-    localStorage.setItem('demoAccessGranted','true');
-  }catch(e){}
-
-  // 4. Submit to Netlify Forms via fetch (fire-and-forget — NEVER blocks demo access)
+  // 3. Submit to Netlify Forms via fetch (fire-and-forget)
   var netlifyPayload=new URLSearchParams({
-    'form-name':'demo-leads',
+    'form-name':'trial-qualification',
     'bot-field':'',
     'fullName':name,
     'firstName':firstName,
@@ -1319,14 +1426,16 @@ async function submitLead(){
     'phone':phone||'',
     'erp':erp,
     'invoiceVolume':volume,
+    'bankAccounts':bankAccounts,
+    'paymentTypes':paymentTypes,
+    'currentProcess':currentProcess,
+    'timeline':timeline,
+    'notes':notes,
     'signupAt':now.toISOString(),
-    'demoStartAt':now.toISOString(),
-    'expiresAt':expiresAt.toISOString(),
-    'demoStatus':'Demo Active',
-    'source':'Free Demo'
+    'requestStatus':'Pending Review',
+    'source':'Trial Qualification Form'
   });
 
-  // Submit async — do not await, never block user
   (async function(){
     try{
       var res=await fetch('/',{
@@ -1335,26 +1444,18 @@ async function submitLead(){
         body:netlifyPayload.toString()
       });
       if(!res.ok){
-        console.warn('Netlify Forms note: submission returned '+res.status+'. Lead saved locally.');
+        console.warn('Netlify Forms: submission returned '+res.status+'. Lead saved locally.');
       }
     }catch(err){
-      console.warn('Netlify Forms note: network unavailable. Lead saved locally.',err);
+      console.warn('Netlify Forms: network unavailable. Lead saved locally.',err);
     }
   })();
 
-  // 5. Show success state immediately — do not wait for network
+  // 4. Show success state — no redirect, user waits for ARMP email
   document.getElementById('lead-form-wrap').style.display='none';
   document.getElementById('lead-success').style.display='block';
   document.getElementById('lead-success-name').textContent=firstName;
   document.getElementById('lead-success-email').textContent=email;
-
-  // 6. Animate progress bar then redirect to demo.html?mode=demo
-  var bar=document.getElementById('lead-progress');
-  var pct=0;
-  var interval=setInterval(function(){
-    pct+=2; bar.style.width=pct+'%';
-    if(pct>=100){ clearInterval(interval); window.location.href='demo.html?mode=demo'; }
-  },50);
 }
 
 // Allow Enter key to submit lead form
@@ -1436,9 +1537,9 @@ const LP_FAQ={
   "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP or NetSuite, import it into AR Match Pro, run the match, and export a posting-ready file back. No integration, no IT approval, no setup time.",
   "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
   "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
-  "Which plan?":"Starter (starting at $1,999/mo annual) covers Invoice, PO, and amount matching for up to 5,000 rows/month with persistent delivery index, keyboard shortcuts, and match confidence pills — best for 1–2 user AR teams. AI Remittance Parser includes 50 free parses/month, then $0.05/parse. Pro (starting at $3,999/mo annual) adds unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, customer learning, historical trends dashboard, SAP/NetSuite exports, CFO dashboards, and unlimited AI Remittance Parser. Team / Custom (contact sales for pricing) adds multi-user collaboration, roles, approval workflows, custom integrations, and dedicated onboarding — sized to your team and volume.",
-  "Book demo?":"Click 'Try free demo' on this page to start a 7-day free trial — full access, no credit card required. Or email info@armatchpro.com to schedule a live walkthrough.",
-  "Pricing?":"Starter starts at $1,999/month annual (month-to-month from $2,399/mo). Pro starts at $3,999/month annual (month-to-month from $4,599/mo). Team / Custom is sized to your team — contact info@armatchpro.com for a quote. All prices are starting prices — customized add-ons may increase pricing."
+  "Which plan?":"Starter (starting at $1,999/mo annual) covers Invoice, PO, and amount matching for up to 5,000 rows/month with persistent delivery index, keyboard shortcuts, and match confidence pills — best for 1–2 user AR teams. AI Remittance Parser includes 50 free parses/month, then $0.05/parse. Pro (starting at $3,832/mo annual) adds unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, customer learning, historical trends dashboard, SAP/NetSuite exports, CFO dashboards, and unlimited AI Remittance Parser. Team / Custom (contact sales for pricing) adds multi-user collaboration, roles, approval workflows, custom integrations, and dedicated onboarding — sized to your team and volume.",
+  "Book demo?":"Click 'Try free demo' on this page to start a 30-day free trial — full access, credit card required (cancel anytime in Settings). Or email info@armatchpro.com to schedule a live walkthrough.",
+  "Pricing?":"Starter starts at $1,999/month annual (month-to-month from $2,399/mo). Pro starts at $3,832/month annual (month-to-month from $4,599/mo). Team / Custom is sized to your team — contact info@armatchpro.com for a quote. All prices are starting prices — customized add-ons may increase pricing."
 };
 let lpChatOpen=false;
 function toggleLpChat(){
