@@ -1005,14 +1005,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div style="text-align:center;margin-bottom:20px;font-size:12px;color:rgba(255,255,255,.28);font-style:italic">All prices are starting prices. Customized add-ons may increase pricing. <a href="mailto:info@armatchpro.com" style="color:rgba(255,255,255,.4)">Contact us</a> for a custom quote.</div>
 
     <!-- Bottom row -->
-    <div class="pricing-bottom-row" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08)">
+    <div class="pricing-bottom-row" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:16px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08)">
       <div class="pricing-trust-signals" style="display:flex;gap:24px;flex-wrap:wrap">
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">🔒 No ERP integration required</div>
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">⚡ Live in minutes</div>
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">🌐 Secure browser-based workflow</div>
-      </div>
-      <div class="pricing-bottom-btns" style="display:flex;gap:12px">
-        <button onclick="openLeadModal()" style="padding:12px 22px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 20px rgba(20,168,216,.3)">▶ Start 30-day free trial</button>
       </div>
     </div>
   </div>
@@ -1570,9 +1567,9 @@ function lpChatAsk(q){
 <script>
 // ── STRIPE PAYMENT LINKS ──
 var _PAYMENT_LINKS = {
-  starter: 'https://buy.stripe.com/7sY7sM5Ewfce3ie8YPcAo02',
-  pro:     'https://buy.stripe.com/eVq9AU1ogd469GC7ULcAo01',
-  team:    'https://buy.stripe.com/14AaEY2sk3tw062grhcAo00'
+  starter: 'https://buy.stripe.com/6oUaEYgja0hk7yu0sjcAo04',  // Starter Monthly (30d trial) — LIVE
+  pro:     'https://buy.stripe.com/5kQ6oI5Ewfce062fndcAo03',  // Pro Monthly (30d trial) — LIVE
+  team:    'mailto:info@armatchpro.com?subject=Team%20%2F%20Custom%20Plan%20Inquiry&body=Hi%2C%20I%27d%20like%20to%20learn%20more%20about%20the%20Team%20%2F%20Custom%20plan%20for%20AR%20Match%20Pro.%0A%0ATeam%20size%3A%20%0AInvoice%20volume%2Fmonth%3A%20%0AERP%20system%3A%20%0APreferred%20call%20time%3A%20%0A%0AThanks%21'
 };
 function goCheckout(plan){
   var link=_PAYMENT_LINKS[plan];
