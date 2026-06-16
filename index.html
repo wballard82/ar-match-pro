@@ -27,7 +27,7 @@ button,input{font-family:inherit}
 .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(20,168,216,.09);color:#075985;font-size:13px;font-weight:800;border:1px solid rgba(20,168,216,.16)}
 
 /* HEADER */
-.site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.84);backdrop-filter:blur(18px);border-bottom:1px solid rgba(226,232,240,.9)}
+.site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.97);border-bottom:1px solid rgba(226,232,240,.9)}
 .nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:-.4px;color:var(--ink)}
 .brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:13px;font-weight:900;box-shadow:0 10px 24px rgba(20,168,216,.28);flex-shrink:0}
@@ -48,7 +48,12 @@ button,input{font-family:inherit}
 .btn-demo:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(20,168,216,.4)}
 
 /* LEAD CAPTURE MODAL */
-.lead-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.lead-overlay{display:none;position:fixed;inset:0;background:rgba(5,13,26,.78);z-index:200;align-items:center;justify-content:center}
+/* When the qualification modal is open, pause CPU-heavy background animations so typing stays smooth */
+body.modal-open .orbit-ring,
+body.modal-open .finance-icon,
+body.modal-open .split-ar,
+body.modal-open .split-mp{animation-play-state:paused !important}
 .lead-overlay.open{display:flex}
 .lead-modal{background:#fff;border-radius:20px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;overflow-x:hidden;box-shadow:0 32px 80px rgba(0,0,0,.22);animation:modalIn .3s cubic-bezier(.34,1.56,.64,1)}
 @keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:none}}
@@ -96,7 +101,6 @@ button,input{font-family:inherit}
   background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.08));
   border:1.5px solid rgba(255,255,255,.32);
   display:grid;place-items:center;font-size:28px;
-  backdrop-filter:blur(14px);
   box-shadow:0 14px 36px rgba(0,0,0,.32),0 0 28px rgba(20,168,216,.22),inset 0 1px 0 rgba(255,255,255,.22);
   transition:.2s;animation:fiFloat 3.2s ease-in-out infinite;
 }
@@ -186,7 +190,7 @@ button,input{font-family:inherit}
 .cfo h2{font-size:48px;letter-spacing:-2px;line-height:1.05;margin:14px 0;font-weight:900}
 .cfo p{color:rgba(255,255,255,.65);font-size:17px;line-height:1.6}
 .cfo-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-.cfo-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:22px;backdrop-filter:blur(8px);transition:.2s}
+.cfo-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:22px;transition:.2s}
 .cfo-card:hover{background:rgba(255,255,255,.12)}
 .cfo-label{font-size:11px;color:rgba(255,255,255,.45);text-transform:uppercase;font-weight:900;letter-spacing:.08em}
 .cfo-val{font-size:34px;font-family:var(--mono);font-weight:900;margin:8px 0}
@@ -781,8 +785,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div class="lead-err" id="lead-err">Please fill in all required fields.</div>
 
         <!-- Contact info -->
-        <div class="lead-label">Full name *</div>
-        <input class="lead-input" type="text" id="lead-name" placeholder="Jane Smith" autocomplete="name">
+        <div class="lead-label">First name *</div>
+        <input class="lead-input" type="text" id="lead-first" placeholder="Jane" autocomplete="given-name">
+
+        <div class="lead-label">Last name *</div>
+        <input class="lead-input" type="text" id="lead-last" placeholder="Smith" autocomplete="family-name">
 
         <div class="lead-label">Work email *</div>
         <input class="lead-input" type="email" id="lead-email" placeholder="you@company.com" autocomplete="email">
@@ -793,7 +800,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div class="lead-label">Job title *</div>
         <input class="lead-input" type="text" id="lead-title" placeholder="AR Manager, Controller, CFO…">
 
-        <div class="lead-label">Phone <span style="color:#94A3B8;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+        <div class="lead-label">Phone *</div>
         <input class="lead-input" type="tel" id="lead-phone" placeholder="+1 555 000 0000" autocomplete="tel">
 
         <!-- Qualification questions -->
@@ -1321,16 +1328,19 @@ var _leadInterestedPlan = '';  // tracks which plan CTA the prospect clicked
 function openLeadModal(plan){
   _leadInterestedPlan = plan || '';
   document.getElementById('lead-overlay').classList.add('open');
+  document.body.classList.add('modal-open');
   document.body.style.overflow='hidden';
-  setTimeout(function(){ var el=document.getElementById('lead-name'); if(el) el.focus(); },300);
+  setTimeout(function(){ var el=document.getElementById('lead-first'); if(el) el.focus(); },300);
 }
 function closeLeadModal(){
   document.getElementById('lead-overlay').classList.remove('open');
+  document.body.classList.remove('modal-open');
   document.body.style.overflow='';
 }
 
 async function submitLead(){
-  var name=document.getElementById('lead-name').value.trim();
+  var firstName=document.getElementById('lead-first').value.trim();
+  var lastName=document.getElementById('lead-last').value.trim();
   var email=document.getElementById('lead-email').value.trim();
   var company=document.getElementById('lead-company').value.trim();
   var title=(document.getElementById('lead-title')||{value:''}).value.trim();
@@ -1346,7 +1356,9 @@ async function submitLead(){
   var paymentTypes=Array.from(pmtNodes).map(function(n){return n.value;}).join(', ');
   var errEl=document.getElementById('lead-err');
 
-  if(!name||!email||!company||!title||!erp||!volume||!bankAccounts||!currentProcess||!timeline){
+  var name=(firstName+' '+lastName).trim();
+
+  if(!firstName||!lastName||!email||!company||!title||!phone||!erp||!volume||!bankAccounts||!currentProcess||!timeline){
     errEl.textContent='Please fill in all required fields.';
     errEl.style.display='block'; return;
   }
@@ -1362,11 +1374,6 @@ async function submitLead(){
 
   var btn=document.getElementById('lead-submit-btn');
   btn.disabled=true; btn.textContent='Submitting your request…';
-
-  // Parse name parts
-  var nameParts=name.trim().split(/\s+/);
-  var firstName=nameParts[0]||name;
-  var lastName=nameParts.slice(1).join(' ')||'';
 
   var now=new Date();
 
