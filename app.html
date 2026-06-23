@@ -3781,7 +3781,43 @@ body.app-active #app {
                 
               </div>
               <div class="ca-bottom-tbl-wrap">
-                
+                <!-- AR Portfolio Summary Bar -->
+                <div id="ar-summary-bar" style="display:none;padding:14px 16px;background:linear-gradient(135deg,var(--surface2),var(--surface1));border-bottom:1px solid var(--bdr)">
+                  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;width:100%">
+                    <div style="padding:4px 14px 4px 0;border-right:1px solid var(--bdr)">
+                      <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Customers</div>
+                      <div style="font-size:19px;font-weight:800;color:var(--t1);font-family:var(--mono);margin-top:3px" id="ars-customers">0</div>
+                    </div>
+                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
+                      <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Open Invoices</div>
+                      <div style="font-size:19px;font-weight:800;color:var(--t1);font-family:var(--mono);margin-top:3px" id="ars-invoices">0</div>
+                    </div>
+                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
+                      <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Total AR Value</div>
+                      <div style="font-size:19px;font-weight:800;color:var(--pd);font-family:var(--mono);margin-top:3px" id="ars-total">$0</div>
+                    </div>
+                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
+                      <div style="font-size:10.5px;font-weight:700;color:var(--g-t);text-transform:uppercase;letter-spacing:.05em">Current</div>
+                      <div style="font-size:16px;font-weight:800;color:var(--g-t);font-family:var(--mono);margin-top:3px" id="ars-current">$0</div>
+                      <div style="font-size:10px;color:var(--t3);margin-top:1px" id="ars-current-pct">0%</div>
+                    </div>
+                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
+                      <div style="font-size:10.5px;font-weight:700;color:var(--am-t);text-transform:uppercase;letter-spacing:.05em">1–30 Days</div>
+                      <div style="font-size:16px;font-weight:800;color:var(--am-t);font-family:var(--mono);margin-top:3px" id="ars-30">$0</div>
+                      <div style="font-size:10px;color:var(--t3);margin-top:1px" id="ars-30-pct">0%</div>
+                    </div>
+                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
+                      <div style="font-size:10.5px;font-weight:700;color:#FB923C;text-transform:uppercase;letter-spacing:.05em">31–60 Days</div>
+                      <div style="font-size:16px;font-weight:800;color:#FB923C;font-family:var(--mono);margin-top:3px" id="ars-60">$0</div>
+                      <div style="font-size:10px;color:var(--t3);margin-top:1px" id="ars-60-pct">0%</div>
+                    </div>
+                    <div style="padding:4px 0 4px 14px">
+                      <div style="font-size:10.5px;font-weight:700;color:var(--r-t);text-transform:uppercase;letter-spacing:.05em">61+ Days</div>
+                      <div style="font-size:16px;font-weight:800;color:var(--r-t);font-family:var(--mono);margin-top:3px" id="ars-90">$0</div>
+                      <div style="font-size:10px;color:var(--t3);margin-top:1px" id="ars-90-pct">0%</div>
+                    </div>
+                  </div>
+                </div>
                 <div style="padding:10px 14px;background:var(--surface1);border-bottom:1px solid var(--bdr);display:flex;gap:10px;align-items:center">
                   <input id="ca-open-search" type="search" placeholder="Search by account number or customer name…" 
                     style="flex:1;max-width:480px;padding:8px 14px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none"
@@ -9240,6 +9276,7 @@ function saveToStorage(){
       return;
     }
     localStorage.setItem(sk('inv'),JSON.stringify(INV));
+    localStorage.setItem(sk('saved_at'),String(Date.now()));
     localStorage.setItem(sk('pay'),JSON.stringify(PAY));
     localStorage.setItem(sk('res'),JSON.stringify(RES));
     localStorage.setItem(sk('exc'),JSON.stringify(EXC));
@@ -9323,6 +9360,123 @@ function refreshStatus(){
   }catch(e){ setStatus('waiting'); }
 }
 
+// ── Session restore prompt (Option B): on login with prior data, let user choose ──
+function _fmtTimeAgo(ms){
+  if(!ms) return 'a previous session';
+  var diff=Date.now()-ms;
+  var mins=Math.floor(diff/60000);
+  if(mins<1) return 'moments ago';
+  if(mins<60) return mins+' minute'+(mins===1?'':'s')+' ago';
+  var hrs=Math.floor(mins/60);
+  if(hrs<24) return hrs+' hour'+(hrs===1?'':'s')+' ago';
+  var days=Math.floor(hrs/24);
+  return days+' day'+(days===1?'':'s')+' ago';
+}
+function armpShowSessionPrompt(){
+  var existing=document.getElementById('armp-session-overlay');
+  if(existing)existing.remove();
+  var savedAt=0;
+  try{ savedAt=parseInt(localStorage.getItem(sk('saved_at'))||'0',10); }catch(e){}
+  var invCount=(typeof INV!=='undefined')?INV.length:0;
+  var payCount=(typeof PAY!=='undefined')?PAY.length:0;
+  var custCount=0;
+  try{ var cs={}; INV.forEach(function(v){if(v.a)cs[v.a]=1;}); custCount=Object.keys(cs).length; }catch(e){}
+  var hasDeliv=(typeof DELIV!=='undefined'&&DELIV.length>0);
+
+  var detailBits=[];
+  if(invCount)detailBits.push('<strong>'+invCount.toLocaleString()+'</strong> open invoice'+(invCount===1?'':'s')+(custCount?' across <strong>'+custCount.toLocaleString()+'</strong> customer'+(custCount===1?'':'s'):''));
+  if(payCount)detailBits.push('<strong>'+payCount.toLocaleString()+'</strong> payment'+(payCount===1?'':'s'));
+  if(hasDeliv)detailBits.push('a delivery report');
+
+  var overlay=document.createElement('div');
+  overlay.id='armp-session-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(5,13,26,.62);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML=
+    '<div style="background:var(--surface,#fff);border:1px solid var(--bdr);border-radius:18px;width:460px;max-width:95vw;box-shadow:0 28px 70px rgba(0,0,0,.32);overflow:hidden">'+
+      '<div style="padding:24px 26px 18px">'+
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
+          '<div style="flex-shrink:0;width:42px;height:42px;border-radius:11px;background:var(--pg,rgba(20,168,216,.12));display:flex;align-items:center;justify-content:center;font-size:22px">📂</div>'+
+          '<div><div style="font-size:18px;font-weight:800;color:var(--t1)">Welcome back</div>'+
+          '<div style="font-size:12.5px;color:var(--t3)">Saved '+_fmtTimeAgo(savedAt)+'</div></div>'+
+        '</div>'+
+        '<div style="font-size:13.5px;color:var(--t2);line-height:1.6;background:var(--surface2,rgba(0,0,0,.03));border:1px solid var(--bdr);border-radius:11px;padding:14px 16px;margin-bottom:6px">'+
+          'Your last session is still here: '+(detailBits.length?detailBits.join(', '):'previous data')+'.'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:6px 26px 24px;display:flex;flex-direction:column;gap:10px">'+
+        '<button onclick="armpSessionContinue()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border:none;border-radius:11px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit">Continue working</button>'+
+        '<button onclick="armpSessionStartFresh()" style="width:100%;padding:13px;background:none;color:var(--r-t,#DC2626);border:1.5px solid var(--bdr);border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit" onmouseover="this.style.borderColor=\'var(--r-t,#DC2626)\'" onmouseout="this.style.borderColor=\'var(--bdr)\'">Start fresh (clear this data)</button>'+
+        '<div style="text-align:center;font-size:11.5px;color:var(--t3);margin-top:2px">Starting fresh permanently deletes the imported data above.</div>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(overlay);
+}
+function armpSessionContinue(){
+  var o=document.getElementById('armp-session-overlay');if(o)o.remove();
+  // Data already loaded in memory — just render it and mark setup as seen
+  try{ StorageManager.save('setup_seen','true'); }catch(e){}
+  try{ rAll(); }catch(e){}
+  try{ updDash(); updTop(); refreshStatus(); updateArSummary(); }catch(e){}
+  if(typeof toast==='function') toast('Welcome back — your session is restored','');
+}
+function armpSessionStartFresh(){
+  if(!confirm('Clear all imported invoices, payments, and matches from your last session? This cannot be undone.')) return;
+  var o=document.getElementById('armp-session-overlay');if(o)o.remove();
+  // Wipe memory + storage
+  INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];REM_ADVICE=[];autoMatchHasRun=false;
+  try{ _invalidateInvIndexes(); }catch(e){}
+  ['inv','pay','res','exc','remadvice','saved_at'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}});
+  try{ if(typeof _clearDeliveryIndex==='function')_clearDeliveryIndex(); }catch(e){}
+  try{ rAll(); updDash(); updTop(); refreshStatus(); updateArSummary(); }catch(e){}
+  try{ StorageManager.remove('setup_seen'); }catch(e){}
+  try{ if(typeof armpOpenSetupModal==='function') armpOpenSetupModal(); }catch(e){}
+  if(typeof toast==='function') toast('Started fresh — workspace cleared','');
+}
+
+// ── AR Portfolio Summary Bar ──
+function updateArSummary(){
+  try{
+    var bar=document.getElementById('ar-summary-bar');
+    if(!bar)return;
+    if(!INV||!INV.length){ bar.style.display='none'; return; }
+    bar.style.display='block';
+
+    var custSet={};
+    var total=0, cur=0, b30=0, b60=0, b90=0;
+    var now=new Date(); now.setHours(0,0,0,0);
+    for(var i=0;i<INV.length;i++){
+      var v=INV[i];
+      if(v.a)custSet[v.a]=1;
+      var amt=parseFloat(v.amt)||0;
+      total+=amt;
+      // Aging by due date
+      var due=(typeof _parseAgingDate==='function')?_parseAgingDate(v.due):(v.due?new Date(v.due):null);
+      if(!due||isNaN(due.getTime())){ cur+=amt; continue; }
+      var daysPast=Math.floor((now-due)/(1000*60*60*24));
+      if(daysPast<=0)cur+=amt;
+      else if(daysPast<=30)b30+=amt;
+      else if(daysPast<=60)b60+=amt;
+      else b90+=amt;
+    }
+    var nCust=Object.keys(custSet).length;
+    function fmtK(n){
+      if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M';
+      if(n>=1e3)return '$'+(n/1e3).toFixed(0)+'K';
+      return '$'+n.toFixed(0);
+    }
+    function pct(n){ return total>0?Math.round(100*n/total)+'%':'0%'; }
+    function setTxt(id,val){ var el=document.getElementById(id); if(el)el.textContent=val; }
+
+    setTxt('ars-customers', nCust.toLocaleString());
+    setTxt('ars-invoices', INV.length.toLocaleString());
+    setTxt('ars-total', '$'+total.toLocaleString('en-US',{maximumFractionDigits:0}));
+    setTxt('ars-current', fmtK(cur));   setTxt('ars-current-pct', pct(cur));
+    setTxt('ars-30', fmtK(b30));        setTxt('ars-30-pct', pct(b30));
+    setTxt('ars-60', fmtK(b60));        setTxt('ars-60-pct', pct(b60));
+    setTxt('ars-90', fmtK(b90));        setTxt('ars-90-pct', pct(b90));
+  }catch(e){ console.warn('[updateArSummary]',e); }
+}
+
 // ── Navigation ──
 function sp(id){
   const map={'engine':'cash-app','cash-app':'cash-app','remittance':'remittance','inv':'invoices','rem':'remittance','posting':'posting','pricing':'settings','audit':'audit'};
@@ -9335,7 +9489,7 @@ function sp(id){
   if(sbi)sbi.classList.add('active');
   if(pid==='reporting')updReporting();
   if(pid==='settings'){try{cfgRenderAll();}catch(e){}}
-  if(pid==='cash-app'){engRefreshSel();renderPayQueue();}
+  if(pid==='cash-app'){engRefreshSel();renderPayQueue();try{updateArSummary();}catch(e){}}
   if(pid==='audit')initAuditTbl();
   if(pid==='cfo'){try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}}
 
@@ -11062,6 +11216,7 @@ function launchApp(user){
   // so a page refresh or re-login doesn't lose their imported invoices/payments.
   INV=[];PAY=[];RES=[];EXC=[];DELIV=[];autoMatchHasRun=false;
   _invalidateInvIndexes();
+  var _restoredPriorSession = false;
   if(IS_DEMO && !IS_MASTER){
     // Demo: clear any stale persisted keys, start fresh
     ['inv','pay','res','exc'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}});
@@ -11070,6 +11225,7 @@ function launchApp(user){
     try{ loadFromStorage(); }catch(e){ console.warn('loadFromStorage:',e); }
     try{ _buildSearchText(); }catch(e){}
     try{ _buildInvIndexes(); }catch(e){}
+    if((INV&&INV.length)||(PAY&&PAY.length)) _restoredPriorSession = true;
   }
   var _bsel=document.getElementById('ca-bank-sel');
   if(_bsel){_bsel.innerHTML='<option value="">All bank accounts</option>';}
@@ -11077,6 +11233,7 @@ function launchApp(user){
   try{updDash();}catch(e){console.warn('updDash:',e);}
   try{updTop();}catch(e){console.warn('updTop:',e);}
   try{refreshStatus();}catch(e){console.warn('refreshStatus:',e);}
+  try{updateArSummary();}catch(e){console.warn('updateArSummary:',e);}
   try{initAuditTbl();}catch(e){console.warn('initAuditTbl:',e);}
   addAudit('Login','User: '+(user.name||CURRENT_USER));
   // cfgInit for non-demo users (already loaded above)
@@ -11119,6 +11276,10 @@ function launchApp(user){
   // Once dismissed via X or "Continue", it won't reappear.
   setTimeout(function(){
     try{
+      // If we restored a prior session with data, ask the user: continue or start fresh.
+      if(_restoredPriorSession && !IS_DEMO){
+        if(typeof armpShowSessionPrompt==='function'){ armpShowSessionPrompt(); return; }
+      }
       if(typeof armpOpenSetupModal==='function'){
         // Always show on first login. Only skip if user previously dismissed.
         var _setupSeen = false;
@@ -11916,10 +12077,46 @@ const sortState={};
 function sortTbl(tblId,ci){
   const tbl=document.getElementById(tblId);if(!tbl)return;
   const tbody=tbl.querySelector('tbody'),th=tbl.querySelectorAll('th')[ci];
+  if(!tbody||!th)return;
   const key=tblId+'_'+ci,asc=sortState[key]!==true;
   sortState[key]=asc;tbl.querySelectorAll('th').forEach(t=>{t.classList.remove('asc','desc');});th.classList.add(asc?'asc':'desc');
   const rows=[...tbody.querySelectorAll('tr')];
-  rows.sort((a,b)=>{const ac=(a.querySelectorAll('td')[ci]||{}).innerText||'',bc=(b.querySelectorAll('td')[ci]||{}).innerText||'';const an=parseFloat(ac.replace(/[$,]/g,'')),bn=parseFloat(bc.replace(/[$,]/g,''));if(!isNaN(an)&&!isNaN(bn))return asc?an-bn:bn-an;return asc?ac.localeCompare(bc):bc.localeCompare(ac);});
+  // Helper: classify a cell value so each column sorts by its natural type
+  function cellVal(cellText){
+    var s=(cellText||'').trim();
+    if(s===''||s==='—'||s==='-') return {t:'empty',v:null};
+    // ISO date (YYYY-MM-DD) or common date forms → sort chronologically
+    var d=s.replace(/[^0-9/\-]/g,'');
+    if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(d) || /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(d)){
+      var ts=Date.parse(d);
+      if(!isNaN(ts)) return {t:'date',v:ts};
+    }
+    // Currency / number ($1,234.56, 1234, -50, etc.)
+    var n=parseFloat(s.replace(/[$,%\s]/g,''));
+    if(!isNaN(n) && /^[\$\-]?[\d,]+\.?\d*%?$/.test(s.replace(/\s/g,''))) return {t:'num',v:n};
+    // "30 days", "Current", aging-style: pull leading number if present
+    var agingMatch=s.match(/^(\d+)\s*(day|d)\b/i);
+    if(agingMatch) return {t:'num',v:parseFloat(agingMatch[1])};
+    if(/^current$/i.test(s)) return {t:'num',v:-1}; // Current sorts before any past-due day count
+    // Fallback: text
+    return {t:'text',v:s.toLowerCase()};
+  }
+  rows.sort((a,b)=>{
+    var ac=(a.querySelectorAll('td')[ci]||{}).innerText||'';
+    var bc=(b.querySelectorAll('td')[ci]||{}).innerText||'';
+    var av=cellVal(ac), bv=cellVal(bc);
+    // Empties always sort to the bottom regardless of direction
+    if(av.t==='empty'&&bv.t==='empty')return 0;
+    if(av.t==='empty')return 1;
+    if(bv.t==='empty')return -1;
+    // If both numeric/date, compare numerically
+    if((av.t==='num'||av.t==='date')&&(bv.t==='num'||bv.t==='date')){
+      return asc?av.v-bv.v:bv.v-av.v;
+    }
+    // Otherwise string compare
+    var as=String(av.v), bs=String(bv.v);
+    return asc?as.localeCompare(bs):bs.localeCompare(as);
+  });
   rows.forEach(r=>tbody.appendChild(r));
 }
 function searchTbl(id,q){const v=q.toLowerCase();document.querySelectorAll('#'+id+' tr').forEach(tr=>{tr.style.display=(!v||tr.innerText.toLowerCase().includes(v))?'':'none';});}
@@ -17607,6 +17804,7 @@ function processImport(){
           setStatus('loaded');
           saveToStorage();
           addAudit('Invoices imported', INV.length+' rows · '+_invMs+'ms');
+          try{updateArSummary();}catch(e){}
           try{StorageManager.save('setup_seen','true');}catch(e){}
           // If INV rows have no customer name (e.g. FBL5N without Customer column),
           // try to extract customer name from the import filename
@@ -17688,6 +17886,7 @@ function processImport(){
           d:r[col('document','docnum','documentnumber','clearingdocument','augbl','clearedwith','referencedocno','xblnr')]||'',
           t:r[col('tracking','trk','trackingnumber','trackingno')]||'',
           dl:r[col('delivery','del','deliverynumber','deliveryno','vbeln2')]||'',
+          logMemo:r[col('logisticsmemo','logisticsmemointernalheader','logmemo','internalmemo','logisticmemo','shippingmemo','freightmemo')]||'',
           // FBL5N-specific fields
           refKey3:r[col('referencekey3','refkey3','referencekey','xblnr')]||'',
           specialGL:r[col('specialglind','specialgl','sglind','umskz')]||'',
