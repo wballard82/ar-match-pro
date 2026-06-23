@@ -209,8 +209,8 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
 }
 
 .login-logo-hero {
-  position: relative; width: 380px; height: 380px;
-  margin: -20px auto -40px; flex-shrink: 0; z-index: 1;
+  position: relative; width: 460px; height: 460px;
+  margin: -10px auto -30px; flex-shrink: 0; z-index: 1;
   filter: drop-shadow(0 24px 48px rgba(14,165,233,.18));
   animation: heroDropIn .9s cubic-bezier(.34,1.56,.64,1) .1s both;
 }
@@ -248,14 +248,14 @@ html,body { height:100%; font-family:var(--font); background:var(--bg); color:va
 .login-split-logo { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none; }
 .login-split-ar {
   position:absolute; font-family:var(--font); font-weight:900;
-  letter-spacing:-3px; font-size:80px;
+  letter-spacing:-3px; font-size:98px;
   background:linear-gradient(135deg,#FDE68A,#F59E0B);
   -webkit-background-clip:text; color:transparent;
   animation:loginMergeAR 7.2s cubic-bezier(.65,0,.35,1) infinite;
 }
 .login-split-mp {
   position:absolute; font-family:var(--font); font-weight:900;
-  letter-spacing:-1.5px; font-size:46px;
+  letter-spacing:-1.5px; font-size:56px;
   background:linear-gradient(135deg,#7DD3FC,#34D399);
   -webkit-background-clip:text; color:transparent;
   animation:loginMergeMP 7.2s cubic-bezier(.65,0,.35,1) infinite;
@@ -2728,7 +2728,7 @@ body.app-active #app {
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">1</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
           <div class="armp-setup-step-label">Upload Invoice Report</div>
-          <div class="armp-setup-step-sub">Open invoices / account open items used for invoice application — XLSX, CSV</div>
+          <div class="armp-setup-step-sub">Invoice CSV — Customer, Account, Invoice, PO, Sales Order #, Amount, Document Type, Invoice Date, Due Date, Document #</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-1" onclick="armpSetupClickStep(1)">Upload Invoice Report</button>
       </div>
@@ -2753,7 +2753,7 @@ body.app-active #app {
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">4</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
           <div class="armp-setup-step-label">Upload Remittance Details</div>
-          <div class="armp-setup-step-sub">Customer remittance with invoice, tracking, PO, and delivery references — XLSX, CSV, PDF</div>
+          <div class="armp-setup-step-sub">Customer remittance advice — contains Invoice #, PO #, Sales Order #, Tracking #, amounts, and remarks</div>
         </div>
         <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Remittance Details</button>
       </div>
@@ -2798,18 +2798,18 @@ body.app-active #app {
         </div>
       </div>
       <div class="login-tagline">Browser-based AR Cash Application Platform</div>
-      <div class="login-stats" style="grid-template-columns:1fr;gap:12px;margin-top:32px;max-width:360px">
-        <div class="login-stat" style="display:flex;align-items:center;gap:13px;padding:16px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
-          <div style="font-size:22px;flex-shrink:0">⚡</div>
-          <div style="font-size:13.5px;font-weight:700;color:#e2e8f0">Deterministic matching you can audit</div>
+      <div class="login-stats" style="grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:32px;max-width:520px">
+        <div class="login-stat" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
+          <div style="font-size:24px">⚡</div>
+          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.35">Deterministic matching you can audit</div>
         </div>
-        <div class="login-stat" style="display:flex;align-items:center;gap:13px;padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
-          <div style="font-size:22px;flex-shrink:0">🏢</div>
-          <div style="font-size:13.5px;font-weight:700;color:#e2e8f0">Purpose-built for SAP &amp; NetSuite shops</div>
+        <div class="login-stat" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
+          <div style="font-size:24px">🏢</div>
+          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.35">Purpose-built for SAP &amp; NetSuite shops</div>
         </div>
-        <div class="login-stat" style="display:flex;align-items:center;gap:13px;padding:16px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
-          <div style="font-size:22px;flex-shrink:0">🔒</div>
-          <div style="font-size:13.5px;font-weight:700;color:#e2e8f0">Your data stays in your browser</div>
+        <div class="login-stat" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
+          <div style="font-size:24px">🔒</div>
+          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.35">Your data stays in your browser</div>
         </div>
       </div>
     </div>
@@ -2861,6 +2861,10 @@ body.app-active #app {
         <div class="lf-field">
           <label class="lf-label">Full name</label>
           <input class="lf-input" id="reg-name" placeholder="Jane Smith" autocomplete="name">
+        </div>
+        <div class="lf-field">
+          <label class="lf-label">Company</label>
+          <input class="lf-input" id="reg-company" placeholder="Acme Corp" autocomplete="organization">
         </div>
         <div class="lf-field">
           <label class="lf-label">Work email</label>
@@ -3163,6 +3167,7 @@ body.app-active #app {
         <div class="tn-avatar" id="tn-avatar">AR</div>
         <div>
           <div class="tn-uname" id="tn-uname">User</div>
+          <div class="tn-company" id="tn-company" style="font-size:11px;color:var(--t3);font-weight:500;margin-top:1px;display:none"></div>
         </div>
         <div class="tn-plan" id="tn-plan">Demo</div>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;opacity:.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -3371,7 +3376,7 @@ body.app-active #app {
           <div class="wl-section" id="wl-allocate-section">
             <div class="wl-section-header">
               <div class="wl-section-title">
-                💳 Payments to allocate
+                🏦 Payments to allocate
                 <span class="wl-count info" id="wl-alloc-ct">0</span>
               </div>
               <button class="btn btn-ghost btn-sm" onclick="setCaTab('match',document.getElementById('ca-tab-match'));sp('cash-app')">Open workspace →</button>
@@ -3562,7 +3567,7 @@ body.app-active #app {
               
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
               <button class="btn btn-outline btn-sm" onclick="openImportDelivery()" title="Upload delivery/tracking report to map Tracking # and Delivery # to invoices">+ Delivery Report</button>
-              <button class="btn btn-outline btn-sm" onclick="openImportRemDetail()" title="Upload remittance advice / remittance details (e.g. supplier remittance with invoice references, PO#, tracking#, amounts)" style="color:var(--pu-t)">+ Remittance Details</button>
+              <button class="btn btn-outline btn-sm" onclick="openImportRemDetail()" title="Upload remittance advice / remittance details (e.g. customer remittance with invoice references, PO#, tracking#, amounts)" style="color:var(--pu-t)">+ Remittance Details</button>
               <button class="btn btn-outline btn-sm" onclick="openAIRemittanceParser()" title="Parse unstructured remittance — paste email text, drop a PDF, or upload a scan. AI extracts structured invoice references and amounts." style="color:var(--cy-t);background:linear-gradient(135deg, rgba(6,182,212,.08), rgba(99,102,241,.06))">🤖 AI Parse</button>
               <button class="btn btn-p btn-sm armp-setup-step-cta" id="btn-auto-match" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px;min-width:200px;text-align:center;justify-content:center">⚡ Auto Match</button>
               
@@ -3622,7 +3627,7 @@ body.app-active #app {
                     </div>
                   </div>
                   <div class="ca-queue-list" id="pq-list">
-                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"></div></div>
+                    <div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div><div class="empty-btn"></div></div>
                   </div>
                 </div>
 
@@ -3722,7 +3727,7 @@ body.app-active #app {
                   </div>
 
                   <div class="empty" id="eng-empty" style="padding:24px">
-                    <div class="empty-icon">💳</div>
+                    <div class="empty-icon">🏦</div>
                     <div class="empty-t">Select a payment to allocate</div>
                     <div class="empty-s">Choose from the queue on the left.</div>
                     <div class="empty-btn" style="display:flex;gap:8px"></div>
@@ -10648,7 +10653,7 @@ function doLogin(){
     CURRENT_USER=email;IS_DEMO=false;
     _persistRemember();
     localStorage.setItem('armp_session',email);
-    try{launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});}catch(e){console.error('FULL STACK:',e.stack);showError('Launch error: '+e.message+' | Check browser console for full trace');}
+    try{launchApp({name:'Admin',company:'AR Match Pro',avatar:'',plan:'team',isMaster:true});}catch(e){console.error('FULL STACK:',e.stack);showError('Launch error: '+e.message+' | Check browser console for full trace');}
     return;
   }
   const users=getUsers();
@@ -10664,6 +10669,7 @@ function doLogin(){
 
 function doRegister(){
   const name=document.getElementById('reg-name').value.trim();
+  const company=(document.getElementById('reg-company')||{value:''}).value.trim();
   const email=document.getElementById('reg-email').value.trim().toLowerCase();
   const pass=document.getElementById('reg-pass').value;
   const lic=document.getElementById('reg-license').value.trim().toUpperCase();
@@ -10681,7 +10687,7 @@ function doRegister(){
         return;
       }
       const demoRecord = DemoManager.registerDemo(email);
-      const user={name,email,pass:btoa(pass),plan,avatar:'',
+      const user={name,company,email,pass:btoa(pass),plan,avatar:'',
         demoStartedAt: demoRecord ? demoRecord.startedAt : new Date().toISOString(),
         demoExpiresAt: demoRecord ? demoRecord.expiresAt : null,
         role:'ar_specialist'};
@@ -10699,7 +10705,7 @@ function doRegister(){
       return;
     }catch(e){console.warn('demo uniqueness check failed',e);}
   }
-  const user={name,email,pass:btoa(pass),plan,avatar:'',role:'ar_specialist',
+  const user={name,company,email,pass:btoa(pass),plan,avatar:'',role:'ar_specialist',
     billing: BillingManager.createBillingRecord(plan, 'annual'),
     created: new Date().toISOString()
   };
@@ -10977,6 +10983,12 @@ function setUserDisplay(user){
   const init=(user.name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
   ['tn-avatar','profile-avatar'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=init;}});
   const un=document.getElementById('tn-uname');if(un)un.textContent=user.name||'User';
+  const tnco=document.getElementById('tn-company');
+  if(tnco){
+    var coName=user.company||'';
+    if(coName){ tnco.textContent=coName; tnco.style.display='block'; }
+    else { tnco.textContent=''; tnco.style.display='none'; }
+  }
   const pe=document.getElementById('sec-email-disp');if(pe)pe.textContent=IS_DEMO?'demo@armatchpro.com':CURRENT_USER;
   // Split full name into first/last for new fields
   const nameParts=(user.name||'').trim().split(/\s+/);
@@ -11176,7 +11188,7 @@ function openImportRemDetail(){
   IMP_BANK_MODE=false;
   const title=document.getElementById('imp-title');const lbl=document.getElementById('imp-lbl');
   if(title)title.textContent='Import Remittance Details';
-  if(lbl)lbl.innerHTML='Supplier/customer remittance advice — contains Invoice #, PO #, Tracking #, amounts, and remarks.<br><span style="font-size:11.5px;color:var(--t3)">Supported: CSV, XLSX. Columns auto-detected. This becomes the primary matching source when present.</span>';
+  if(lbl)lbl.innerHTML='Customer remittance advice — contains Invoice #, PO #, Sales Order #, Tracking #, amounts, and remarks.<br><span style="font-size:11.5px;color:var(--t3)">Supported: CSV, XLSX. Columns auto-detected. This becomes the primary matching source when present.</span>';
   const ta=document.getElementById('mo-ta');if(ta)ta.value='';
   hideProgress();
   var _impM=document.getElementById('imp-modal');if(_impM)_impM.classList.add('open');
@@ -13415,7 +13427,7 @@ function renderPayQueue(){
     return acct===bankVal;
   });
   if(ct)ct.textContent='('+PAY.length+')';
-  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">💳</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div></div>';return;}
+  if(!PAY.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments</div><div class="empty-s">Import remittance data.</div></div>';return;}
   if(!visiblePay.length){list.innerHTML='<div class="empty" style="padding:24px 12px"><div class="empty-icon">🏦</div><div class="empty-t">No payments for '+bankVal+'</div><div class="empty-s">Select a different bank account.</div></div>';return;}
   // Read all active filters
   const ccySel2=document.getElementById('ca-ccy-sel');
@@ -18315,7 +18327,7 @@ window.addEventListener('load',()=>{
   const sess=localStorage.getItem('armp_session');
   if(sess){
     try{
-      if(sess===MASTER_ADMIN_EMAIL){CURRENT_USER=sess;IS_DEMO=false;launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});return;}
+      if(sess===MASTER_ADMIN_EMAIL){CURRENT_USER=sess;IS_DEMO=false;launchApp({name:'Admin',company:'AR Match Pro',avatar:'',plan:'team',isMaster:true});return;}
       const users=getUsers();
       const sessUser=users[sess];
       if(sessUser){
