@@ -2716,12 +2716,12 @@ body.app-active #app {
 <div class="mo-overlay" id="armp-setup-modal">
   <div class="mo-box" style="max-width:540px">
     <div class="mo-header">
-      <div class="mo-title" style="background:var(--armp-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;letter-spacing:-0.4px">Let's Get Started</div>
+      <div class="mo-title" style="background:var(--armp-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;letter-spacing:-0.4px">Complete these steps to start matching payments</div>
       <div class="mo-close" onclick="armpCloseSetupModal()" aria-label="Close">×</div>
     </div>
     <div class="mo-body" style="padding:8px 24px 20px">
       <div style="font-size:13.5px;color:var(--t2);margin-bottom:18px;line-height:1.55">
-        Complete these 3 steps to start matching payments.
+        Three quick steps and you'll be matching payments in minutes.
       </div>
       <!-- Steps list -->
       <div class="armp-setup-step" id="armp-setup-step-1" data-state="active">
@@ -2797,27 +2797,19 @@ body.app-active #app {
           <div class="login-split-mp">Match Pro</div>
         </div>
       </div>
-      <div class="login-tagline">Remittances · Cash Application · AR Automation</div>
-      <div class="login-stats" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:32px">
-        <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
-          <div style="font-size:22px;margin-bottom:6px">⚡</div>
-          <div style="font-size:13px;font-weight:700;color:#e2e8f0">Auto-matching</div>
-          <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px">Invoice · PO · SO · Amount</div>
+      <div class="login-tagline">Browser-based AR Cash Application Platform</div>
+      <div style="margin-top:28px;display:flex;flex-direction:column;gap:14px;max-width:340px">
+        <div style="display:flex;align-items:center;gap:11px;font-size:13.5px;color:rgba(255,255,255,.78)">
+          <span style="flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,.14);display:flex;align-items:center;justify-content:center;font-size:14px">⚡</span>
+          Deterministic matching you can audit
         </div>
-        <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
-          <div style="font-size:22px;margin-bottom:6px">🏢</div>
-          <div style="font-size:13px;font-weight:700;color:#e2e8f0">SAP · NetSuite</div>
-          <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px">ERP posting export</div>
+        <div style="display:flex;align-items:center;gap:11px;font-size:13.5px;color:rgba(255,255,255,.78)">
+          <span style="flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(59,130,246,.14);display:flex;align-items:center;justify-content:center;font-size:14px">🏢</span>
+          Purpose-built for SAP &amp; NetSuite shops
         </div>
-        <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15)">
-          <div style="font-size:22px;margin-bottom:6px">⚠️</div>
-          <div style="font-size:13px;font-weight:700;color:#e2e8f0">Exception detection</div>
-          <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px">Short pays · Duplicates</div>
-        </div>
-        <div class="login-stat" style="padding:16px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
-          <div style="font-size:22px;margin-bottom:6px">📋</div>
-          <div style="font-size:13px;font-weight:700;color:#e2e8f0">Full audit trail</div>
-          <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:2px">Every decision logged</div>
+        <div style="display:flex;align-items:center;gap:11px;font-size:13.5px;color:rgba(255,255,255,.78)">
+          <span style="flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(139,92,246,.14);display:flex;align-items:center;justify-content:center;font-size:14px">🔒</span>
+          Your data stays in your browser
         </div>
       </div>
     </div>
@@ -2850,9 +2842,12 @@ body.app-active #app {
         <div class="lf-row">
           <div class="lf-check-row">
             <input type="checkbox" id="li-remember" autocomplete="off">
-            <label class="lf-check-label" for="li-remember">Remember me</label>
+            <label class="lf-check-label" for="li-remember">Save my login on this device</label>
           </div>
           <a class="lf-link" onclick="showLfView('forgot')">Forgot password?</a>
+        </div>
+        <div id="li-forget-row" style="display:none;text-align:right;margin-top:-6px;margin-bottom:8px">
+          <a class="lf-link" style="font-size:11.5px;color:var(--t3)" onclick="forgetSavedLogin()">Forget saved login on this device</a>
         </div>
         <button class="btn-login" onclick="doLogin()">Sign in</button>
         <div class="lf-bottom" style="text-align:center;margin-top:14px">
@@ -3167,12 +3162,28 @@ body.app-active #app {
         <svg id="dm-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
       <div class="tn-divider"></div>
-      <div class="tn-user" onclick="sp('settings')">
+      <div class="tn-user" id="tn-user-btn" onclick="toggleProfileMenu(event)" style="position:relative;cursor:pointer">
         <div class="tn-avatar" id="tn-avatar">AR</div>
         <div>
           <div class="tn-uname" id="tn-uname">User</div>
         </div>
         <div class="tn-plan" id="tn-plan">Demo</div>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;opacity:.5"><polyline points="6 9 12 15 18 9"/></svg>
+        <!-- Dropdown -->
+        <div id="tn-profile-menu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:190px;background:var(--surface,#fff);border:1px solid var(--bdr);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);overflow:hidden;z-index:300">
+          <div style="padding:12px 14px;border-bottom:1px solid var(--bdr)">
+            <div id="tn-menu-name" style="font-size:13px;font-weight:700;color:var(--t1)">User</div>
+            <div id="tn-menu-email" style="font-size:11.5px;color:var(--t3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          </div>
+          <button onclick="event.stopPropagation();closeProfileMenu();sp('settings')" style="width:100%;text-align:left;padding:11px 14px;background:none;border:none;font-size:13px;font-weight:600;color:var(--t1);cursor:pointer;display:flex;align-items:center;gap:9px;font-family:inherit" onmouseover="this.style.background='var(--surface2,rgba(0,0,0,.04))'" onmouseout="this.style.background='none'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+          </button>
+          <button onclick="event.stopPropagation();closeProfileMenu();doLogout()" style="width:100%;text-align:left;padding:11px 14px;background:none;border:none;border-top:1px solid var(--bdr);font-size:13px;font-weight:600;color:var(--r,#DC2626);cursor:pointer;display:flex;align-items:center;gap:9px;font-family:inherit" onmouseover="this.style.background='var(--surface2,rgba(0,0,0,.04))'" onmouseout="this.style.background='none'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   </nav>
@@ -3308,11 +3319,15 @@ body.app-active #app {
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.1 3.1l1.4 1.4M11.5 11.5l1.4 1.4M3.1 12.9l1.4-1.4M11.5 4.5l1.4-1.4"/></svg>
           Settings
         </div>
+        <div class="sb-item" id="sbi-support" onclick="openSupportMenu()">
+          <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="7"/><path d="M6.1 6a1.9 1.9 0 0 1 3.7.6c0 1.3-1.9 1.9-1.9 1.9"/><line x1="8" y1="11.5" x2="8" y2="11.5"/></svg>
+          Help &amp; Support
+        </div>
       </div>
       <div class="sb-footer">
         <div class="sb-status">
-          <div class="sb-status-dot" id="sb-status-dot"></div>
-          <div class="sb-status-txt" id="sb-status-txt">Ready</div>
+          <div class="sb-status-dot" id="sb-status-dot" style="background:var(--t3)"></div>
+          <div class="sb-status-txt" id="sb-status-txt">Waiting for import</div>
         </div>
       </div>
     </aside>
@@ -4749,10 +4764,6 @@ body.app-active #app {
                 <button class="btn btn-upgrade btn-sm" id="settings-upgrade-btn" onclick="showUpgrade('Upgrade your plan','')">Upgrade</button>
               </div>
             </div>
-            <div style="font-size:12px;color:var(--t3);text-align:center">
-              <button class="btn btn-p btn-sm" onclick="openContactModal()" style="font-size:12px">💬 Contact AR Match Pro</button>
-              <button class="btn btn-outline btn-sm" onclick="openHelpModal()" style="font-size:12px">📖 User Guide</button>
-            </div>
           </div>
 
 
@@ -4811,7 +4822,6 @@ body.app-active #app {
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:16px;border-top:1px solid var(--bdr)">
             <button class="btn btn-ghost" onclick="clearAllData()" style="color:var(--r-t)">Clear all data</button>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-outline" onclick="openFeedbackModal()" style="font-size:12.5px">💬 Send Feedback</button>
               <button class="btn btn-outline" onclick="doLogout()">Sign out</button>
               <button class="btn btn-p" onclick="saveSettings()">Save settings</button>
             </div>
@@ -8755,10 +8765,10 @@ let IS_DEMO=true;
 let IS_MASTER=false;
 let CURRENT_USER='';
 const MASTER_ADMIN_EMAIL='admin@armatchpro.com';
-const MASTER_ADMIN_PASS='ARMP-MASTER-2026';
+const MASTER_ADMIN_PASS='ArmpqQueooJB!Owner9x';
 const VALID_KEYS={
   'ARMP-STAR-2026-0001':'starter','ARMP-PRO0-2026-0001':'pro','ARMP-TEAM-2026-0001':'team',
-  'ARMP-MASTER-2026':'team'
+  'ARMP-OWNER-9X7K-QJ4B':'team'
 };
 
 // ── Storage ──
@@ -9294,10 +9304,21 @@ function toast(msg,type=''){
 function setStatus(s){
   const dot=document.getElementById('sb-status-dot');
   const txt=document.getElementById('sb-status-txt');
-  const labels={ready:'Ready',loaded:'Data loaded',running:'Matching…'};
-  const colors={ready:'var(--g)',loaded:'var(--am)',running:'var(--p)'};
-  if(dot)dot.style.background=colors[s]||'var(--g)';
+  const labels={ready:'Ready',loaded:'Data loaded',running:'Matching…',waiting:'Waiting for import'};
+  const colors={ready:'var(--g)',loaded:'var(--am)',running:'var(--p)',waiting:'var(--t3)'};
+  if(dot)dot.style.background=colors[s]||'var(--t3)';
   if(txt)txt.textContent=labels[s]||s;
+}
+// Recompute the right status from current data state
+function refreshStatus(){
+  try{
+    var hasPay=(typeof PAY!=='undefined')&&PAY.length>0;
+    var hasInv=(typeof INV!=='undefined')&&INV.length>0;
+    var hasMatched=(typeof RES!=='undefined')&&RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc||r.fromExc;}).length>0;
+    if(!hasPay&&!hasInv){ setStatus('waiting'); return; }
+    if(hasMatched){ setStatus('ready'); return; }
+    setStatus('loaded');
+  }catch(e){ setStatus('waiting'); }
 }
 
 // ── Navigation ──
@@ -9886,10 +9907,14 @@ function armpPulseWfCta(){
 // ── Item 4: Posting Export approval requirement ────────────────────
 function armpComputeExportBlockers(){
   var reasons = [];
+  var notStarted = false;
   try{
     var hasPay = (typeof PAY!=='undefined') && PAY.length>0;
     var hasMatched = (typeof RES!=='undefined') && RES.filter(function(r){return r.st==='Exact'||r.st==='Subset exact'||r.fromAlloc||r.fromExc;}).length>0;
-    if(!hasPay) reasons.push('Import bank file and invoices first.');
+    // If nothing has been imported yet, this is the natural starting state — NOT a blocker to "resolve"
+    if(!hasPay){
+      return {blocked:true, notStarted:true, reasons:['Import your bank file and invoices to begin.']};
+    }
     if(!hasMatched) reasons.push('Run Auto Match to generate allocations.');
     // Open exceptions
     var openExc = (typeof EXC!=='undefined')?EXC.filter(function(e){return !e.s || e.s==='Open';}).length:0;
@@ -9910,7 +9935,7 @@ function armpComputeExportBlockers(){
     }
     if(unreconciled>0) reasons.push('Approve reconciliation before export ('+unreconciled+' unreconciled).');
   }catch(e){console.warn('[armpComputeExportBlockers]',e);}
-  return {blocked: reasons.length>0, reasons: reasons};
+  return {blocked: reasons.length>0, notStarted:notStarted, reasons: reasons};
 }
 function armpRefreshExportBlocker(){
   try{
@@ -9918,7 +9943,24 @@ function armpRefreshExportBlocker(){
     var btn = document.getElementById('post-export-lock-btn');
     var banner = document.getElementById('armp-export-blocker');
     if(!btn) return;
-    if(blocker.blocked){
+    if(blocker.blocked && blocker.notStarted){
+      // Natural starting state — neutral "waiting for import" message, not an alarming "blocked" banner
+      btn.disabled = true;
+      btn.style.opacity = '0.55';
+      btn.style.cursor = 'not-allowed';
+      btn.title = 'Import data to begin';
+      if(banner){
+        banner.style.display = 'block';
+        banner.innerHTML =
+          '<div style="display:flex;align-items:flex-start;gap:10px">'+
+          '<span style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:var(--surface3,rgba(148,163,184,.18));color:var(--t2);font-size:12px;font-weight:900">↑</span>'+
+          '<div style="flex:1;line-height:1.5">'+
+            '<div style="font-size:12.5px;font-weight:700;color:var(--t1);margin-bottom:2px">Waiting for import</div>'+
+            '<div style="font-size:11.5px;color:var(--t2)">Import your bank file and invoices, then run Auto Match. Approved records will appear here ready for ERP posting.</div>'+
+          '</div>'+
+          '</div>';
+      }
+    } else if(blocker.blocked){
       btn.disabled = true;
       btn.style.opacity = '0.55';
       btn.style.cursor = 'not-allowed';
@@ -10594,9 +10636,20 @@ function doLogin(){
   const lic=document.getElementById('li-license').value.trim().toUpperCase();
   const remember=document.getElementById('li-remember')?.checked||false;
   if(!email||!pass){showError('Please enter email and password');return;}
+  // "Save my login on this device" — persist credentials so user can re-login without retyping.
+  // Convenience feature for trusted personal devices; cleared via "Forget saved login".
+  function _persistRemember(){
+    if(remember){
+      localStorage.setItem('armp_remember_email',email);
+      localStorage.setItem('armp_remember_pass',btoa(pass));
+    } else {
+      localStorage.removeItem('armp_remember_email');
+      localStorage.removeItem('armp_remember_pass');
+    }
+  }
   if(email===MASTER_ADMIN_EMAIL&&pass===MASTER_ADMIN_PASS){
     CURRENT_USER=email;IS_DEMO=false;
-    if(remember)localStorage.setItem('armp_remember_email',email);
+    _persistRemember();
     localStorage.setItem('armp_session',email);
     try{launchApp({name:'Admin',avatar:'',plan:'team',isMaster:true});}catch(e){console.error('FULL STACK:',e.stack);showError('Launch error: '+e.message+' | Check browser console for full trace');}
     return;
@@ -10607,7 +10660,7 @@ function doLogin(){
   if(user.pass!==btoa(pass)){showError('Incorrect password.');return;}
   if(lic&&VALID_KEYS[lic]){user.plan=VALID_KEYS[lic];saveUser(email,user);}
   CURRENT_USER=email;IS_DEMO=false;
-  if(remember)localStorage.setItem('armp_remember_email',email);
+  _persistRemember();
   localStorage.setItem('armp_session',email);
   launchApp(user);
 }
@@ -10660,6 +10713,76 @@ function doRegister(){
 }
 
 function doForgot(){toast('Password reset instructions sent if account exists.','');}
+
+function forgetSavedLogin(){
+  localStorage.removeItem('armp_remember_email');
+  localStorage.removeItem('armp_remember_pass');
+  var e=document.getElementById('li-email');if(e)e.value='';
+  var p=document.getElementById('li-pass');if(p)p.value='';
+  var rb=document.getElementById('li-remember');if(rb)rb.checked=false;
+  var fr=document.getElementById('li-forget-row');if(fr)fr.style.display='none';
+  if(typeof toast==='function')toast('Saved login cleared from this device','');
+}
+
+// ── Help & Support menu (sidebar) ──
+function openSupportMenu(){
+  var existing=document.getElementById('armp-support-overlay');
+  if(existing)existing.remove();
+  var overlay=document.createElement('div');
+  overlay.id='armp-support-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(5,13,26,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.onclick=function(e){ if(e.target===overlay)overlay.remove(); };
+  overlay.innerHTML=
+    '<div style="background:var(--surface,#fff);border:1px solid var(--bdr);border-radius:18px;width:420px;max-width:95vw;box-shadow:0 24px 64px rgba(0,0,0,.28);overflow:hidden">'+
+      '<div style="padding:20px 22px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">'+
+        '<div><div style="font-size:17px;font-weight:800;color:var(--t1)">Help &amp; Support</div>'+
+        '<div style="font-size:12.5px;color:var(--t3);margin-top:2px">We\'re here to help you get the most out of ARMP</div></div>'+
+        '<div onclick="document.getElementById(\'armp-support-overlay\').remove()" style="cursor:pointer;font-size:22px;color:var(--t3);line-height:1">×</div>'+
+      '</div>'+
+      '<div style="padding:14px 18px 20px;display:flex;flex-direction:column;gap:10px">'+
+        '<button onclick="document.getElementById(\'armp-support-overlay\').remove();openContactModal()" style="display:flex;align-items:center;gap:13px;padding:14px;background:var(--surface2,rgba(20,168,216,.06));border:1px solid var(--bdr);border-radius:12px;cursor:pointer;text-align:left;font-family:inherit;transition:.15s" onmouseover="this.style.borderColor=\'var(--p)\'" onmouseout="this.style.borderColor=\'var(--bdr)\'">'+
+          '<span style="font-size:22px">💬</span><div><div style="font-size:14px;font-weight:700;color:var(--t1)">Contact AR Match Pro</div><div style="font-size:12px;color:var(--t3)">Get help, ask questions, request features</div></div>'+
+        '</button>'+
+        '<button onclick="document.getElementById(\'armp-support-overlay\').remove();openFeedbackModal()" style="display:flex;align-items:center;gap:13px;padding:14px;background:var(--surface2,rgba(20,168,216,.06));border:1px solid var(--bdr);border-radius:12px;cursor:pointer;text-align:left;font-family:inherit;transition:.15s" onmouseover="this.style.borderColor=\'var(--p)\'" onmouseout="this.style.borderColor=\'var(--bdr)\'">'+
+          '<span style="font-size:22px">📣</span><div><div style="font-size:14px;font-weight:700;color:var(--t1)">Send Feedback</div><div style="font-size:12px;color:var(--t3)">Tell us what\'s working and what isn\'t</div></div>'+
+        '</button>'+
+        '<button onclick="document.getElementById(\'armp-support-overlay\').remove();openHelpModal()" style="display:flex;align-items:center;gap:13px;padding:14px;background:var(--surface2,rgba(20,168,216,.06));border:1px solid var(--bdr);border-radius:12px;cursor:pointer;text-align:left;font-family:inherit;transition:.15s" onmouseover="this.style.borderColor=\'var(--p)\'" onmouseout="this.style.borderColor=\'var(--bdr)\'">'+
+          '<span style="font-size:22px">📖</span><div><div style="font-size:14px;font-weight:700;color:var(--t1)">User Guide</div><div style="font-size:12px;color:var(--t3)">Full documentation &amp; reference manual</div></div>'+
+        '</button>'+
+        '<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:4px">Or email <a href="mailto:info@armatchpro.com" style="color:var(--p)">info@armatchpro.com</a></div>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
+// ── Profile dropdown menu (topnav) ──
+function toggleProfileMenu(e){
+  if(e)e.stopPropagation();
+  var menu=document.getElementById('tn-profile-menu');
+  if(!menu)return;
+  var isOpen=menu.style.display==='block';
+  if(isOpen){ menu.style.display='none'; return; }
+  // Populate name/email
+  try{
+    var nm=document.getElementById('tn-menu-name');
+    var em=document.getElementById('tn-menu-email');
+    var uname=document.getElementById('tn-uname');
+    if(nm&&uname)nm.textContent=uname.textContent||'User';
+    if(em)em.textContent=IS_MASTER?MASTER_ADMIN_EMAIL:(CURRENT_USER||'');
+  }catch(e2){}
+  menu.style.display='block';
+}
+function closeProfileMenu(){
+  var menu=document.getElementById('tn-profile-menu');
+  if(menu)menu.style.display='none';
+}
+// Close menu when clicking anywhere else
+document.addEventListener('click',function(e){
+  var btn=document.getElementById('tn-user-btn');
+  var menu=document.getElementById('tn-profile-menu');
+  if(!btn||!menu)return;
+  if(menu.style.display==='block'&&!btn.contains(e.target)){ menu.style.display='none'; }
+});
 
 // ── Send Feedback Modal ────────────────────────────────────────────────────
 function openFeedbackModal(){
@@ -10933,6 +11056,7 @@ function launchApp(user){
   try{rAll();}catch(e){console.warn('rAll:',e);}
   try{updDash();}catch(e){console.warn('updDash:',e);}
   try{updTop();}catch(e){console.warn('updTop:',e);}
+  try{refreshStatus();}catch(e){console.warn('refreshStatus:',e);}
   try{initAuditTbl();}catch(e){console.warn('initAuditTbl:',e);}
   addAudit('Login','User: '+(user.name||CURRENT_USER));
   // cfgInit for non-demo users (already loaded above)
@@ -11261,7 +11385,7 @@ function clearAllData(){
       var bankSel=document.getElementById('ca-bank-sel');
       if(bankSel)bankSel.innerHTML='<option value="">All bank accounts</option>';
     }catch(e){}
-    updDash();updTop();setStatus('ready');
+    updDash();updTop();refreshStatus();
     ['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});
     addAudit('Cleared all data');
     toast('All data cleared');
@@ -11285,7 +11409,7 @@ function _doResetAll(){
   try{ ERS_LINES=[]; VMI_LINES=[]; }catch(e){}
   _resetWorkflowState();
   _invalidateInvIndexes();
-  rAll();updDash();updTop();setStatus('ready');
+  rAll();updDash();updTop();refreshStatus();
   // Clear user-scoped transactional keys
   var keys=['inv','pay','res','exc'];
   keys.forEach(function(k){
@@ -13303,6 +13427,32 @@ function renderPayQueue(){
   const dtEl=document.getElementById('ca-date-to');
   const fromD=dfEl&&dfEl.value?new Date(dfEl.value):null;
   const toD=dtEl&&dtEl.value?new Date(dtEl.value):null;
+
+  // ── PERF: build lookup indexes ONCE instead of RES.find()/EXC.find() per row (was O(PAY×RES) per render) ──
+  var _matchByAlloc=new Map();   // alloc target keys → matched result
+  for(var _r=0;_r<RES.length;_r++){
+    var r=RES[_r];
+    if(!r.fromAlloc)continue;
+    if(r.d!=null)_matchByAlloc.set('d:'+r.d,r);
+    if(r.i!=null)_matchByAlloc.set('i:'+r.i,r);
+    if(r.po!=null)_matchByAlloc.set('po:'+r.po,r);
+    if(r.a!=null&&r.pd!=null)_matchByAlloc.set('apd:'+r.a+'|'+Math.round(r.pd),r);
+  }
+  var _excByAcct=new Map();       // account → array of EXC
+  for(var _e=0;_e<EXC.length;_e++){
+    var ex=EXC[_e];var _k=ex.a;
+    if(!_excByAcct.has(_k))_excByAcct.set(_k,[]);
+    _excByAcct.get(_k).push(ex);
+  }
+  function _findMatch(p){
+    return _matchByAlloc.get('d:'+(p.txId||p.i||p.po))||_matchByAlloc.get('i:'+p.i)||_matchByAlloc.get('po:'+p.po)||(p.a!=null?_matchByAlloc.get('apd:'+p.a+'|'+Math.round(p.amt)):null)||null;
+  }
+  function _findExc(p){
+    var arr=_excByAcct.get(p.a);if(!arr)return null;
+    for(var k=0;k<arr.length;k++){ if(Math.abs(arr[k].amt-p.amt)<0.01)return arr[k]; }
+    return null;
+  }
+
   list.innerHTML=PAY.map((p,i)=>{
     // Bank account filter
     const _pa=String(p.bankAcct||p.bankAccount||p.statementAccount||'').replace(/[^0-9A-Za-z\-]/g,'').trim();
@@ -13312,8 +13462,8 @@ function renderPayQueue(){
     // Date range filter
     if(fromD&&p.payDate&&new Date(p.payDate)<fromD)return'';
     if(toD&&p.payDate&&new Date(p.payDate)>toD)return'';
-    const matched=RES.find(r=>r.fromAlloc&&(r.d===(p.txId||p.i||p.po)||r.i===p.i||r.po===p.po||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1)));
-    const exc=EXC.find(e=>e.a===p.a&&Math.abs(e.amt-p.amt)<0.01);
+    const matched=_findMatch(p);
+    const exc=_findExc(p);
     // Matched/Unmatched tab filter
     if(_payFilter==='matched'&&!matched)return'';
     if(_payFilter==='unmatched'&&matched)return'';
@@ -18143,10 +18293,16 @@ window.addEventListener('load',()=>{
   if(_initPath==='/app.html'||_initPath==='/app.html/'){
     try{ if(window.history&&window.history.replaceState) window.history.replaceState({},'AR Match Pro — Login','/Login'); }catch(e){}
   }
-  if(params.get('demo')==='true'){demoLogin();return;}
+  // NOTE: ?demo=true URL bypass removed — every user must authenticate via doLogin()
+  // or an approved Stripe-checkout account. No anonymous demo access.
   const rem=localStorage.getItem('armp_remember_email');
+  const remPass=localStorage.getItem('armp_remember_pass');
   const emailEl=document.getElementById('li-email');
-  if(rem&&emailEl){emailEl.value=rem;const rb=document.getElementById('li-remember');if(rb)rb.checked=true;}
+  if(rem&&emailEl){emailEl.value=rem;const rb=document.getElementById('li-remember');if(rb)rb.checked=true;
+    var passEl=document.getElementById('li-pass');
+    if(remPass&&passEl){try{passEl.value=atob(remPass);}catch(e){}}
+    var fr=document.getElementById('li-forget-row');if(fr)fr.style.display='block';
+  }
   if(params.get('checkout')==='success'){
     const plan=params.get('plan')||'pro';
     const planNames={starter:'Starter',pro:'Pro',team:'Team'};
