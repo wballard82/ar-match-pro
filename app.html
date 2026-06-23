@@ -2721,7 +2721,7 @@ body.app-active #app {
     </div>
     <div class="mo-body" style="padding:8px 24px 20px">
       <div style="font-size:13.5px;color:var(--t2);margin-bottom:18px;line-height:1.55">
-        Three quick steps and you'll be matching payments in minutes.
+        Four quick steps and you'll be matching payments in minutes.
       </div>
       <!-- Steps list -->
       <div class="armp-setup-step" id="armp-setup-step-1" data-state="active">
@@ -2798,18 +2798,18 @@ body.app-active #app {
         </div>
       </div>
       <div class="login-tagline">Browser-based AR Cash Application Platform</div>
-      <div style="margin-top:28px;display:flex;flex-direction:column;gap:14px;max-width:340px">
-        <div style="display:flex;align-items:center;gap:11px;font-size:13.5px;color:rgba(255,255,255,.78)">
-          <span style="flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,.14);display:flex;align-items:center;justify-content:center;font-size:14px">⚡</span>
-          Deterministic matching you can audit
+      <div class="login-stats" style="grid-template-columns:1fr;gap:12px;margin-top:32px;max-width:360px">
+        <div class="login-stat" style="display:flex;align-items:center;gap:13px;padding:16px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
+          <div style="font-size:22px;flex-shrink:0">⚡</div>
+          <div style="font-size:13.5px;font-weight:700;color:#e2e8f0">Deterministic matching you can audit</div>
         </div>
-        <div style="display:flex;align-items:center;gap:11px;font-size:13.5px;color:rgba(255,255,255,.78)">
-          <span style="flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(59,130,246,.14);display:flex;align-items:center;justify-content:center;font-size:14px">🏢</span>
-          Purpose-built for SAP &amp; NetSuite shops
+        <div class="login-stat" style="display:flex;align-items:center;gap:13px;padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
+          <div style="font-size:22px;flex-shrink:0">🏢</div>
+          <div style="font-size:13.5px;font-weight:700;color:#e2e8f0">Purpose-built for SAP &amp; NetSuite shops</div>
         </div>
-        <div style="display:flex;align-items:center;gap:11px;font-size:13.5px;color:rgba(255,255,255,.78)">
-          <span style="flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(139,92,246,.14);display:flex;align-items:center;justify-content:center;font-size:14px">🔒</span>
-          Your data stays in your browser
+        <div class="login-stat" style="display:flex;align-items:center;gap:13px;padding:16px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
+          <div style="font-size:22px;flex-shrink:0">🔒</div>
+          <div style="font-size:13.5px;font-weight:700;color:#e2e8f0">Your data stays in your browser</div>
         </div>
       </div>
     </div>
@@ -2842,12 +2842,9 @@ body.app-active #app {
         <div class="lf-row">
           <div class="lf-check-row">
             <input type="checkbox" id="li-remember" autocomplete="off">
-            <label class="lf-check-label" for="li-remember">Save my login on this device</label>
+            <label class="lf-check-label" for="li-remember">Remember Me</label>
           </div>
           <a class="lf-link" onclick="showLfView('forgot')">Forgot password?</a>
-        </div>
-        <div id="li-forget-row" style="display:none;text-align:right;margin-top:-6px;margin-bottom:8px">
-          <a class="lf-link" style="font-size:11.5px;color:var(--t3)" onclick="forgetSavedLogin()">Forget saved login on this device</a>
         </div>
         <button class="btn-login" onclick="doLogin()">Sign in</button>
         <div class="lf-bottom" style="text-align:center;margin-top:14px">
@@ -18301,7 +18298,6 @@ window.addEventListener('load',()=>{
   if(rem&&emailEl){emailEl.value=rem;const rb=document.getElementById('li-remember');if(rb)rb.checked=true;
     var passEl=document.getElementById('li-pass');
     if(remPass&&passEl){try{passEl.value=atob(remPass);}catch(e){}}
-    var fr=document.getElementById('li-forget-row');if(fr)fr.style.display='block';
   }
   if(params.get('checkout')==='success'){
     const plan=params.get('plan')||'pro';
