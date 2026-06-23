@@ -2798,18 +2798,18 @@ body.app-active #app {
         </div>
       </div>
       <div class="login-tagline">Browser-based AR Cash Application Platform</div>
-      <div class="login-stats" style="grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:32px;max-width:520px">
-        <div class="login-stat" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
-          <div style="font-size:24px">⚡</div>
-          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.35">Deterministic matching you can audit</div>
+      <div class="login-stats" style="grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px;width:100%;align-items:stretch">
+        <div class="login-stat" style="display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15)">
+          <div style="font-size:24px;line-height:1">⚡</div>
+          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.4">Deterministic matching you can audit</div>
         </div>
-        <div class="login-stat" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
-          <div style="font-size:24px">🏢</div>
-          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.35">Purpose-built for SAP &amp; NetSuite shops</div>
+        <div class="login-stat" style="display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15)">
+          <div style="font-size:24px;line-height:1">🏢</div>
+          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.4">Purpose-built for SAP &amp; NetSuite shops</div>
         </div>
-        <div class="login-stat" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
-          <div style="font-size:24px">🔒</div>
-          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.35">Your data stays in your browser</div>
+        <div class="login-stat" style="display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:14px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.15)">
+          <div style="font-size:24px;line-height:1">🔒</div>
+          <div style="font-size:12.5px;font-weight:700;color:#e2e8f0;line-height:1.4">Your data stays in your browser</div>
         </div>
       </div>
     </div>
@@ -9228,7 +9228,7 @@ function cfgInit(){
 // PRODUCTION STABILITY — Defensive storage, error boundaries, null checks
 // ════════════════════════════════════════════════════════════════════════════
 var _lastSaveError = null;
-var _STORAGE_SIZE_WARN_MB = 4; // warn when localStorage usage approaches 5MB limit
+var _STORAGE_SIZE_WARN_MB = 4.5; // localStorage origin quota is typically 5-10MB; warn near the safe ceiling
 
 function saveToStorage(){
   if(IS_DEMO) return;
@@ -11056,10 +11056,21 @@ function launchApp(user){
     try{ _loadMpRules(); }catch(e){}
   }
 
-  // ── Clean workspace — fully reset transactional data ──
+  // ── Workspace data init ──
+  // For demo users: always start with a clean workspace (demo data never persists).
+  // For real (non-demo) users: RESTORE their previously saved data from localStorage
+  // so a page refresh or re-login doesn't lose their imported invoices/payments.
   INV=[];PAY=[];RES=[];EXC=[];DELIV=[];autoMatchHasRun=false;
   _invalidateInvIndexes();
-  ['inv','pay','res','exc'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}});
+  if(IS_DEMO && !IS_MASTER){
+    // Demo: clear any stale persisted keys, start fresh
+    ['inv','pay','res','exc'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}});
+  } else {
+    // Real user / master: restore their saved workspace
+    try{ loadFromStorage(); }catch(e){ console.warn('loadFromStorage:',e); }
+    try{ _buildSearchText(); }catch(e){}
+    try{ _buildInvIndexes(); }catch(e){}
+  }
   var _bsel=document.getElementById('ca-bank-sel');
   if(_bsel){_bsel.innerHTML='<option value="">All bank accounts</option>';}
   try{rAll();}catch(e){console.warn('rAll:',e);}
