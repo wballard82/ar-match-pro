@@ -5729,7 +5729,7 @@ function renderWsRecon(){
   const reconciledCt=matched.filter(function(r){var v=r.vr||0,w=r.writeOff||0,b=r.bankFee||0;// Item 7 (v16): adjustments reduce magnitude of variance (offset, not double-subtract)
       var _net = v < 0 ? (v + w + b) : (v > 0 ? (v - w - b) : -(w + b));
       return Math.abs(_net)<0.01;}).length;
-  if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${reconciledCt}</strong> of <strong style="color:var(--t1)">${matched.length}</strong> reconciled · ${$fk(totalMatched)} of ${$fk(totalPay)} · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}%</span>`;
+  if(summary)summary.innerHTML=`<strong style="color:var(--t1)">${reconciledCt}</strong> of <strong style="color:var(--t1)">${matched.length}</strong> reconciled · $${$f(totalMatched)} of $${$f(totalPay)} · <span style="color:${reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)'}">${reconPct}%</span>`;
   if(!PAY.length){list.innerHTML='<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-t">No payment data</div><div class="empty-s">Import bank file and auto match to reconcile.</div></div>';return;}
   
   // Item 7 FIX: inputs use onchange (not oninput) for table re-render,
@@ -5867,7 +5867,7 @@ function reconCommit(idx){
     var totalPay=PAY.reduce(function(s,p){return s+p.amt;},0);
     var totalMatched=matched.reduce(function(s,r){return s+r.pd;},0);
     var reconPct=totalPay>0?((totalMatched/totalPay)*100).toFixed(1):0;
-    summary.innerHTML='<strong style="color:var(--t1)">'+reconciledCt+'</strong> of <strong style="color:var(--t1)">'+matched.length+'</strong> reconciled · '+$fk(totalMatched)+' of '+$fk(totalPay)+' · <span style="color:'+(reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)')+'">'+reconPct+'%</span>';
+    summary.innerHTML='<strong style="color:var(--t1)">'+reconciledCt+'</strong> of <strong style="color:var(--t1)">'+matched.length+'</strong> reconciled · '+'$'+$f(totalMatched)+' of $'+$f(totalPay)+' · <span style="color:'+(reconPct>=80?'var(--g-t)':reconPct>=50?'var(--am-t)':'var(--r-t)')+'">'+reconPct+'%</span>';
   }
   // Item 4: show/hide "Approve All Reconciled" button based on full-reconciliation state
   var btn=document.getElementById('recon-approve-all-btn');
@@ -11586,9 +11586,12 @@ function clearInvData(){
   },'Clear invoices','btn-r');
 }
 function clearPayData(){
-  var msg='Clear all payment data?\n\n'+PAY.length+' payments will be removed.\nThis cannot be undone.';
+  var msg='Clear all payment data?\n\n'+PAY.length+' payments will be removed.\nThis also clears any matches and exceptions generated from these payments.\nThis cannot be undone.';
   showConfirm(msg,function(){
     PAY=[];
+    RES=[];           // clear matched results (were derived from payments)
+    EXC=[];           // clear exceptions (were derived from payments)
+    autoMatchHasRun=false;
     saveToStorage();
     rRem();
     try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
@@ -11599,13 +11602,15 @@ function clearPayData(){
     // Item 5: refresh ALL relevant displays
     try{updDash();}catch(e){}
     try{updTop();}catch(e){}
+    try{refreshStatus();}catch(e){}
     try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
     try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
     try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
     try{if(typeof renderWsRecon==='function')renderWsRecon();}catch(e){}
     try{if(typeof rPost==='function')rPost();}catch(e){}
+    try{if(typeof armpRefreshExportBlocker==='function')armpRefreshExportBlocker();}catch(e){}
     addAudit('Cleared payment data');
-    toast('Payment data cleared');
+    toast('Payment data, matches, and exceptions cleared');
   },'Clear payments','btn-r');
 }
 function clearMatchData(){
@@ -13186,7 +13191,23 @@ function _legacyEngUpdateRightPanel(){
     const exactSum=ENG_ROWS.reduce((s,r)=>s+r.inv.amt,0);
     if(Math.abs(exactSum-ENG_PAY.amt)<0.01&&ENG_ROWS.length>1)tips.push(`✓ ${ENG_ROWS.length} invoices sum exactly to payment — auto-apply all`);
     aiRight.innerHTML=tips.length?tips.map(t=>`<div class="ai-suggestion">${t}</div>`).join(''):'<div style="font-size:12px;color:var(--t3)">No AI suggestions for this payment.</div>';
-  }else if(aiRight){aiRight.innerHTML='<div style="font-size:12px;color:var(--t3)">No open invoices found for this customer.</div>';}
+  }else if(aiRight){
+    // ENG_ROWS empty — figure out WHY before showing a message
+    var _selPayMatched=false, _custHasInv=false;
+    try{
+      if(ENG_PAY){
+        _selPayMatched = RES.some(function(r){return r.fromAlloc&&(r.d===(ENG_PAY.txId||ENG_PAY.i||ENG_PAY.po)||r.i===ENG_PAY.i||(ENG_PAY.a&&r.a===ENG_PAY.a&&Math.abs((r.pd||0)-ENG_PAY.amt)<1));});
+        _custHasInv = INV.some(function(v){return v.a&&ENG_PAY.a&&String(v.a).trim()===String(ENG_PAY.a).trim();});
+      }
+    }catch(e){}
+    if(_selPayMatched){
+      aiRight.innerHTML='<div style="font-size:12px;color:var(--g-t);line-height:1.6">✓ This payment is already matched and allocated. No further action needed.</div>';
+    }else if(_custHasInv){
+      aiRight.innerHTML='<div style="font-size:12px;color:var(--t3);line-height:1.6">All open invoices for this customer are already applied, or none match this payment amount. Consider posting as unapplied cash.</div>';
+    }else{
+      aiRight.innerHTML='<div style="font-size:12px;color:var(--t3);line-height:1.6">No open invoices found for this customer.<br><small>Check that the customer/account matches between your invoice and remittance data.</small></div>';
+    }
+  }
   if(excRight&&ENG_PAY){
     const myExc=EXC.filter(e=>e.a===ENG_PAY.a&&Math.abs(e.amt-ENG_PAY.amt)<0.01);
     excRight.innerHTML=myExc.length?myExc.map(e=>`<div class="ai-suggestion" style="border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.04)"><span class="badge badge-r" style="font-size:10px">${e.type}</span> ${e.detail}</div>`).join(''):'<div style="font-size:12px;color:var(--t3)">No exceptions for this payment.</div>';
@@ -14351,18 +14372,42 @@ function _findInvoicesForPayment(p){
       if(inv&&!found.find(function(x){return x.i===inv.i;}))found.push(inv);
     });
   }
-  // Fallback: customer name search when no refs match and no customer account
-  if(!found.length&&p.c&&!p.a){
-    var pCustN=String(p.c).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,15);
-    if(pCustN.length>=4){
-      var custInvs=INV.filter(function(v){
-        if(!v.c)return false;
-        var iCustN=String(v.c).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,15);
-        return iCustN.includes(pCustN)||pCustN.includes(iCustN);
+  // Fallback: subset-sum search when no refs matched.
+  // Search by ACCOUNT first (most reliable), then by customer NAME.
+  if(!found.length && (typeof findSub==='function')){
+    var candidateInvs = null;
+
+    // (a) By account — the common case for bank payments that carry an account
+    if(p.a){
+      var _acctN = String(p.a).trim();
+      candidateInvs = INV.filter(function(v){
+        return v.a && String(v.a).trim()===_acctN && !v.s;
       });
-      if(custInvs.length&&typeof findSub==='function'){
-        var sub=findSub(custInvs,p.amt,50);
-        if(sub&&sub.length)found=sub;
+    }
+
+    // (b) By customer name — when no account, or account search found nothing
+    if((!candidateInvs || !candidateInvs.length) && p.c){
+      var pCustN=String(p.c).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,15);
+      if(pCustN.length>=4){
+        candidateInvs=INV.filter(function(v){
+          if(!v.c||v.s)return false;
+          var iCustN=String(v.c).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,15);
+          return iCustN.includes(pCustN)||pCustN.includes(iCustN);
+        });
+      }
+    }
+
+    // Run subset-sum: find a combination of open invoices summing to the payment.
+    // Only auto-apply when the result is UNAMBIGUOUS (exactly one combination),
+    // to stay conservative — multiple possible combinations route to review.
+    if(candidateInvs && candidateInvs.length){
+      // Exact-total shortcut: if ALL open invoices sum to the payment, use them
+      var _allSum=candidateInvs.reduce(function(s,v){return s+v.amt;},0);
+      if(Math.abs(_allSum-p.amt)<=0.01 && candidateInvs.length>1){
+        found=candidateInvs.slice();
+      } else {
+        var sub=findSub(candidateInvs,p.amt,0.50); // tight 50-cent tolerance
+        if(sub&&sub.length) found=sub;
       }
     }
   }
