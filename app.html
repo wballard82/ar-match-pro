@@ -3783,38 +3783,50 @@ body.app-active #app {
               <div class="ca-bottom-tbl-wrap">
                 <!-- AR Portfolio Summary Bar -->
                 <div id="ar-summary-bar" style="display:none;padding:14px 16px;background:linear-gradient(135deg,var(--surface2),var(--surface1));border-bottom:1px solid var(--bdr)">
-                  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;width:100%">
-                    <div style="padding:4px 14px 4px 0;border-right:1px solid var(--bdr)">
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;width:100%;margin-bottom:10px">
+                    <div style="padding:2px 14px 2px 0;border-right:1px solid var(--bdr)">
                       <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Customers</div>
-                      <div style="font-size:19px;font-weight:800;color:var(--t1);font-family:var(--mono);margin-top:3px" id="ars-customers">0</div>
+                      <div style="font-size:20px;font-weight:800;color:var(--t1);font-family:var(--mono);margin-top:3px" id="ars-customers">0</div>
                     </div>
-                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
+                    <div style="padding:2px 14px;border-right:1px solid var(--bdr)">
                       <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Open Invoices</div>
-                      <div style="font-size:19px;font-weight:800;color:var(--t1);font-family:var(--mono);margin-top:3px" id="ars-invoices">0</div>
+                      <div style="font-size:20px;font-weight:800;color:var(--t1);font-family:var(--mono);margin-top:3px" id="ars-invoices">0</div>
                     </div>
-                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
+                    <div style="padding:2px 14px">
                       <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Total AR Value</div>
-                      <div style="font-size:19px;font-weight:800;color:var(--pd);font-family:var(--mono);margin-top:3px" id="ars-total">$0</div>
+                      <div style="font-size:20px;font-weight:800;color:var(--pd);font-family:var(--mono);margin-top:3px" id="ars-total">$0</div>
                     </div>
-                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
-                      <div style="font-size:10.5px;font-weight:700;color:var(--g-t);text-transform:uppercase;letter-spacing:.05em">Current</div>
-                      <div style="font-size:16px;font-weight:800;color:var(--g-t);font-family:var(--mono);margin-top:3px" id="ars-current">$0</div>
-                      <div style="font-size:10px;color:var(--t3);margin-top:1px" id="ars-current-pct">0%</div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%">
+                    <div style="padding:8px 10px;border-radius:9px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18)">
+                      <div style="font-size:9.5px;font-weight:700;color:var(--g-t);text-transform:uppercase;letter-spacing:.04em">Current</div>
+                      <div style="font-size:14px;font-weight:800;color:var(--g-t);font-family:var(--mono);margin-top:2px" id="ars-current">$0</div>
+                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-current-pct">0%</div>
                     </div>
-                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
-                      <div style="font-size:10.5px;font-weight:700;color:var(--am-t);text-transform:uppercase;letter-spacing:.05em">1–30 Days</div>
-                      <div style="font-size:16px;font-weight:800;color:var(--am-t);font-family:var(--mono);margin-top:3px" id="ars-30">$0</div>
-                      <div style="font-size:10px;color:var(--t3);margin-top:1px" id="ars-30-pct">0%</div>
+                    <div style="padding:8px 10px;border-radius:9px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.18)">
+                      <div style="font-size:9.5px;font-weight:700;color:var(--am-t);text-transform:uppercase;letter-spacing:.04em">1–30 Days</div>
+                      <div style="font-size:14px;font-weight:800;color:var(--am-t);font-family:var(--mono);margin-top:2px" id="ars-30">$0</div>
+                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-30-pct">0%</div>
                     </div>
-                    <div style="padding:4px 14px;border-right:1px solid var(--bdr)">
-                      <div style="font-size:10.5px;font-weight:700;color:#FB923C;text-transform:uppercase;letter-spacing:.05em">31–60 Days</div>
-                      <div style="font-size:16px;font-weight:800;color:#FB923C;font-family:var(--mono);margin-top:3px" id="ars-60">$0</div>
-                      <div style="font-size:10px;color:var(--t3);margin-top:1px" id="ars-60-pct">0%</div>
+                    <div style="padding:8px 10px;border-radius:9px;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2)">
+                      <div style="font-size:9.5px;font-weight:700;color:#FB923C;text-transform:uppercase;letter-spacing:.04em">31–60 Days</div>
+                      <div style="font-size:14px;font-weight:800;color:#FB923C;font-family:var(--mono);margin-top:2px" id="ars-60">$0</div>
+                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-60-pct">0%</div>
                     </div>
-                    <div style="padding:4px 0 4px 14px">
-                      <div style="font-size:10.5px;font-weight:700;color:var(--r-t);text-transform:uppercase;letter-spacing:.05em">61+ Days</div>
-                      <div style="font-size:16px;font-weight:800;color:var(--r-t);font-family:var(--mono);margin-top:3px" id="ars-90">$0</div>
-                      <div style="font-size:10px;color:var(--t3);margin-top:1px" id="ars-90-pct">0%</div>
+                    <div style="padding:8px 10px;border-radius:9px;background:rgba(249,115,22,.09);border:1px solid rgba(249,115,22,.22)">
+                      <div style="font-size:9.5px;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:.04em">61–90 Days</div>
+                      <div style="font-size:14px;font-weight:800;color:#EA580C;font-family:var(--mono);margin-top:2px" id="ars-90">$0</div>
+                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-90-pct">0%</div>
+                    </div>
+                    <div style="padding:8px 10px;border-radius:9px;background:rgba(239,68,68,.09);border:1px solid rgba(239,68,68,.22)">
+                      <div style="font-size:9.5px;font-weight:700;color:var(--r-t);text-transform:uppercase;letter-spacing:.04em">91–120 Days</div>
+                      <div style="font-size:14px;font-weight:800;color:var(--r-t);font-family:var(--mono);margin-top:2px" id="ars-120">$0</div>
+                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-120-pct">0%</div>
+                    </div>
+                    <div style="padding:8px 10px;border-radius:9px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.28)">
+                      <div style="font-size:9.5px;font-weight:700;color:#B91C1C;text-transform:uppercase;letter-spacing:.04em">120+ Days</div>
+                      <div style="font-size:14px;font-weight:800;color:#B91C1C;font-family:var(--mono);margin-top:2px" id="ars-120plus">$0</div>
+                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-120plus-pct">0%</div>
                     </div>
                   </div>
                 </div>
@@ -3839,10 +3851,10 @@ body.app-active #app {
                       <th onclick="sortFbl5n(8)" style="text-align:right">Net Due<span class="si2"></span></th>
                       <th onclick="sortFbl5n(9)" style="text-align:right">Balance<span class="si2"></span></th>
                       <th onclick="sortFbl5n(10)">Status<span class="si2"></span></th>
-                      <th style="text-align:center">Match %</th>
-                      <th style="text-align:center;color:var(--pu-t)" title="Delivery number from delivery report">Delivery #</th>
-                      <th style="text-align:center;color:var(--cy-t)" title="Bill of Lading / Tracking # from delivery report">Tracking / BOL</th>
-                      <th style="text-align:left;color:var(--am-t);max-width:160px" title="Logistics Memo from delivery report (may contain SS PO ref or 1Z tracking)">Logistics Memo</th>
+                      <th onclick="sortFbl5n(11)" style="text-align:center">Match %<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(12)" style="text-align:center;color:var(--pu-t)" title="Delivery number from delivery report">Delivery #<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(13)" style="text-align:center;color:var(--cy-t)" title="Bill of Lading / Tracking # from delivery report">Tracking / BOL<span class="si2"></span></th>
+                      <th onclick="sortFbl5n(14)" style="text-align:left;color:var(--am-t);max-width:160px" title="Logistics Memo from delivery report (may contain SS PO ref or 1Z tracking)">Logistics Memo<span class="si2"></span></th>
                     </tr>
                   </thead>
                   <tbody id="ca-open-items-body">
@@ -3923,10 +3935,10 @@ body.app-active #app {
                       <th onclick="sortFbl5nExc(8)" style="text-align:right">Net Due<span class="si2"></span></th>
                       <th onclick="sortFbl5nExc(9)" style="text-align:right">Balance<span class="si2"></span></th>
                       <th onclick="sortFbl5nExc(10)">Status<span class="si2"></span></th>
-                      <th style="text-align:center">Match %</th>
-                      <th style="text-align:center;color:var(--pu-t)" title="Delivery # from delivery report">Delivery #</th>
-                      <th style="text-align:center;color:var(--cy-t)" title="Tracking # / Bill of Lading from delivery report">Tracking / BOL</th>
-                      <th style="color:var(--am-t);max-width:160px" title="Logistics Memo - Internal Header from delivery report">Logistics Memo</th>
+                      <th onclick="sortFbl5nExc(11)" style="text-align:center">Match %<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(12)" style="text-align:center;color:var(--pu-t)" title="Delivery # from delivery report">Delivery #<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(13)" style="text-align:center;color:var(--cy-t)" title="Tracking # / Bill of Lading from delivery report">Tracking / BOL<span class="si2"></span></th>
+                      <th onclick="sortFbl5nExc(14)" style="color:var(--am-t);max-width:160px" title="Logistics Memo - Internal Header from delivery report">Logistics Memo<span class="si2"></span></th>
                     </tr>
                   </thead>
                   <tbody id="exc-open-items-body">
@@ -9442,7 +9454,7 @@ function updateArSummary(){
     bar.style.display='block';
 
     var custSet={};
-    var total=0, cur=0, b30=0, b60=0, b90=0;
+    var total=0, cur=0, b30=0, b60=0, b90=0, b120=0, b120plus=0;
     var now=new Date(); now.setHours(0,0,0,0);
     for(var i=0;i<INV.length;i++){
       var v=INV[i];
@@ -9456,7 +9468,9 @@ function updateArSummary(){
       if(daysPast<=0)cur+=amt;
       else if(daysPast<=30)b30+=amt;
       else if(daysPast<=60)b60+=amt;
-      else b90+=amt;
+      else if(daysPast<=90)b90+=amt;
+      else if(daysPast<=120)b120+=amt;
+      else b120plus+=amt;
     }
     var nCust=Object.keys(custSet).length;
     function fmtK(n){
@@ -9470,10 +9484,12 @@ function updateArSummary(){
     setTxt('ars-customers', nCust.toLocaleString());
     setTxt('ars-invoices', INV.length.toLocaleString());
     setTxt('ars-total', '$'+total.toLocaleString('en-US',{maximumFractionDigits:0}));
-    setTxt('ars-current', fmtK(cur));   setTxt('ars-current-pct', pct(cur));
-    setTxt('ars-30', fmtK(b30));        setTxt('ars-30-pct', pct(b30));
-    setTxt('ars-60', fmtK(b60));        setTxt('ars-60-pct', pct(b60));
-    setTxt('ars-90', fmtK(b90));        setTxt('ars-90-pct', pct(b90));
+    setTxt('ars-current', fmtK(cur));        setTxt('ars-current-pct', pct(cur));
+    setTxt('ars-30', fmtK(b30));             setTxt('ars-30-pct', pct(b30));
+    setTxt('ars-60', fmtK(b60));             setTxt('ars-60-pct', pct(b60));
+    setTxt('ars-90', fmtK(b90));             setTxt('ars-90-pct', pct(b90));
+    setTxt('ars-120', fmtK(b120));           setTxt('ars-120-pct', pct(b120));
+    setTxt('ars-120plus', fmtK(b120plus));   setTxt('ars-120plus-pct', pct(b120plus));
   }catch(e){ console.warn('[updateArSummary]',e); }
 }
 
@@ -19280,8 +19296,8 @@ function refreshFbl5n(){
   // renderFbl5n already sorts payment-relevant invoices to top when ENG_PAY is set
   renderFbl5n('ca-open-items-body',acct,'');
 }
-function sortFbl5n(ci){ sortTbl('ca-open-items-tbl',ci); }
-function sortFbl5nExc(ci){ sortTbl('exc-open-items-tbl',ci); }
+function sortFbl5n(ci){ sortTbl('ca-open-items-tbl',ci+1); }
+function sortFbl5nExc(ci){ sortTbl('exc-open-items-tbl',ci+1); }
 
 function caAcctInputSearch(q){
   var drop=document.getElementById('ca-acct-drop');if(!drop)return;
