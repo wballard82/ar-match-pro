@@ -4861,7 +4861,7 @@ body.app-active #app {
                 <div class="settings-desc" id="learned-mappings-count">Saved column mappings the parser reuses per customer</div>
               </div>
               <div style="display:flex;gap:6px">
-                <button class="btn btn-outline btn-xs" onclick="armpClearAllMappings()" style="color:var(--r-t)">Clear all saved mappings</button>
+                <button class="btn btn-outline btn-xs" onclick="armpClearAllMappings()">Clear all saved mappings</button>
               </div>
             </div>
           </div>
@@ -7299,27 +7299,38 @@ var RemittanceParser = (function(){
       Object.keys(savedProfile.colMap).forEach(function(f){ mappingMeta[f]={src:'learned',conf:0.95}; });
     }
 
-    // Auto-detect remaining fields
+    // Auto-detect remaining fields.
+    // PASS 1 — EXACT matches across ALL fields first. This guarantees an exact
+    // header match always wins over any fuzzy/partial match (e.g. "Customer"
+    // exact-maps to custName before custAcct can fuzzy-grab it).
+    var _claimedCols = {}; // colIndex → true once a field claims it
+    Object.keys(colMap).forEach(function(f){ if(colMap[f]!=null)_claimedCols[colMap[f]]=true; });
     Object.keys(RM_FIELD_MAPS).forEach(function(field){
-      if(colMap[field]!==undefined) return; // already mapped from profile
+      if(colMap[field]!==undefined) return;
       var aliases = RM_FIELD_MAPS[field];
       for(var ci=0;ci<normedHdrs.length;ci++){
-        var nh=normedHdrs[ci];
-        if(aliases.indexOf(nh)>=0){
-          colMap[field]=ci; mappingMeta[field]={src:'auto',conf:0.85,label:hdrs[ci]}; break;
+        if(_claimedCols[ci]) continue; // don't steal a column already claimed
+        if(aliases.indexOf(normedHdrs[ci])>=0){
+          colMap[field]=ci; _claimedCols[ci]=true;
+          mappingMeta[field]={src:'auto',conf:0.85,label:hdrs[ci]}; break;
         }
       }
-      // Fuzzy: partial match
-      if(colMap[field]===undefined){
-        for(var ci2=0;ci2<normedHdrs.length;ci2++){
-          var nh2=normedHdrs[ci2];
-          for(var ai=0;ai<aliases.length;ai++){
-            if(nh2.length>3 && (nh2.indexOf(aliases[ai])>=0||aliases[ai].indexOf(nh2)>=0)){
-              colMap[field]=ci2; mappingMeta[field]={src:'fuzzy',conf:0.65,label:hdrs[ci2]}; break;
-            }
+    });
+    // PASS 2 — FUZZY/partial matches, only for fields still unmapped and
+    // only onto columns not already claimed by an exact match.
+    Object.keys(RM_FIELD_MAPS).forEach(function(field){
+      if(colMap[field]!==undefined) return;
+      var aliases = RM_FIELD_MAPS[field];
+      for(var ci2=0;ci2<normedHdrs.length;ci2++){
+        if(_claimedCols[ci2]) continue;
+        var nh2=normedHdrs[ci2];
+        for(var ai=0;ai<aliases.length;ai++){
+          if(nh2.length>3 && (nh2.indexOf(aliases[ai])>=0||aliases[ai].indexOf(nh2)>=0)){
+            colMap[field]=ci2; _claimedCols[ci2]=true;
+            mappingMeta[field]={src:'fuzzy',conf:0.65,label:hdrs[ci2]}; break;
           }
-          if(colMap[field]!==undefined) break;
         }
+        if(colMap[field]!==undefined) break;
       }
     });
     return { colMap:colMap, meta:mappingMeta };
