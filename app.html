@@ -4855,6 +4855,15 @@ body.app-active #app {
                 <input type="file" id="armp-cfg-import-file" accept="application/json,.json" style="display:none" onchange="armpHandleCfgImport(event)">
               </div>
             </div>
+            <div class="settings-row" style="margin-top:12px">
+              <div>
+                <div class="settings-label">Learned remittance mappings</div>
+                <div class="settings-desc" id="learned-mappings-count">Saved column mappings the parser reuses per customer</div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-outline btn-xs" onclick="armpClearAllMappings()" style="color:var(--r-t)">Clear all saved mappings</button>
+              </div>
+            </div>
           </div>
 
           <!-- ═══ Recent Activity (v18) — compact audit log ═══ -->
@@ -7476,8 +7485,35 @@ var RemittanceParser = (function(){
     if(custCtx.custName && custCtx.custName.length > 2){
       profile = ParserLearningProfile.get(custCtx.custName);
     }
-    if(profile && !opts.savedProfile){
-      cm = _buildColMap(hdr.rawHdrs, profile);
+    // ── VALIDATE the saved profile against the CURRENT file's headers ──
+    // A profile saved from a differently-shaped file can corrupt mapping.
+    // Only apply it if its mapped columns still align with the current headers.
+    if(profile && profile.colMap && !opts.savedProfile){
+      var _profileValid = true;
+      var _nCols = hdr.rawHdrs.length;
+      // Every column index in the profile must exist in this file
+      Object.keys(profile.colMap).forEach(function(f){
+        var ci = profile.colMap[f];
+        if(ci==null || ci<0 || ci>=_nCols) _profileValid=false;
+      });
+      // The profile's essential fields (custName, amt, invNo/poNo) must still
+      // land on plausibly-matching headers; otherwise re-auto-detect.
+      if(_profileValid){
+        var _autoCm = _buildColMap(hdr.rawHdrs, null).colMap;
+        // If auto-detect cleanly finds amount + a reference + customer, and the
+        // saved profile disagrees on those, trust fresh auto-detect instead.
+        var _autoHasCore = (_autoCm.amt!=null) && (_autoCm.custName!=null) &&
+                           (_autoCm.invNo!=null || _autoCm.poNo!=null || _autoCm.soNo!=null);
+        var _profDisagrees = (profile.colMap.amt!==_autoCm.amt) ||
+                             (profile.colMap.custName!==_autoCm.custName);
+        if(_autoHasCore && _profDisagrees){
+          _profileValid = false; // fresh auto-detect is more reliable here
+        }
+      }
+      if(_profileValid){
+        cm = _buildColMap(hdr.rawHdrs, profile);
+      }
+      // else: keep the auto-detected cm from above (do not apply stale profile)
     }
 
     // Parse data rows
@@ -7876,6 +7912,19 @@ function _saveParserProfileFromReview(){
 function _resetParserProfile(custName){
   ParserLearningProfile.reset(custName);
   toast('Parser profile reset for '+custName);
+}
+
+// Clear ALL learned remittance mappings (settings → reset bad profiles)
+function armpClearAllMappings(){
+  var all=[];
+  try{ all=ParserLearningProfile.listAll(); }catch(e){}
+  var n=all.length;
+  if(n===0){ if(typeof toast==='function')toast('No saved mappings to clear',''); return; }
+  if(!confirm('Clear all '+n+' saved remittance column mapping'+(n===1?'':'s')+'? The parser will re-detect columns on the next import. This cannot be undone.')) return;
+  try{ localStorage.removeItem('ARMP:SYS:remittance_parser_profiles'); }catch(e){}
+  var el=document.getElementById('learned-mappings-count');
+  if(el)el.textContent='Saved column mappings the parser reuses per customer (0 saved)';
+  if(typeof toast==='function')toast('Cleared '+n+' saved mapping'+(n===1?'':'s'),'');
 }
 
 // Confirm and finalize import after mapping review
