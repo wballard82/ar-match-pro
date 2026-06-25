@@ -5446,10 +5446,16 @@ function renderWsExcPremium(){
       const _cbd = _excConf >= 90 ? 'rgba(18,184,134,.30)' : _excConf >= 70 ? 'rgba(245,158,11,.30)' : 'rgba(239,68,68,.30)';
       return `<span class="armp-match-conf exc-card-confidence" title="Match confidence: ${_excConf}%" style="color:${_cc};background:${_cbg};border-color:${_cbd}">${_excConf}% match</span>`;
     })() : '';
+    // Map the suggested action to a resolveException decision so the chip is clickable
+    var _suggDec = '';
+    if(sugg){
+      var _am={apply_to_invoice:'Apply to invoice',cash_on_account:'Cash on Account',write_off:'Write off',bank_fee:'Bank fee',chase_customer:'Chase customer',duplicate_reject:'Duplicate — reject'}[sugg.action]||'';
+      _suggDec=_am;
+    }
     const suggHtml = (!isResV && sugg)
       ? `<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap">
           <span style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.05em">Suggested:</span>
-          <span class="armp-ai-suggest" title="${sugg.rationale} (${sugg.confidence}% confidence)">${sugg.label}</span>
+          <span class="armp-ai-suggest" ${_suggDec?`onclick="event.stopPropagation();resolveException(${realIdx},'${_suggDec}')" style="cursor:pointer"`:''} title="${sugg.rationale} (${sugg.confidence}% confidence) — click to apply">${sugg.label}</span>
         </div>`
       : '';
     return`<div class="exc-card sev-${sev}" onclick="excSelectCard(${realIdx},this)" style="cursor:pointer">
