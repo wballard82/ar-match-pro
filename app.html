@@ -3891,6 +3891,7 @@ body.app-active #app {
                     <option value="">All types</option>
                     <option>Short pay</option><option>Unapplied payment</option><option>Unmatched</option>
                     <option>Duplicate</option><option>Missing PO</option><option>Bank fee</option>
+                    <option>Ambiguous</option>
                   </select>
                 </div>
                 <div style="display:flex;gap:8px">
@@ -4020,7 +4021,7 @@ body.app-active #app {
                 <option value="">All types</option>
                 <option>Short pay</option><option>Unapplied payment</option><option>Unmatched</option>
                 <option>Duplicate</option><option>Missing PO</option><option>Bank fee</option>
-                <option>Down payment</option><option>Overpay</option>
+                <option>Down payment</option><option>Overpay</option><option>Ambiguous</option>
               </select>
               <button class="btn btn-outline btn-sm" id="exc-tab-open" onclick="setExcView('open')">Open</button>
               <button class="btn btn-outline btn-sm" id="exc-tab-resolved" onclick="setExcView('resolved')">Resolved <span id="exc-resolved-ct" style="font-size:10px;margin-left:2px">0</span></button>
@@ -4114,6 +4115,7 @@ body.app-active #app {
             <button class="na-chip" data-type="Bank fee" onclick="naChipClick(this)">Bank Fee <span class="na-chip-ct" id="na-ct-Bank fee">0</span></button>
             <button class="na-chip" data-type="Missing PO" onclick="naChipClick(this)">Missing PO <span class="na-chip-ct" id="na-ct-Missing PO">0</span></button>
             <button class="na-chip" data-type="Overpay" onclick="naChipClick(this)">Overpay <span class="na-chip-ct" id="na-ct-Overpay">0</span></button>
+            <button class="na-chip" data-type="Ambiguous" onclick="naChipClick(this)" title="Lump payment where 2+ invoice combinations tie to the amount — specialist chooses the correct combination">Ambiguous / Choose combination <span class="na-chip-ct" id="na-ct-Ambiguous">0</span></button>
           </div>
           <div style="padding:10px 20px;font-size:12px;color:var(--t3);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:16px;background:var(--surface2)">
             <span id="exc-ct">0 exceptions</span>
@@ -5382,8 +5384,8 @@ function renderWsExcPremium(){
       
     </div>`;return;
   }
-  const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Cash on Account':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱'};
-  const typeSev={'Short pay':'med','Unapplied payment':'low','Cash on Account':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high'};
+  const typeIcon={'Short pay':'💸','Unapplied payment':'💰','Cash on Account':'💰','Unmatched':'❓','Duplicate':'⚠️','Missing PO':'📎','Bank fee':'🏦','Down payment':'↓','Overpay':'↑','Currency mismatch':'💱','Ambiguous':'🔀'};
+  const typeSev={'Short pay':'med','Unapplied payment':'low','Cash on Account':'low','Unmatched':'high','Duplicate':'high','Missing PO':'med','Bank fee':'low','Down payment':'low','Overpay':'med','Currency mismatch':'high','Ambiguous':'high'};
 
   // ── Bulk-approve banner ──────────────────────────────────────────────
   // When multiple Cash on Account EXCs share a parentRef (e.g. 15 COA lines
@@ -9880,7 +9882,7 @@ function naUpdateChipCounts(){
     });
     var total=0;Object.keys(counts).forEach(function(k){total+=counts[k];});
     var allEl=document.getElementById('na-ct-all');if(allEl)allEl.textContent=total;
-    ['Short pay','Unmatched','Duplicate','Unapplied payment','Bank fee','Missing PO','Overpay'].forEach(function(t){
+    ['Short pay','Unmatched','Duplicate','Unapplied payment','Bank fee','Missing PO','Overpay','Ambiguous'].forEach(function(t){
       var el=document.getElementById('na-ct-'+t);
       if(el)el.textContent=counts[t]||0;
     });
@@ -14360,14 +14362,38 @@ function _extractInvoiceRefs(p){
   return Array.from(refs);
 }
 
+// Enumerate up to `maxFind` DISTINCT invoice subsets that sum to `t` within
+// `tol`. Distinct = different SET of invoice numbers. Bounded like findSub
+// (first 16 candidates) so worst case stays small. Used to DETECT ambiguity:
+// if 2+ distinct combinations tie to a lump payment we route to review rather
+// than guess (conservative cash-application rule).
+function _enumDistinctSubsets(g,t,tol,maxFind){
+  var n=Math.min(g.length,16),gr=g.slice(0,n),out=[],seen={};
+  function _key(c){return c.map(function(x){return String(x.i||x.amt);}).sort().join('|');}
+  function bt(i,c,s){
+    if(out.length>=maxFind)return;
+    if(c.length>0&&Math.abs(s-t)<=tol){var k=_key(c);if(!seen[k]){seen[k]=true;out.push(c.slice());}if(out.length>=maxFind)return;}
+    if(s>t+tol||i>=gr.length)return;
+    bt(i+1,c.concat([gr[i]]),s+gr[i].amt);
+    bt(i+1,c,s);
+  }
+  bt(0,[],0);
+  return out;
+}
+
 function _findInvoicesForPayment(p){
   if(!p||typeof INV==='undefined')return[];
+  p._ambigCombos=null; // cleared each run; set only when 2+ subsets tie (route to review)
   var refs=_extractInvoiceRefs(p);
   var found=[];
   if(refs.length){
     refs.forEach(function(ref){
       var inv=INV.find(function(v){
-        return v.i===ref||(v.i&&String(v.i).replace(/^0+/,'')===String(ref).replace(/^0+/,''));
+        // Only OPEN invoices — an invoice already settled this run must not be
+        // re-applied here (would double-count cash, e.g. a duplicate payment
+        // referencing an already-matched invoice). Consistent with the
+        // subset-sum path below, which also filters !v.s.
+        return !v.s&&(v.i===ref||(v.i&&String(v.i).replace(/^0+/,'')===String(ref).replace(/^0+/,'')));
       });
       if(inv&&!found.find(function(x){return x.i===inv.i;}))found.push(inv);
     });
@@ -14406,8 +14432,12 @@ function _findInvoicesForPayment(p){
       if(Math.abs(_allSum-p.amt)<=0.01 && candidateInvs.length>1){
         found=candidateInvs.slice();
       } else {
-        var sub=findSub(candidateInvs,p.amt,0.50); // tight 50-cent tolerance
-        if(sub&&sub.length) found=sub;
+        // Detect ambiguity: find up to TWO distinct subsets that tie to the
+        // payment. Exactly one → auto-apply (unchanged). Two or more → do NOT
+        // guess; signal the caller (p._ambigCombos) to route to review.
+        var _subs=_enumDistinctSubsets(candidateInvs,p.amt,0.50,2); // 50-cent tolerance, stop at 2
+        if(_subs.length>=2){ p._ambigCombos=_subs; found=[]; }
+        else if(_subs.length===1){ found=_subs[0]; }
       }
     }
   }
@@ -16044,7 +16074,15 @@ async function runMatch(){
       try{
         if(typeof _findInvoicesForPayment==='function'){
           var _fbFound=_findInvoicesForPayment(p);
-          if(_fbFound&&_fbFound.length){
+          if(p._ambigCombos&&p._ambigCombos.length>=2){
+            // Ambiguous lump: 2+ distinct invoice combinations tie to this
+            // payment. Per cash-application rule, auto-apply NOTHING — route to
+            // Needs Attention with the candidate combinations for a specialist.
+            var _comboTxt=p._ambigCombos.map(function(combo){return combo.map(function(v){return v.i;}).join('+');}).join('  OR  ');
+            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'',c:p.c||'',amt:p.amt,ref:p.po||p.i||'—',type:'Ambiguous',detail:'Ambiguous allocation — '+p._ambigCombos.length+'+ invoice combinations tie to $'+$f(p.amt)+'; specialist must choose: '+_comboTxt,action:'Review — choose invoice combination',dec:'',s:'Open',notes:p.n||'',ambigCombos:_comboTxt});
+            matched=true;
+          }
+          else if(_fbFound&&_fbFound.length){
             var _fbSum=_fbFound.reduce(function(s,v){return s+v.amt;},0);
             var _fbDiff=p.amt-_fbSum;
             if(Math.abs(_fbDiff)<=tol){_fbFound.forEach(function(v){v.s='Exact';RES.push({c:v.c,a:v.a,i:v.i,po:v.po,so:v.so,d:v.d,oa:v.amt,pd:v.amt,vr:0,st:'Exact',m:'Multi-invoice match',n:_fbFound.length+'-invoice subset-sum'});});matched=true;}
