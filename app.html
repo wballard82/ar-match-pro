@@ -2070,6 +2070,13 @@ input:focus, select:focus, textarea:focus { outline: none; }
 .fbl5n-tbl tbody tr.selected-inv { background:rgba(16,185,129,.07) !important; }
 .fbl5n-tbl tbody tr.suggested-inv td:first-child { position:relative; }
 .fbl5n-tbl tbody tr.kb-focus { outline:2px solid var(--p); outline-offset:-2px; background:rgba(20,168,216,.05); }
+/* Dense allocation mode — compact rows so 20+ invoices fit before scrolling */
+.ca-bottom-half.alloc-dense .fbl5n-tbl tbody td { padding:3px 10px !important; font-size:11.5px; }
+.ca-bottom-half.alloc-dense .fbl5n-tbl thead th { padding:5px 10px; }
+.ca-bottom-half.alloc-dense .fbl5n-tbl tbody tr { line-height:1.25; }
+/* When allocating, the top half is replaced by the thin strip — hide it fully so the grid gets the whole screen */
+.ca-hsplit.allocating .ca-top-half { display:none !important; }
+.ca-hsplit.allocating .ca-bottom-half { min-height:0; }
 .fbl5n-tbl .td-num { text-align:right; font-family:var(--mono); font-weight:600; }
 .aging-chip { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10.5px; font-weight:700; }
 .aging-cur { background:var(--g-bg); color:var(--g-t); }
@@ -3610,7 +3617,26 @@ body.app-active #app {
           </div>
 
           <!-- Horizontal split workspace -->
-          <div class="ca-hsplit">
+          <div class="ca-hsplit" id="ca-hsplit">
+            <!-- Thin allocation strip — shown only while allocating (top half collapsed) -->
+            <div id="ca-alloc-strip" style="display:none;align-items:center;gap:18px;padding:10px 16px;background:var(--surface2);border-bottom:2px solid var(--p);flex-shrink:0;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:7px">
+                <span style="font-size:16px">🏦</span>
+                <div>
+                  <div id="cas-cust" style="font-size:13px;font-weight:800;color:var(--t1);line-height:1.1">—</div>
+                  <div id="cas-acct" style="font-size:10px;color:var(--t3);font-family:var(--mono)">—</div>
+                </div>
+              </div>
+              <div style="height:26px;width:1px;background:var(--bdr)"></div>
+              <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Payment</div><div id="cas-amt" style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--t1)">$0.00</div></div>
+              <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Applied</div><div id="cas-applied" style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">$0.00</div></div>
+              <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Remaining</div><div id="cas-rem" style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--pd)">$0.00</div></div>
+              <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Ref</div><div id="cas-ref" style="font-size:11px;font-family:var(--mono);color:var(--t2)">—</div></div>
+              <div style="margin-left:auto;display:flex;gap:8px">
+                <button onclick="caExpandPayment()" class="btn btn-outline btn-xs" title="Show full payment details">▾ Expand</button>
+                <button class="btn btn-g btn-xs" onclick="engApprove()">✓ Approve</button>
+              </div>
+            </div>
             <!-- TOP HALF: three-panel allocation workspace -->
             <div class="ca-top-half" id="ca-top-half">
               <button id="ca-collapse-toggle" onclick="toggleCaTopHalf()" title="Collapse payment details to see more invoices" style="position:absolute;right:14px;top:8px;z-index:20;font-size:11px;font-weight:700;color:var(--t3);background:var(--surface2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px"><span id="ca-collapse-icon">▲</span> <span id="ca-collapse-label">Collapse</span></button>
@@ -3739,8 +3765,8 @@ body.app-active #app {
                   </div>
                 </div>
 
-                <!-- RIGHT: Intelligence panel -->
-                <div class="ca-right">
+                <!-- RIGHT: Intelligence panel (hidden by default — AI now in suggestion banner) -->
+                <div class="ca-right" id="ca-right-panel" style="display:none">
                   <div class="ca-right-scroll">
                     <!-- Warnings at top of right panel -->
                     <div id="ca-dup-warn-right" style="display:none;margin:10px 10px 0;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;font-weight:600;color:#ef4444">
@@ -3770,58 +3796,14 @@ body.app-active #app {
                   📋 Customer Open Items
                   <span style="font-weight:500;color:var(--t3);text-transform:none;letter-spacing:0;font-size:11px" id="ca-bottom-cust-label">select account or payment</span>
                 </div>
-                
+                <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                  <span id="ca-grid-rowcount" style="font-size:11px;color:var(--t3)"></span>
+                  <button id="ca-show-queue-btn" onclick="caShowQueue()" class="btn btn-outline btn-xs" style="display:none" title="Show the payment queue">☰ Queue</button>
+                </div>
               </div>
               <div class="ca-bottom-tbl-wrap">
                 <!-- AR Portfolio Summary Bar -->
-                <div id="ar-summary-bar" style="display:none;padding:14px 16px;background:linear-gradient(135deg,var(--surface2),var(--surface1));border-bottom:1px solid var(--bdr)">
-                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;width:100%;margin-bottom:10px">
-                    <div style="padding:2px 14px 2px 0;border-right:1px solid var(--bdr)">
-                      <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Customers</div>
-                      <div style="font-size:20px;font-weight:800;color:var(--t1);font-family:var(--mono);margin-top:3px" id="ars-customers">0</div>
-                    </div>
-                    <div style="padding:2px 14px;border-right:1px solid var(--bdr)">
-                      <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Open Invoices</div>
-                      <div style="font-size:20px;font-weight:800;color:var(--t1);font-family:var(--mono);margin-top:3px" id="ars-invoices">0</div>
-                    </div>
-                    <div style="padding:2px 14px">
-                      <div style="font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em">Total AR Value</div>
-                      <div style="font-size:20px;font-weight:800;color:var(--pd);font-family:var(--mono);margin-top:3px" id="ars-total">$0</div>
-                    </div>
-                  </div>
-                  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%">
-                    <div style="padding:8px 10px;border-radius:9px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18)">
-                      <div style="font-size:9.5px;font-weight:700;color:var(--g-t);text-transform:uppercase;letter-spacing:.04em">Current</div>
-                      <div style="font-size:14px;font-weight:800;color:var(--g-t);font-family:var(--mono);margin-top:2px" id="ars-current">$0</div>
-                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-current-pct">0%</div>
-                    </div>
-                    <div style="padding:8px 10px;border-radius:9px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.18)">
-                      <div style="font-size:9.5px;font-weight:700;color:var(--am-t);text-transform:uppercase;letter-spacing:.04em">1–30 Days</div>
-                      <div style="font-size:14px;font-weight:800;color:var(--am-t);font-family:var(--mono);margin-top:2px" id="ars-30">$0</div>
-                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-30-pct">0%</div>
-                    </div>
-                    <div style="padding:8px 10px;border-radius:9px;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2)">
-                      <div style="font-size:9.5px;font-weight:700;color:#FB923C;text-transform:uppercase;letter-spacing:.04em">31–60 Days</div>
-                      <div style="font-size:14px;font-weight:800;color:#FB923C;font-family:var(--mono);margin-top:2px" id="ars-60">$0</div>
-                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-60-pct">0%</div>
-                    </div>
-                    <div style="padding:8px 10px;border-radius:9px;background:rgba(249,115,22,.09);border:1px solid rgba(249,115,22,.22)">
-                      <div style="font-size:9.5px;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:.04em">61–90 Days</div>
-                      <div style="font-size:14px;font-weight:800;color:#EA580C;font-family:var(--mono);margin-top:2px" id="ars-90">$0</div>
-                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-90-pct">0%</div>
-                    </div>
-                    <div style="padding:8px 10px;border-radius:9px;background:rgba(239,68,68,.09);border:1px solid rgba(239,68,68,.22)">
-                      <div style="font-size:9.5px;font-weight:700;color:var(--r-t);text-transform:uppercase;letter-spacing:.04em">91–120 Days</div>
-                      <div style="font-size:14px;font-weight:800;color:var(--r-t);font-family:var(--mono);margin-top:2px" id="ars-120">$0</div>
-                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-120-pct">0%</div>
-                    </div>
-                    <div style="padding:8px 10px;border-radius:9px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.28)">
-                      <div style="font-size:9.5px;font-weight:700;color:#B91C1C;text-transform:uppercase;letter-spacing:.04em">120+ Days</div>
-                      <div style="font-size:14px;font-weight:800;color:#B91C1C;font-family:var(--mono);margin-top:2px" id="ars-120plus">$0</div>
-                      <div style="font-size:9.5px;color:var(--t3);margin-top:1px" id="ars-120plus-pct">0%</div>
-                    </div>
-                  </div>
-                </div>
+                <div id="ar-summary-bar" style="display:none" aria-hidden="true"><span id="ars-customers"></span><span id="ars-invoices"></span><span id="ars-total"></span><span id="ars-current"></span><span id="ars-current-pct"></span><span id="ars-30"></span><span id="ars-30-pct"></span><span id="ars-60"></span><span id="ars-60-pct"></span><span id="ars-90"></span><span id="ars-90-pct"></span><span id="ars-120"></span><span id="ars-120-pct"></span><span id="ars-120plus"></span><span id="ars-120plus-pct"></span></div>
                 <div id="ca-suggest-banner" style="display:none;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(135deg,rgba(20,168,216,.10),rgba(20,168,216,.03));border-bottom:1px solid var(--bdr)"></div>
                 <div style="padding:10px 14px;background:var(--surface1);border-bottom:1px solid var(--bdr);display:flex;gap:10px;align-items:center">
                   <input id="ca-open-search" type="search" placeholder="Search by account number or customer name…" 
@@ -5357,11 +5339,33 @@ function engMarkSuggested(p){
   }
   // Mark candidates
   ENG_ROWS.forEach(function(r){r._suggested=false;});
+  // If the payment is genuinely ambiguous (2+ combos tie), do NOT pre-highlight
+  // a single combination — surface the ambiguity instead.
+  if(p._ambigCombos && p._ambigCombos.length>=2){
+    _engSuggestion={ambiguous:true,count:p._ambigCombos.length};
+    engRenderSuggestionBanner();
+    return;
+  }
   picked.forEach(function(r){if(r)r._suggested=true;});
   if(picked.length){
     var sum=picked.reduce(function(a,r){return a+r.inv.amt;},0);
-    var avgConf=Math.round(picked.reduce(function(a,r){return a+(r.conf||0);},0)/picked.length);
-    _engSuggestion={count:picked.length,sum:sum,conf:avgConf,exact:Math.abs(sum-p.amt)<0.01,invoices:picked.map(function(r){return r.inv.i;})};
+    var isExact=Math.abs(sum-p.amt)<0.01;
+    // Confidence reflects match QUALITY, not the per-invoice heuristic score:
+    //  - exact sum to payment    → very high (96%)
+    //  - exact single-invoice #  → very high (95%)
+    //  - close sum (within tol)  → high (85%)
+    //  - otherwise fall back to averaged row confidence
+    var conf;
+    var singleInvExact = picked.length===1 && p.i && picked[0].inv.i &&
+                         picked[0].inv.i.replace(/\s/g,'').toLowerCase()===(''+p.i).replace(/\s/g,'').toLowerCase();
+    if(isExact) conf = 96;
+    else if(singleInvExact) conf = 95;
+    else if(Math.abs(sum-p.amt)<=0.50) conf = 85;
+    else {
+      var avg=Math.round(picked.reduce(function(a,r){return a+(r.conf||0);},0)/picked.length);
+      conf = Math.max(avg, 50);
+    }
+    _engSuggestion={count:picked.length,sum:sum,conf:conf,exact:isExact,invoices:picked.map(function(r){return r.inv.i;})};
   } else {
     _engSuggestion=null;
   }
@@ -5375,6 +5379,16 @@ function engRenderSuggestionBanner(){
   if(!el)return;
   if(!_engSuggestion||!ENG_PAY){el.style.display='none';return;}
   var s=_engSuggestion;
+  // Ambiguous payment — surface the ambiguity rather than a confident pick
+  if(s.ambiguous){
+    el.style.display='flex';
+    el.innerHTML=
+      '<span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--t2)">'+
+        '<span style="font-size:15px">🔀</span>'+
+        '<b style="color:var(--am-t)">Ambiguous</b> · '+s.count+' invoice combinations tie to this amount — choose the correct one'+
+      '</span>';
+    return;
+  }
   var confColor=s.conf>=80?'var(--g-t)':s.conf>=50?'var(--am-t)':'var(--r-t)';
   var confBg=s.conf>=80?'rgba(16,185,129,.12)':s.conf>=50?'rgba(245,158,11,.12)':'rgba(239,68,68,.12)';
   el.style.display='flex';
@@ -5442,6 +5456,68 @@ document.addEventListener('keydown',function(e){
     if(typeof engApprove==='function') engApprove();
   }
 });
+
+// ── Allocation focus mode ──────────────────────────────────────────────────
+// When a payment is selected, the screen transforms into a full-width, dense
+// allocation grid: the payment detail block collapses to a thin strip, the
+// queue hides, and the grid claims the screen (20+ invoices visible). The user
+// can expand the details or restore the queue any time.
+function caEnterAllocFocus(){
+  var hsplit=document.getElementById('ca-hsplit');
+  var strip=document.getElementById('ca-alloc-strip');
+  var bottom=document.querySelector('.ca-bottom-half');
+  var queueBtn=document.getElementById('ca-show-queue-btn');
+  if(hsplit) hsplit.classList.add('allocating');
+  if(strip) strip.style.display='flex';
+  if(bottom) bottom.classList.add('alloc-dense');
+  if(queueBtn) queueBtn.style.display='inline-flex';
+  // hide the top-half's own collapse toggle (the strip's Expand replaces it)
+  var ct=document.getElementById('ca-collapse-toggle'); if(ct) ct.style.display='none';
+  caSyncAllocStrip();
+}
+function caExitAllocFocus(){
+  var hsplit=document.getElementById('ca-hsplit');
+  var strip=document.getElementById('ca-alloc-strip');
+  var bottom=document.querySelector('.ca-bottom-half');
+  var queueBtn=document.getElementById('ca-show-queue-btn');
+  if(hsplit){ hsplit.classList.remove('allocating'); }
+  if(strip) strip.style.display='none';
+  if(bottom) bottom.classList.remove('alloc-dense');
+  if(queueBtn) queueBtn.style.display='none';
+  var ct=document.getElementById('ca-collapse-toggle'); if(ct) ct.style.display='flex';
+  // restore queue visibility
+  var q=document.querySelector('.ca-queue'); if(q) q.style.display='';
+}
+// Expand: bring the full payment-detail block back (exit focus mode but keep grid dense)
+function caExpandPayment(){
+  var hsplit=document.getElementById('ca-hsplit');
+  var strip=document.getElementById('ca-alloc-strip');
+  if(hsplit) hsplit.classList.remove('allocating');
+  if(strip) strip.style.display='none';
+  // Restore the top-half collapse toggle, and a button to re-enter focus mode
+  var ct=document.getElementById('ca-collapse-toggle');
+  if(ct){ ct.style.display='flex'; ct.setAttribute('onclick','caEnterAllocFocus()'); ct.title='Collapse to focus on invoices'; var ic=document.getElementById('ca-collapse-icon'); var lb=document.getElementById('ca-collapse-label'); if(ic)ic.textContent='▲'; if(lb)lb.textContent='Focus grid'; }
+}
+// Restore the payment queue (after it was hidden for max grid width)
+function caShowQueue(){
+  var q=document.querySelector('.ca-queue');
+  if(q){ q.style.display = q.style.display==='none' ? '' : 'none'; }
+}
+// Keep the thin strip's numbers in sync with the engine
+function caSyncAllocStrip(){
+  if(typeof ENG_PAY==='undefined'||!ENG_PAY) return;
+  var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  var applied=ENG_ROWS.filter(function(r){return r.selected;}).reduce(function(s,r){return s+r.applyAmt;},0);
+  var rem=ENG_PAY.amt-applied;
+  set('cas-cust', getDisplayCustomerName(ENG_PAY)||ENG_PAY.c||'—');
+  set('cas-acct', 'Acct '+(ENG_PAY.a||'—'));
+  set('cas-amt', '$'+$f(ENG_PAY.amt));
+  set('cas-applied', '$'+$f(applied));
+  set('cas-rem', '$'+$f(Math.max(0,rem)));
+  set('cas-ref', ENG_PAY.txId||ENG_PAY.i||ENG_PAY.po||'—');
+  var remEl=document.getElementById('cas-rem');
+  if(remEl) remEl.style.color = Math.abs(rem)<0.01?'var(--g-t)':rem<0?'var(--r-t)':'var(--pd)';
+}
 
 function engBuildAI(p,invs){
   const bar=document.getElementById('eng-ai-bar');const list=document.getElementById('eng-ai-list');if(!bar||!list)return;
@@ -9628,12 +9704,21 @@ function armpSessionStartFresh(){
 }
 
 // ── AR Portfolio Summary Bar ──
+function toggleArSummary(){
+  window._showArSummary = !window._showArSummary;
+  var bar=document.getElementById('ar-summary-bar');
+  if(bar) bar.style.display = window._showArSummary ? 'block' : 'none';
+  if(window._showArSummary && typeof updateArSummary==='function') updateArSummary();
+}
 function updateArSummary(){
   try{
     var bar=document.getElementById('ar-summary-bar');
     if(!bar)return;
+    // Tucked away by default to keep the allocation grid uncluttered.
+    // Toggle visible via the "Portfolio" button on the open-items header.
     if(!INV||!INV.length){ bar.style.display='none'; return; }
-    bar.style.display='block';
+    if(!window._showArSummary){ bar.style.display='none'; }
+    else { bar.style.display='block'; }
 
     var custSet={};
     var total=0, cur=0, b30=0, b60=0, b90=0, b120=0, b120plus=0;
@@ -13364,6 +13449,9 @@ function engLoadPayment(idx){
   engUpdateTotals();
   engAudit('Opened: '+(p.c||'Unknown')+' · $'+$f(p.amt));
   renderPayQueue();
+  // Auto-enter allocation focus mode: collapse details to a thin strip, hide
+  // queue, dense grid — maximum room for invoices.
+  try{ caEnterAllocFocus(); }catch(e){}
   // Update right panel
   _engUpdateRightPanel();
 }
@@ -13546,6 +13634,7 @@ function engUpdateTotals(){
     var gabRem=document.getElementById('ca-gab-rem');
     if(gabRem)gabRem.style.color=full?'var(--g-t)':rem<0?'var(--r-t)':'var(--pd)';
   }
+  try{ caSyncAllocStrip(); }catch(e){}
   _engUpdateRightPanel();
 }
 
@@ -13939,6 +14028,7 @@ function engResetUI(){
   var gab=document.getElementById('ca-grid-actionbar');if(gab)gab.style.display='none';
   var sb=document.getElementById('ca-suggest-banner');if(sb)sb.style.display='none';
   _engSuggestion=null;
+  try{ caExitAllocFocus(); }catch(e){}
 }
 
 // ── Payment Queue ──
@@ -19412,6 +19502,7 @@ function _fbl5nRenderPage(tbodyId,startIdx){
   if(startIdx===0){tbody.innerHTML=rows.join('')+footer;}
   else{var old=document.getElementById('fbl5n-load-more');if(old)old.remove();tbody.insertAdjacentHTML('beforeend',rows.join('')+footer);}
   _fbl5nOffset=end;
+  if(tbodyId==='ca-open-items-body'){var rc=document.getElementById('ca-grid-rowcount');if(rc)rc.textContent=invs.length?invs.length+' open item'+(invs.length!==1?'s':''):'';}
 }
 
 function _fbl5nLoadMore(tbodyId){_fbl5nRenderPage(tbodyId,_fbl5nOffset);}
