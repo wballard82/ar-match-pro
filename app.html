@@ -2068,6 +2068,8 @@ input:focus, select:focus, textarea:focus { outline: none; }
 .fbl5n-tbl tbody td { padding:7px 10px; border-bottom:1px solid var(--bdr); vertical-align:middle; white-space:nowrap; }
 .fbl5n-tbl tbody tr:hover { background:rgba(59,130,246,.04); }
 .fbl5n-tbl tbody tr.selected-inv { background:rgba(16,185,129,.07) !important; }
+.fbl5n-tbl tbody tr.suggested-inv td:first-child { position:relative; }
+.fbl5n-tbl tbody tr.kb-focus { outline:2px solid var(--p); outline-offset:-2px; background:rgba(20,168,216,.05); }
 .fbl5n-tbl .td-num { text-align:right; font-family:var(--mono); font-weight:600; }
 .aging-chip { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10.5px; font-weight:700; }
 .aging-cur { background:var(--g-bg); color:var(--g-t); }
@@ -3820,6 +3822,7 @@ body.app-active #app {
                     </div>
                   </div>
                 </div>
+                <div id="ca-suggest-banner" style="display:none;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(135deg,rgba(20,168,216,.10),rgba(20,168,216,.03));border-bottom:1px solid var(--bdr)"></div>
                 <div style="padding:10px 14px;background:var(--surface1);border-bottom:1px solid var(--bdr);display:flex;gap:10px;align-items:center">
                   <input id="ca-open-search" type="search" placeholder="Search by account number or customer name…" 
                     style="flex:1;max-width:480px;padding:8px 14px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none"
@@ -3851,6 +3854,13 @@ body.app-active #app {
                     <tr><td colspan="16"><div class="empty" style="padding:20px"><div class="empty-icon">📋</div><div class="empty-t">No open items</div><div class="empty-s">Select a payment or account to view open invoices</div></div></td></tr>
                   </tbody>
                 </table>
+              </div>
+              <!-- Pinned allocation action bar (shows when a payment is loaded) -->
+              <div id="ca-grid-actionbar" style="display:none;align-items:center;gap:14px;padding:9px 16px;border-top:2px solid var(--p);background:var(--surface2);flex-shrink:0">
+                <span style="font-size:12px;color:var(--t2)">Applied <b style="color:var(--g-t);font-family:var(--mono)" id="ca-gab-applied">$0.00</b></span>
+                <span style="font-size:12px;color:var(--t2)">Remaining <b style="font-family:var(--mono)" id="ca-gab-rem">$0.00</b></span>
+                <span style="font-size:10.5px;color:var(--t3);display:flex;align-items:center;gap:4px">⌨ <span style="font-family:var(--mono)">↑↓</span> move · <span style="font-family:var(--mono)">space</span> select · <span style="font-family:var(--mono)">enter</span> approve</span>
+                <button class="btn btn-g btn-sm" style="margin-left:auto" onclick="engApprove()">✓ Approve Allocation</button>
               </div>
             </div><!-- end ca-bottom-half -->
           </div><!-- end ca-hsplit -->
@@ -5320,6 +5330,119 @@ function _updatePaymentFlowProgress(){
 }
 
 // ── Enhanced engBuildAI (top bar) ──
+// Compute the engine's suggested invoice combination for a payment and mark
+// those ENG_ROWS as candidates (pre-highlight). Mirrors the matching engine's
+// priority: exact invoice/PO/SO/amount, then subset-sum — but only marks,
+// never auto-applies (the specialist confirms).
+function engMarkSuggested(p){
+  if(!p||!ENG_ROWS||!ENG_ROWS.length){_engSuggestion=null;return;}
+  var n=function(s){return(s||'').replace(/\s/g,'').toLowerCase();};
+  var picked=[];
+  // 1) Exact single-invoice match (invoice #, then amount)
+  var exact=ENG_ROWS.find(function(r){return p.i&&r.inv.i&&n(r.inv.i)===n(p.i);});
+  if(!exact) exact=ENG_ROWS.find(function(r){return Math.abs(r.inv.amt-p.amt)<0.01;});
+  if(exact){ picked=[exact]; }
+  // 2) PO/SO group that sums to payment
+  if(!picked.length && p.po){
+    var poRows=ENG_ROWS.filter(function(r){return r.inv.po&&n(r.inv.po)===n(p.po);});
+    if(poRows.length){var s=poRows.reduce(function(a,r){return a+r.inv.amt;},0);if(Math.abs(s-p.amt)<0.50)picked=poRows;}
+  }
+  // 3) Subset-sum across open invoices (reuse findSub if present)
+  if(!picked.length && typeof findSub==='function'){
+    var cands=ENG_ROWS.filter(function(r){return !r.alreadyPaid;});
+    var sub=findSub(cands.map(function(r){return r.inv;}),p.amt,0.50);
+    if(sub&&sub.length){
+      picked=sub.map(function(inv){return ENG_ROWS.find(function(r){return r.inv.i===inv.i;});}).filter(Boolean);
+    }
+  }
+  // Mark candidates
+  ENG_ROWS.forEach(function(r){r._suggested=false;});
+  picked.forEach(function(r){if(r)r._suggested=true;});
+  if(picked.length){
+    var sum=picked.reduce(function(a,r){return a+r.inv.amt;},0);
+    var avgConf=Math.round(picked.reduce(function(a,r){return a+(r.conf||0);},0)/picked.length);
+    _engSuggestion={count:picked.length,sum:sum,conf:avgConf,exact:Math.abs(sum-p.amt)<0.01,invoices:picked.map(function(r){return r.inv.i;})};
+  } else {
+    _engSuggestion=null;
+  }
+  engRenderSuggestionBanner();
+}
+var _engSuggestion=null;
+
+// Render the suggestion banner above the open-items grid
+function engRenderSuggestionBanner(){
+  var el=document.getElementById('ca-suggest-banner');
+  if(!el)return;
+  if(!_engSuggestion||!ENG_PAY){el.style.display='none';return;}
+  var s=_engSuggestion;
+  var confColor=s.conf>=80?'var(--g-t)':s.conf>=50?'var(--am-t)':'var(--r-t)';
+  var confBg=s.conf>=80?'rgba(16,185,129,.12)':s.conf>=50?'rgba(245,158,11,.12)':'rgba(239,68,68,.12)';
+  el.style.display='flex';
+  el.innerHTML=
+    '<span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--t2)">'+
+      '<span style="font-size:15px">✨</span>'+
+      'Engine suggests <b style="color:var(--t1)">'+s.count+' invoice'+(s.count>1?'s':'')+'</b>'+
+      (s.exact?' · sums exactly to '+('$'+$f(ENG_PAY.amt)):' · $'+$f(s.sum)+' of $'+$f(ENG_PAY.amt))+
+    '</span>'+
+    '<span style="display:flex;align-items:center;gap:8px;margin-left:auto">'+
+      '<span style="font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;color:'+confColor+';background:'+confBg+'">'+s.conf+'% confidence</span>'+
+      '<button class="btn btn-g btn-xs" onclick="engAcceptSuggestion()" title="Select the suggested invoices">Accept</button>'+
+    '</span>';
+}
+
+// One-click accept: select all suggested invoices
+function engAcceptSuggestion(){
+  if(!_engSuggestion)return;
+  ENG_ROWS.forEach(function(r,i){
+    if(r._suggested && !r.selected && !r.alreadyPaid){
+      engToggleRow(i,true);
+    }
+  });
+  try{refreshFbl5n();}catch(e){}
+  toast('Suggested invoices selected — review and approve','');
+}
+
+// ── Keyboard navigation for the open-items grid (power-user speed) ──
+// ↑/↓ move focus · space toggles select · enter approves · only active on the
+// To Be Matched tab with a payment loaded, and not while typing in an input.
+var _fbl5nKbIndex=-1;
+function _fbl5nKbRows(){
+  var body=document.getElementById('ca-open-items-body');
+  if(!body)return[];
+  return Array.prototype.slice.call(body.querySelectorAll('tr[data-inv]'));
+}
+function _fbl5nKbFocus(idx){
+  var rows=_fbl5nKbRows();
+  if(!rows.length)return;
+  if(idx<0)idx=0; if(idx>=rows.length)idx=rows.length-1;
+  rows.forEach(function(r){r.classList.remove('kb-focus');});
+  var row=rows[idx];
+  if(row){ row.classList.add('kb-focus'); row.scrollIntoView({block:'nearest'}); _fbl5nKbIndex=idx; }
+}
+document.addEventListener('keydown',function(e){
+  // Only when To Be Matched tab is active and a payment is loaded
+  var matchTab=document.getElementById('ws-match');
+  if(!matchTab||!matchTab.classList.contains('active'))return;
+  if(typeof ENG_PAY==='undefined'||!ENG_PAY)return;
+  // Ignore while typing
+  var t=e.target;
+  if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable))return;
+  var rows=_fbl5nKbRows();
+  if(!rows.length)return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); _fbl5nKbFocus(_fbl5nKbIndex<0?0:_fbl5nKbIndex+1); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); _fbl5nKbFocus(_fbl5nKbIndex<0?0:_fbl5nKbIndex-1); }
+  else if(e.key===' '||e.code==='Space'){
+    if(_fbl5nKbIndex<0)return;
+    e.preventDefault();
+    var row=rows[_fbl5nKbIndex];
+    if(row){ var inv=row.getAttribute('data-inv'); var cb=row.querySelector('input[type=checkbox]'); if(cb){ fbl5nCheckRow(inv,!cb.checked); setTimeout(function(){_fbl5nKbFocus(_fbl5nKbIndex);},10); } }
+  }
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    if(typeof engApprove==='function') engApprove();
+  }
+});
+
 function engBuildAI(p,invs){
   const bar=document.getElementById('eng-ai-bar');const list=document.getElementById('eng-ai-list');if(!bar||!list)return;
   const tips=[];
@@ -13230,6 +13353,10 @@ function engLoadPayment(idx){
     return(cMatch||aMatch)&&open;
   });
   ENG_ROWS=custInvs.map(v=>({inv:v,applyAmt:0,selected:false,alreadyPaid:false,conf:engGetConfidence(v,p),excCode:engGetExcCode(v,p)}));
+  // ── Pre-highlight the engine's suggested invoice combination ──
+  // Surfaces what the matching engine would auto-apply, so the specialist sees
+  // the recommendation before acting (confidence + which invoices).
+  try{ engMarkSuggested(p); }catch(e){}
   engCheckDuplicates(p);
   engBuildAI(p,custInvs);
   engRenderRows();
@@ -13410,6 +13537,15 @@ function engUpdateTotals(){
   const rSpWarn=document.getElementById('ca-sp-warn-right');
   if(rSpWarn)rSpWarn.style.display=hasShortPay?'block':'none';
   const totalsBar=document.getElementById('alloc-totals');if(totalsBar)totalsBar.style.display=ENG_ROWS.length?'flex':'none';
+  // Pinned grid action bar (hero-grid layout)
+  var gab=document.getElementById('ca-grid-actionbar');
+  if(gab){
+    gab.style.display = ENG_PAY ? 'flex' : 'none';
+    set('ca-gab-applied','$'+$f(applied));
+    set('ca-gab-rem','$'+$f(Math.max(0,rem)));
+    var gabRem=document.getElementById('ca-gab-rem');
+    if(gabRem)gabRem.style.color=full?'var(--g-t)':rem<0?'var(--r-t)':'var(--pd)';
+  }
   _engUpdateRightPanel();
 }
 
@@ -13800,6 +13936,9 @@ function engResetUI(){
   ['eng-header','eng-grid-wrap','eng-audit-wrap','eng-ai-bar','eng-dup-warn','eng-short-pay-warn','alloc-fully'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const emp=document.getElementById('eng-empty');if(emp)emp.style.display='flex';
   const totalsBar=document.getElementById('alloc-totals');if(totalsBar)totalsBar.style.display='none';
+  var gab=document.getElementById('ca-grid-actionbar');if(gab)gab.style.display='none';
+  var sb=document.getElementById('ca-suggest-banner');if(sb)sb.style.display='none';
+  _engSuggestion=null;
 }
 
 // ── Payment Queue ──
@@ -19229,12 +19368,13 @@ function _fbl5nBuildRow(v){
           '<span style="color:var(--t3);font-size:12px">Open</span>';
   var cd=conf>0?'<span class="'+(conf>=80?'conf-high':conf>=50?'conf-med':'conf-low')+'">'+conf+'%</span>':'\u2014';
   var sel=ENG_ROW&&ENG_ROW.selected;
+  var isSugg=ENG_ROW&&ENG_ROW._suggested;
   var vi=v.i||'';
   // Delivery report enriched fields
   var delCell  = v.dl ? '<span class="td-mono" style="font-size:10.5px;color:var(--pu-t)">'+_escapeHtml(v.dl)+'</span>' : '<span style="color:var(--t4);font-size:11px">—</span>';
   var trkCell  = v.t  ? '<span class="td-mono" style="font-size:10.5px;color:var(--cy-t)">'+_escapeHtml(v.t)+'</span>'  : '<span style="color:var(--t4);font-size:11px">—</span>';
   var memoCell = v.logMemo ? '<span style="font-size:10.5px;color:var(--am-t);max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:bottom" title="'+_escapeAttr(v.logMemo)+'">'+_escapeHtml(v.logMemo.slice(0,28))+(v.logMemo.length>28?'…':'')+'</span>' : '<span style="color:var(--t4);font-size:11px">—</span>';
-  return '<tr class="'+(sel?'selected-inv':'')+'" onclick="fbl5nRowClick(\''+vi+'\')" style="cursor:pointer">'+
+  return '<tr class="'+(sel?'selected-inv':'')+(isSugg?' suggested-inv':'')+'" data-inv="'+_escapeAttr(vi)+'" onclick="fbl5nRowClick(\''+vi+'\')" style="cursor:pointer'+(isSugg&&!sel?';background:rgba(20,168,216,.06);border-left:3px solid var(--p)':'')+'">'+
     '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+vi+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
     '<td class="td-mono" style="font-size:11.5px">'+(v.a||'')+'</td>'+
     '<td style="font-weight:600">'+(v.c||'')+'</td>'+
