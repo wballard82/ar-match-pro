@@ -8819,7 +8819,8 @@ function armpGetSuggestedResolution(ex){
     'Unmatched':          { action:'chase_customer',     label:'Chase Customer',      rationale:'No matching invoice, PO, or SO found. Request invoice reference from customer.', confidence:60 },
     'Missing PO':         { action:'chase_customer',     label:'Chase Customer',      rationale:'PO number absent. Contact customer purchasing team to confirm PO.', confidence:68 },
     'Currency mismatch':  { action:'chase_customer',     label:'Chase Customer',      rationale:'Currency on remittance differs from invoice. Clarify with customer.', confidence:70 },
-    'Down payment':       { action:'apply_to_invoice',   label:'Apply to Invoice',    rationale:'Down payment or deposit. Find open invoice and partially apply.', confidence:74 }
+    'Down payment':       { action:'apply_to_invoice',   label:'Apply to Invoice',    rationale:'Down payment or deposit. Find open invoice and partially apply.', confidence:74 },
+    'Ambiguous':          { action:'apply_to_invoice',   label:'Choose Combination',  rationale:'Multiple invoice combinations tie to this payment amount. Select the correct invoices below to allocate.', confidence:50 }
   };
 
   var rule = RULES[type];
@@ -12944,10 +12945,60 @@ function _excBankFeeConfirm(excIdx){
   toast('Bank fee approved — $'+$f(bfAmt));
 }
 
+// Resolve an Ambiguous exception by loading its payment into the allocation
+// workspace, where the specialist picks the correct invoice combination and
+// watches the balance deduct live. Pre-highlights the candidate combinations.
+function armpResolveAmbiguous(idx){
+  var ex=EXC[idx];
+  if(!ex){toast('Exception not found','warn');return;}
+  // Find the originating payment by account + amount + reference
+  var payIdx=-1;
+  for(var i=0;i<PAY.length;i++){
+    var p=PAY[i];
+    var acctOk=!ex.a||!p.a||String(p.a).trim()===String(ex.a).trim();
+    var amtOk=Math.abs((p.amt||0)-(ex.amt||0))<0.01;
+    var refOk=!ex.ref||ex.ref==='—'||(p.txId===ex.ref||p.po===ex.ref||p.i===ex.ref||p.ref===ex.ref);
+    if(acctOk&&amtOk&&refOk){payIdx=i;break;}
+  }
+  if(payIdx<0){
+    // Fallback: match on account + amount only
+    for(var j=0;j<PAY.length;j++){
+      if(Math.abs((PAY[j].amt||0)-(ex.amt||0))<0.01 && (!ex.a||PAY[j].a===ex.a)){payIdx=j;break;}
+    }
+  }
+  if(payIdx<0){toast('Could not locate the payment for this item','warn');return;}
+  // Navigate to Cash Application and load the payment into the allocation workspace
+  try{ if(typeof sp==='function') sp('cash-app'); }catch(e){}
+  setTimeout(function(){
+    try{
+      engLoadPayment(payIdx);
+      // Mark that this came from an ambiguous exception so approval clears the EXC
+      ENG_PAY && (ENG_PAY._fromAmbigExc=idx);
+      // Show a guidance banner with the candidate combinations
+      var combos=ex.ambigCombos||(ex.detail||'').split('specialist must choose:')[1]||'';
+      toast('Choose the correct invoice combination — balance updates as you select','');
+      // Briefly highlight candidate invoices if we can parse them
+      if(combos){
+        var invNums=(combos.match(/\d{6,}/g)||[]);
+        ENG_ROWS.forEach(function(r){
+          if(invNums.indexOf(String(r.inv.i))>=0){ r._candidate=true; }
+        });
+        try{engRenderRows();}catch(e){}
+      }
+    }catch(e){console.warn('armpResolveAmbiguous:',e);}
+  }, 250);
+}
+
 function resolveException(idx,dec){
   
   const ex=EXC[idx];if(!ex){console.warn('[resolveException] EXC['+idx+'] not found');toast('Exception not found','warn');return;}
   if(!dec||dec==='— Select —'||dec==='— Select action —'||dec===''){return;}
+  // AMBIGUOUS exceptions: the specialist needs to CHOOSE a combination.
+  // Route to the full allocation workspace (live invoice selection + balance deduction)
+  // rather than the type-to-search apply modal.
+  if(ex.type==='Ambiguous' && dec==='Apply to invoice'){
+    if(typeof armpResolveAmbiguous==='function'){ armpResolveAmbiguous(idx); return; }
+  }
   if(dec==='Apply to invoice'){
     excActionOpen(idx,'apply');
     return;
@@ -13410,6 +13461,14 @@ function engApprove(){
   });
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
   addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
+  // If this allocation resolved an Ambiguous exception, mark that exception resolved
+  try{
+    if(ENG_PAY && ENG_PAY._fromAmbigExc!=null){
+      var _ax=EXC[ENG_PAY._fromAmbigExc];
+      if(_ax && _ax.type==='Ambiguous'){ _ax.s='Resolved'; _ax.dec='Applied to invoices'; }
+      if(typeof rExc==='function')try{rExc();}catch(e){}
+    }
+  }catch(e){}
   saveToStorage();updDash();updTop();
   try{if(typeof rPost==='function')rPost();}catch(e){console.warn('rPost err',e);}
   try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){console.warn('renderWsReview err',e);}
