@@ -2043,7 +2043,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
 
 /* ── REFACTOR PHASE: horizontal splits, account view, match priority ── */
 .ca-hsplit { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
-.ca-top-half { flex:0 0 auto; min-height:160px; height:280px; display:flex; flex-direction:column; overflow:hidden; position:relative; transition:height .25s ease, min-height .25s ease; }
+.ca-top-half { flex:0 0 auto; min-height:120px; height:210px; display:flex; flex-direction:column; overflow:hidden; position:relative; transition:height .25s ease, min-height .25s ease; }
 .ca-top-half.collapsed { height:54px; min-height:54px; }
 .ca-top-half.collapsed .ca-workspace { opacity:0; pointer-events:none; }
 .ca-drag-handle { height:8px; background:var(--surface3); border-top:1px solid var(--bdr2); border-bottom:1px solid var(--bdr2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; user-select:none; }
@@ -3675,58 +3675,45 @@ body.app-active #app {
 
                   <!-- Payment header — full detail -->
                   <div class="payment-flow" id="eng-header" style="margin:8px 12px">
-                    <!-- Row 1: Customer + Invoice# always prominent -->
-                    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--bdr)">
-                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
-                        <div class="pf-label">Customer</div>
-                        <div class="pf-val" id="eng-h-cust" style="font-size:15px;font-weight:900;color:var(--t1)">—</div>
-                        <div style="font-size:11px;color:var(--t3);margin-top:2px">Account: <span id="eng-h-acct" style="font-family:var(--mono);color:var(--pd)">—</span></div>
+                    <!-- Compact single-strip payment details — all fields, minimized height -->
+                    <div style="display:flex;align-items:stretch;flex-wrap:wrap;border:1px solid var(--bdr);border-radius:9px;overflow:hidden;background:var(--surface)">
+                      <div style="flex:2;min-width:150px;padding:7px 12px;border-right:1px solid var(--bdr)">
+                        <div class="pf-label" style="font-size:9px">Customer</div>
+                        <div id="eng-h-cust" style="font-size:13.5px;font-weight:800;color:var(--t1);line-height:1.2">—</div>
+                        <div style="font-size:10px;color:var(--t3)">Acct: <span id="eng-h-acct" style="font-family:var(--mono);color:var(--pd)">—</span></div>
                       </div>
-                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
-                        <div class="pf-label">Invoice #</div>
-                        <div class="pf-val" id="eng-h-inv" style="font-size:13px;font-weight:800;color:var(--pd)">—</div>
+                      <div style="flex:1;min-width:90px;padding:7px 10px;border-right:1px solid var(--bdr)">
+                        <div class="pf-label" style="font-size:9px">Payment</div>
+                        <div id="eng-h-amt" style="font-size:15px;font-weight:900;color:var(--t1);font-family:var(--mono);line-height:1.2">$0.00</div>
+                        <div style="font-size:10px;color:var(--t3)"><span id="eng-h-method">—</span> · <span id="eng-h-ccy">USD</span></div>
                       </div>
-                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
-                        <div class="pf-label">PO Number</div>
-                        <div class="pf-val" id="eng-h-po" style="font-size:13px;color:var(--t2)">—</div>
+                      <div style="flex:1;min-width:80px;padding:7px 10px;border-right:1px solid var(--bdr)">
+                        <div class="pf-label" style="font-size:9px">Applied</div>
+                        <div id="eng-h-applied" style="font-size:15px;font-weight:900;color:var(--g-t);font-family:var(--mono);line-height:1.2">$0.00</div>
+                        <div style="font-size:10px;color:var(--t3)"><span id="pf-applied-pct">0%</span> applied</div>
                       </div>
-                      <div class="pf-field">
-                        <div class="pf-label">Date</div>
-                        <div class="pf-val" id="eng-h-date" style="font-size:13px">—</div>
+                      <div style="flex:1;min-width:80px;padding:7px 10px;border-right:1px solid var(--bdr)">
+                        <div class="pf-label" style="font-size:9px">Remaining</div>
+                        <div id="eng-h-rem" style="font-size:15px;font-weight:900;color:var(--pd);font-family:var(--mono);line-height:1.2">$0.00</div>
+                        <div id="pf-status-label" style="font-size:10px;color:var(--t3)">Select invoices</div>
                       </div>
-                    </div>
-                    <!-- Row 2: Amounts + method + txid -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:0">
-                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
-                        <div class="pf-label">Payment</div>
-                        <div class="pf-val hero" id="eng-h-amt">$0.00</div>
+                      <div style="flex:1;min-width:90px;padding:7px 10px;border-right:1px solid var(--bdr)">
+                        <div class="pf-label" style="font-size:9px">Invoice / PO</div>
+                        <div id="eng-h-inv" style="font-size:12px;font-weight:700;color:var(--pd);line-height:1.2">—</div>
+                        <div style="font-size:10px;color:var(--t3)">PO <span id="eng-h-po">—</span></div>
                       </div>
-                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
-                        <div class="pf-label">Applied</div>
-                        <div class="pf-val green" id="eng-h-applied" style="font-size:16px;font-weight:900">$0.00</div>
-                      </div>
-                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
-                        <div class="pf-label">Remaining</div>
-                        <div class="pf-val" id="eng-h-rem" style="font-size:16px;font-weight:900;color:var(--pd)">$0.00</div>
-                      </div>
-                      <div class="pf-field" style="border-right:1px solid var(--bdr)">
-                        <div class="pf-label">Method</div>
-                        <div class="pf-val" id="eng-h-method" style="font-size:12px">—</div>
-                        <div style="font-size:10px;color:var(--t3);margin-top:1px"><span id="eng-h-ccy">USD</span></div>
-                      </div>
-                      <div class="pf-field">
-                        <div class="pf-label">TX / Ref ID</div>
-                        <div class="pf-val" id="eng-h-ref" style="font-size:11px;font-family:var(--mono);color:var(--t2);word-break:break-all">—</div>
+                      <div style="flex:1;min-width:90px;padding:7px 10px">
+                        <div class="pf-label" style="font-size:9px">Date / Ref</div>
+                        <div id="eng-h-date" style="font-size:12px;color:var(--t2);line-height:1.2">—</div>
+                        <div style="font-size:10px;color:var(--t3);font-family:var(--mono);word-break:break-all" id="eng-h-ref">—</div>
                       </div>
                     </div>
-                    <div class="pf-progress-wrap">
-                      <div class="pf-progress-track"><div class="pf-progress-fill" id="pf-progress-fill"></div></div>
-                      <div class="pf-progress-labels"><span>Applied: <span id="pf-applied-pct">0%</span></span><span id="pf-status-label" style="color:var(--t3)">Select invoices below</span></div>
-                    </div>
-                    <div class="pf-status-row">
+                    <div class="pf-status-row" style="margin-top:6px">
                       <div class="pay-fully-badge" id="eng-full-badge">✓ Fully Allocated</div>
                       <div class="pay-locked-badge" id="eng-locked-badge">🔒 Locked · Exported</div>
                     </div>
+                    <!-- hidden compatibility element (progress bar referenced by engine) -->
+                    <div style="display:none"><span id="pf-progress-fill"></span></div>
                   </div>
 
                   <div class="empty" id="eng-empty" style="padding:24px">
