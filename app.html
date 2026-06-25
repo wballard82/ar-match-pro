@@ -2043,7 +2043,9 @@ input:focus, select:focus, textarea:focus { outline: none; }
 
 /* ── REFACTOR PHASE: horizontal splits, account view, match priority ── */
 .ca-hsplit { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
-.ca-top-half { flex:0 0 auto; min-height:180px; height:320px; display:flex; flex-direction:column; overflow:hidden; }
+.ca-top-half { flex:0 0 auto; min-height:160px; height:280px; display:flex; flex-direction:column; overflow:hidden; position:relative; transition:height .25s ease, min-height .25s ease; }
+.ca-top-half.collapsed { height:54px; min-height:54px; }
+.ca-top-half.collapsed .ca-workspace { opacity:0; pointer-events:none; }
 .ca-drag-handle { height:8px; background:var(--surface3); border-top:1px solid var(--bdr2); border-bottom:1px solid var(--bdr2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; user-select:none; }
 .ca-drag-handle::after { content:""; display:block; width:32px; height:3px; border-radius:2px; background:var(--bdr3); }
 .ca-drag-handle:hover { background:var(--bdr2); }
@@ -3578,6 +3580,7 @@ body.app-active #app {
         <!-- Workspace Tabs -->
         <div class="ca-tabs">
           <button class="ca-tab active" id="ca-tab-match" onclick="setCaTab('match',this)">To Be Matched</button>
+          <button class="ca-tab" id="ca-tab-acct" onclick="setCaTab('acct',this)">Customer Line Items</button>
           <button class="ca-tab" id="ca-tab-exc" onclick="setCaTab('exc',this)">Needs Attention</button>
           <button class="ca-tab" id="ca-tab-review" onclick="setCaTab('review',this)">Review</button>
           <button class="ca-tab" id="ca-tab-recon" onclick="if(checkFeature('reconcile'))setCaTab('recon',this)">Reconcile</button>
@@ -3608,7 +3611,8 @@ body.app-active #app {
           <!-- Horizontal split workspace -->
           <div class="ca-hsplit">
             <!-- TOP HALF: three-panel allocation workspace -->
-            <div class="ca-top-half">
+            <div class="ca-top-half" id="ca-top-half">
+              <button id="ca-collapse-toggle" onclick="toggleCaTopHalf()" title="Collapse payment details to see more invoices" style="position:absolute;right:14px;top:8px;z-index:20;font-size:11px;font-weight:700;color:var(--t3);background:var(--surface2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px"><span id="ca-collapse-icon">▲</span> <span id="ca-collapse-label">Collapse</span></button>
               <div class="ca-workspace" style="flex:1;overflow:hidden">
                 <!-- LEFT: Payment Queue -->
                 <div class="ca-queue">
@@ -3963,6 +3967,21 @@ body.app-active #app {
             <div class="acct-right">
               <div id="acct-detail-empty" class="empty"><div class="empty-icon">🏢</div><div class="empty-t">Select a customer</div><div class="empty-s">Click a customer to view their full AR account activity.</div></div>
               <div id="acct-detail" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+                <!-- Apply-mode banner: shows when a payment is loaded for allocation -->
+                <div id="acct-apply-bar" style="display:none;padding:12px 18px;background:linear-gradient(135deg,rgba(20,168,216,.10),rgba(20,168,216,.04));border-bottom:2px solid var(--p);flex-shrink:0">
+                  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+                    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+                      <div style="font-size:12px;font-weight:700;color:var(--p)">APPLYING PAYMENT</div>
+                      <div style="font-size:12px;color:var(--t2)">Payment <b style="color:var(--t1);font-family:var(--mono)" id="acct-apply-pay">$0.00</b></div>
+                      <div style="font-size:12px;color:var(--t2)">Applied <b style="color:var(--g-t);font-family:var(--mono)" id="acct-apply-applied">$0.00</b></div>
+                      <div style="font-size:12px;color:var(--t2)">Remaining <b style="color:var(--pd);font-family:var(--mono)" id="acct-apply-rem">$0.00</b></div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                      <button class="btn btn-outline btn-sm" onclick="acctApplyCancel()">Cancel</button>
+                      <button class="btn btn-g btn-sm" id="acct-apply-approve" onclick="acctApplyApprove()">✓ Approve Allocation</button>
+                    </div>
+                  </div>
+                </div>
                 <div id="acct-header" style="padding:14px 18px;border-bottom:1px solid var(--bdr);background:var(--surface2);flex-shrink:0">
                   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
                     <div><div style="font-size:17px;font-weight:800;color:var(--t1)" id="acct-cust-name">—</div><div style="font-size:12px;color:var(--t3);margin-top:2px" id="acct-cust-id">—</div></div>
@@ -3975,6 +3994,7 @@ body.app-active #app {
                   <table class="fbl5n-tbl" id="acct-inv-tbl">
                     <thead>
                       <tr>
+                        <th id="acct-inv-cb-col" style="display:none;width:34px"></th>
                         <th>Invoice #</th><th>Inv Date</th><th>Due Date</th><th>PO #</th><th>Sales Order</th>
                         <th style="text-align:right">Amount</th><th style="text-align:right">Balance</th>
                         <th>Aging</th><th>Status</th><th>Action</th>
@@ -12954,6 +12974,18 @@ function _excBankFeeConfirm(excIdx){
 // Resolve an Ambiguous exception by loading its payment into the allocation
 // workspace, where the specialist picks the correct invoice combination and
 // watches the balance deduct live. Pre-highlights the candidate combinations.
+// Collapse/expand the payment-details top half so the specialist can see more
+// invoices in the allocation list (helps when a customer has many open invoices).
+function toggleCaTopHalf(){
+  var top=document.getElementById('ca-top-half');
+  if(!top)return;
+  var collapsed=top.classList.toggle('collapsed');
+  var icon=document.getElementById('ca-collapse-icon');
+  var label=document.getElementById('ca-collapse-label');
+  if(icon)icon.textContent=collapsed?'▼':'▲';
+  if(label)label.textContent=collapsed?'Show payment':'Collapse';
+}
+
 function armpResolveAmbiguous(idx){
   var ex=EXC[idx];
   if(!ex){toast('Exception not found','warn');return;}
@@ -12973,26 +13005,19 @@ function armpResolveAmbiguous(idx){
     }
   }
   if(payIdx<0){toast('Could not locate the payment for this item','warn');return;}
-  // Navigate to Cash Application → To Be Matched tab (where the allocation workspace lives)
+  // Mark the payment so approval clears the ambiguous exception, then open the
+  // Customer Line Items tab in apply mode (full-page FBL5N grid with checkboxes).
+  PAY[payIdx]._fromAmbigExc = idx;
+  if(typeof acctStartApply==='function'){ acctStartApply(payIdx); return; }
+  // Fallback to the old workspace if the new tab isn't available
   try{ if(typeof sp==='function') sp('cash-app'); }catch(e){}
   try{ setCaTab('match',document.getElementById('ca-tab-match')); }catch(e){}
   setTimeout(function(){
     try{
-      // Sync the payment-select dropdown too, so the workspace header matches
       var _sel=document.getElementById('eng-pay-sel');
       if(_sel){ _sel.value=payIdx; }
       engLoadPayment(payIdx);
-      // Mark that this came from an ambiguous exception so approval clears the EXC
       ENG_PAY && (ENG_PAY._fromAmbigExc=idx);
-      // Highlight candidate invoices from the detected combinations
-      var combos=ex.ambigCombos||(ex.detail||'').split('specialist must choose:')[1]||'';
-      if(combos){
-        var invNums=(combos.match(/\d{6,}/g)||[]);
-        ENG_ROWS.forEach(function(r){
-          if(invNums.indexOf(String(r.inv.i))>=0){ r._candidate=true; }
-        });
-        try{engRenderRows();}catch(e){}
-      }
       toast('Choose the correct invoice combination — balance updates as you select','');
     }catch(e){console.warn('armpResolveAmbiguous:',e);}
   }, 200);
@@ -14120,6 +14145,94 @@ function renderWsExc(){
 // ACCOUNT TRANSACTION TAB
 // ═══════════════════════════════════════
 let ACCT_SELECTED_CUSTOMER = null;
+// ── Customer Line Items: apply-mode state ──
+let ACCT_APPLY_MODE = false;        // true when allocating a payment via this tab
+let ACCT_APPLY_PAYMENT = null;      // the payment being applied
+let ACCT_APPLY_SELECTED = {};       // { invoiceNo: amount } currently ticked
+
+// Enter apply mode for a payment, navigate to the Customer Line Items tab,
+// auto-select the payment's customer, and show checkboxes + applied/remaining.
+function acctStartApply(payIdx){
+  var p = PAY[payIdx];
+  if(!p){ toast('Payment not found','warn'); return; }
+  ACCT_APPLY_MODE = true;
+  ACCT_APPLY_PAYMENT = {...p, _idx:payIdx};
+  ACCT_APPLY_SELECTED = {};
+  try{ setCaTab('acct',document.getElementById('ca-tab-acct')); }catch(e){}
+  setTimeout(function(){
+    try{ selectAcctCustomer(p.c||'', p.a||''); }catch(e){}
+    acctApplyRefresh();
+  }, 150);
+}
+function acctApplyToggle(invNo, amt, checked){
+  if(checked){ ACCT_APPLY_SELECTED[invNo] = amt; }
+  else { delete ACCT_APPLY_SELECTED[invNo]; }
+  acctApplyRefresh();
+  // Re-render rows to update row highlight without losing scroll
+  try{
+    var cb=document.querySelector('.acct-apply-cb[onclick*="'+invNo+'"]');
+    if(cb){ var tr=cb.closest('tr'); if(tr) tr.style.background = checked?'rgba(16,185,129,.06)':''; }
+  }catch(e){}
+}
+function acctApplyRefresh(){
+  var bar=document.getElementById('acct-apply-bar');
+  var cbCol=document.getElementById('acct-inv-cb-col');
+  if(bar) bar.style.display = ACCT_APPLY_MODE ? 'block' : 'none';
+  if(cbCol) cbCol.style.display = ACCT_APPLY_MODE ? '' : 'none';
+  if(!ACCT_APPLY_MODE) return;
+  var payAmt = ACCT_APPLY_PAYMENT ? (ACCT_APPLY_PAYMENT.amt||0) : 0;
+  var applied = 0;
+  Object.keys(ACCT_APPLY_SELECTED).forEach(function(k){ applied += (ACCT_APPLY_SELECTED[k]||0); });
+  var rem = payAmt - applied;
+  var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  set('acct-apply-pay','$'+$f(payAmt));
+  set('acct-apply-applied','$'+$f(applied));
+  set('acct-apply-rem','$'+$f(rem));
+  var remEl=document.getElementById('acct-apply-rem');
+  if(remEl) remEl.style.color = Math.abs(rem)<0.01 ? 'var(--g-t)' : rem<0 ? 'var(--r-t)' : 'var(--pd)';
+}
+function acctApplyCancel(){
+  ACCT_APPLY_MODE=false; ACCT_APPLY_PAYMENT=null; ACCT_APPLY_SELECTED={};
+  acctApplyRefresh();
+  if(ACCT_SELECTED_CUSTOMER) selectAcctCustomer(ACCT_SELECTED_CUSTOMER, '');
+  toast('Apply cancelled','');
+}
+function acctApplyApprove(){
+  if(!ACCT_APPLY_PAYMENT){ toast('No payment loaded','warn'); return; }
+  var sel = Object.keys(ACCT_APPLY_SELECTED);
+  if(!sel.length){ toast('Select at least one invoice to apply','warn'); return; }
+  var p = ACCT_APPLY_PAYMENT;
+  var applied = 0;
+  sel.forEach(function(invNo){
+    var inv = INV.find(function(v){ return String(v.i)===String(invNo); });
+    if(!inv) return;
+    var applyAmt = ACCT_APPLY_SELECTED[invNo];
+    applied += applyAmt;
+    var vr = applyAmt - inv.amt;
+    // Mark invoice and push a result
+    inv.s = Math.abs(vr)<0.01 ? 'Applied' : 'Partial';
+    RES.push({a:inv.a||p.a||'',c:inv.c||p.c||'',i:inv.i,po:inv.po,so:inv.so,d:p.txId||p.i||'',id:p.txId||p.i||'',oa:inv.amt,pd:applyAmt,vr:vr,st:Math.abs(vr)<0.01?'Exact':'Partial',m:'Cash Application (Line Items)',n:'',fromAlloc:true,approved:true});
+  });
+  // If this came from an ambiguous exception, resolve it
+  try{
+    if(p._fromAmbigExc!=null && EXC[p._fromAmbigExc] && EXC[p._fromAmbigExc].type==='Ambiguous'){
+      EXC[p._fromAmbigExc].s='Resolved'; EXC[p._fromAmbigExc].dec='Applied to invoices';
+    }
+  }catch(e){}
+  addAudit('Line-item allocation approved','$'+$f(applied)+' · '+sel.length+' invoices · '+(p.c||''));
+  saveToStorage();
+  try{updDash();updTop();}catch(e){}
+  try{if(typeof rPost==='function')rPost();}catch(e){}
+  try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+  try{if(typeof rExc==='function')rExc();}catch(e){}
+  var _wasAmbig = (p._fromAmbigExc!=null);
+  ACCT_APPLY_MODE=false; ACCT_APPLY_PAYMENT=null; ACCT_APPLY_SELECTED={};
+  acctApplyRefresh();
+  if(ACCT_SELECTED_CUSTOMER) selectAcctCustomer(ACCT_SELECTED_CUSTOMER, '');
+  toast('✓ Applied '+sel.length+' invoice(s) · $'+$f(applied),'');
+  // Return to Needs Attention if this came from there
+  if(_wasAmbig){ try{ setCaTab('exc',document.getElementById('ca-tab-exc')); }catch(e){} }
+}
 
 function renderAcctCustomers(){
   const list=document.getElementById('acct-customer-list');if(!list)return;
@@ -14198,7 +14311,12 @@ function selectAcctCustomer(custName,acctId){
     const daysPast=due?Math.floor((now2-due)/(1000*60*60*24)):0;
     const aging=!due?'—':daysPast<=0?'<span class="badge badge-g">Current</span>':daysPast<=30?`<span class="badge badge-am">${daysPast}d</span>`:daysPast<=60?`<span class="badge badge-r">${daysPast}d</span>`:`<span class="badge badge-r" style="font-weight:900">${daysPast}d+</span>`;
     const bal=v.s==='Exact'||v.s==='Applied'?0:v.amt;
-    return`<tr onclick="openCustomerDrawerForCustomer('${(custName||'').replace(/'/g,"\'")}','${acctId||''}')">
+    var _isOpen=(!v.s||v.s==='Open'||v.s==='');
+    var _cbCell=ACCT_APPLY_MODE
+      ? '<td style="text-align:center">'+(_isOpen?'<input type="checkbox" class="acct-apply-cb" '+(ACCT_APPLY_SELECTED[v.i]?'checked':'')+' onclick="event.stopPropagation();acctApplyToggle(\''+(v.i||'').replace(/'/g,"\\'")+'\','+v.amt+',this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--p)">':'<span style="color:var(--t4)">—</span>')+'</td>'
+      : '';
+    return`<tr onclick="openCustomerDrawerForCustomer('${(custName||'').replace(/'/g,"\'")}','${acctId||''}')" style="${ACCT_APPLY_SELECTED[v.i]?'background:rgba(16,185,129,.06)':''}">
+      ${_cbCell}
       <td class="td-key">${v.i||'—'}</td>
       <td class="td-mono">${fmtDate(v.dt2)}</td>
       <td class="td-mono">${fmtDate(v.due)}</td>
@@ -14225,6 +14343,8 @@ function selectAcctCustomer(custName,acctId){
       <td>${sb}</td>
     </tr>`;
   }).join(''):'<tr><td colspan="7"><div class="empty" style="padding:16px"><div class="empty-t">No payments</div></div></td></tr>';
+  // Refresh apply-mode UI (checkboxes + totals) if a payment is being allocated
+  try{ if(typeof acctApplyRefresh==='function') acctApplyRefresh(); }catch(e){}
 }
 
 function engLoadPaymentForInv(invRef){
