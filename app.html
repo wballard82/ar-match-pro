@@ -12973,17 +12973,19 @@ function armpResolveAmbiguous(idx){
     }
   }
   if(payIdx<0){toast('Could not locate the payment for this item','warn');return;}
-  // Navigate to Cash Application and load the payment into the allocation workspace
+  // Navigate to Cash Application → To Be Matched tab (where the allocation workspace lives)
   try{ if(typeof sp==='function') sp('cash-app'); }catch(e){}
+  try{ setCaTab('match',document.getElementById('ca-tab-match')); }catch(e){}
   setTimeout(function(){
     try{
+      // Sync the payment-select dropdown too, so the workspace header matches
+      var _sel=document.getElementById('eng-pay-sel');
+      if(_sel){ _sel.value=payIdx; }
       engLoadPayment(payIdx);
       // Mark that this came from an ambiguous exception so approval clears the EXC
       ENG_PAY && (ENG_PAY._fromAmbigExc=idx);
-      // Show a guidance banner with the candidate combinations
+      // Highlight candidate invoices from the detected combinations
       var combos=ex.ambigCombos||(ex.detail||'').split('specialist must choose:')[1]||'';
-      toast('Choose the correct invoice combination — balance updates as you select','');
-      // Briefly highlight candidate invoices if we can parse them
       if(combos){
         var invNums=(combos.match(/\d{6,}/g)||[]);
         ENG_ROWS.forEach(function(r){
@@ -12991,8 +12993,9 @@ function armpResolveAmbiguous(idx){
         });
         try{engRenderRows();}catch(e){}
       }
+      toast('Choose the correct invoice combination — balance updates as you select','');
     }catch(e){console.warn('armpResolveAmbiguous:',e);}
-  }, 250);
+  }, 200);
 }
 
 function resolveException(idx,dec){
@@ -13468,8 +13471,10 @@ function engApprove(){
   engAudit('Approved: '+sel.length+' invoice(s) · $'+$f(totalApplied));
   addAudit('Allocation approved','$'+$f(totalApplied)+' · '+sel.length+' invoices');
   // If this allocation resolved an Ambiguous exception, mark that exception resolved
+  var _wasFromAmbig=false;
   try{
     if(ENG_PAY && ENG_PAY._fromAmbigExc!=null){
+      _wasFromAmbig=true;
       var _ax=EXC[ENG_PAY._fromAmbigExc];
       if(_ax && _ax.type==='Ambiguous'){ _ax.s='Resolved'; _ax.dec='Applied to invoices'; }
       if(typeof rExc==='function')try{rExc();}catch(e){}
@@ -13480,8 +13485,16 @@ function engApprove(){
   try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){console.warn('renderWsReview err',e);}
   try{if(typeof rAll==='function')rAll();}catch(e){}
   try{renderPayQueue();}catch(e){}
-  setCaTab('review',document.getElementById('ca-tab-review'));
-  toast('✓ Approved — '+sel.length+' invoice(s) moved to Review');
+  if(_wasFromAmbig){
+    // Came from Needs Attention — return the specialist there, where they left off
+    try{ setCaTab('exc',document.getElementById('ca-tab-exc')); }catch(e){}
+    try{ engResetUI(); }catch(e){}
+    try{ if(typeof renderWsExcPremium==='function') setTimeout(renderWsExcPremium,50); }catch(e){}
+    toast('✓ Allocation approved — exception resolved','');
+  } else {
+    setCaTab('review',document.getElementById('ca-tab-review'));
+    toast('✓ Approved — '+sel.length+' invoice(s) moved to Review');
+  }
 }
 
 function engExport(){
