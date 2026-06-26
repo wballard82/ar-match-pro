@@ -5794,7 +5794,7 @@ function renderWsReview(){
         (function(){
           var _cbg = confNum >= 90 ? 'rgba(18,184,134,.10)' : confNum >= 70 ? 'rgba(245,158,11,.10)' : 'rgba(239,68,68,.10)';
           var _cbd = confNum >= 90 ? 'rgba(18,184,134,.30)' : confNum >= 70 ? 'rgba(245,158,11,.30)' : 'rgba(239,68,68,.30)';
-          return '<span class="armp-match-conf" title="'+armpConfidenceMeaning(confNum).replace(/"/g,'')+'" style="color:'+confColor+';background:'+_cbg+';border-color:'+_cbd+'">'+conf+' match</span>';
+          return '<span class="armp-match-conf" onclick="event.stopPropagation();armpShowConfidenceInfo('+confNum+',\''+encodeURIComponent(JSON.stringify(_leadItem.matchReasons||[]))+'\')" title="Click for confidence breakdown" style="cursor:pointer;color:'+confColor+';background:'+_cbg+';border-color:'+_cbd+'">'+conf+' match ⓘ</span>';
         })()+
       '</div>'+
       // Item 5: Approve + Revert buttons
@@ -8559,6 +8559,50 @@ function armpConfidenceMeaning(conf){
   return 'Low confidence ('+conf+'%) — weak or amount-only match. Manual review required before posting.';
 }
 
+// Clickable confidence explainer — opens a modal breaking down HOW the score was
+// computed (which signals matched and their weights) and what the band means.
+function armpShowConfidenceInfo(conf, reasonsJson){
+  conf = Number(conf)||0;
+  var reasons=[];
+  try{ reasons = reasonsJson ? JSON.parse(decodeURIComponent(reasonsJson)) : []; }catch(e){}
+  var band = conf>=90?{label:'High',color:'var(--g-t)',bg:'rgba(16,185,129,.1)'}:
+             conf>=70?{label:'Good',color:'var(--am-t)',bg:'rgba(245,158,11,.1)'}:
+             conf>=50?{label:'Moderate',color:'var(--am-t)',bg:'rgba(245,158,11,.1)'}:
+                      {label:'Low',color:'var(--r-t)',bg:'rgba(239,68,68,.1)'};
+  var reasonRows = reasons.length ? reasons.map(function(r){
+    var sign = (r.w||0)>=0?'+':'';
+    var c = (r.w||0)>=0?'var(--g-t)':'var(--r-t)';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bdr)">'+
+      '<span style="font-size:13px;color:var(--t1)">'+(r.label||r.type||'Signal')+(r.value?' <span style="color:var(--t3);font-family:var(--mono);font-size:11px">'+r.value+'</span>':'')+'</span>'+
+      '<span style="font-size:13px;font-weight:800;font-family:var(--mono);color:'+c+'">'+sign+(r.w||0)+'</span>'+
+    '</div>';
+  }).join('') : '<div style="font-size:12px;color:var(--t3);padding:8px 0">No detailed signal breakdown available for this match.</div>';
+
+  var html =
+    '<div class="mo-overlay open" id="conf-info-modal" onclick="if(event.target===this)armpCloseConfidenceInfo()" style="z-index:9999">'+
+      '<div class="mo" style="max-width:440px" onclick="event.stopPropagation()">'+
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">'+
+          '<div style="font-size:26px;font-weight:900;font-family:var(--mono);color:'+band.color+'">'+conf+'%</div>'+
+          '<div><div style="font-size:15px;font-weight:800;color:var(--t1)">'+band.label+' Confidence</div>'+
+          '<div style="font-size:11px;color:var(--t3)">Match confidence score</div></div>'+
+          '<button onclick="armpCloseConfidenceInfo()" style="margin-left:auto;background:none;border:none;font-size:20px;color:var(--t3);cursor:pointer">×</button>'+
+        '</div>'+
+        '<div style="font-size:13px;color:var(--t2);line-height:1.5;padding:10px 12px;background:'+band.bg+';border-radius:9px;margin:10px 0">'+
+          armpConfidenceMeaning(conf)+
+        '</div>'+
+        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 4px">How this score was built</div>'+
+        reasonRows+
+        '<div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:14px;padding-top:12px;border-top:1px solid var(--bdr)">'+
+          '<b>How to read it:</b> 90%+ is safe to auto-apply · 70–89% warrants a quick review · 50–69% verify before approving · below 50% needs manual review. '+
+          'Confidence is built from objective matching signals (invoice #, PO/SO, exact amount, customer account, delivery/tracking) — not a black-box guess.'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  var existing=document.getElementById('conf-info-modal'); if(existing)existing.remove();
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+function armpCloseConfidenceInfo(){var m=document.getElementById('conf-info-modal');if(m)m.remove();}
+
 function armpAnnotateMatch(r, payment){
   if(!r || typeof r !== 'object') return;
   // Re-annotate if the scoring logic version changed (invalidates cached confidence)
@@ -8676,7 +8720,7 @@ function armpRenderMatchPills(r, opts){
 
   var html = '<div class="armp-match-explain" title="' + _escapeAttr(tooltip) + '">' +
     // Confidence badge
-    '<span class="armp-match-conf" style="color:' + confColor + ';background:' + confBg + ';border-color:' + confBdr + '">' + conf + '%</span>' +
+    '<span class="armp-match-conf" onclick="event.stopPropagation();armpShowConfidenceInfo(' + conf + ',\'' + encodeURIComponent(JSON.stringify(r.matchReasons||[])) + '\')" title="Click for confidence breakdown" style="cursor:pointer;color:' + confColor + ';background:' + confBg + ';border-color:' + confBdr + '">' + conf + '% ⓘ</span>' +
     // "Matched by:" label (subtle)
     '<span style="font-size:10px;color:var(--t3);font-weight:600;letter-spacing:.03em;margin-right:1px">by</span>';
 
@@ -10279,24 +10323,43 @@ function armpSkipCurrentStep(){
 }
 function armpSetupClickStep(n){
   try{
-    if(n===1){
-      openImport('inv');
-    } else if(n===2){
-      openImportBank();
-    } else if(n===3){
-      openImportRemDetail();
-    } else if(n===4){
-      openImportDelivery();
-    }
-    // Auto-open the OS file picker so the user doesn't need a second click.
-    // Only for the standard file-import modal (not AI-parse / image flows).
+    // Open the correct import modal (sets the right IMP_TYPE/labels), but hide
+    // the select-file area and trigger the OS picker directly. Track focus to
+    // detect cancel — if the user cancels without choosing a file, close the
+    // modal so they don't land on the bare "Select file to import" screen.
+    if(n===1) openImport('inv');
+    else if(n===2) openImportBank();
+    else if(n===3) openImportRemDetail();
+    else if(n===4) openImportDelivery();
+
     setTimeout(function(){
       var modal=document.getElementById('imp-modal');
+      var fileArea=document.getElementById('imp-file-area');
       var fi=document.getElementById('fi');
-      if(modal && modal.classList.contains('open') && fi){
-        try{ fi.click(); }catch(e){}
-      }
-    }, 200);
+      if(!modal || !fi) return;
+      // Hide the select-file prompt while the native picker is open
+      if(fileArea) fileArea.style.visibility='hidden';
+      var _picked=false;
+      fi.onchange=function(ev){
+        _picked = !!(fi.files && fi.files.length);
+        if(fileArea) fileArea.style.visibility='';
+        if(_picked) handleFiles(fi);
+        // restore the default inline handler for subsequent normal opens
+        fi.onchange=function(){ handleFiles(fi); };
+      };
+      // Detect cancel: window regains focus but no file was picked
+      var _onFocus=function(){
+        window.removeEventListener('focus',_onFocus);
+        setTimeout(function(){
+          if(!_picked){
+            if(modal) modal.classList.remove('open');   // close — no bare select screen
+            if(fileArea) fileArea.style.visibility='';   // restore for future opens
+          }
+        }, 150);
+      };
+      window.addEventListener('focus',_onFocus);
+      fi.click();
+    }, 50);
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
 }
 function armpMaybeShowSetupOnCashApp(){
