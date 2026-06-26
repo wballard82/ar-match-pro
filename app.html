@@ -2046,9 +2046,7 @@ input:focus, select:focus, textarea:focus { outline: none; }
 .ca-top-half { flex:0 0 auto; min-height:120px; max-height:42vh; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden; position:relative; transition:max-height .25s ease, min-height .25s ease; }
 .ca-top-half.collapsed { max-height:54px; min-height:54px; }
 .ca-top-half.collapsed .ca-workspace { opacity:0; pointer-events:none; }
-.ca-drag-handle { height:8px; background:var(--surface3); border-top:1px solid var(--bdr2); border-bottom:1px solid var(--bdr2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; user-select:none; }
-.ca-drag-handle::after { content:""; display:block; width:32px; height:3px; border-radius:2px; background:var(--bdr3); }
-.ca-drag-handle:hover { background:var(--bdr2); }
+.ca-drag-handle { display:none !important; }
 .ca-bottom-half { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:280px; }
 .ca-bottom-header { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:var(--surface2); border-bottom:1px solid var(--bdr); flex-shrink:0; }
 .ca-bottom-title { font-size:10px; font-weight:800; color:var(--t3); text-transform:uppercase; letter-spacing:.1em; display:flex; align-items:center; gap:8px; }
@@ -3788,7 +3786,7 @@ body.app-active #app {
                 </div>
               </div>
             </div><!-- end ca-top-half -->
-            <div class="ca-drag-handle" id="ca-drag-handle"></div>
+            <!-- drag handle removed: split is fixed, no manual resize -->
             <!-- BOTTOM HALF: SAP FBL5N-style customer open items -->
             <div class="ca-bottom-half">
               <div class="ca-bottom-header">
@@ -9805,7 +9803,16 @@ function armpSessionContinue(){
   if(typeof toast==='function') toast('Welcome back — your session is restored','');
 }
 function armpSessionStartFresh(){
-  if(!confirm('Clear all imported invoices, payments, and matches from your last session? This cannot be undone.')) return;
+  armpStyledConfirm({
+    title:'Start fresh?',
+    message:'This will clear all imported invoices, payments, and matches from your last session.',
+    footnote:'This cannot be undone.',
+    confirmLabel:'Start fresh',
+    danger:true,
+    onConfirm:_armpDoSessionStartFresh
+  });
+}
+function _armpDoSessionStartFresh(){
   var o=document.getElementById('armp-session-overlay');if(o)o.remove();
   // Wipe memory + storage
   INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];REM_ADVICE=[];autoMatchHasRun=false;
@@ -22154,22 +22161,10 @@ function helpShowSection(id){
 // Legacy stub — keep downloadHelp for the PDF link
 function downloadHelp(e){}
 
-// ── Drag handle ──
+// ── Drag handle (removed — split is fixed, no manual resize) ──
 (function(){
-  function init(){
-    var handle=document.getElementById('ca-drag-handle');if(!handle)return;
-    var topHalf=handle.previousElementSibling;
-    var prev=handle.previousSibling;
-    while(prev&&prev.nodeType!==1)prev=prev.previousSibling;
-    if(prev)topHalf=prev;
-    var container=handle.parentElement;
-    var dragging=false,startY=0,startH=0;
-    handle.addEventListener('mousedown',function(e){dragging=true;startY=e.clientY;startH=topHalf.getBoundingClientRect().height;document.body.style.cursor='ns-resize';document.body.style.userSelect='none';e.preventDefault();});
-    document.addEventListener('mousemove',function(e){if(!dragging)return;var newH=Math.max(180,Math.min(startH+(e.clientY-startY),container.getBoundingClientRect().height-280));topHalf.style.height=newH+'px';topHalf.style.flex='0 0 auto';});
-    document.addEventListener('mouseup',function(){if(dragging){dragging=false;document.body.style.cursor='';document.body.style.userSelect='';}});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
-  else setTimeout(init,600);
+  // Intentionally a no-op: the Customer Open Items split is fixed.
+  return;
 })();
 
 // ── AI Contact Modal ──
