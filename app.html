@@ -5487,11 +5487,37 @@ function caExitAllocFocus(){
   var q=document.querySelector('.ca-queue'); if(q) q.style.display='';
 }
 // Expand: bring the full payment-detail block back (exit focus mode but keep grid dense)
+// Repopulate the full payment-detail header block from the current ENG_PAY.
+// Used when expanding from the thin strip so details show immediately.
+function engRefreshHeader(){
+  if(typeof ENG_PAY==='undefined'||!ENG_PAY) return;
+  var p=ENG_PAY;
+  var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  set('eng-h-cust', (typeof getDisplayCustomerName==='function'?getDisplayCustomerName(p):p.c)||'—');
+  set('eng-h-acct', p.a||'—');
+  set('eng-h-amt', '$'+$f(p.amt));
+  set('eng-h-method', p.m||'—');
+  set('eng-h-ccy', p.ccy||'USD');
+  set('eng-h-inv', p.i||'—');
+  set('eng-h-po', p.po||'—');
+  set('eng-h-date', p.dt||p.date||'—');
+  set('eng-h-ref', p.txId||p.i||p.po||'—');
+  if(typeof engUpdateTotals==='function') engUpdateTotals();
+}
+
 function caExpandPayment(){
   var hsplit=document.getElementById('ca-hsplit');
   var strip=document.getElementById('ca-alloc-strip');
   if(hsplit) hsplit.classList.remove('allocating');
   if(strip) strip.style.display='none';
+  // Re-populate the full payment-detail block so it shows current values
+  // immediately (no manual refresh needed).
+  try{
+    if(typeof ENG_PAY!=='undefined' && ENG_PAY){
+      if(typeof engRefreshHeader==='function') engRefreshHeader();
+      else if(typeof engUpdateTotals==='function') engUpdateTotals();
+    }
+  }catch(e){}
   // Restore the top-half collapse toggle, and a button to re-enter focus mode
   var ct=document.getElementById('ca-collapse-toggle');
   if(ct){ ct.style.display='flex'; ct.setAttribute('onclick','caEnterAllocFocus()'); ct.title='Collapse to focus on invoices'; var ic=document.getElementById('ca-collapse-icon'); var lb=document.getElementById('ca-collapse-label'); if(ic)ic.textContent='▲'; if(lb)lb.textContent='Minimize'; }
@@ -8580,20 +8606,20 @@ function armpShowConfidenceInfo(conf, reasonsJson){
 
   var html =
     '<div class="mo-overlay open" id="conf-info-modal" onclick="if(event.target===this)armpCloseConfidenceInfo()" style="z-index:9999">'+
-      '<div class="mo" style="max-width:440px" onclick="event.stopPropagation()">'+
-        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">'+
-          '<div style="font-size:26px;font-weight:900;font-family:var(--mono);color:'+band.color+'">'+conf+'%</div>'+
-          '<div><div style="font-size:15px;font-weight:800;color:var(--t1)">'+band.label+' Confidence</div>'+
+      '<div class="mo-box" style="width:460px;padding:24px">'+
+        '<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:4px">'+
+          '<div style="font-size:30px;font-weight:900;font-family:var(--mono);color:'+band.color+';line-height:1">'+conf+'%</div>'+
+          '<div style="flex:1"><div style="font-size:16px;font-weight:800;color:var(--t1)">'+band.label+' Confidence</div>'+
           '<div style="font-size:11px;color:var(--t3)">Match confidence score</div></div>'+
-          '<button onclick="armpCloseConfidenceInfo()" style="margin-left:auto;background:none;border:none;font-size:20px;color:var(--t3);cursor:pointer">×</button>'+
+          '<button onclick="armpCloseConfidenceInfo()" style="background:none;border:none;font-size:22px;line-height:1;color:var(--t3);cursor:pointer;padding:0;margin:-4px -4px 0 0">×</button>'+
         '</div>'+
-        '<div style="font-size:13px;color:var(--t2);line-height:1.5;padding:10px 12px;background:'+band.bg+';border-radius:9px;margin:10px 0">'+
+        '<div style="font-size:13px;color:var(--t2);line-height:1.5;padding:12px 14px;background:'+band.bg+';border-radius:10px;margin:14px 0">'+
           armpConfidenceMeaning(conf)+
         '</div>'+
-        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 4px">How this score was built</div>'+
+        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 2px">How this score was built</div>'+
         reasonRows+
-        '<div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:14px;padding-top:12px;border-top:1px solid var(--bdr)">'+
-          '<b>How to read it:</b> 90%+ is safe to auto-apply · 70–89% warrants a quick review · 50–69% verify before approving · below 50% needs manual review. '+
+        '<div style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-top:16px;padding-top:14px;border-top:1px solid var(--bdr)">'+
+          '<b style="color:var(--t2)">How to read it:</b> 90%+ is safe to auto-apply · 70–89% warrants a quick review · 50–69% verify before approving · below 50% needs manual review. '+
           'Confidence is built from objective matching signals (invoice #, PO/SO, exact amount, customer account, delivery/tracking) — not a black-box guess.'+
         '</div>'+
       '</div>'+
@@ -8606,7 +8632,7 @@ function armpCloseConfidenceInfo(){var m=document.getElementById('conf-info-moda
 function armpAnnotateMatch(r, payment){
   if(!r || typeof r !== 'object') return;
   // Re-annotate if the scoring logic version changed (invalidates cached confidence)
-  var SCORE_VERSION = 2;
+  var SCORE_VERSION = 3;
   if(r.matchReasons && r.confidence !== undefined && r._scoreV === SCORE_VERSION) return;
   var w = armpCfgGet('matching.confidenceWeights', {});
   var reasons = [];
@@ -8678,7 +8704,12 @@ function armpAnnotateMatch(r, payment){
   }
   // ── Amount-only (cap at 60%) ─────────────────────────────────────────────
   if(st === 'Amount match'){
-    reasons.push({type:'amount', label:'Amount-only', value:'$'+(r.pd||0).toFixed(2), w:w.amountExact||20});
+    // Don't double-count: if an 'Exact amount' reason is already present, keep
+    // it; otherwise add an amount reason. Only one amount signal should show.
+    var _hasAmt = reasons.some(function(rs){return rs.type==='amount';});
+    if(!_hasAmt){
+      reasons.push({type:'amount', label:'Amount match', value:'$'+(r.pd||0).toFixed(2), w:w.amountExact||20});
+    }
     confidence = Math.min(confidence, 60);
   }
   // ── Strong exact match boost ─────────────────────────────────────────────
@@ -10323,43 +10354,33 @@ function armpSkipCurrentStep(){
 }
 function armpSetupClickStep(n){
   try{
-    // Open the correct import modal (sets the right IMP_TYPE/labels), but hide
-    // the select-file area and trigger the OS picker directly. Track focus to
-    // detect cancel — if the user cancels without choosing a file, close the
-    // modal so they don't land on the bare "Select file to import" screen.
-    if(n===1) openImport('inv');
-    else if(n===2) openImportBank();
-    else if(n===3) openImportRemDetail();
-    else if(n===4) openImportDelivery();
-
-    setTimeout(function(){
-      var modal=document.getElementById('imp-modal');
-      var fileArea=document.getElementById('imp-file-area');
-      var fi=document.getElementById('fi');
-      if(!modal || !fi) return;
-      // Hide the select-file prompt while the native picker is open
-      if(fileArea) fileArea.style.visibility='hidden';
-      var _picked=false;
-      fi.onchange=function(ev){
-        _picked = !!(fi.files && fi.files.length);
+    // Set import type directly (mirrors what each opener sets) and trigger the
+    // OS file picker WITHOUT opening the modal first — so there's no flash of a
+    // select-file screen. The modal opens only once a file is actually chosen.
+    var cfg = {
+      1:{type:'inv',     bank:false, open:function(){openImport('inv');}},
+      2:{type:'rem',     bank:true,  open:function(){openImportBank();}},
+      3:{type:'remdetail',bank:false,open:function(){openImportRemDetail();}},
+      4:{type:'del',     bank:false, open:function(){openImportDelivery();}}
+    }[n];
+    if(!cfg) return;
+    IMP_TYPE = cfg.type;
+    IMP_BANK_MODE = cfg.bank;
+    var fi=document.getElementById('fi');
+    if(!fi) return;
+    fi.value='';
+    fi.onchange=function(){
+      if(fi.files && fi.files.length){
+        // Now (and only now) show the modal with correct labels, then process
+        cfg.open();
+        var fileArea=document.getElementById('imp-file-area');
         if(fileArea) fileArea.style.visibility='';
-        if(_picked) handleFiles(fi);
-        // restore the default inline handler for subsequent normal opens
-        fi.onchange=function(){ handleFiles(fi); };
-      };
-      // Detect cancel: window regains focus but no file was picked
-      var _onFocus=function(){
-        window.removeEventListener('focus',_onFocus);
-        setTimeout(function(){
-          if(!_picked){
-            if(modal) modal.classList.remove('open');   // close — no bare select screen
-            if(fileArea) fileArea.style.visibility='';   // restore for future opens
-          }
-        }, 150);
-      };
-      window.addEventListener('focus',_onFocus);
-      fi.click();
-    }, 50);
+        handleFiles(fi);
+      }
+      // restore default inline behavior for any later normal opens
+      fi.onchange=function(){ handleFiles(fi); };
+    };
+    fi.click();
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
 }
 function armpMaybeShowSetupOnCashApp(){
