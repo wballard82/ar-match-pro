@@ -2070,10 +2070,10 @@ input:focus, select:focus, textarea:focus { outline: none; }
 .fbl5n-tbl tbody tr.selected-inv { background:rgba(16,185,129,.07) !important; }
 .fbl5n-tbl tbody tr.suggested-inv td:first-child { position:relative; }
 .fbl5n-tbl tbody tr.kb-focus { outline:2px solid var(--p); outline-offset:-2px; background:rgba(20,168,216,.05); }
-/* Dense allocation mode — compact rows so 20+ invoices fit before scrolling */
-.ca-bottom-half.alloc-dense .fbl5n-tbl tbody td { padding:3px 10px !important; font-size:11.5px; }
-.ca-bottom-half.alloc-dense .fbl5n-tbl thead th { padding:5px 10px; }
-.ca-bottom-half.alloc-dense .fbl5n-tbl tbody tr { line-height:1.25; }
+/* Dense allocation mode — readable font, tight vertical rhythm so 18+ invoices fit */
+.ca-bottom-half.alloc-dense .fbl5n-tbl tbody td { padding:5px 10px !important; font-size:12.5px; }
+.ca-bottom-half.alloc-dense .fbl5n-tbl thead th { padding:6px 10px; font-size:10px; }
+.ca-bottom-half.alloc-dense .fbl5n-tbl tbody tr { line-height:1.3; }
 /* When allocating, the top half is replaced by the thin strip — hide it fully so the grid gets the whole screen */
 .ca-hsplit.allocating .ca-top-half { display:none !important; }
 .ca-hsplit.allocating .ca-bottom-half { min-height:0; }
@@ -13624,7 +13624,7 @@ function engUpdateTotals(){
   if(spWarn)spWarn.style.display='none'; // legacy hidden
   const rSpWarn=document.getElementById('ca-sp-warn-right');
   if(rSpWarn)rSpWarn.style.display=hasShortPay?'block':'none';
-  const totalsBar=document.getElementById('alloc-totals');if(totalsBar)totalsBar.style.display=ENG_ROWS.length?'flex':'none';
+  const totalsBar=document.getElementById('alloc-totals');if(totalsBar)totalsBar.style.display='none';
   // Pinned grid action bar (hero-grid layout)
   var gab=document.getElementById('ca-grid-actionbar');
   if(gab){
