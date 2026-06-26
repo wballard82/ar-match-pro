@@ -5508,7 +5508,12 @@ function engRefreshHeader(){
 function caExpandPayment(){
   var hsplit=document.getElementById('ca-hsplit');
   var strip=document.getElementById('ca-alloc-strip');
+  var top=document.getElementById('ca-top-half');
+  var queueBtn=document.getElementById('ca-show-queue-btn');
+  // Clear BOTH collapse states so the full payment block always returns,
+  // no matter how the user got here (focus mode, manual collapse, resize).
   if(hsplit) hsplit.classList.remove('allocating');
+  if(top){ top.classList.remove('collapsed'); top.style.display=''; }
   if(strip) strip.style.display='none';
   // Re-populate the full payment-detail block so it shows current values
   // immediately (no manual refresh needed).
@@ -5518,9 +5523,17 @@ function caExpandPayment(){
       else if(typeof engUpdateTotals==='function') engUpdateTotals();
     }
   }catch(e){}
-  // Restore the top-half collapse toggle, and a button to re-enter focus mode
+  // Restore the collapse toggle as a "Minimize" control to re-enter focus mode
   var ct=document.getElementById('ca-collapse-toggle');
-  if(ct){ ct.style.display='flex'; ct.setAttribute('onclick','caEnterAllocFocus()'); ct.title='Collapse to focus on invoices'; var ic=document.getElementById('ca-collapse-icon'); var lb=document.getElementById('ca-collapse-label'); if(ic)ic.textContent='▲'; if(lb)lb.textContent='Minimize'; }
+  if(ct){
+    ct.style.display='flex';
+    ct.setAttribute('onclick','caEnterAllocFocus()');
+    ct.title='Collapse to focus on invoices';
+    var ic=document.getElementById('ca-collapse-icon'); var lb=document.getElementById('ca-collapse-label');
+    if(ic)ic.textContent='▲'; if(lb)lb.textContent='Minimize';
+  }
+  // Keep the "show queue" affordance available
+  if(queueBtn) queueBtn.style.display='inline-flex';
 }
 // Restore the payment queue (after it was hidden for max grid width)
 function caShowQueue(){
@@ -11837,6 +11850,56 @@ function closeModal(){
     setTimeout(function(){if(o)o.style.display='';},50);
   }
 }
+// Styled confirm dialog — matches the confidence modal's look (mo-box card,
+// app color scheme) instead of the native browser confirm(). Used for
+// destructive actions like Reset All Data / Clear All.
+function armpStyledConfirm(opts){
+  opts = opts || {};
+  var title = opts.title || 'Are you sure?';
+  var message = opts.message || '';
+  var bullets = opts.bullets || [];
+  var confirmLabel = opts.confirmLabel || 'Confirm';
+  var onConfirm = opts.onConfirm || function(){};
+  var danger = opts.danger !== false; // default to danger styling
+  var icon = opts.icon || (danger ? '⚠️' : 'ℹ️');
+  var accent = danger ? 'var(--r-t)' : 'var(--p)';
+  var accentBg = danger ? 'rgba(239,68,68,.08)' : 'rgba(20,168,216,.08)';
+
+  window.__armpStyledConfirmCb = onConfirm;
+
+  var bulletHtml = bullets.length
+    ? '<div style="margin:14px 0;padding:12px 14px;background:'+accentBg+';border-radius:10px">'+
+        bullets.map(function(b){
+          return '<div style="display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--t2);padding:3px 0">'+
+            '<span style="color:'+accent+';flex-shrink:0;font-weight:700">•</span><span>'+b+'</span></div>';
+        }).join('')+
+      '</div>'
+    : '';
+
+  var html =
+    '<div class="mo-overlay open" id="armp-styled-confirm" onclick="if(event.target===this)armpCloseStyledConfirm()" style="z-index:10000">'+
+      '<div class="mo-box" style="max-width:420px">'+
+        '<div style="padding:24px">'+
+          '<div style="display:flex;align-items:flex-start;gap:13px;margin-bottom:4px">'+
+            '<div style="font-size:26px;line-height:1">'+icon+'</div>'+
+            '<div style="flex:1"><div style="font-size:17px;font-weight:800;color:var(--t1)">'+title+'</div></div>'+
+            '<button onclick="armpCloseStyledConfirm()" style="background:none;border:none;font-size:22px;line-height:1;color:var(--t3);cursor:pointer;padding:0;margin:-4px -4px 0 0">×</button>'+
+          '</div>'+
+          (message?'<div style="font-size:13.5px;color:var(--t2);line-height:1.6;margin-top:8px">'+message+'</div>':'')+
+          bulletHtml+
+          (opts.footnote?'<div style="font-size:12px;color:var(--t3);margin-top:10px">'+opts.footnote+'</div>':'')+
+          '<div style="display:flex;gap:9px;justify-content:flex-end;margin-top:22px">'+
+            '<button class="btn btn-outline btn-sm" onclick="armpCloseStyledConfirm()">Cancel</button>'+
+            '<button class="btn btn-sm '+(danger?'btn-r':'btn-p')+'" onclick="var fn=window.__armpStyledConfirmCb;armpCloseStyledConfirm();window.__armpStyledConfirmCb=null;if(fn){try{fn();}catch(e){console.error(e);}}">'+confirmLabel+'</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  var existing=document.getElementById('armp-styled-confirm'); if(existing)existing.remove();
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+function armpCloseStyledConfirm(){var m=document.getElementById('armp-styled-confirm');if(m)m.remove();}
+
 function showConfirm(msg,onYes,yesLabel,yesClass){
   
   closeModal();
@@ -11960,7 +12023,13 @@ function clearMatchData(){
 }
 function clearAllData(){
   clearTimeout(_fbl5nTimer);clearTimeout(_invSearchTimer);_fbl5nFiltered=[];
-  showConfirm('Clear ALL data?\n\nInvoices, payments, matches, and exceptions will be permanently removed.\nThis cannot be undone.',function(){
+  armpStyledConfirm({
+    title:'Clear all data?',
+    message:'Invoices, payments, matches, and exceptions will be permanently removed.',
+    footnote:'This cannot be undone.',
+    confirmLabel:'Clear all data',
+    danger:true,
+    onConfirm:function(){
     INV=[];PAY=[];RES=[];EXC=[];
     try{ DELIV=[]; REM_DETAIL=[]; ERS_LINES=[]; VMI_LINES=[]; }catch(e){}
     autoMatchHasRun=false;
@@ -11988,11 +12057,19 @@ function clearAllData(){
         if(typeof armpOpenSetupModal==='function') armpOpenSetupModal();
       }, 250);
     }catch(e){}
-  },'Clear all data','btn-r');
+    }
+  });
 }
 function resetAllData(){
-  if(!window.confirm('Reset ALL data?\n\nThis will clear:\n• All invoices\n• All remittance / payments\n• All match results\n• All exceptions\n\nThis cannot be undone.'))return;
-  _doResetAll();
+  armpStyledConfirm({
+    title:'Reset all data?',
+    message:'This will permanently clear all imported and matched data from this session:',
+    bullets:['All invoices','All remittance / payments','All match results','All exceptions'],
+    footnote:'This cannot be undone.',
+    confirmLabel:'Reset all data',
+    danger:true,
+    onConfirm:_doResetAll
+  });
 }
 function _doResetAll(){
   INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];autoMatchHasRun=false;
