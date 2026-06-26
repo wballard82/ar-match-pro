@@ -8625,6 +8625,15 @@ function armpAnnotateMatch(r, payment){
     reasons.push({type:'amount', label:'Amount-only', value:'$'+(r.pd||0).toFixed(2), w:w.amountExact||20});
     confidence = Math.min(confidence, 60);
   }
+  // ── Strong exact match boost ─────────────────────────────────────────────
+  // An exact-amount match on the correct customer account is a definitive
+  // single-invoice match even when the remittance reference doesn't carry the
+  // invoice number. Reflect that as high confidence.
+  var _exactAmt = Math.abs(r.vr||0) <= tol;
+  var _exactInv = r.i && (st==='Exact'||st==='Subset exact') && /Direct invoice|Multi-invoice/i.test(m);
+  if(_exactAmt && r.a && (st==='Exact'||st==='Amount match'||st==='Subset exact')){
+    confidence = Math.max(confidence, _exactInv ? 97 : 90);
+  }
   // Clamp
   confidence = Math.max(0, Math.min(100, Math.round(confidence)));
   r.matchReasons = reasons;
