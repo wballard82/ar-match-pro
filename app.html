@@ -2746,27 +2746,27 @@ body.app-active #app {
       <div class="armp-setup-step" id="armp-setup-step-2" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">2</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
-          <div class="armp-setup-step-label">Upload Delivery Report</div>
-          <div class="armp-setup-step-sub">Delivery, tracking, bill of lading, logistics memo, PO, and sales order bridge — XLSX, CSV</div>
-          <div id="armp-deliv-status" style="font-size:11px;color:var(--g-t);margin-top:4px"></div>
+          <div class="armp-setup-step-label">Upload Bank File</div>
+          <div class="armp-setup-step-sub">BAI2, CSV, Excel, PDF, or bank summary</div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload Delivery Report</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-2" onclick="armpSetupClickStep(2)">Upload Bank File</button>
       </div>
       <div class="armp-setup-step" id="armp-setup-step-3" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
-          <div class="armp-setup-step-label">Upload Bank File</div>
-          <div class="armp-setup-step-sub">BAI2, CSV, Excel, PDF, or bank summary</div>
+          <div class="armp-setup-step-label">Upload Remittance Details</div>
+          <div class="armp-setup-step-sub">Customer remittance advice — contains Invoice #, PO #, Sales Order #, Tracking #, amounts, and remarks</div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Upload Bank File</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Upload Remittance Details</button>
       </div>
       <div class="armp-setup-step" id="armp-setup-step-4" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">4</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
-          <div class="armp-setup-step-label">Upload Remittance Details</div>
-          <div class="armp-setup-step-sub">Customer remittance advice — contains Invoice #, PO #, Sales Order #, Tracking #, amounts, and remarks</div>
+          <div class="armp-setup-step-label">Upload Delivery Report</div>
+          <div class="armp-setup-step-sub">Delivery, tracking, bill of lading, logistics memo, PO, and sales order bridge — XLSX, CSV</div>
+          <div id="armp-deliv-status" style="font-size:11px;color:var(--g-t);margin-top:4px"></div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Remittance Details</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Delivery Report</button>
       </div>
       <!-- Dynamic recommendation area -->
       <div id="armp-setup-recommendation" style="display:none;padding:0 4px"></div>
@@ -5794,7 +5794,7 @@ function renderWsReview(){
         (function(){
           var _cbg = confNum >= 90 ? 'rgba(18,184,134,.10)' : confNum >= 70 ? 'rgba(245,158,11,.10)' : 'rgba(239,68,68,.10)';
           var _cbd = confNum >= 90 ? 'rgba(18,184,134,.30)' : confNum >= 70 ? 'rgba(245,158,11,.30)' : 'rgba(239,68,68,.30)';
-          return '<span class="armp-match-conf" title="Match confidence: '+conf+'" style="color:'+confColor+';background:'+_cbg+';border-color:'+_cbd+'">'+conf+' match</span>';
+          return '<span class="armp-match-conf" title="'+armpConfidenceMeaning(confNum).replace(/"/g,'')+'" style="color:'+confColor+';background:'+_cbg+';border-color:'+_cbd+'">'+conf+' match</span>';
         })()+
       '</div>'+
       // Item 5: Approve + Revert buttons
@@ -8549,9 +8549,21 @@ try{ armpCfgLoad(); }catch(e){}
 // ═══════════════════════════════════════════════════════════════════════════
 // MATCHING EXPLAINABILITY (v18) — Compute confidence + reasons per RES entry
 // ═══════════════════════════════════════════════════════════════════════════
+// Human-readable explanation of what a confidence score means, for the tooltip.
+// Helps CFOs/Controllers/AR Managers trust and interpret the number.
+function armpConfidenceMeaning(conf){
+  conf = Number(conf)||0;
+  if(conf>=90) return 'High confidence ('+conf+'%) — strong, definitive match (e.g. exact invoice # and/or exact amount on the correct account). Safe to auto-apply.';
+  if(conf>=70) return 'Good confidence ('+conf+'%) — solid match on key signals (amount, PO/SO, or account), minor gaps. Quick review recommended.';
+  if(conf>=50) return 'Moderate confidence ('+conf+'%) — partial signals matched. Verify before approving.';
+  return 'Low confidence ('+conf+'%) — weak or amount-only match. Manual review required before posting.';
+}
+
 function armpAnnotateMatch(r, payment){
   if(!r || typeof r !== 'object') return;
-  if(r.matchReasons && r.confidence !== undefined) return;
+  // Re-annotate if the scoring logic version changed (invalidates cached confidence)
+  var SCORE_VERSION = 2;
+  if(r.matchReasons && r.confidence !== undefined && r._scoreV === SCORE_VERSION) return;
   var w = armpCfgGet('matching.confidenceWeights', {});
   var reasons = [];
   var confidence = 0;
@@ -8638,6 +8650,7 @@ function armpAnnotateMatch(r, payment){
   confidence = Math.max(0, Math.min(100, Math.round(confidence)));
   r.matchReasons = reasons;
   r.confidence = confidence;
+  r._scoreV = SCORE_VERSION;
 }
 // Render compact match explanation HTML for a RES entry.
 // Shows: confidence % badge + "Matched by:" reason pills.
@@ -10160,9 +10173,9 @@ function armpUpdateSetupState(){
     // Steps 1-4: file uploads — each independently done/active, NEVER locked
     var steps = [
       {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:ws._invoiceSkipped?'Skipped — upload anytime':INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
-      {id:'armp-setup-step-2', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped — upload anytime':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'},
-      {id:'armp-setup-step-3', done:ws.bankFileLoaded,          sub_done:(PAY.length>0?PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded':(ws._bankImagePending?'Image uploaded — extraction pending':(ws._bankSkipped?'Skipped — upload anytime':'Pending'))), sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
-      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(ws._remittanceImagePending?'Screenshot uploaded — extraction pending':((typeof ERS_LINES!=='undefined'&&ERS_LINES.length>0?ERS_LINES.length+' ERS':'')+(typeof VMI_LINES!=='undefined'&&VMI_LINES.length>0?(ERS_LINES.length>0?' + ':'')+VMI_LINES.length+' VMI':'')+(REM_DETAIL&&REM_DETAIL.length?((ERS_LINES.length||VMI_LINES.length)?' + ':'')+REM_DETAIL.length+' remittance':''))+' lines loaded'), sub_pending:'Optional — remittance with invoice, tracking, PO refs'}
+      {id:'armp-setup-step-2', done:ws.bankFileLoaded,          sub_done:(PAY.length>0?PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded':(ws._bankImagePending?'Image uploaded — extraction pending':(ws._bankSkipped?'Skipped — upload anytime':'Pending'))), sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
+      {id:'armp-setup-step-3', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(ws._remittanceImagePending?'Screenshot uploaded — extraction pending':((typeof ERS_LINES!=='undefined'&&ERS_LINES.length>0?ERS_LINES.length+' ERS':'')+(typeof VMI_LINES!=='undefined'&&VMI_LINES.length>0?(ERS_LINES.length>0?' + ':'')+VMI_LINES.length+' VMI':'')+(REM_DETAIL&&REM_DETAIL.length?((ERS_LINES.length||VMI_LINES.length)?' + ':'')+REM_DETAIL.length+' remittance':''))+' lines loaded'), sub_pending:'Optional — remittance with invoice, tracking, PO refs'},
+      {id:'armp-setup-step-4', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped — upload anytime':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'}
     ];
     for(var si=0;si<steps.length;si++){
       var el=document.getElementById(steps[si].id);
@@ -10267,18 +10280,23 @@ function armpSkipCurrentStep(){
 function armpSetupClickStep(n){
   try{
     if(n===1){
-      // Step 1: Upload Invoice Report — open import modal with correct type
       openImport('inv');
     } else if(n===2){
-      // Step 2: Upload Delivery Report
-      openImportDelivery();
-    } else if(n===3){
-      // Step 3: Upload Bank File / Bank Summary
       openImportBank();
-    } else if(n===4){
-      // Step 4: Upload Remittance Details
+    } else if(n===3){
       openImportRemDetail();
+    } else if(n===4){
+      openImportDelivery();
     }
+    // Auto-open the OS file picker so the user doesn't need a second click.
+    // Only for the standard file-import modal (not AI-parse / image flows).
+    setTimeout(function(){
+      var modal=document.getElementById('imp-modal');
+      var fi=document.getElementById('fi');
+      if(modal && modal.classList.contains('open') && fi){
+        try{ fi.click(); }catch(e){}
+      }
+    }, 200);
   }catch(e){ console.warn('[armpSetupClickStep]', e); }
 }
 function armpMaybeShowSetupOnCashApp(){
