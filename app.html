@@ -6141,6 +6141,7 @@ function _legacyClearAllExceptions(){
 
 // ── Data ──
 let INV=[],PAY=[],RES=[],EXC=[],REM_ADVICE=[],IMP_TYPE='inv',IMP_BANK_MODE=false;
+let ARMP_SILENT_IMPORT=false; // when true, imports run in background without showing the import modal
 // autoMatchHasRun: Review section stays blank until user explicitly clicks Auto Match.
 // Resets to false when new files are uploaded or data is cleared.
 var autoMatchHasRun = false;
@@ -8606,21 +8607,23 @@ function armpShowConfidenceInfo(conf, reasonsJson){
 
   var html =
     '<div class="mo-overlay open" id="conf-info-modal" onclick="if(event.target===this)armpCloseConfidenceInfo()" style="z-index:9999">'+
-      '<div class="mo-box" style="width:460px;padding:24px">'+
-        '<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:4px">'+
-          '<div style="font-size:30px;font-weight:900;font-family:var(--mono);color:'+band.color+';line-height:1">'+conf+'%</div>'+
-          '<div style="flex:1"><div style="font-size:16px;font-weight:800;color:var(--t1)">'+band.label+' Confidence</div>'+
-          '<div style="font-size:11px;color:var(--t3)">Match confidence score</div></div>'+
-          '<button onclick="armpCloseConfidenceInfo()" style="background:none;border:none;font-size:22px;line-height:1;color:var(--t3);cursor:pointer;padding:0;margin:-4px -4px 0 0">×</button>'+
-        '</div>'+
-        '<div style="font-size:13px;color:var(--t2);line-height:1.5;padding:12px 14px;background:'+band.bg+';border-radius:10px;margin:14px 0">'+
-          armpConfidenceMeaning(conf)+
-        '</div>'+
-        '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 2px">How this score was built</div>'+
-        reasonRows+
-        '<div style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-top:16px;padding-top:14px;border-top:1px solid var(--bdr)">'+
-          '<b style="color:var(--t2)">How to read it:</b> 90%+ is safe to auto-apply · 70–89% warrants a quick review · 50–69% verify before approving · below 50% needs manual review. '+
-          'Confidence is built from objective matching signals (invoice #, PO/SO, exact amount, customer account, delivery/tracking) — not a black-box guess.'+
+      '<div class="mo-box" style="max-width:460px">'+
+        '<div style="padding:24px">'+
+          '<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:4px">'+
+            '<div style="font-size:30px;font-weight:900;font-family:var(--mono);color:'+band.color+';line-height:1">'+conf+'%</div>'+
+            '<div style="flex:1"><div style="font-size:16px;font-weight:800;color:var(--t1)">'+band.label+' Confidence</div>'+
+            '<div style="font-size:11px;color:var(--t3)">Match confidence score</div></div>'+
+            '<button onclick="armpCloseConfidenceInfo()" style="background:none;border:none;font-size:22px;line-height:1;color:var(--t3);cursor:pointer;padding:0;margin:-4px -4px 0 0">×</button>'+
+          '</div>'+
+          '<div style="font-size:13px;color:var(--t2);line-height:1.5;padding:12px 14px;background:'+band.bg+';border-radius:10px;margin:14px 0">'+
+            armpConfidenceMeaning(conf)+
+          '</div>'+
+          '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 2px">How this score was built</div>'+
+          reasonRows+
+          '<div style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-top:16px;padding-top:14px;border-top:1px solid var(--bdr)">'+
+            '<b style="color:var(--t2)">How to read it:</b> 90%+ is safe to auto-apply · 70–89% warrants a quick review · 50–69% verify before approving · below 50% needs manual review. '+
+            'Confidence is built from objective matching signals (invoice #, PO/SO, exact amount, customer account, delivery/tracking) — not a black-box guess.'+
+          '</div>'+
         '</div>'+
       '</div>'+
     '</div>';
@@ -10354,34 +10357,38 @@ function armpSkipCurrentStep(){
 }
 function armpSetupClickStep(n){
   try{
-    // Set import type directly (mirrors what each opener sets) and trigger the
-    // OS file picker WITHOUT opening the modal first — so there's no flash of a
-    // select-file screen. The modal opens only once a file is actually chosen.
+    // Trigger the OS file picker directly and import in the background — no
+    // import modal is shown at all (no "Import Invoice Data" flash, no
+    // select-file screen). Progress shows via toast; results update the steps.
     var cfg = {
-      1:{type:'inv',     bank:false, open:function(){openImport('inv');}},
-      2:{type:'rem',     bank:true,  open:function(){openImportBank();}},
-      3:{type:'remdetail',bank:false,open:function(){openImportRemDetail();}},
-      4:{type:'del',     bank:false, open:function(){openImportDelivery();}}
+      1:{type:'inv',      bank:false},
+      2:{type:'rem',      bank:true },
+      3:{type:'remdetail',bank:false},
+      4:{type:'del',      bank:false}
     }[n];
     if(!cfg) return;
     IMP_TYPE = cfg.type;
     IMP_BANK_MODE = cfg.bank;
+    ARMP_SILENT_IMPORT = true; // suppress modal opening during this import
     var fi=document.getElementById('fi');
     if(!fi) return;
     fi.value='';
     fi.onchange=function(){
       if(fi.files && fi.files.length){
-        // Now (and only now) show the modal with correct labels, then process
-        cfg.open();
-        var fileArea=document.getElementById('imp-file-area');
-        if(fileArea) fileArea.style.visibility='';
-        handleFiles(fi);
+        var modal=document.getElementById('imp-modal');
+        if(modal) modal.classList.remove('open');
+        Promise.resolve(handleFiles(fi)).finally(function(){
+          ARMP_SILENT_IMPORT=false;
+          var m=document.getElementById('imp-modal');
+          if(m) m.classList.remove('open'); // ensure it never lingers open
+        });
+      } else {
+        ARMP_SILENT_IMPORT = false;
       }
-      // restore default inline behavior for any later normal opens
       fi.onchange=function(){ handleFiles(fi); };
     };
     fi.click();
-  }catch(e){ console.warn('[armpSetupClickStep]', e); }
+  }catch(e){ console.warn('[armpSetupClickStep]', e); ARMP_SILENT_IMPORT=false; }
 }
 function armpMaybeShowSetupOnCashApp(){
   // Show setup modal if user hasn't explicitly dismissed it.
@@ -11774,6 +11781,7 @@ function openImport(t){
   }
   const ta=document.getElementById('mo-ta');if(ta)ta.value='';
   hideProgress();
+  if(ARMP_SILENT_IMPORT) return; // setup flow imports in background — no modal
   var _impM=document.getElementById('imp-modal');if(_impM)_impM.classList.add('open');
 }
 function closeMo(){var m=document.getElementById('imp-modal');if(m)m.classList.remove('open');}
