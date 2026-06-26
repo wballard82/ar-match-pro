@@ -954,7 +954,7 @@ th.desc .si2::after { content:' ↓'; opacity:1; }
 .pq-item-ref { font-size:11px; color:var(--t3); font-family:var(--mono); }
 
 /* Center */
-.ca-center { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+.ca-center { flex:1; display:flex; flex-direction:column; overflow:visible; min-width:0; }
 .ca-toolbar {
   padding:10px 16px; border-bottom:1px solid var(--bdr);
   background:var(--surface2); display:flex; align-items:center; gap:8px;
@@ -2043,8 +2043,8 @@ input:focus, select:focus, textarea:focus { outline: none; }
 
 /* ── REFACTOR PHASE: horizontal splits, account view, match priority ── */
 .ca-hsplit { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
-.ca-top-half { flex:0 0 auto; min-height:120px; height:210px; display:flex; flex-direction:column; overflow:hidden; position:relative; transition:height .25s ease, min-height .25s ease; }
-.ca-top-half.collapsed { height:54px; min-height:54px; }
+.ca-top-half { flex:0 0 auto; min-height:120px; max-height:42vh; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden; position:relative; transition:max-height .25s ease, min-height .25s ease; }
+.ca-top-half.collapsed { max-height:54px; min-height:54px; }
 .ca-top-half.collapsed .ca-workspace { opacity:0; pointer-events:none; }
 .ca-drag-handle { height:8px; background:var(--surface3); border-top:1px solid var(--bdr2); border-bottom:1px solid var(--bdr2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; user-select:none; }
 .ca-drag-handle::after { content:""; display:block; width:32px; height:3px; border-radius:2px; background:var(--bdr3); }
@@ -11901,35 +11901,34 @@ function armpStyledConfirm(opts){
 function armpCloseStyledConfirm(){var m=document.getElementById('armp-styled-confirm');if(m)m.remove();}
 
 function showConfirm(msg,onYes,yesLabel,yesClass){
-  
-  closeModal();
-  yesLabel=yesLabel||'Confirm';yesClass=yesClass||'btn-r';
-  // Stash the callback in a stable slot — inline onclick will read it
-  window.__lastConfirmCb=onYes;
-  window.__lastConfirmMsg=msg;
-  // Build modal with INLINE onclick that reads the stable slot
-  var ok=showModal('Confirm',
-    '<div style="font-size:13.5px;color:var(--t2);line-height:1.7;margin-bottom:20px;white-space:pre-line">'+msg+'</div>'+
-    '<div style="display:flex;gap:8px;justify-content:flex-end">'+
-    '<button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>'+
-    '<button class="btn btn-sm '+yesClass+'" id="_confirmYesBtn" onclick="var fn=window.__lastConfirmCb;closeModal();window.__lastConfirmCb=null;if(fn){try{fn();}catch(e){console.error(\'[confirm cb]\',e);}}">'+yesLabel+'</button>'+
-    '</div>'
-  );
-  // Verify modal really opens — if not, drop straight to browser confirm
-  if(ok){
-    setTimeout(function(){
-      var ov=document.getElementById('exc-modal-overlay');
-      if(!ov||window.getComputedStyle(ov).display==='none'){
-        console.warn('[showConfirm] modal not visible — using window.confirm');
-        var fn=window.__lastConfirmCb;window.__lastConfirmCb=null;
-        if(window.confirm(msg)&&fn)fn();
-      }
-    },50);
-  } else {
-    
-    var fn=window.__lastConfirmCb;window.__lastConfirmCb=null;
-    if(window.confirm(msg)&&fn)fn();
+  // Route through the styled confirm modal (matches the confidence modal) so
+  // every confirm dialog across the app shares the same look. Falls back to
+  // native confirm only if the styled modal isn't available.
+  if(typeof armpStyledConfirm==='function'){
+    msg = String(msg||'');
+    // Split the message into a title (first line) and body/bullets.
+    var lines = msg.split('\n').filter(function(l){return l.trim().length;});
+    var title = lines.length ? lines[0].replace(/\?$/,'')+ '?' : 'Are you sure?';
+    if(!/\?$/.test(lines[0]||'')) title = lines.length?lines[0]:'Are you sure?';
+    var rest = lines.slice(1);
+    var bullets = rest.filter(function(l){return /^[•\-\*]/.test(l.trim());}).map(function(l){return l.replace(/^[•\-\*]\s*/,'').trim();});
+    var bodyLines = rest.filter(function(l){return !/^[•\-\*]/.test(l.trim());});
+    var footnote = bodyLines.filter(function(l){return /cannot be undone/i.test(l);}).join(' ');
+    var body = bodyLines.filter(function(l){return !/cannot be undone/i.test(l);}).join(' ');
+    armpStyledConfirm({
+      title: title,
+      message: body,
+      bullets: bullets,
+      footnote: footnote,
+      confirmLabel: yesLabel||'Confirm',
+      danger: (yesClass||'btn-r')==='btn-r',
+      onConfirm: onYes||function(){}
+    });
+    return true;
   }
+  // Fallback
+  if(window.confirm(msg)&&onYes)onYes();
+  return true;
 }
 function showProgress(msg,pct){
   // Show new progress area, hide file picker
