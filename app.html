@@ -3258,11 +3258,7 @@ body.app-active #app {
       <div class="kpi-card-val green" id="kpi-ready-export">0</div>
       <div class="kpi-card-sub" id="kpi-ready-export-sub">Approved allocations</div>
     </div>
-    <!-- Expand toggle -->
-    <span style="margin-left:auto"></span>
-  </div>
-  <!-- ── Secondary KPIs (hidden by default) ── -->
-  <div class="kpi-strip" id="kpi-strip-secondary" style="margin-top:8px;border-top:1px dashed var(--bdr);padding-top:12px">
+    <!-- Secondary KPIs merged inline onto the same header line -->
     <div class="kpi-card kpi-blue" onclick="setCaTab('exc',document.getElementById('ca-tab-exc'));sp('cash-app');setTimeout(function(){var f=document.getElementById('ws-exc-type-filter');if(f){f.value='Unapplied payment';renderWsExcPremium();}},80)" style="cursor:pointer;min-width:160px">
       <div class="kpi-card-label">
         <div class="kpi-dot" style="background:#0EA5E9"></div>
@@ -3635,9 +3631,9 @@ body.app-active #app {
               <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Remaining</div><div id="cas-rem" style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--pd)">$0.00</div></div>
               <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Ref</div><div id="cas-ref" style="font-size:11px;font-family:var(--mono);color:var(--t2)">—</div></div>
               <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <button onclick="caExpandPayment()" title="Show full payment details" class="btn btn-outline btn-xs">▾ Expand</button>
                 <button class="btn btn-g btn-xs" onclick="engApprove()">✓ Approve</button>
               </div>
-              <button onclick="caExpandPayment()" title="Show full payment details" style="position:absolute;right:14px;top:8px;z-index:21;font-size:11px;font-weight:700;color:var(--t3);background:var(--surface2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px">▾ Expand</button>
             </div>
             <!-- TOP HALF: three-panel allocation workspace -->
             <div class="ca-top-half" id="ca-top-half">
@@ -5211,7 +5207,9 @@ function _engUpdateRightPanel(){
     } else {
     const cards=[];
     // Duplicate detection
-    const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&((q.i&&q.i===p.i)||(q.txId&&q.txId===p.txId)));
+    const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&(
+      (q.txId&&p.txId&&q.txId===p.txId) || (q.i&&p.i&&q.i===p.i)
+    ));
     if(dups.length)cards.push({priority:'high',icon:'🚨',title:'Potential Duplicate Payment',body:`${dups.length} payment(s) with matching amount and reference detected. Verify before posting to avoid double-credit.`,action:'Review duplicates',conf:92,confColor:'var(--r)'});
     // Parent-child / consolidated
     const sharedPO=rows.filter(r=>r.inv.po&&p.po&&norm(r.inv.po)===norm(p.po));
@@ -5219,8 +5217,11 @@ function _engUpdateRightPanel(){
     // Exact subset match
     const exactSum=rows.reduce((s,r)=>s+r.inv.amt,0);
     if(Math.abs(exactSum-p.amt)<0.01&&rows.length>1)cards.push({priority:'ok',icon:'✓',title:`${rows.length} Invoices Sum to Exact Payment`,body:`${$f(p.amt)} matches total of all open invoices. Auto-apply all recommended.`,action:'Auto-apply all',conf:99,confColor:'var(--g)',actionFn:'engMarkAll()'});
-    // Short pay likelihood
-    const spRows=rows.filter(r=>p.amt<r.inv.amt&&p.amt>r.inv.amt*0.8);
+    // Short pay likelihood — only when there is NO exact single-invoice or
+    // exact-sum match available (an exact match is not a short pay).
+    const _exactInvRP=rows.some(r=>Math.abs(r.inv.amt-p.amt)<0.01);
+    const _exactSumRP=Math.abs(exactSum-p.amt)<0.01&&rows.length>1;
+    const spRows=(_exactInvRP||_exactSumRP)?[]:rows.filter(r=>p.amt<r.inv.amt&&p.amt>r.inv.amt*0.8);
     if(spRows.length)cards.push({priority:'med',icon:'⚠️',title:'Likely Short Pay Detected',body:`Payment is ${((1-p.amt/spRows[0].inv.amt)*100).toFixed(1)}% short of invoice ${spRows[0].inv.i}. Partial allocation or write-off may be needed.`,action:'Apply partial',conf:74,confColor:'var(--am)'});
     // Down payments
     const dpRows=rows.filter(r=>r.excCode==='down_payment');
@@ -5802,8 +5803,10 @@ function renderWsReview(){
     var wsClass = headerStatus==='Exact'||headerStatus==='Resolved'||headerStatus==='Subset exact'?'ws-badge-ready':headerStatus==='Short pay'||headerStatus==='Overpay'?'ws-badge-review':'ws-badge-pending';
     
     // Detect if any PAY record for this customer carries a learned profile
-    var _hasLearnedProfile = false;
+    var _hasLearnedProfile = false; // Profile-loaded badge feature removed
     var _learnedProfileEnc = 0;
+    // (Profile-loaded badge removed by request — detection disabled.)
+    if(false){
     try {
       if(typeof PAY !== 'undefined' && Array.isArray(PAY) && g.c){
         var _pf = PAY.find(function(p){ return p.c === g.c && p._learnedProfile; });
@@ -5813,6 +5816,7 @@ function renderWsReview(){
         }
       }
     } catch(e){}
+    } // end if(false) — profile detection disabled
 
     // Build header row
     var headerHtml = '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border-bottom:'+(isMulti?'1px solid var(--bdr)':'none')+'">'+
@@ -5821,7 +5825,7 @@ function renderWsReview(){
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">'+
           '<div style="font-size:13.5px;font-weight:800;color:var(--t1)">'+(g.c||'—')+'</div>'+
           '<span class="badge '+(stBadge[headerStatus]||'badge-gray')+'">'+headerStatus+'</span>'+
-          '<span class="ws-badge '+wsClass+'" style="font-size:10.5px;padding:2px 8px"><span class="ws-dot"></span>'+ws+'</span>'+
+          '<span class="ws-badge '+wsClass+'" style="font-size:10.5px;padding:2px 8px'+(ws==='Review Recommended'?';cursor:pointer" title="Open this match in To Be Matched" onclick="armpReviewGoToMatch(\''+_escapeAttr((items[0]&&items[0].i)||'')+'\',\''+_escapeAttr(g.a||'')+'\')':'"')+'><span class="ws-dot"></span>'+ws+'</span>'+
           (isMulti?'<span style="font-size:11px;color:var(--pd);font-weight:700;background:rgba(99,102,241,.10);padding:2px 8px;border-radius:10px">'+items.length+' invoices</span>':'')+
           (_hasLearnedProfile?'<span title="ARMP has matched payments for this customer '+_learnedProfileEnc+' time(s) before. It reuses what it learned (naming, references, typical invoices) to match faster and more accurately." style="font-size:10.5px;font-weight:700;background:linear-gradient(135deg, rgba(168,85,247,.12), rgba(99,102,241,.12));color:var(--pu-t);padding:2px 8px;border-radius:10px;border:1px solid rgba(168,85,247,.25);cursor:help">🧠 Seen '+_learnedProfileEnc+'× before</span>':'')+
         '</div>'+
@@ -8654,7 +8658,7 @@ function armpCloseConfidenceInfo(){var m=document.getElementById('conf-info-moda
 function armpAnnotateMatch(r, payment){
   if(!r || typeof r !== 'object') return;
   // Re-annotate if the scoring logic version changed (invalidates cached confidence)
-  var SCORE_VERSION = 3;
+  var SCORE_VERSION = 4;
   if(r.matchReasons && r.confidence !== undefined && r._scoreV === SCORE_VERSION) return;
   var w = armpCfgGet('matching.confidenceWeights', {});
   var reasons = [];
@@ -8734,17 +8738,36 @@ function armpAnnotateMatch(r, payment){
     }
     confidence = Math.min(confidence, 60);
   }
-  // ── Strong exact match boost ─────────────────────────────────────────────
-  // An exact-amount match on the correct customer account is a definitive
-  // single-invoice match even when the remittance reference doesn't carry the
-  // invoice number. Reflect that as high confidence.
+  // ── Strong exact match boost (AUDITABLE) ────────────────────────────────
+  // An exact amount match on the correct customer account is a statistically
+  // definitive single-invoice match even when the remittance reference does not
+  // carry the invoice number. Rather than silently override the score (which
+  // would make the breakdown not add up), we add an EXPLICIT reason for the
+  // combined-signal strength so the weights always sum to the displayed score.
   var _exactAmt = Math.abs(r.vr||0) <= tol;
   var _exactInv = r.i && (st==='Exact'||st==='Subset exact') && /Direct invoice|Multi-invoice/i.test(m);
   if(_exactAmt && r.a && (st==='Exact'||st==='Amount match'||st==='Subset exact')){
-    confidence = Math.max(confidence, _exactInv ? 97 : 90);
+    // remove the amount-only 60% cap effect by recomputing from reasons
+    var sumSoFar = reasons.reduce(function(s,rs){return s+(rs.w||0);},0);
+    var target = _exactInv ? 97 : 90;
+    if(sumSoFar < target){
+      var bonus = target - sumSoFar;
+      reasons.push({
+        type:'combined',
+        label: _exactInv ? 'Exact invoice # + amount on correct account (definitive)' : 'Exact amount uniquely identifies this invoice on the correct account',
+        value:'',
+        w: bonus
+      });
+      confidence = target;
+    }
   }
   // Clamp
   confidence = Math.max(0, Math.min(100, Math.round(confidence)));
+  // Final auditability guarantee: the displayed confidence equals the sum of
+  // the reason weights (clamped to 0–100). This makes every score explainable.
+  var _reasonSum = reasons.reduce(function(s,rs){return s+(rs.w||0);},0);
+  _reasonSum = Math.max(0, Math.min(100, _reasonSum));
+  confidence = _reasonSum;
   r.matchReasons = reasons;
   r.confidence = confidence;
   r._scoreV = SCORE_VERSION;
@@ -13671,8 +13694,8 @@ function engLoadPayment(idx){
   // Surfaces what the matching engine would auto-apply, so the specialist sees
   // the recommendation before acting (confidence + which invoices).
   try{ engMarkSuggested(p); }catch(e){}
-  engCheckDuplicates(p);
-  engBuildAI(p,custInvs);
+  engCheckDuplicates(ENG_PAY);
+  engBuildAI(ENG_PAY,custInvs);
   engRenderRows();
   engUpdateWS('suggested');
   engUpdateTotals();
@@ -14388,6 +14411,40 @@ function setPayFilter(f,btn){
 }
 
 // ── Workspace tabs ──
+// From the Review tab, jump to the matched invoice in To Be Matched: switch
+// tabs, load the corresponding payment, and highlight the invoice row.
+function armpReviewGoToMatch(invNo, acct){
+  try{
+    // Switch to the To Be Matched tab
+    var matchBtn=document.getElementById('ca-tab-match');
+    setCaTab('match', matchBtn);
+    // Find the payment whose match produced this invoice (by account, then by
+    // the matched RES record), and load it into the allocation workspace.
+    var payIdx=-1;
+    if(acct){
+      payIdx=PAY.findIndex(function(p){return String(p.a||'').trim()===String(acct).trim();});
+    }
+    if(payIdx<0 && invNo){
+      var res=RES.find(function(r){return r.i===invNo;});
+      if(res && res.a){ payIdx=PAY.findIndex(function(p){return String(p.a||'').trim()===String(res.a).trim();}); }
+    }
+    if(payIdx>=0 && typeof engLoadPayment==='function'){
+      engLoadPayment(payIdx);
+    }
+    // Pre-filter the open-items grid to this account and highlight the invoice
+    setTimeout(function(){
+      try{ if(typeof renderFbl5n==='function') renderFbl5n('ca-open-items-body', acct||'', ''); }catch(e){}
+      try{
+        var body=document.getElementById('ca-open-items-body');
+        if(body && invNo){
+          var row=body.querySelector('tr[data-inv="'+invNo+'"]');
+          if(row){ row.classList.add('kb-focus'); row.scrollIntoView({block:'center'}); }
+        }
+      }catch(e){}
+    }, 120);
+  }catch(e){ console.warn('[armpReviewGoToMatch]', e); }
+}
+
 function setCaTab(tab,btn){
   document.querySelectorAll('.ca-tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.ws-tab-view').forEach(v=>v.classList.remove('active'));
@@ -22210,24 +22267,68 @@ function downloadHelp(e){}
 function openContactModal(){var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='flex';setTimeout(function(){var i=document.getElementById('contact-chat-inp');if(i)i.focus();},100);}
 function closeContactModal(){var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='none';}
 var _cHist=[{role:'user',content:'You are an AR Match Pro support assistant for enterprise AR cash application software. Help with: matching logic, exceptions, short pays, DSO, reconciliation, CFO reporting, settings. Be concise and professional under 120 words per reply.'}];
-async function sendContactMsg(){
+// ── AR Match Pro local knowledge base ──────────────────────────────────────
+// Answers common "how do I" questions instantly with no API key. Anything it
+// can't confidently match is referred to the ARMP support email.
+var ARMP_KB = [
+  { q:['upload','import','invoice','open items','load invoices','add invoices'],
+    a:"To upload invoices: click <b>+ Invoices</b> (top right of Cash Application) or use the setup checklist's <b>Upload Invoice Report</b> step. Accepts CSV and Excel with columns like Customer, Account, Invoice #, PO, Sales Order, Amount, Doc Type, Date, Due Date." },
+  { q:['upload payment','import payment','bank file','bank statement','load payments','add payments','remittance'],
+    a:"To upload payments: click <b>+ Bank File</b> for your bank statement (BAI2, CSV, Excel, or PDF), and <b>+ Remittance Details</b> for the customer remittance advice. The setup checklist walks you through it: Invoice Report → Bank File → Remittance Details → Delivery Report." },
+  { q:['auto match','run match','match payments','matching','automatch'],
+    a:"After importing invoices and a bank/remittance file, click the <b>⚡ Auto Match</b> button (top right). ARMP matches payments to invoices by invoice #, PO/SO, exact amount, and customer account, then routes clean matches to <b>Review</b> and anything uncertain to <b>Needs Attention</b>." },
+  { q:['confidence','match score','percent','why 90','how is the score','scoring'],
+    a:"Each match shows a confidence score built from objective signals (invoice # +50, exact amount, customer account, PO/SO, delivery/tracking). Click any score badge to see the full breakdown — every point is itemized so it's fully auditable. 90%+ is safe to auto-apply, 70–89% warrants a quick review, below 50% needs manual review." },
+  { q:['exception','needs attention','unmatched','could not match','no match'],
+    a:"Payments that can't be matched automatically appear in the <b>Needs Attention</b> tab. Open one to see the customer's open items and resolve it — apply manually, post as cash on account, mark a short pay, or write it off." },
+  { q:['short pay','short payment','underpayment','partial'],
+    a:"A short pay is when a payment is less than the invoice. ARMP flags likely short pays in Needs Attention. You can apply the partial amount and leave the balance open, or write off the difference. Set your short-pay threshold in Settings." },
+  { q:['cash on account','unapplied','post unapplied','on account'],
+    a:"If a payment has no matching invoice, post it as <b>Cash on Account</b> (button in the allocation workspace). It records the payment against the customer without applying it to a specific invoice, so you can apply it later." },
+  { q:['export','posting','post to erp','sap','netsuite','posting file','download'],
+    a:"Once allocations are approved, go to <b>Posting Export</b> (left sidebar) or click <b>Export</b> in the workflow. Choose your ERP format in Settings → ERP Export Profile (SAP S/4HANA, SAP ECC, NetSuite, Generic CSV, or Excel). Exported items are locked." },
+  { q:['reconcile','reconciliation','tie out','variance'],
+    a:"The <b>Reconcile</b> tab shows approved allocations and whether each ties out (variance minus write-offs and bank fees equals zero). Resolve any unreconciled items before exporting." },
+  { q:['approve','approval','approve all','approve allocation'],
+    a:"In <b>To Be Matched</b>, select the invoices for a payment and click <b>✓ Approve Allocation</b>. In <b>Review</b>, you can approve matches individually or use <b>Approve All</b>. Approved items move toward export." },
+  { q:['short pay threshold','tolerance','settings tolerance','variance threshold'],
+    a:"In <b>Settings</b>, set the short-pay threshold and matching tolerances. Variances below the threshold are flagged as short pays; you control how strict matching is." },
+  { q:['customer name','normalization','alias','bank name','rename customer'],
+    a:"Bank files often truncate customer names. In <b>Settings → Customer Name Normalization</b>, map a bank alias (e.g. FORD MOTOR COMPA) to the canonical name (FORD MOTOR COMPANY) so matching works. Each organization starts with a clean list and adds its own." },
+  { q:['delivery','tracking','bol','bill of lading','logistics'],
+    a:"Upload a <b>Delivery Report</b> in setup to enrich invoices with Delivery #, Tracking #, BOL, and logistics memos. This helps match payments that reference shipments instead of invoice numbers." },
+  { q:['duplicate','double','same payment','duplicate payment'],
+    a:"ARMP flags a possible duplicate only when another payment shares the <b>same reference and amount</b>. If you see this, verify before posting to avoid double-crediting a customer." },
+  { q:['reset','clear','start over','start fresh','delete data','clear all'],
+    a:"Use <b>Clear all</b> on a section, or <b>Reset all data</b> in Settings, to clear imported data. ARMP also starts each new week (Monday) with a fresh workspace automatically." },
+  { q:['keyboard','shortcut','arrow keys','navigate'],
+    a:"In the open-items grid you can use the ↑/↓ arrow keys to navigate invoices. Selection is by checkbox/click." },
+  { q:['profile','export profile','erp format','format'],
+    a:"Set your ERP export format in <b>Settings → ERP Export Profile</b>. Options: SAP S/4HANA 7.50, SAP ECC (legacy), NetSuite, Generic CSV, and Excel." },
+];
+
+function _armpKbAnswer(query){
+  var q=(query||'').toLowerCase();
+  var best=null, bestScore=0;
+  ARMP_KB.forEach(function(entry){
+    var score=0;
+    entry.q.forEach(function(kw){ if(q.indexOf(kw)>=0) score+=kw.split(' ').length; });
+    if(score>bestScore){ bestScore=score; best=entry; }
+  });
+  return bestScore>0 ? best.a : null;
+}
+
+function sendContactMsg(){
   var inp=document.getElementById('contact-chat-inp');if(!inp||!inp.value.trim())return;
   var msg=inp.value.trim();inp.value='';
   var msgs=document.getElementById('contact-chat-msgs');if(!msgs)return;
-  msgs.innerHTML+=`<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px;border-bottom-right-radius:4px;font-size:13px;max-width:85%;line-height:1.5">${msg}</div></div>`;
+  msgs.innerHTML+=`<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px;border-bottom-right-radius:4px;font-size:13px;max-width:85%;line-height:1.5">${_escapeHtml(msg)}</div></div>`;
   msgs.scrollTop=msgs.scrollHeight;
-  var tid='t'+Date.now();
-  msgs.innerHTML+=`<div id="${tid}" style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;font-size:13px;color:var(--t3)">Thinking…</div></div>`;
-  msgs.scrollTop=msgs.scrollHeight;
-  _cHist.push({role:'user',content:msg});
-  try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:250,messages:_cHist.filter(m=>m.role==='user'||m.role==='assistant')})});
-    var data=await res.json();
-    var reply=(data.content&&data.content[0]&&data.content[0].text)||'Sorry, connection error. Email info@armatchpro.com.';
-    _cHist.push({role:'assistant',content:reply});
-    var el=document.getElementById(tid);
-    if(el)el.outerHTML=`<div style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">${reply.replace(/\n/g,'<br>')}</div></div>`;
-  }catch(e){var el2=document.getElementById(tid);if(el2)el2.querySelector('div:last-child').textContent='Connection error. Please email info@armatchpro.com.';}
+  var answer=_armpKbAnswer(msg);
+  var reply = answer
+    ? answer
+    : "I don't have a specific answer for that one. For help beyond the basics, email our team at <b>info@armatchpro.com</b> and a person will get back to you.";
+  msgs.innerHTML+=`<div style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">${reply}</div></div>`;
   msgs.scrollTop=msgs.scrollHeight;
 }
 
