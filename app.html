@@ -2066,6 +2066,8 @@ input:focus, select:focus, textarea:focus { outline: none; }
 .fbl5n-tbl tbody td { padding:7px 10px; border-bottom:1px solid var(--bdr); vertical-align:middle; white-space:nowrap; }
 .fbl5n-tbl tbody tr:hover { background:rgba(59,130,246,.04); }
 .fbl5n-tbl tbody tr.selected-inv { background:rgba(16,185,129,.07) !important; }
+.fbl5n-tbl tbody tr.approved-inv { background:rgba(16,185,129,.16) !important; }
+.fbl5n-tbl tbody tr.approved-inv:hover { background:rgba(16,185,129,.22) !important; }
 .fbl5n-tbl tbody tr.suggested-inv td:first-child { position:relative; }
 .fbl5n-tbl tbody tr.kb-focus { outline:2px solid var(--p); outline-offset:-2px; background:rgba(20,168,216,.05); }
 /* Dense allocation mode — tight rhythm so 22+ invoices fit, still readable */
@@ -3294,12 +3296,12 @@ body.app-active #app {
     <aside class="sidebar">
       <div class="sb-group">
         <div class="sb-group-label">Workspace</div>
-        <div class="sb-item active" id="sbi-worklist" onclick="sp('worklist')">
+        <div class="sb-item" id="sbi-worklist" onclick="sp('worklist')" style="display:none">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h12M2 8h9M2 12h7"/><circle cx="13" cy="12" r="2.5"/><path d="M12 11l1 1 1.5-1.5"/></svg>
           Today's Work
           <span id="sb-wl-ct" style="display:none">0</span>
         </div>
-        <div class="sb-item" id="sbi-cash-app" onclick="sp('cash-app')">
+        <div class="sb-item active" id="sbi-cash-app" onclick="sp('cash-app')">
           <svg class="sb-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 8h14M8 1v14"/><circle cx="8" cy="8" r="7"/></svg>
           Cash Application
         </div>
@@ -3335,12 +3337,6 @@ body.app-active #app {
           Help &amp; Support
         </div>
       </div>
-      <div class="sb-footer">
-        <div class="sb-status">
-          <div class="sb-status-dot" id="sb-status-dot" style="background:var(--t3)"></div>
-          <div class="sb-status-txt" id="sb-status-txt">Waiting for import</div>
-        </div>
-      </div>
     </aside>
 
     <!-- MAIN PANELS -->
@@ -3348,7 +3344,7 @@ body.app-active #app {
 
       <!-- ════════════════ DASHBOARD ════════════════ -->
       <!-- ════════════════ TODAY'S WORK (WORKLIST) ════════════════ -->
-      <div class="panel active" id="p-worklist">
+      <div class="panel" id="p-worklist">
         <div class="wl-header-bar">
           <div>
             <div class="wl-greeting" id="wl-greeting">Good morning</div>
@@ -3549,7 +3545,7 @@ body.app-active #app {
       </div>
 
       <!-- ════════════════ CASH APPLICATION ════════════════ -->
-      <div class="panel" id="p-cash-app">
+      <div class="panel active" id="p-cash-app">
         <div class="wf-strip" id="wf-strip">
           <div class="wf-step" data-stage="import"><span class="wf-dot">1</span><span>Import</span></div>
           <span class="wf-arrow">›</span>
@@ -3617,7 +3613,7 @@ body.app-active #app {
           <!-- Horizontal split workspace -->
           <div class="ca-hsplit" id="ca-hsplit">
             <!-- Thin allocation strip — shown only while allocating (top half collapsed) -->
-            <div id="ca-alloc-strip" style="display:none;align-items:center;gap:18px;padding:10px 16px;background:var(--surface2);border-bottom:2px solid var(--p);flex-shrink:0;flex-wrap:wrap">
+            <div id="ca-alloc-strip" style="display:none;position:relative;align-items:center;gap:18px;padding:10px 16px;background:var(--surface2);border-bottom:2px solid var(--p);flex-shrink:0;flex-wrap:wrap">
               <div style="display:flex;align-items:center;gap:7px">
                 <span style="font-size:16px">🏦</span>
                 <div>
@@ -3630,10 +3626,10 @@ body.app-active #app {
               <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Applied</div><div id="cas-applied" style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--g-t)">$0.00</div></div>
               <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Remaining</div><div id="cas-rem" style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--pd)">$0.00</div></div>
               <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Ref</div><div id="cas-ref" style="font-size:11px;font-family:var(--mono);color:var(--t2)">—</div></div>
-              <div style="margin-left:auto;display:flex;gap:8px">
-                <button onclick="caExpandPayment()" class="btn btn-outline btn-xs" title="Show full payment details">▾ Expand</button>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
                 <button class="btn btn-g btn-xs" onclick="engApprove()">✓ Approve</button>
               </div>
+              <button onclick="caExpandPayment()" title="Show full payment details" style="position:absolute;right:14px;top:8px;z-index:21;font-size:11px;font-weight:700;color:var(--t3);background:var(--surface2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px">▾ Expand</button>
             </div>
             <!-- TOP HALF: three-panel allocation workspace -->
             <div class="ca-top-half" id="ca-top-half">
@@ -3837,7 +3833,7 @@ body.app-active #app {
               <div id="ca-grid-actionbar" style="display:none;align-items:center;gap:14px;padding:9px 16px;border-top:2px solid var(--p);background:var(--surface2);flex-shrink:0">
                 <span style="font-size:12px;color:var(--t2)">Applied <b style="color:var(--g-t);font-family:var(--mono)" id="ca-gab-applied">$0.00</b></span>
                 <span style="font-size:12px;color:var(--t2)">Remaining <b style="font-family:var(--mono)" id="ca-gab-rem">$0.00</b></span>
-                <span style="font-size:10.5px;color:var(--t3);display:flex;align-items:center;gap:4px">⌨ <span style="font-family:var(--mono)">↑↓</span> move · <span style="font-family:var(--mono)">space</span> select · <span style="font-family:var(--mono)">enter</span> approve</span>
+                <span style="font-size:10.5px;color:var(--t3);display:flex;align-items:center;gap:4px">⌨ <span style="font-family:var(--mono)">↑↓</span> navigate invoices</span>
                 <button class="btn btn-g btn-sm" style="margin-left:auto" onclick="engApprove()">✓ Approve Allocation</button>
               </div>
             </div><!-- end ca-bottom-half -->
@@ -5164,7 +5160,7 @@ function updateReadyToExportKpi(){
     el.textContent=ready.length;
     if(sub){
       var totalAmt=ready.reduce(function(s,r){return s+(r.pd||0);},0);
-      sub.textContent = ready.length===0 ? 'Nothing pending' : (typeof $fk==='function'?$fk(totalAmt):'') + ' approved';
+      sub.textContent = ready.length===0 ? 'Nothing pending' : '$'+(typeof $f==='function'?$f(totalAmt):totalAmt.toFixed(2)) + ' approved';
     }
   }catch(e){console.warn('[updateReadyToExportKpi]',e);}
 }
@@ -5441,16 +5437,8 @@ document.addEventListener('keydown',function(e){
   if(!rows.length)return;
   if(e.key==='ArrowDown'){ e.preventDefault(); _fbl5nKbFocus(_fbl5nKbIndex<0?0:_fbl5nKbIndex+1); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); _fbl5nKbFocus(_fbl5nKbIndex<0?0:_fbl5nKbIndex-1); }
-  else if(e.key===' '||e.code==='Space'){
-    if(_fbl5nKbIndex<0)return;
-    e.preventDefault();
-    var row=rows[_fbl5nKbIndex];
-    if(row){ var inv=row.getAttribute('data-inv'); var cb=row.querySelector('input[type=checkbox]'); if(cb){ fbl5nCheckRow(inv,!cb.checked); setTimeout(function(){_fbl5nKbFocus(_fbl5nKbIndex);},10); } }
-  }
-  else if(e.key==='Enter'){
-    e.preventDefault();
-    if(typeof engApprove==='function') engApprove();
-  }
+  // Space-to-select and Enter-to-approve intentionally removed — selection is
+  // click/checkbox only, to avoid accidental selection/approval.
 });
 
 // ── Allocation focus mode ──────────────────────────────────────────────────
@@ -5557,14 +5545,26 @@ function caSyncAllocStrip(){
 function engBuildAI(p,invs){
   const bar=document.getElementById('eng-ai-bar');const list=document.getElementById('eng-ai-list');if(!bar||!list)return;
   const tips=[];
-  const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&((q.i&&q.i===p.i)||(q.txId&&q.txId===p.txId)));
+  // Duplicate: only when another payment shares the SAME reference (txId or
+  // invoice ref) AND the same amount. Shared amount alone is not a duplicate.
+  const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&(
+    (q.txId&&p.txId&&q.txId===p.txId) || (q.i&&p.i&&q.i===p.i)
+  ));
   if(dups.length)tips.push(`🚨 <strong>Possible duplicate</strong> — ${dups.length} matching payment(s) with same reference/amount`);
   const sharedPO=invs.filter(v=>v.po&&p.po&&norm(v.po)===norm(p.po));
   if(sharedPO.length>1)tips.push(`🔗 <strong>${sharedPO.length} invoices share PO ${p.po}</strong> — consolidated remittance likely`);
+  // Is there an exact single-invoice or exact-sum match available?
+  const exactInv=invs.some(v=>Math.abs(v.amt-p.amt)<0.01);
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
-  if(Math.abs(exactSum-p.amt)<0.01&&invs.length>1)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to ${$f(p.amt)} · auto-apply recommended`);
-  const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);
-  if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by ${$f(sp[0].amt-p.amt)}`);
+  const exactSumMatch=Math.abs(exactSum-p.amt)<0.01&&invs.length>1;
+  if(exactSumMatch)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to ${$f(p.amt)} · auto-apply recommended`);
+  // Short pay: ONLY flag when there is no exact match available. If the payment
+  // exactly equals an open invoice (or a subset sums exactly), it is not a short
+  // pay of some other invoice.
+  if(!exactInv && !exactSumMatch){
+    const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);
+    if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by ${$f(sp[0].amt-p.amt)}`);
+  }
   if(!invs.length)tips.push(`🔍 <strong>No open invoices</strong> for ${getDisplayCustomerName(p)||'this customer'} — consider posting as unapplied cash`);
   if(tips.length){bar.style.display='block';list.innerHTML=tips.map(t=>`<div style="padding:5px 0;border-bottom:1px solid rgba(139,92,246,.08);line-height:1.5;font-size:12.5px;color:var(--t2)">${t}</div>`).join('');}
   else bar.style.display='none';
@@ -5815,7 +5815,7 @@ function renderWsReview(){
           '<span class="badge '+(stBadge[headerStatus]||'badge-gray')+'">'+headerStatus+'</span>'+
           '<span class="ws-badge '+wsClass+'" style="font-size:10.5px;padding:2px 8px"><span class="ws-dot"></span>'+ws+'</span>'+
           (isMulti?'<span style="font-size:11px;color:var(--pd);font-weight:700;background:rgba(99,102,241,.10);padding:2px 8px;border-radius:10px">'+items.length+' invoices</span>':'')+
-          (_hasLearnedProfile?'<span title="ARMP recognized this customer from prior sessions ('+_learnedProfileEnc+' previous encounters)" style="font-size:10.5px;font-weight:700;background:linear-gradient(135deg, rgba(168,85,247,.12), rgba(99,102,241,.12));color:var(--pu-t);padding:2px 8px;border-radius:10px;border:1px solid rgba(168,85,247,.25)">🧠 Profile loaded · '+_learnedProfileEnc+'×</span>':'')+
+          (_hasLearnedProfile?'<span title="ARMP has matched payments for this customer '+_learnedProfileEnc+' time(s) before. It reuses what it learned (naming, references, typical invoices) to match faster and more accurately." style="font-size:10.5px;font-weight:700;background:linear-gradient(135deg, rgba(168,85,247,.12), rgba(99,102,241,.12));color:var(--pu-t);padding:2px 8px;border-radius:10px;border:1px solid rgba(168,85,247,.25);cursor:help">🧠 Seen '+_learnedProfileEnc+'× before</span>':'')+
         '</div>'+
         '<div style="display:flex;align-items:center;gap:14px;font-size:12px;color:var(--t2);flex-wrap:wrap">'+
           '<span>Acct: <strong style="color:var(--t1)">'+(g.a||'—')+'</strong></span>'+
@@ -9755,11 +9755,29 @@ function _fmtTimeAgo(ms){
   var days=Math.floor(hrs/24);
   return days+' day'+(days===1?'':'s')+' ago';
 }
+// Returns the timestamp of the most recent Monday at 00:00 local time.
+function _armpMostRecentMonday(){
+  var d=new Date();
+  d.setHours(0,0,0,0);
+  var day=d.getDay(); // 0=Sun,1=Mon,...
+  var diff=(day===0?6:day-1); // days since Monday
+  d.setDate(d.getDate()-diff);
+  return d.getTime();
+}
 function armpShowSessionPrompt(){
   var existing=document.getElementById('armp-session-overlay');
   if(existing)existing.remove();
   var savedAt=0;
   try{ savedAt=parseInt(localStorage.getItem(sk('saved_at'))||'0',10); }catch(e){}
+  // Weekly fresh start: if the saved session predates this week's Monday,
+  // clear it automatically instead of offering to restore stale data.
+  if(savedAt && savedAt < _armpMostRecentMonday()){
+    try{ if(typeof _armpDoSessionStartFresh==='function'){ _armpDoSessionStartFresh(); }
+         else { INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];REM_ADVICE=[];
+                ['inv','pay','res','exc','remadvice','saved_at'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}}); } }catch(e){}
+    try{ if(typeof toast==='function') toast('New week — started with a fresh workspace',''); }catch(e){}
+    return; // no restore prompt
+  }
   var invCount=(typeof INV!=='undefined')?INV.length:0;
   var payCount=(typeof PAY!=='undefined')?PAY.length:0;
   var custCount=0;
@@ -13732,7 +13750,11 @@ function engGetExcCode(inv,pay){
 }
 
 function engCheckDuplicates(p){
-  const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&((q.i&&q.i===p.i)||(q.txId&&q.txId===p.txId)));
+  // A duplicate requires the SAME reference (txId or invoice ref) and amount —
+  // not merely the same amount (many distinct payments share round amounts).
+  const dups=PAY.filter((q,i)=>i!==p._idx&&Math.abs(q.amt-p.amt)<0.01&&(
+    (q.txId&&p.txId&&q.txId===p.txId) || (q.i&&p.i&&q.i===p.i)
+  ));
   // Right panel warning (visible)
   const rWarn=document.getElementById('ca-dup-warn-right');
   const rMsg=document.getElementById('ca-dup-msg-right');
@@ -14370,6 +14392,12 @@ function setCaTab(tab,btn){
   else if(tab==='exc'){if(typeof renderWsExcPremium==='function')renderWsExcPremium();else renderWsExc();}
   else if(tab==='acct'){renderAcctCustomers();} 
   else if(tab==='recon')renderWsRecon();
+  else if(tab==='match'){
+    // Always show the expanded payment view when entering To Be Matched.
+    if(typeof ENG_PAY!=='undefined' && ENG_PAY && typeof caExpandPayment==='function'){
+      setTimeout(function(){ try{ caExpandPayment(); }catch(e){} }, 0);
+    }
+  }
 }
 
 // ═══════════════════════════════════════
@@ -19672,10 +19700,14 @@ function _fbl5nBuildRow(v){
   var matched=RES.find(function(r){return r.i===v.i;});
   var applied=matched?matched.pd:0;
   var balance=v.amt-applied;
+  // Is this invoice approved (in Review) or already allocated? If so, show it
+  // as approved here too, with a deep-green highlight that stands out.
+  var isApproved = !!(matched && (matched.approved===true || matched.fromAlloc===true || matched.exported===true));
   var ENG_ROW=(typeof ENG_ROWS!=='undefined')?ENG_ROWS.find(function(r){return r.inv&&r.inv.i===v.i;}):null;
   var conf=ENG_ROW?ENG_ROW.conf:(ENG_PAY&&typeof engGetConfidence==='function'?engGetConfidence(v,ENG_PAY):0);
   var status=v.s||'Open';
-  var sb=v.s==='Exact'||v.s==='Applied'?'<span class="badge badge-g">'+status+'</span>':
+  var sb=isApproved?'<span class="badge badge-g" style="background:var(--g);color:#fff">✓ Approved</span>':
+          v.s==='Exact'||v.s==='Applied'?'<span class="badge badge-g">'+status+'</span>':
           v.s==='Short pay'?'<span class="badge badge-am">'+status+'</span>':
           v.s==='Overpay'?'<span class="badge badge-r">'+status+'</span>':
           '<span style="color:var(--t3);font-size:12px">Open</span>';
@@ -19687,7 +19719,7 @@ function _fbl5nBuildRow(v){
   var delCell  = v.dl ? '<span class="td-mono" style="font-size:10.5px;color:var(--pu-t)">'+_escapeHtml(v.dl)+'</span>' : '<span style="color:var(--t4);font-size:11px">—</span>';
   var trkCell  = v.t  ? '<span class="td-mono" style="font-size:10.5px;color:var(--cy-t)">'+_escapeHtml(v.t)+'</span>'  : '<span style="color:var(--t4);font-size:11px">—</span>';
   var memoCell = v.logMemo ? '<span style="font-size:10.5px;color:var(--am-t);max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:bottom" title="'+_escapeAttr(v.logMemo)+'">'+_escapeHtml(v.logMemo.slice(0,28))+(v.logMemo.length>28?'…':'')+'</span>' : '<span style="color:var(--t4);font-size:11px">—</span>';
-  return '<tr class="'+(sel?'selected-inv':'')+(isSugg?' suggested-inv':'')+'" data-inv="'+_escapeAttr(vi)+'" onclick="fbl5nRowClick(\''+vi+'\')" style="cursor:pointer'+(isSugg&&!sel?';background:rgba(20,168,216,.06);border-left:3px solid var(--p)':'')+'">'+
+  return '<tr class="'+(sel?'selected-inv':'')+(isSugg?' suggested-inv':'')+(isApproved?' approved-inv':'')+'" data-inv="'+_escapeAttr(vi)+'" onclick="fbl5nRowClick(\''+vi+'\')" style="cursor:pointer'+(isApproved?';background:rgba(16,185,129,.16);border-left:4px solid var(--g)':(isSugg&&!sel?';background:rgba(20,168,216,.06);border-left:3px solid var(--p)':''))+'">'+
     '<td style="width:32px;padding:4px 6px"><input type="checkbox"'+(sel?' checked':'')+' onchange="fbl5nCheckRow(\''+vi+'\',this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--p);width:14px;height:14px"></td>'+
     '<td class="td-mono" style="font-size:11.5px">'+(v.a||'')+'</td>'+
     '<td style="font-weight:600">'+(v.c||'')+'</td>'+
@@ -20320,13 +20352,13 @@ function buildWorklist(){
 // navToWorklist
 // ═══════════════════════════════════════════════════════════
 function navToWorklist(){
+  // Today's Work removed — land on Cash Application instead.
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  var wl=document.getElementById('p-worklist');
-  if(wl) wl.classList.add('active');
+  var ca=document.getElementById('p-cash-app');
+  if(ca) ca.classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active');});
-  var sbiWl=document.getElementById('sbi-worklist');
-  if(sbiWl) sbiWl.classList.add('active');
-  buildWorklist();
+  var sbiCa=document.getElementById('sbi-cash-app');
+  if(sbiCa) sbiCa.classList.add('active');
 }
 
 // ═══════════════════════════════════════════════════════════
