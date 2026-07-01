@@ -3631,8 +3631,9 @@ body.app-active #app {
               <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Remaining</div><div id="cas-rem" style="font-size:14px;font-weight:800;font-family:var(--mono);color:var(--pd)">$0.00</div></div>
               <div><div style="font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Ref</div><div id="cas-ref" style="font-size:11px;font-family:var(--mono);color:var(--t2)">—</div></div>
               <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-                <button onclick="caExpandPayment()" title="Show full payment details" class="btn btn-outline btn-xs">▾ Expand</button>
                 <button class="btn btn-g btn-xs" onclick="engApprove()">✓ Approve</button>
+                <button class="btn btn-outline btn-xs" onclick="engPostUnapplied&&engPostUnapplied()">💰 Cash on Account</button>
+                <button onclick="caExpandPayment()" title="Show full payment details" class="btn btn-outline btn-xs">▾ Expand</button>
               </div>
             </div>
             <!-- TOP HALF: three-panel allocation workspace -->
@@ -5567,11 +5568,12 @@ function engBuildAI(p,invs){
   const exactSum=invs.reduce((s,v)=>s+v.amt,0);
   const exactSumMatch=Math.abs(exactSum-p.amt)<0.01&&invs.length>1;
   if(exactSumMatch)tips.push(`✅ <strong>Exact match</strong> — ${invs.length} invoices sum to ${$f(p.amt)} · auto-apply recommended`);
-  // Short pay: ONLY flag when there is no exact match available. If the payment
-  // exactly equals an open invoice (or a subset sums exactly), it is not a short
-  // pay of some other invoice.
+  // Short pay: ONLY flag when there is NO exact single-invoice match and no
+  // exact-sum match. An exact match to one invoice is never a short pay of
+  // another invoice. Also skip if the short-pay candidate is itself the exact
+  // match (guards floating-point edge cases).
   if(!exactInv && !exactSumMatch){
-    const sp=invs.filter(v=>p.amt<v.amt&&p.amt>v.amt*0.8);
+    const sp=invs.filter(v=>p.amt<v.amt-0.01&&p.amt>v.amt*0.8);
     if(sp.length)tips.push(`⚠️ <strong>Likely short pay</strong> — payment is short of invoice ${sp[0].i} by ${$f(sp[0].amt-p.amt)}`);
   }
   if(!invs.length)tips.push(`🔍 <strong>No open invoices</strong> for ${getDisplayCustomerName(p)||'this customer'} — consider posting as unapplied cash`);
@@ -5790,7 +5792,7 @@ function renderWsReview(){
 
     // Real confidence from armpAnnotateMatch (falls back to status-based estimate)
     var _leadItem = items[0];
-    if(!_leadItem.matchReasons) armpAnnotateMatch(_leadItem);
+    armpAnnotateMatch(_leadItem); // always call — internal version guard decides whether to recompute
     var confNum = _leadItem.confidence != null ? _leadItem.confidence :
       (headerStatus==='Exact' ? 95 : headerStatus==='Subset exact' ? 88 : headerStatus==='Amount match' ? 65 : headerStatus==='Short pay' ? 55 : 0);
     var conf = confNum + '%';
@@ -5825,7 +5827,7 @@ function renderWsReview(){
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">'+
           '<div style="font-size:13.5px;font-weight:800;color:var(--t1)">'+(g.c||'—')+'</div>'+
           '<span class="badge '+(stBadge[headerStatus]||'badge-gray')+'">'+headerStatus+'</span>'+
-          '<span class="ws-badge '+wsClass+'" style="font-size:10.5px;padding:2px 8px'+(ws==='Review Recommended'?';cursor:pointer" title="Open this match in To Be Matched" onclick="armpReviewGoToMatch(\''+_escapeAttr((items[0]&&items[0].i)||'')+'\',\''+_escapeAttr(g.a||'')+'\')':'"')+'><span class="ws-dot"></span>'+ws+'</span>'+
+          '<span class="ws-badge '+wsClass+'" style="font-size:10.5px;padding:2px 8px'+(ws==='Review Recommended'?';cursor:pointer" title="Open this match in To Be Matched" onclick="armpReviewGoToMatch(\''+_escapeAttr((items[0]&&items[0].i)||'')+'\',\''+_escapeAttr(g.a||'')+'\')"':'"')+'><span class="ws-dot"></span>'+ws+'</span>'+
           (isMulti?'<span style="font-size:11px;color:var(--pd);font-weight:700;background:rgba(99,102,241,.10);padding:2px 8px;border-radius:10px">'+items.length+' invoices</span>':'')+
           (_hasLearnedProfile?'<span title="ARMP has matched payments for this customer '+_learnedProfileEnc+' time(s) before. It reuses what it learned (naming, references, typical invoices) to match faster and more accurately." style="font-size:10.5px;font-weight:700;background:linear-gradient(135deg, rgba(168,85,247,.12), rgba(99,102,241,.12));color:var(--pu-t);padding:2px 8px;border-radius:10px;border:1px solid rgba(168,85,247,.25);cursor:help">🧠 Seen '+_learnedProfileEnc+'× before</span>':'')+
         '</div>'+
@@ -9076,7 +9078,7 @@ function armpAnnotateAllResults(){
 function armpBuildMatchPayload(r){
   if(!r || r._aiPayload) return; // already built
   try{
-    if(!r.matchReasons) armpAnnotateMatch(r);
+    armpAnnotateMatch(r); // always call — internal version guard handles caching
     r._aiPayload = {
       // Identity
       invoiceNo:    r.i  || null,
@@ -10793,7 +10795,7 @@ function updWorkflow(){
             }
           }
         }catch(e){console.warn('[wf-cta flash]',e);}
-        cta.style.display='inline-flex';
+        cta.style.display='none'; // "Next:" CTA button removed — only numbered steps flash
         cta.setAttribute('data-action',cfg.action||'');
       } else {
         cta.style.display='none';
