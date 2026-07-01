@@ -3637,7 +3637,7 @@ body.app-active #app {
             </div>
             <!-- TOP HALF: three-panel allocation workspace -->
             <div class="ca-top-half" id="ca-top-half">
-              <button id="ca-collapse-toggle" onclick="toggleCaTopHalf()" title="Collapse payment details to see more invoices" class="btn btn-outline btn-xs" style="position:absolute;right:14px;top:10px;z-index:20"><span id="ca-collapse-icon">▲</span> <span id="ca-collapse-label">Minimize</span></button>
+              <!-- Minimize toggle moved into the action row below (was absolute, overlapped Reopen) -->
               <div class="ca-workspace" style="flex:1;overflow:hidden">
                 <!-- LEFT: Payment Queue -->
                 <div class="ca-queue">
@@ -3691,6 +3691,7 @@ body.app-active #app {
                       <button class="btn btn-outline btn-sm" id="eng-writeoff-btn" onclick="engWriteOff()" style="display:none">Write Off</button>
                       <button class="btn btn-outline btn-sm" id="eng-bankfee-btn" onclick="engBankFee()" style="display:none">Bank Fee</button>
                       <button class="btn btn-outline btn-sm" onclick="engReopen()">↩ Reopen</button>
+                      <button id="ca-collapse-toggle" onclick="toggleCaTopHalf()" title="Collapse payment details to see more invoices" class="btn btn-outline btn-sm"><span id="ca-collapse-icon">▲</span> <span id="ca-collapse-label">Minimize</span></button>
                     </div>
                   </div>
 
