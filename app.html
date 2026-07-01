@@ -3752,6 +3752,16 @@ body.app-active #app {
 
                   <div class="alloc-fully-bar" id="alloc-fully">✅ Payment fully allocated — click Approve</div>
 
+                  <!-- Remittance details for the selected payment (from remittance advice) -->
+                  <div id="eng-rem-detail" style="display:none;margin:8px 12px;border:1px solid var(--bdr);border-radius:10px;overflow:hidden">
+                    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--bdr)">
+                      <span style="font-size:13px">📄</span>
+                      <span style="font-size:11.5px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em">Remittance Details</span>
+                      <span id="eng-rem-detail-ct" style="font-size:11px;color:var(--t3)"></span>
+                    </div>
+                    <div id="eng-rem-detail-body" style="max-height:180px;overflow-y:auto"></div>
+                  </div>
+
                   <div id="eng-audit-wrap" style="display:none;flex-shrink:0;height:0;overflow:hidden">
                     <div style="padding:6px 14px;background:var(--surface2);border-top:1px solid var(--bdr)"><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">Allocation Audit</div></div>
                     <div id="eng-audit-list" style="padding:4px 14px;max-height:70px;overflow-y:auto;background:var(--surface)"></div>
@@ -5551,6 +5561,49 @@ function caSyncAllocStrip(){
   set('cas-ref', ENG_PAY.txId||ENG_PAY.i||ENG_PAY.po||'—');
   var remEl=document.getElementById('cas-rem');
   if(remEl) remEl.style.color = Math.abs(rem)<0.01?'var(--g-t)':rem<0?'var(--r-t)':'var(--pd)';
+}
+
+// Show the remittance-advice lines that belong to the selected payment. Matches
+// REM_DETAIL rows by payment reference first, then by customer/account. Useful
+// at review time to see exactly what the customer said they were paying.
+function engRenderRemDetail(p){
+  var wrap=document.getElementById('eng-rem-detail');
+  var body=document.getElementById('eng-rem-detail-body');
+  var ct=document.getElementById('eng-rem-detail-ct');
+  if(!wrap||!body) return;
+  if(typeof REM_DETAIL==='undefined' || !REM_DETAIL || !REM_DETAIL.length || !p){ wrap.style.display='none'; return; }
+  var pRef=(p.txId||p.i||'').toString().trim().toLowerCase();
+  var pName=(p.c||'').toString().trim().toLowerCase();
+  var lines=REM_DETAIL.filter(function(d){
+    var dRef=(d.paymentRef||'').toString().trim().toLowerCase();
+    var dName=(d.custName||'').toString().trim().toLowerCase();
+    if(pRef && dRef) return dRef===pRef;
+    return dName && pName && dName===pName;
+  });
+  if(!lines.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  if(ct) ct.textContent = lines.length+' line'+(lines.length>1?'s':'')+' from customer advice';
+  var rows = lines.map(function(d){
+    var bits=[];
+    if(d.invNo) bits.push('<span style="color:var(--t3)">Inv</span> <b>'+_escapeHtml(d.invNo)+'</b>');
+    if(d.poNo)  bits.push('<span style="color:var(--t3)">PO</span> '+_escapeHtml(d.poNo));
+    if(d.soNo)  bits.push('<span style="color:var(--t3)">SO</span> '+_escapeHtml(d.soNo));
+    if(d.trkNo) bits.push('<span style="color:var(--t3)">Trk</span> '+_escapeHtml(d.trkNo));
+    var meta = bits.join(' &nbsp;·&nbsp; ') || '<span style="color:var(--t3)">—</span>';
+    var shortPay = (d.shortPay && Math.abs(d.shortPay)>0.001) ? '<span style="color:var(--am-t);font-size:10.5px;margin-left:8px">short $'+$f(Math.abs(d.shortPay))+'</span>' : '';
+    var remarks = d.remarks ? '<div style="font-size:11px;color:var(--t3);margin-top:2px;font-style:italic">"'+_escapeHtml(d.remarks)+'"</div>' : '';
+    return '<div style="padding:8px 12px;border-bottom:1px solid var(--bdr);font-size:12px">'+
+             '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'+
+               '<div style="min-width:0">'+meta+shortPay+'</div>'+
+               '<div style="font-family:var(--mono);font-weight:700;color:var(--t1);white-space:nowrap">$'+$f(d.amt||0)+'</div>'+
+             '</div>'+remarks+
+           '</div>';
+  }).join('');
+  body.innerHTML=rows;
+}
+
+function engRenderRemDetailReset(){
+  var wrap=document.getElementById('eng-rem-detail'); if(wrap) wrap.style.display='none';
 }
 
 function engBuildAI(p,invs){
@@ -13706,6 +13759,7 @@ function engLoadPayment(idx){
   try{ engMarkSuggested(p); }catch(e){}
   engCheckDuplicates(ENG_PAY);
   engBuildAI(ENG_PAY,custInvs);
+  try{ engRenderRemDetail(ENG_PAY); }catch(e){}
   engRenderRows();
   engUpdateWS('suggested');
   engUpdateTotals();
@@ -14307,7 +14361,7 @@ function engAudit(action){
 
 function engResetUI(){
   ENG_PAY=null;ENG_PAY_IDX=-1;ENG_ROWS=[];ENG_LOCKED=false;
-  ['eng-header','eng-grid-wrap','eng-audit-wrap','eng-ai-bar','eng-dup-warn','eng-short-pay-warn','alloc-fully'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  ['eng-header','eng-grid-wrap','eng-audit-wrap','eng-ai-bar','eng-dup-warn','eng-short-pay-warn','alloc-fully','eng-rem-detail'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   const emp=document.getElementById('eng-empty');if(emp)emp.style.display='flex';
   const totalsBar=document.getElementById('alloc-totals');if(totalsBar)totalsBar.style.display='none';
   var gab=document.getElementById('ca-grid-actionbar');if(gab)gab.style.display='none';
@@ -21951,6 +22005,32 @@ var HELP_CONTENT = {
   index: null, // built dynamically
   sections: [
     {
+      id:'confidence', icon:'🎯', title:'Confidence Scoring',
+      sub:'How match scores are calculated · Auditability',
+      nav:"setCaTab('review',document.getElementById('ca-tab-review'));sp('cash-app')",
+      content:`
+        <h3>What the score means</h3>
+        <p>Every match shows a confidence score from 0–100%. It reflects how strong the match is, built entirely from objective signals — never a black-box guess. Click any score badge to see the full breakdown.</p>
+        <table><thead><tr><th>Band</th><th>Meaning</th></tr></thead><tbody>
+        <tr><td><strong>90–100%</strong></td><td>High — strong, definitive match. Safe to auto-apply.</td></tr>
+        <tr><td><strong>70–89%</strong></td><td>Good — solid match, quick review recommended.</td></tr>
+        <tr><td><strong>50–69%</strong></td><td>Moderate — verify before approving.</td></tr>
+        <tr><td><strong>Below 50%</strong></td><td>Low — manual review required before posting.</td></tr>
+        </tbody></table>
+        <h3>How the score is built (auditable)</h3>
+        <p>The score is the sum of the individual matching signals. Every point is itemized so the total is fully explainable to a controller or auditor:</p>
+        <table><thead><tr><th>Signal</th><th>Weight</th></tr></thead><tbody>
+        <tr><td>Invoice # exact match</td><td>+50</td></tr>
+        <tr><td>Exact amount</td><td>+20</td></tr>
+        <tr><td>Customer account</td><td>+15</td></tr>
+        <tr><td>PO # match</td><td>+25</td></tr>
+        <tr><td>Sales Order # match</td><td>+30</td></tr>
+        <tr><td>Tracking / Delivery #</td><td>+35</td></tr>
+        <tr><td>Exact amount uniquely identifies the invoice on the correct account</td><td>brings a definitive match up to 90%+</td></tr>
+        </tbody></table>
+        <div class="hm-tip">💡 A payment that exactly matches an invoice amount on the correct customer account scores 90%+ even when the remittance reference doesn't carry the invoice number — because that combination is statistically definitive. The breakdown always adds up to the displayed score.</div>`
+    },
+    {
       id:'start', icon:'🚀', title:'Getting Started',
       sub:'Login · Sample data · Navigation',
       nav: null,
@@ -21959,19 +22039,17 @@ var HELP_CONTENT = {
         <p>Navigate to your AR Match Pro URL and enter your credentials. New users can register from the login screen. If you have a license key, enter it during registration to activate your plan.</p>
         <h3>Demo Mode</h3>
         <p>Click <strong>Try Demo</strong> on the login screen to explore all features with pre-loaded sample data. In demo mode, data is not saved between sessions and export features require Starter plan or above.</p>
-        <h3>Loading Sample Data</h3>
-        <p>Go to <strong>Invoices</strong> and click <strong>Import</strong> to upload your invoice file. Go to <strong>Remittances</strong> and click <strong>+ Bank File</strong> to import your bank or BAI2 file.</p>
-        <div class="hm-tip">💡 Load both JPM and BOA sample data, then run Auto-Match to see a full matching cycle — exact matches, short pays, and multi-invoice PO group matches.</div>
+        <h3>Loading Data</h3>
+        <p>Use the setup checklist (or the top-right buttons) to load data in order: <strong>1. Upload Invoice Report</strong> → <strong>2. Upload Bank File</strong> → <strong>3. Upload Remittance Details</strong> → <strong>4. Upload Delivery Report</strong>. Invoice and bank files are required; remittance and delivery are optional but improve matching.</p>
+        <div class="hm-tip">💡 After importing, click ⚡ Auto Match to run a full matching cycle — exact matches, multi-invoice PO groups, and short pays are detected automatically.</div>
         <h3>Navigation</h3>
         <table><thead><tr><th>Section</th><th>Purpose</th></tr></thead><tbody>
-        <tr><td>Today's Work</td><td>Dashboard showing urgent exceptions and pending tasks</td></tr>
         <tr><td>Cash Application</td><td>Main workspace: match, review, reconcile, export</td></tr>
-        <tr><td>Invoices</td><td>View, edit, import, and manage all open invoices</td></tr>
-        <tr><td>Remittances</td><td>View, edit, import, and manage all incoming payments</td></tr>
-        <tr><td>CFO Summary</td><td>Executive dashboard: period metrics, DSO, ROI</td></tr>
         <tr><td>Posting Export</td><td>Final review and ERP posting file download</td></tr>
         <tr><td>Reports</td><td>Match rate, DSO, exception breakdown, export</td></tr>
-        <tr><td>Settings</td><td>Account, matching rules, CFO thresholds, plans</td></tr>
+        <tr><td>CFO Summary</td><td>Executive dashboard: period metrics, DSO, ROI</td></tr>
+        <tr><td>Settings</td><td>Account, matching rules, customer name normalization, ERP export profile, plans</td></tr>
+        <tr><td>Help &amp; Support</td><td>User guide and built-in support assistant</td></tr>
         </tbody></table>
         <h3>Key Concepts</h3>
         <table><thead><tr><th>Term</th><th>Definition</th></tr></thead><tbody>
@@ -21993,7 +22071,7 @@ var HELP_CONTENT = {
         <h3>Payment Queue</h3>
         <p>The top panel lists all imported payments. Each card shows customer name, amount, method, bank tag, and status (Pending / Matched / Exception). Use the <strong>bank account filter</strong> to show only JPM or BOA payments. Click any payment to load it for allocation.</p>
         <h3>Customer Open Items</h3>
-        <p>The bottom panel shows open invoices for the selected payment's account. Invoices are automatically sorted by relevance — best matches appear first. All columns support sorting (click header) and per-column filtering (type in the filter row). Drag the divider handle to resize the split.</p>
+        <p>The bottom panel shows open invoices for the selected payment's account. Invoices are automatically sorted by relevance — the engine's suggested match is highlighted and shown in a banner above the grid. All columns support sorting (click header) and search. When you select a payment, the view expands to a full-width dense grid; use <strong>Minimize</strong> to focus on invoices and <strong>Expand</strong> to bring back the full payment details.</p>
         <h3>Auto-Matching Engine</h3>
         <p>Click <strong>⚡ Auto match</strong> to auto match across all payments. The engine tries these methods in order:</p>
         <table><thead><tr><th>Priority</th><th>Method</th><th>Description</th></tr></thead><tbody>
@@ -22111,6 +22189,8 @@ var HELP_CONTENT = {
         <tr><td>Invoice # Matching</td><td>Enable/disable direct invoice number matching pass</td></tr>
         <tr><td>PO Matching</td><td>Enable/disable purchase order matching pass</td></tr>
         <tr><td>SO Matching</td><td>Enable/disable sales order matching pass</td></tr>
+        <tr><td>Customer Name Normalization</td><td>Map bank-truncated names to canonical names (e.g. FORD MOTOR COMPA → FORD MOTOR COMPANY). Each organization starts with a clean list and adds its own aliases.</td></tr>
+        <tr><td>ERP Export Profile</td><td>Choose the posting format: SAP S/4HANA, SAP ECC, NetSuite, Generic CSV, or Excel</td></tr>
         </tbody></table>
         <h3>CFO Settings</h3>
         <table><thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead><tbody>
@@ -22232,7 +22312,7 @@ function helpShowIndex(){
   var hSub=document.getElementById('help-header-sub');
   if(backBtn)backBtn.style.display='none';
   if(hTitle)hTitle.textContent='📖 AR Match Pro — User Guide';
-  if(hSub)hSub.textContent='Complete reference · v1.0 · Click any section to read';
+  if(hSub)hSub.textContent='Complete reference · v2.0 · Click any section to read';
   if(!body)return;
   body.innerHTML='<div class="hm-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
     HELP_CONTENT.sections.map(function(s){
