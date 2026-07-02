@@ -6551,6 +6551,10 @@ function _updateDelivStatusUI(){
       el.innerHTML = '✓ Delivery index: <strong>' + DELIV.length.toLocaleString() + '</strong> records' +
                      (ageStr ? ' · last updated <strong>' + ageStr + '</strong>' : '') +
                      ' · <a href="#" onclick="_clearDeliveryIndex();return false;" style="color:var(--t3);font-size:11px;text-decoration:underline">Clear</a>';
+    }).catch(function(){
+      // IDB unavailable — still show the in-memory count, just without the age
+      el.innerHTML = '✓ Delivery index: <strong>' + DELIV.length.toLocaleString() + '</strong> records' +
+                     ' · <a href="#" onclick="_clearDeliveryIndex();return false;" style="color:var(--t3);font-size:11px;text-decoration:underline">Clear</a>';
     });
   } catch(e){}
 }
@@ -6562,7 +6566,10 @@ function _clearDeliveryIndex(){
 }
 // No-prompt version for callers that have already confirmed (e.g. Clear All)
 function _clearDeliveryIndexNow(){
-  return ArmpDB.clearDeliveryIndex().then(function(){
+  // In-memory reset — must run even if the IndexedDB clear fails (private
+  // browsing / locked-down browsers reject the open). Otherwise "Start fresh"
+  // leaves stale delivery bridges that produce phantom matches next run.
+  function _resetDelivMemory(){
     DELIV = [];
     _buildDelivIndexes();
     window._DELIV_BRIDGE = new Map();
@@ -6570,7 +6577,13 @@ function _clearDeliveryIndexNow(){
     window._SO_BRIDGE = new Map();
     _updateDelivStatusUI();
     if(typeof armpUpdateSetupState === 'function') try{ armpUpdateSetupState(); }catch(e){}
+  }
+  return ArmpDB.clearDeliveryIndex().then(function(){
+    _resetDelivMemory();
     if(typeof toast === 'function') toast('Delivery index cleared');
+  }).catch(function(err){
+    console.warn('[clearDeliveryIndex]', err && err.message ? err.message : err);
+    _resetDelivMemory();
   });
 }
 
@@ -10545,6 +10558,11 @@ function armpUpdateBanner(){
     }
     _updateWorkflowState();
     var ws = workflowState;
+    // Data-state flags (were previously referenced but never defined here,
+    // so the step indicators silently never updated)
+    var hasPay = (typeof PAY!=='undefined') && PAY.length > 0;
+    var hasInv = (typeof INV!=='undefined') && INV.length > 0;
+    var hasMatched = (typeof RES!=='undefined') && RES.length > 0;
     // Banner stays visible unless user explicitly dismissed it
     // Step states
     var s1 = document.getElementById('armp-banner-step-1');
@@ -15815,7 +15833,10 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
         // EXACT match — single invoice equals ERS PO total
         if(total + _onlyInv.amt <= _cap){ matched.push(_onlyInv); total += _onlyInv.amt; }
       }
-      // No partial-pay branch. Non-matching amount → unmatched, routes to COA.
+      // No partial-pay branch. If nothing was applied (amount mismatch OR the
+      // payment cap blocked it), record the group so Priority 5c can post the
+      // per-line "COA for SO/PO" entries instead of a context-free credit.
+      if(matched.length === _matchedCountBefore) _recordUnmatchedGroup(g);
       return;
     }
 
@@ -15824,6 +15845,8 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
     var exact = invList.filter(function(inv){ return Math.abs(inv.amt - g.total) <= 1; }).sort(_olderFirst);
     if(exact.length > 0){
       if(total + exact[0].amt <= _cap){ matched.push(exact[0]); total += exact[0].amt; }
+      // Cap blocked the exact match → group is unmatched; record for COA context
+      if(matched.length === _matchedCountBefore) _recordUnmatchedGroup(g);
       return;
     }
 
@@ -19511,7 +19534,9 @@ var RoleManager = (function(){
     return _currentRole() === 'admin'; // admin ONLY
   }
   function canSeeCFO(){
-    return _currentRole() === 'admin' || _currentRole() === 'cfo' || _currentRole() === 'controller';
+    // Matches the CFO gate copy: "AR Managers, Controllers, CFOs, and Admins"
+    var r = _currentRole();
+    return r === 'admin' || r === 'cfo' || r === 'controller' || r === 'manager';
   }
   function isViewer(){
     return _currentLevel() <= 10;
@@ -19551,6 +19576,21 @@ var RoleManager = (function(){
     displayLabel: displayLabel
   };
 })();
+
+// Toggle the CFO Summary panel between its content and the role gate.
+// Called on role change (saveUserRole), on login (initRole), and when
+// navigating to the CFO panel. Was previously called but never defined,
+// which aborted saveUserRole before its toast/audit ran.
+function applyCfoAccess(){
+  try{
+    var gate = document.getElementById('cfo-role-gate');
+    var wrap = document.getElementById('cfo-content-wrap');
+    if(!gate || !wrap) return;
+    var ok = (typeof IS_MASTER!=='undefined' && IS_MASTER) || RoleManager.canSeeCFO();
+    gate.style.display = ok ? 'none' : 'block';
+    wrap.style.display = ok ? '' : 'none';
+  }catch(e){ console.warn('[applyCfoAccess]', e); }
+}
 
 function saveUserRole(){
   var sel = document.getElementById('s-role');
@@ -20899,6 +20939,9 @@ function _clearMatchHistory(){
   ArmpDB.clearMatchHistory().then(function(){
     if(typeof toast === 'function') toast('Match history cleared');
     renderTrendsDashboard();
+  }).catch(function(e){
+    console.warn('[clearMatchHistory]', e && e.message ? e.message : e);
+    if(typeof toast === 'function') toast('Match history storage unavailable in this browser','warn');
   });
 }
 
