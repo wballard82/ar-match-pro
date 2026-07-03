@@ -3895,6 +3895,17 @@ body.app-active #app {
                   </div>
                 </div>
               </div>
+              <div class="na-chips" id="ws-na-chips">
+                <button class="na-chip na-chip-active" data-type="" onclick="wsNaChipClick(this)">All <span class="na-chip-ct" id="ws-na-ct-all">0</span></button>
+                <button class="na-chip" data-type="Short pay" onclick="wsNaChipClick(this)">Short Pays <span class="na-chip-ct" id="ws-na-ct-Short pay">0</span></button>
+                <button class="na-chip" data-type="Unmatched" onclick="wsNaChipClick(this)">Missing Invoice <span class="na-chip-ct" id="ws-na-ct-Unmatched">0</span></button>
+                <button class="na-chip" data-type="Duplicate" onclick="wsNaChipClick(this)">Duplicate Risk <span class="na-chip-ct" id="ws-na-ct-Duplicate">0</span></button>
+                <button class="na-chip" data-type="Unapplied payment" onclick="wsNaChipClick(this)">Cash on Account <span class="na-chip-ct" id="ws-na-ct-Unapplied payment">0</span></button>
+                <button class="na-chip" data-type="Bank fee" onclick="wsNaChipClick(this)">Bank Fee <span class="na-chip-ct" id="ws-na-ct-Bank fee">0</span></button>
+                <button class="na-chip" data-type="Missing PO" onclick="wsNaChipClick(this)">Missing PO <span class="na-chip-ct" id="ws-na-ct-Missing PO">0</span></button>
+                <button class="na-chip" data-type="Overpay" onclick="wsNaChipClick(this)">Overpay <span class="na-chip-ct" id="ws-na-ct-Overpay">0</span></button>
+                <button class="na-chip" data-type="Ambiguous" onclick="wsNaChipClick(this)" title="Lump payment where 2+ invoice combinations tie to the amount — specialist chooses the correct combination">Ambiguous / Choose combination <span class="na-chip-ct" id="ws-na-ct-Ambiguous">0</span></button>
+              </div>
               <div id="ws-exc-list"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></div>
             </div><!-- end exc-top-half -->
 
@@ -5665,6 +5676,7 @@ function excSelectCard(idx,el){
 }
 function renderWsExcPremium(){
   const list=document.getElementById('ws-exc-list');const ct=document.getElementById('ws-exc-ct');if(!list)return;
+  try{if(typeof naUpdateChipCounts==='function')naUpdateChipCounts();}catch(e){}
   const tf=document.getElementById('ws-exc-type-filter');const tval=tf?tf.value:'';
   const isResolved=typeof WS_EXC_VIEW!=='undefined'&&WS_EXC_VIEW==='resolved';
   let items=EXC.filter(ex=>isResolved?(ex.s==='Resolved'||ex.s==='Resolved — rejected'):(ex.s!=='Resolved'&&ex.s!=='Resolved — rejected'));
@@ -10323,6 +10335,18 @@ function naChipClick(el){
   // Re-render
   try{rExc();}catch(e){}
 }
+// Chip strip on the PREMIUM Needs Attention tab (the panel users actually see).
+// Syncs ws-exc-type-filter and re-renders the premium exception list.
+function wsNaChipClick(el){
+  if(!el)return;
+  var type=el.getAttribute('data-type')||'';
+  var strip=document.getElementById('ws-na-chips');
+  if(strip){strip.querySelectorAll('.na-chip').forEach(function(c){c.classList.remove('na-chip-active');});}
+  el.classList.add('na-chip-active');
+  var sel=document.getElementById('ws-exc-type-filter');
+  if(sel){sel.value=type;}
+  try{renderWsExcPremium();}catch(e){}
+}
 function naUpdateChipCounts(){
   try{
     if(typeof EXC==='undefined')return;
@@ -10332,10 +10356,13 @@ function naUpdateChipCounts(){
       counts[e.type||'Other']=(counts[e.type||'Other']||0)+1;
     });
     var total=0;Object.keys(counts).forEach(function(k){total+=counts[k];});
-    var allEl=document.getElementById('na-ct-all');if(allEl)allEl.textContent=total;
+    // Update BOTH strips: legacy (na-ct-*) and premium tab (ws-na-ct-*)
+    ['na-ct-all','ws-na-ct-all'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=total;});
     ['Short pay','Unmatched','Duplicate','Unapplied payment','Bank fee','Missing PO','Overpay','Ambiguous'].forEach(function(t){
       var el=document.getElementById('na-ct-'+t);
       if(el)el.textContent=counts[t]||0;
+      var wsEl=document.getElementById('ws-na-ct-'+t);
+      if(wsEl)wsEl.textContent=counts[t]||0;
     });
   }catch(e){console.warn('[naChipCounts]',e);}
 }
