@@ -11910,7 +11910,7 @@ function globalSearch(q){
 // ── Modals ──
 function openImportBank(){
   IMP_TYPE='rem';
-  openImport('rem');
+  openImport('rem'); // openImport now also dismisses any open setup modal
   IMP_BANK_MODE=true;
   setTimeout(()=>{
     const title=document.getElementById('imp-title');
@@ -11945,6 +11945,16 @@ function openImportRemDetail(){
   var _impM=document.getElementById('imp-modal');if(_impM)_impM.classList.add('open');
 }
 function openImport(t){
+  // If the onboarding setup modal is open, the user has chosen to drive the
+  // import manually via the top-right buttons — dismiss it so its backdrop
+  // doesn't sit on top of (and block clicks to) the import modal and workspace.
+  try{
+    var _setup=document.getElementById('armp-setup-modal');
+    if(_setup && (_setup.classList.contains('open') || _setup.style.display==='flex')){
+      _setup.classList.remove('open'); _setup.style.display='none';
+      try{ StorageManager.save('setup_seen','true'); }catch(e){}
+    }
+  }catch(e){}
   IMP_TYPE=t;
   IMP_BANK_MODE=false;
   const title=document.getElementById('imp-title');const lbl=document.getElementById('imp-lbl');
@@ -14555,6 +14565,16 @@ function armpReviewGoToMatch(invNo, acct){
 }
 
 function setCaTab(tab,btn){
+  // Safety: a user interacting with the workspace tabs means no blocking modal
+  // should be covering the UI. Dismiss the onboarding setup modal if it lingered
+  // open (e.g. after Start fresh) so its backdrop can't eat clicks.
+  try{
+    var _setup=document.getElementById('armp-setup-modal');
+    if(_setup && (_setup.classList.contains('open') || _setup.style.display==='flex')){
+      _setup.classList.remove('open'); _setup.style.display='none';
+      try{ StorageManager.save('setup_seen','true'); }catch(e){}
+    }
+  }catch(e){}
   document.querySelectorAll('.ca-tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.ws-tab-view').forEach(v=>v.classList.remove('active'));
   if(btn)btn.classList.add('active');
