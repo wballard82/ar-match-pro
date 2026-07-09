@@ -6,8 +6,20 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- ── Enterprise security headers ──────────────────────────────────────────
+     Content-Security-Policy restricts script/style/connect origins to defend
+     against XSS and unauthorized data exfiltration. Scripts limited to self +
+     the two vetted CDNs (cdnjs, Stripe). connect-src allows Stripe + the
+     Anthropic API (used by the optional AI-parse feature). No object/embed,
+     no framing by third parties. For strongest posture, also set these as
+     real HTTP response headers at the CDN/host (Netlify _headers file):
+       Content-Security-Policy, X-Content-Type-Options: nosniff,
+       X-Frame-Options: DENY, Strict-Transport-Security, Referrer-Policy. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com https://api.stripe.com https://cdnjs.cloudflare.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <title>AR Match Pro</title>
 <!-- Mobile block: app workspace is desktop-only -->
 <script>
@@ -3609,7 +3621,7 @@ body.app-active #app {
               </select>
             </div>
             <div class="ca-filter-item" style="margin-left:auto">
-              <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
+              <button class="btn btn-r btn-sm" onclick="armpClearEverything()">Clear all</button>
             </div>
           </div>
 
@@ -3861,7 +3873,7 @@ body.app-active #app {
             <div style="font-size:12px;color:var(--t3)" id="review-ct">0 matched records</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-p btn-sm" id="review-approve-all-btn" onclick="approveAllReviewItems()">✓ Approve All</button>
-              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
+              <button class="btn btn-r btn-sm" onclick="armpClearEverything()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting file</button>
             </div>
           </div>
@@ -3999,7 +4011,7 @@ body.app-active #app {
             <div style="font-size:12px;color:var(--t3)" id="recon-summary">Matched payments vs open invoices</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-outline btn-sm" id="armp-send-unrec-btn" onclick="armpSendUnreconciledToNA()" style="display:none;font-size:11.5px"></button>
-              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
+              <button class="btn btn-r btn-sm" onclick="armpClearEverything()">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting</button>
             </div>
           </div>
@@ -4160,7 +4172,7 @@ body.app-active #app {
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               
               
-              <button class="btn btn-r btn-sm" onclick="clearPayData()">Clear all</button>
+              <button class="btn btn-r btn-sm" onclick="armpClearEverything()">Clear all</button>
               <button class="btn btn-outline btn-sm" onclick="addRemRowAfter()">+ Add row</button>
               
             </div>
@@ -4220,7 +4232,7 @@ body.app-active #app {
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <span id="post-ct" style="font-size:12.5px;color:var(--t3)">0 rows</span>
-              <button class="btn btn-r btn-sm" onclick="clearMatchData()">Clear all</button>
+              <button class="btn btn-r btn-sm" onclick="armpClearEverything()">Clear all</button>
               <button class="btn btn-p btn-sm" id="post-export-lock-btn" onclick="exportPostAndLock()">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
                 <span id="post-export-lock-label">Export &amp; Lock</span>
@@ -9806,6 +9818,53 @@ function loadFromStorage(){
 function getUsers(){try{return JSON.parse(localStorage.getItem('armp_users')||'{}')}catch(e){return {}}}
 function saveUser(email,data){const u=getUsers();u[email]=data;localStorage.setItem('armp_users',JSON.stringify(u))}
 
+// ════════════════════════════════════════════════════════════════════════
+// PASSWORD SECURITY — PBKDF2 (SHA-256, 150k iterations) with per-user salt.
+// Replaces the legacy btoa() encoding (which was NOT a hash and exposed
+// passwords in plaintext-equivalent form). Uses the Web Crypto API, available
+// in all modern browsers over HTTPS. Format stored: "pbkdf2$<saltB64>$<hashB64>".
+// Legacy btoa accounts are transparently upgraded on next successful login.
+// ════════════════════════════════════════════════════════════════════════
+var ARMP_PBKDF2_ITER = 150000;
+function _b64(bytes){ var s=''; var b=new Uint8Array(bytes); for(var i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s); }
+function _b64ToBytes(b64){ var s=atob(b64); var a=new Uint8Array(s.length); for(var i=0;i<s.length;i++) a[i]=s.charCodeAt(i); return a; }
+async function hashPassword(pass, saltBytes){
+  // saltBytes optional (generate if absent). Returns "pbkdf2$salt$hash".
+  if(!(window.crypto && window.crypto.subtle)){
+    // Extremely old browser fallback — still better than plaintext: tag it so we
+    // know it's weak, but this branch should never run on a supported browser.
+    return 'legacy$'+btoa(pass);
+  }
+  var salt = saltBytes || window.crypto.getRandomValues(new Uint8Array(16));
+  var enc = new TextEncoder();
+  var keyMaterial = await window.crypto.subtle.importKey('raw', enc.encode(pass), {name:'PBKDF2'}, false, ['deriveBits']);
+  var bits = await window.crypto.subtle.deriveBits(
+    {name:'PBKDF2', salt:salt, iterations:ARMP_PBKDF2_ITER, hash:'SHA-256'},
+    keyMaterial, 256
+  );
+  return 'pbkdf2$'+_b64(salt)+'$'+_b64(bits);
+}
+async function verifyPassword(pass, stored){
+  if(!stored) return false;
+  // New PBKDF2 format
+  if(stored.indexOf('pbkdf2$')===0){
+    var parts = stored.split('$');
+    if(parts.length!==3) return false;
+    var salt = _b64ToBytes(parts[1]);
+    var recomputed = await hashPassword(pass, salt);
+    // constant-ish time compare
+    var a = recomputed, b = stored;
+    if(a.length!==b.length) return false;
+    var diff=0; for(var i=0;i<a.length;i++){ diff |= (a.charCodeAt(i)^b.charCodeAt(i)); }
+    return diff===0;
+  }
+  // Legacy btoa format — verify, caller should re-hash on success
+  if(stored.indexOf('legacy$')===0){ return ('legacy$'+btoa(pass))===stored; }
+  // Oldest format: raw btoa(pass) with no prefix
+  return btoa(pass)===stored;
+}
+function isLegacyHash(stored){ return !!stored && stored.indexOf('pbkdf2$')!==0; }
+
 // ── Plan utils ──
 function setPlan(plan){USER_PLAN=plan;const p=PLANS[plan];if(p){IS_DEMO=plan==='demo';}}
 function hasFeat(f){if(IS_MASTER)return true;return PLANS[USER_PLAN]?.features?.includes(f)}
@@ -11371,46 +11430,57 @@ function doLogin(){
   const lic=document.getElementById('li-license').value.trim().toUpperCase();
   const remember=document.getElementById('li-remember')?.checked||false;
   if(!email||!pass){showError('Please enter email and password');return;}
-  // "Save my login on this device" — persist credentials so user can re-login without retyping.
-  // Convenience feature for trusted personal devices; cleared via "Forget saved login".
+  // "Remember me" persists only the EMAIL for convenience — never the password.
+  // Storing passwords (even encoded) on the client is a security anti-pattern
+  // that IT review will reject. Users re-enter their password each session.
   function _persistRemember(){
     if(remember){
       localStorage.setItem('armp_remember_email',email);
-      localStorage.setItem('armp_remember_pass',btoa(pass));
     } else {
       localStorage.removeItem('armp_remember_email');
-      localStorage.removeItem('armp_remember_pass');
     }
+    // Proactively remove any legacy stored password from prior versions.
+    localStorage.removeItem('armp_remember_pass');
   }
   if(email===MASTER_ADMIN_EMAIL&&pass===MASTER_ADMIN_PASS){
     CURRENT_USER=email;IS_DEMO=false;
     _persistRemember();
     localStorage.setItem('armp_session',email);
-    try{launchApp({name:'Admin',company:'AR Match Pro',avatar:'',plan:'team',isMaster:true});}catch(e){console.error('FULL STACK:',e.stack);showError('Launch error: '+e.message+' | Check browser console for full trace');}
+    try{launchApp({name:'Admin',company:'AR Match Pro',avatar:'',plan:'team',isMaster:true});}catch(e){console.error(e);showError('Launch error: '+e.message);}
     return;
   }
   const users=getUsers();
   const user=users[email];
   if(!user){showError('No account found. Please sign up.');return;}
-  if(user.pass!==btoa(pass)){showError('Incorrect password.');return;}
-  if(lic&&VALID_KEYS[lic]){user.plan=VALID_KEYS[lic];saveUser(email,user);}
-  CURRENT_USER=email;IS_DEMO=false;
-  _persistRemember();
-  localStorage.setItem('armp_session',email);
-  launchApp(user);
+  verifyPassword(pass, user.pass).then(function(ok){
+    if(!ok){showError('Incorrect password.');return;}
+    // Auto-upgrade legacy (btoa) hashes to PBKDF2 on successful login.
+    if(isLegacyHash(user.pass)){
+      hashPassword(pass).then(function(nh){ user.pass=nh; saveUser(email,user); }).catch(function(){});
+    }
+    if(lic&&VALID_KEYS[lic]){user.plan=VALID_KEYS[lic];saveUser(email,user);}
+    CURRENT_USER=email;IS_DEMO=false;
+    _persistRemember();
+    localStorage.setItem('armp_session',email);
+    launchApp(user);
+  }).catch(function(e){ console.warn('[login]',e); showError('Login error — please try again.'); });
 }
 
-function doRegister(){
+async function doRegister(){
   const name=document.getElementById('reg-name').value.trim();
   const company=(document.getElementById('reg-company')||{value:''}).value.trim();
   const email=document.getElementById('reg-email').value.trim().toLowerCase();
   const pass=document.getElementById('reg-pass').value;
   const lic=document.getElementById('reg-license').value.trim().toUpperCase();
   if(!name||!email||!pass){showError('Please fill all required fields.');return;}
-  if(pass.length<6){showError('Password must be at least 6 characters.');return;}
+  if(pass.length<8){showError('Password must be at least 8 characters.');return;}
+  // Enforce a basic strength policy for enterprise readiness
+  if(!/[A-Za-z]/.test(pass)||!/[0-9]/.test(pass)){showError('Password must contain at least one letter and one number.');return;}
   const users=getUsers();
   if(users[email]){showError('An account with this email already exists.');return;}
   let plan=lic&&VALID_KEYS[lic]?VALID_KEYS[lic]:'demo';
+  var _passHash;
+  try{ _passHash = await hashPassword(pass); }catch(e){ showError('Could not secure password — please try a modern browser over HTTPS.'); return; }
   // 7-day demo uniqueness: one free trial per email ever
   // [Backend-required]: server-side validation via Netlify function for strong enforcement
   if(plan==='demo'){
@@ -11420,7 +11490,7 @@ function doRegister(){
         return;
       }
       const demoRecord = DemoManager.registerDemo(email);
-      const user={name,company,email,pass:btoa(pass),plan,avatar:'',
+      const user={name,company,email,pass:_passHash,plan,avatar:'',
         demoStartedAt: demoRecord ? demoRecord.startedAt : new Date().toISOString(),
         demoExpiresAt: demoRecord ? demoRecord.expiresAt : null,
         role:'ar_specialist'};
@@ -11438,7 +11508,7 @@ function doRegister(){
       return;
     }catch(e){console.warn('demo uniqueness check failed',e);}
   }
-  const user={name,company,email,pass:btoa(pass),plan,avatar:'',role:'ar_specialist',
+  const user={name,company,email,pass:_passHash,plan,avatar:'',role:'ar_specialist',
     billing: BillingManager.createBillingRecord(plan, 'annual'),
     created: new Date().toISOString()
   };
@@ -12148,6 +12218,58 @@ function clearInvData(){
     toast('Invoice data cleared');
   },'Clear invoices','btn-r');
 }
+// ════════════════════════════════════════════════════════════════════════
+// AUTHORITATIVE FULL WIPE — every "Clear all" routes here. Clears ALL data
+// arrays, ALL persisted storage keys, resets the allocation workspace
+// (ENG_PAY), payment queue, exceptions, review, reconcile, export, onboarding.
+// Leaves the workspace in a true zero state.
+// ════════════════════════════════════════════════════════════════════════
+function armpClearEverythingCore(){
+  INV=[];PAY=[];RES=[];EXC=[];
+  try{ DELIV=[]; REM_DETAIL=[]; REM_ADVICE=[]; ERS_LINES=[]; VMI_LINES=[]; }catch(e){}
+  autoMatchHasRun=false;
+  // Allocation workspace / expanded payment card (the lingering $X.XX row)
+  try{ ENG_PAY=null; ENG_PAY_IDX=-1; ENG_ROWS=[]; ENG_LOCKED=false; }catch(e){}
+  try{ if(typeof engResetUI==='function') engResetUI(); }catch(e){}
+  try{ _invalidateInvIndexes(); }catch(e){}
+  try{ if(typeof _resetWorkflowState==='function') _resetWorkflowState(); }catch(e){}
+  try{ if(typeof _clearDeliveryIndexNow==='function') _clearDeliveryIndexNow(); }catch(e){}
+  ['inv','pay','res','exc','remadvice','saved_at'].forEach(function(k){ try{ localStorage.removeItem(sk(k)); }catch(e){} });
+  try{ rAll(); }catch(e){}
+  try{ rRem(); }catch(e){}
+  try{ if(typeof renderPayQueue==='function') renderPayQueue(); }catch(e){}
+  try{ if(typeof renderFbl5n==='function') renderFbl5n('ca-open-items-body','',''); }catch(e){}
+  try{ if(typeof rExc==='function') rExc(); }catch(e){}
+  try{ if(typeof renderWsExcPremium==='function') renderWsExcPremium(); }catch(e){}
+  try{ if(typeof renderWsReview==='function') renderWsReview(); }catch(e){}
+  try{ if(typeof renderWsRecon==='function') renderWsRecon(); }catch(e){}
+  try{ if(typeof rPost==='function') rPost(); }catch(e){}
+  try{ if(typeof naUpdateChipCounts==='function') naUpdateChipCounts(); }catch(e){}
+  try{ if(typeof updateCfoSummary==='function') updateCfoSummary(); }catch(e){}
+  try{ if(typeof updWorkflow==='function') updWorkflow(); }catch(e){}
+  try{ if(typeof armpRefreshExportBlocker==='function') armpRefreshExportBlocker(); }catch(e){}
+  try{ updDash(); updTop(); refreshStatus(); }catch(e){}
+  try{ if(typeof updateArSummary==='function') updateArSummary(); }catch(e){}
+  try{
+    var inp=document.getElementById('ca-acct-input'); if(inp) inp.value='';
+    var lbl=document.getElementById('ca-bottom-cust-label'); if(lbl) lbl.textContent='select account or payment';
+    var bankSel=document.getElementById('ca-bank-sel'); if(bankSel) bankSel.innerHTML='<option value="">All bank accounts</option>';
+  }catch(e){}
+  try{ addAudit('Cleared all data'); }catch(e){}
+}
+function armpClearEverything(){
+  armpStyledConfirm({
+    title:'Clear all data?',
+    message:'This permanently removes ALL invoices, payments, matches, exceptions, delivery, and remittance data from this workspace.',
+    footnote:'This cannot be undone.',
+    confirmLabel:'Clear everything',
+    danger:true,
+    onConfirm:function(){
+      armpClearEverythingCore();
+      if(typeof toast==='function') toast('All data cleared — workspace reset');
+    }
+  });
+}
 function clearPayData(){
   var msg='Clear all payment data?\n\n'+PAY.length+' payments will be removed.\nThis also clears any matches and exceptions generated from these payments.\nThis cannot be undone.';
   showConfirm(msg,function(){
@@ -12202,23 +12324,7 @@ function clearAllData(){
     confirmLabel:'Clear all data',
     danger:true,
     onConfirm:function(){
-    INV=[];PAY=[];RES=[];EXC=[];
-    try{ DELIV=[]; REM_DETAIL=[]; ERS_LINES=[]; VMI_LINES=[]; }catch(e){}
-    autoMatchHasRun=false;
-    _resetWorkflowState();
-    try{_invalidateInvIndexes();}catch(e){}
-    rAll();
-    try{renderFbl5n('ca-open-items-body','','');}catch(e){}
-    try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
-    try{
-      var inp=document.getElementById('ca-acct-input');if(inp)inp.value='';
-      var lbl=document.getElementById('ca-bottom-cust-label');if(lbl)lbl.textContent='select account or payment';
-      var bankSel=document.getElementById('ca-bank-sel');
-      if(bankSel)bankSel.innerHTML='<option value="">All bank accounts</option>';
-    }catch(e){}
-    updDash();updTop();refreshStatus();
-    ['inv','pay','res','exc'].forEach(k=>{try{localStorage.removeItem(sk(k))}catch(e){}});
-    addAudit('Cleared all data');
+    armpClearEverythingCore();
     toast('All data cleared');
     // Fully reset onboarding UI — reopen Let's Get Started at Step 1
     try{
@@ -16334,8 +16440,11 @@ function allocateMultiSource(payment, invIndex, tolerance){
 }
 
 async function runMatch(){
-  if(!INV.length){toast('Import invoices first','warn');return;}
   if(!PAY.length){toast('Import remittance first','warn');return;}
+  // Note: zero open invoices is a VALID state — payments still process and route
+  // to Cash on Account / Unmatched (e.g. a customer whose invoices are all paid,
+  // or a prepayment). We warn but do not abort, so no payment is silently dropped.
+  if(!INV.length){ toast('No open invoices loaded — payments will route to Cash on Account / review','info'); }
 
   // Fix 1: Mark Auto Match as explicitly run — Review section now shows results
   autoMatchHasRun = true;
@@ -19432,12 +19541,10 @@ window.addEventListener('load',()=>{
   // NOTE: ?demo=true URL bypass removed — every user must authenticate via doLogin()
   // or an approved Stripe-checkout account. No anonymous demo access.
   const rem=localStorage.getItem('armp_remember_email');
-  const remPass=localStorage.getItem('armp_remember_pass');
+  // Security: purge any password persisted by older builds. Never auto-fill passwords.
+  try{ localStorage.removeItem('armp_remember_pass'); }catch(e){}
   const emailEl=document.getElementById('li-email');
-  if(rem&&emailEl){emailEl.value=rem;const rb=document.getElementById('li-remember');if(rb)rb.checked=true;
-    var passEl=document.getElementById('li-pass');
-    if(remPass&&passEl){try{passEl.value=atob(remPass);}catch(e){}}
-  }
+  if(rem&&emailEl){emailEl.value=rem;const rb=document.getElementById('li-remember');if(rb)rb.checked=true;}
   if(params.get('checkout')==='success'){
     const plan=params.get('plan')||'pro';
     const planNames={starter:'Starter',pro:'Pro',team:'Team'};
