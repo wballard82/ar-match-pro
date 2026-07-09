@@ -6514,6 +6514,235 @@ function _buildDelivIndexes(){
   window._DELIV_BY_PO_AMT = byPOAmt;
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// REMITTANCE BRIDGE — resolves a customer remittance line to real invoices when
+// the remittance does NOT quote SAP invoice numbers.
+//
+// Real-world SAP case (TK-Fujikin): the customer's remittance references its own
+// shipment IDs ("SS260409-KB3(TK-F)") and UPS tracking numbers, never the SAP
+// billing document. The chain to the invoice is:
+//
+//   remittance SS ref / tracking no
+//        └─→ Delivery Report row (logistics memo / bill of lading)
+//              └─→ Reference document (sales order)
+//                    └─→ SOA invoice rows with matching Reference Key 3
+//                          └─→ disambiguate by amount
+//
+// This module builds the extra indexes that chain needs and exposes a single
+// resolver used by both bank-file and remittance-only matching.
+// ════════════════════════════════════════════════════════════════════════════
+
+// Expand SAP invoice shorthand: "5105205708, 09, 5105196931, 32"
+//   → ["5105205708","5105205709","5105196931","5105196932"]
+// A short token (1-3 digits) inherits the prefix of the previous full number.
+function armpExpandInvoiceShorthand(raw){
+  var out = [];
+  if(!raw) return out;
+  var parts = String(raw).split(/[,;/]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+  var lastFull = '';
+  parts.forEach(function(p){
+    var digits = p.replace(/[^0-9]/g,'');
+    if(!digits) return;
+    if(digits.length >= 8){            // a full document number
+      out.push(digits);
+      lastFull = digits;
+    } else if(lastFull){               // shorthand tail — inherit prefix
+      var stem = lastFull.slice(0, lastFull.length - digits.length);
+      out.push(stem + digits);
+    }
+  });
+  return out;
+}
+
+// Build SS-reference and Reference-Key-3 indexes used by the remittance bridge.
+function armpBuildRemittanceIndexes(){
+  var ssBridge = new Map();   // SS reference (upper) → DELIV[]
+  var invByRef3 = new Map();  // Reference Key 3     → INV[]
+  try{
+    (DELIV||[]).forEach(function(d){
+      var hay = String(d.logMemo||'') + ' ' + String(d.poNo||'');
+      var m = hay.match(/SS[0-9]{6}-[A-Z]{2}[0-9]{1,2}\(TK-F\)/ig);
+      if(m){
+        m.forEach(function(ss){
+          var k = ss.toUpperCase();
+          if(!ssBridge.has(k)) ssBridge.set(k, []);
+          var arr = ssBridge.get(k);
+          if(!arr.some(function(x){ return x.deliveryNo===d.deliveryNo && x.salesOrder===d.salesOrder; })) arr.push(d);
+        });
+      }
+    });
+    (INV||[]).forEach(function(v){
+      if(!v.refKey3) return;
+      var k = String(v.refKey3).trim();
+      if(!invByRef3.has(k)) invByRef3.set(k, []);
+      invByRef3.get(k).push(v);
+    });
+  }catch(e){ console.warn('[armpBuildRemittanceIndexes]', e); }
+  window._SS_BRIDGE = ssBridge;
+  window._INV_BY_REFKEY3 = invByRef3;
+  return { ssBridge: ssBridge, invByRef3: invByRef3 };
+}
+
+// Resolve one remittance line → { invoices, method, confidence, candidates }
+// line: { ref, tracking, amount, account }
+function armpResolveRemittanceLine(line){
+  var amt = parseFloat(line.amount)||0;
+  var ref = String(line.ref||'').trim();
+  var trk = String(line.tracking||'').trim().toUpperCase();
+  var res = { invoices: [], method: '', confidence: 0, candidates: [] };
+  if(!window._INV_BY_REFKEY3) armpBuildRemittanceIndexes();
+  var invByRef3 = window._INV_BY_REFKEY3 || new Map();
+  var ssBridge  = window._SS_BRIDGE || new Map();
+  var trkBridge = window._TRK_BRIDGE || new Map();
+
+  // ── 1. Direct invoice number(s) quoted on the remittance (incl. shorthand) ──
+  var expanded = armpExpandInvoiceShorthand(ref);
+  if(expanded.length){
+    var direct = [];
+    expanded.forEach(function(num){
+      var hit = (INV||[]).find(function(v){ return String(v.i).trim() === num; });
+      if(hit) direct.push(hit);
+    });
+    if(direct.length === expanded.length && direct.length > 0){
+      res.invoices = direct;
+      res.method = direct.length > 1 ? 'Remittance — multi-invoice reference' : 'Remittance — direct invoice';
+      res.confidence = 99;
+      return res;
+    }
+    if(direct.length > 0){ res.candidates = direct; }
+  }
+
+  // ── 2. Delivery bridge: SS reference or tracking number → sales order → invoices ──
+  var delRows = [];
+  if(ref && ssBridge.has(ref.toUpperCase())) delRows = ssBridge.get(ref.toUpperCase()).slice();
+  if(!delRows.length && trk){
+    // tracking may carry trailing notes, e.g. "1Z2... / 'RMA"
+    var trkClean = (trk.match(/1Z[A-Z0-9]{16}/) || [trk])[0];
+    if(trkBridge.has(trkClean)) delRows = trkBridge.get(trkClean).slice();
+  }
+  if(delRows.length){
+    // ── 2a. DETERMINISTIC: if the invoice import carried a delivery number
+    // (SAP field "Reference"/XBLNR), match delivery→invoice directly. This is
+    // exact and needs no amount guessing. Only available when the SOA extract
+    // includes that column.
+    var delNos = new Set(delRows.map(function(d){ return String(d.deliveryNo||'').trim(); }).filter(Boolean));
+    if(delNos.size){
+      var byDeliv = (INV||[]).filter(function(v){
+        var dref = String(v.dl || v.deliveryNo || '').trim();
+        return dref && delNos.has(dref);
+      });
+      if(byDeliv.length){
+        var dTot = byDeliv.reduce(function(s,v){ return s+(v.amt||0); },0);
+        res.invoices = byDeliv;
+        res.method = 'Delivery bridge — delivery number (deterministic)';
+        res.confidence = Math.abs(dTot - amt) < 0.01 ? 99 : 90;
+        return res;
+      }
+    }
+
+    // ── 2b. Narrow candidates: invoices whose Reference Key 3 matches the
+    // delivery's sales order AND whose Payment reference matches the delivery's
+    // customer PO. Intersecting both keys cuts false candidates substantially.
+    var refdocs = new Set(delRows.map(function(d){ return String(d.salesOrder||'').trim(); }).filter(Boolean));
+    var custPOs = new Set(delRows.map(function(d){ return String(d.poNo||'').trim(); }).filter(Boolean));
+    var cands = [], seen = new Set();
+    refdocs.forEach(function(rd){
+      (invByRef3.get(rd)||[]).forEach(function(v){
+        if(v.s) return;                              // already applied
+        var poOk = !custPOs.size || custPOs.has(String(v.po||'').trim());
+        if(poOk && !seen.has(String(v.i))){ seen.add(String(v.i)); cands.push(v); }
+      });
+    });
+    if(!cands.length){                               // fallback: sales order only
+      refdocs.forEach(function(rd){
+        (invByRef3.get(rd)||[]).forEach(function(v){
+          if(v.s) return;
+          if(!seen.has(String(v.i))){ seen.add(String(v.i)); cands.push(v); }
+        });
+      });
+    }
+    res.candidates = cands;
+    if(cands.length){
+      // Disambiguate by exact amount (the remittance states what it's paying)
+      var exact = cands.filter(function(v){ return Math.abs((v.amt||0) - amt) < 0.01; });
+      if(exact.length === 1){
+        res.invoices = exact;
+        res.method = 'Delivery bridge — ' + (ref && ssBridge.has(ref.toUpperCase()) ? 'shipment ref' : 'tracking no');
+        res.confidence = 97;
+        return res;
+      }
+      if(exact.length > 1){
+        res.method = 'Delivery bridge — ambiguous (' + exact.length + ' invoices share this amount)';
+        res.confidence = 0;
+        res.candidates = exact;
+        return res;
+      }
+      // No single invoice equals the amount — the shipment was billed across
+      // several invoices. Enumerate distinct combinations; a unique one is safe
+      // to apply, 2+ means a specialist must choose.
+      var pool = cands.slice().sort(function(a,b){ return (a.dt2||'') < (b.dt2||'') ? -1 : 1; }).slice(0, 16);
+      var subsets = (typeof _enumDistinctSubsets === 'function') ? _enumDistinctSubsets(pool, amt, 0.01, 2) : [];
+      if(subsets.length === 1){
+        res.invoices = subsets[0];
+        res.method = 'Delivery bridge — multi-invoice allocation';
+        res.confidence = 93;
+        return res;
+      }
+      if(subsets.length > 1){
+        res.method = 'Delivery bridge — ambiguous (2+ invoice combinations tie to this amount)';
+        res.confidence = 0;
+        return res;
+      }
+      res.method = 'Delivery bridge — amount does not tie to any open invoice combination';
+      res.confidence = 0;
+      return res;
+    }
+    res.method = 'Delivery bridge — shipment found but no open invoice for it';
+    return res;
+  }
+
+  res.method = 'Unresolved — no invoice, shipment reference, or tracking match';
+  return res;
+}
+
+// Synthesize PAY rows from remittance detail lines so matching can run WITHOUT a
+// bank file. Each line becomes a payment application carrying `unconfirmedCash`,
+// because the remittance is the customer's ADVICE — the cash has not been proven
+// received until a bank file is reconciled against it.
+function armpSynthesizePaymentsFromRemittance(){
+  if(!REM_DETAIL || !REM_DETAIL.length) return 0;
+  var made = 0;
+  var payDate = new Date().toLocaleDateString('en-US');
+  REM_DETAIL.forEach(function(rd, i){
+    var amt = parseFloat(rd.amt != null ? rd.amt : (rd.amount || 0)) || 0;
+    if(!amt) return;
+    PAY.push({
+      a: String(rd.custAcct || '').trim(),
+      c: String(rd.custName || '').trim(),
+      amt: amt,
+      i: String(rd.invNo || '').trim(),
+      po: String(rd.poNo || '').trim(),
+      so: String(rd.soNo || '').trim(),
+      trkNo: String(rd.trkNo || '').trim(),
+      m: 'Remittance advice',
+      txId: 'REM-' + String(i + 1).padStart(4, '0'),
+      payDate: rd.paymentDate || payDate,
+      n: rd.notes || '',
+      ccy: rd.currency || 'USD',
+      _fromRemittance: true,
+      _remIdx: i,
+      unconfirmedCash: true
+    });
+    made++;
+  });
+  if(made){
+    try{ _normalizePayCustomers(); }catch(e){}
+    try{ saveToStorage(); }catch(e){}
+    addAudit('Remittance-only matching', made + ' payment lines synthesized from remittance advice (cash unconfirmed)');
+  }
+  return made;
+}
+
 // On app boot, hydrate DELIV from IndexedDB if the in-memory array is empty.
 // This is the persistence promise: the user uploads the 13K-row delivery
 // report ONCE, and on every subsequent session it's already loaded.
@@ -16440,11 +16669,21 @@ function allocateMultiSource(payment, invIndex, tolerance){
 }
 
 async function runMatch(){
-  if(!PAY.length){toast('Import remittance first','warn');return;}
-  // Note: zero open invoices is a VALID state — payments still process and route
-  // to Cash on Account / Unmatched (e.g. a customer whose invoices are all paid,
-  // or a prepayment). We warn but do not abort, so no payment is silently dropped.
+  // ── Remittance-only mode ──────────────────────────────────────────────────
+  // A bank file is NOT required. If the customer's remittance advice has been
+  // imported, synthesize payment lines from it so invoices + delivery report +
+  // remittance can be matched on their own. Cash stays flagged unconfirmed
+  // until a bank file is reconciled against it.
+  if(!PAY.length && typeof REM_DETAIL!=='undefined' && REM_DETAIL && REM_DETAIL.length){
+    var _made = armpSynthesizePaymentsFromRemittance();
+    if(_made) toast('Matching from remittance advice — '+_made+' lines (no bank file; cash unconfirmed)','info');
+  }
+  if(!PAY.length){toast('Import a bank file or remittance advice first','warn');return;}
+  // Zero open invoices is a VALID state — payments still process and route to
+  // Cash on Account / Unmatched, so no payment is silently dropped.
   if(!INV.length){ toast('No open invoices loaded — payments will route to Cash on Account / review','info'); }
+  // Build the SS-reference + Reference-Key-3 indexes the remittance bridge needs
+  try{ armpBuildRemittanceIndexes(); }catch(e){ console.warn('[remittance indexes]', e); }
 
   // Fix 1: Mark Auto Match as explicitly run — Review section now shows results
   autoMatchHasRun = true;
@@ -16851,8 +17090,66 @@ async function runMatch(){
       }
       if(matched)continue;
 
-      // PRIORITY 2: SO group match
-      // Plan guard removed when delivery report is loaded — tracking bridge may have set p.so
+      // PRIORITY 1b: REMITTANCE → DELIVERY BRIDGE
+      // The customer's remittance quotes its own shipment ref (e.g. SS260409-KB3(TK-F))
+      // or a carrier tracking number instead of the SAP invoice. Walk
+      //   shipment/tracking → delivery report → sales order → Reference Key 3 → invoice
+      // and disambiguate by the amount the remittance says it is paying.
+      if(DELIV && DELIV.length && (p.i || p.po || p.trkNo)){
+        var _brRef = String(p.i||'').trim();
+        var _brTrk = String(p.trkNo || p.po || '').trim();
+        // Only engage when the reference is NOT a plain invoice number already handled above
+        var _looksBridged = /SS[0-9]{6}-/i.test(_brRef) || /1Z[A-Z0-9]{16}/i.test(_brTrk) || /^[0-9]{10}$/.test(_brRef);
+        if(_looksBridged){
+          var _br = armpResolveRemittanceLine({ ref:_brRef, tracking:_brTrk, amount:p.amt, account:p.a });
+          if(_br.invoices && _br.invoices.length){
+            var _brTot = _br.invoices.reduce(function(s,v){ return s + (v.amt||0); }, 0);
+            var _brVr  = p.amt - _brTot;
+            var _brSt  = Math.abs(_brVr) <= tol ? 'Exact' : (_brVr < 0 ? 'Short pay' : 'Overpay');
+            _br.invoices.forEach(function(_bi){
+              _bi.s = _brSt;
+              RES.push({
+                c:_bi.c||p.c, a:_bi.a||p.a, i:_bi.i, po:_bi.po, so:_bi.so, d:_bi.d,
+                oa:_bi.amt, pd:_bi.amt + (_br.invoices.length===1 ? _brVr : 0),
+                vr:(_br.invoices.length===1 ? _brVr : 0),
+                st:_brSt, m:_br.method,
+                n:'Remittance ref '+(_brRef||_brTrk)+(p.unconfirmedCash?' · cash unconfirmed':''),
+                confidence:_br.confidence, matchReasons:[_br.method],
+                scenario:'REM_DELIV_BRIDGE',
+                unconfirmedCash: !!p.unconfirmedCash
+              });
+            });
+            if(_brSt !== 'Exact'){
+              EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_brRef||_brTrk,
+                type:_brSt, detail:'Remittance '+$f(p.amt)+' vs invoice(s) '+$f(_brTot)+' — variance '+$f(_brVr),
+                action:_brSt==='Short pay'?'Chase balance or write off':'Return overpayment',dec:'',s:'Open'});
+            }
+            matched = true;
+          } else if(/ambiguous|does not tie/i.test(_br.method||'')){
+            // Unresolved bridge line → specialist chooses from the candidate set.
+            // Candidates are attached so the allocation workspace pre-highlights them.
+            var _cd = (_br.candidates||[]);
+            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_brRef||_brTrk,
+              type:'Ambiguous',
+              detail:_br.method+' — '+_cd.length+' candidate invoice(s) under this shipment; specialist must choose',
+              ambigCombos:_cd.map(function(v){return v.i;}).join('+'),
+              candidateInvoices:_cd.map(function(v){return v.i;}),
+              action:'Choose combination',dec:'',s:'Open',
+              confidence:0,
+              unconfirmedCash: !!p.unconfirmedCash});
+            matched = true;
+          } else if(/no open invoice|shipment found/i.test(_br.method||'')){
+            EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:_brRef||_brTrk,
+              type:'Cash on Account',
+              detail:_br.method+' — post as unapplied credit until the invoice posts',
+              action:'Cash on Account',dec:'',s:'Open',confidence:90,
+              unconfirmedCash: !!p.unconfirmedCash});
+            matched = true;
+          }
+        }
+      }
+      if(matched)continue;
+
       if(ns && (useSO && (hasFeat('so') || _hasBridge))){
         var _gso=_idx.bySO&&_idx.bySO.get(ns);
         if(_gso&&_gso.length){
@@ -18905,7 +19202,7 @@ function processImport(){
             'ordernum','ordernumber','soref',
             'salesorderid','orderid','tranid2'
           )]||'',
-          amt:parseFloat(String(r[col('amount','amt','openamount','balance','invoiceamount','netdue','netamount','openbalance','amountinlocalcurrency','amountindoccurrency','amtlc','outstandingbalance','remainingbalance','arbalance')]||'0').replace(/[^0-9.\-]/g,''))||0,
+          amt:parseFloat(String(r[col('amountindoccurr','amountindoccurrency','amountindocumentcurrency','amountinlocalcurrency','amountindoccurr.','amount','amt','openamount','balance','invoiceamount','netamount','openbalance','amtlc','outstandingbalance','remainingbalance','arbalance')]||'0').replace(/[^0-9.\-]/g,''))||0,
           dt:r[col('documenttype','doctype','type','transactiontype','blart','postingtype','invoicetype','dt','category','recordtype')]||'Invoice',
           dt2:r[col('invoicedate','docdate','postingdate','documentdate','budat','bldat','date','invoicecreated','createdate','postdate','transactiondate','valuedate','trandate','createddate')]||'',
           due:r[col('duedate','due','netduedate','netduedate','cashdiscountdate1','cashdiscountdate','zfbdt','dueondate','paymentduedate','duedate2','maturitydate','duedate3','paymentdate','dueby')]||'',
@@ -18956,16 +19253,23 @@ function processImport(){
     //  G: Bill of lading         → trackingNo (1Z prefix, may have date prefix)
     //  H: Logistics Memo         → trackingNo (1Z) or poNo (SS) — multi-value
     DELIV = rows.filter(function(r){ return r.some(function(c){ return c; }); }).map(function(r){
-      // Column index lookup — support both positional (TK-Fujikin) and header-based
-      var _c = function(){ var aliases=Array.prototype.slice.call(arguments); return col.apply(null,aliases); };
-      var custNameVal  = r[_c('nameofsoldt','nameofcust','customername','customer','supplier','soldtoname','nameofparty','nameofsoldt')] || r[0] || '';
-      var delivNoVal   = r[_c('delivery','deliverynumber','deliveryno','deliverynum','delno','dn')] || r[1] || '';
-      var soVal        = r[_c('referencedocument','salesorder','so','soref','salesdoc','salesordernumber','refdoc')] || r[2] || '';
-      var custAcctVal  = r[_c('soldtoparty','soldto','accountno','customeraccount','acct','kunnr','customernumber')] || r[3] || '';
-      var amtVal       = r[_c('planedbillingamount','plannedbillingamount','billingamount','amount','amt','deliveryamount','netamount')] || r[4] || '';
-      var poNoVal      = r[_c('customerponumber','ponumber','po','custpo','purchaseorder','customerpono')] || r[5] || '';
-      var bolVal       = r[_c('billoflading','bol','billofladingnumber','bolno','trackingnumber','tracking')] || r[6] || '';
-      var logMemoVal   = r[_c('logisticsmemointernalheader','logisticsmemo','logmemo','internalmemo','memo','notes')] || r[7] || '';
+      // Resolve each column by header alias. If the header exists, use it even when the
+      // cell is EMPTY. Only fall back to a positional index when the header is absent.
+      // (Previously `r[col(...)] || r[N]` meant an empty Bill-of-lading silently fell
+      //  through to the Billing Date column, producing dates as tracking numbers.)
+      var _pick = function(pos, aliases){
+        var i = col.apply(null, aliases);
+        if(i >= 0) return r[i];
+        return (pos < r.length) ? r[pos] : '';
+      };
+      var custNameVal  = _pick(0, ['nameofsoldtoparty','nameofsoldt','nameofcust','customername','soldtoname','nameofparty','supplier']);
+      var delivNoVal   = _pick(1, ['delivery','deliverynumber','deliveryno','deliverynum','delno','dn']);
+      var soVal        = _pick(2, ['referencedocument','refdoc','salesorder','salesordernumber','salesdoc','soref','so']);
+      var custAcctVal  = _pick(3, ['soldtoparty','soldto','accountno','customeraccount','customernumber','kunnr','acct']);
+      var amtVal       = _pick(4, ['planedbillingamount','plannedbillingamount','billingamount','deliveryamount','netamount','amount','amt']);
+      var poNoVal      = _pick(5, ['customerponumber','customerpono','ponumber','custpo','purchaseorder','po']);
+      var bolVal       = _pick(6, ['billoflading','billofladingnumber','bol','bolno']);
+      var logMemoVal   = _pick(7, ['logisticsmemointernalheader','logisticsmemo','logmemo','internalmemo','memo','notes']);
 
       // Normalize delivery number — strip to digits if pure numeric
       var delivNo = String(delivNoVal||'').trim();

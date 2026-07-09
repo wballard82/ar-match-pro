@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<!-- Enterprise security headers. Also set as real HTTP headers via the Netlify _headers file. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTRBOEQ4Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMTJCODg2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZmZmZmYiPkFSPC90ZXh0Pjwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -586,6 +590,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="grid-3">
         <div class="feature-card"><div class="feature-icon">📋</div><h3>Workflow-first design</h3><p>The 8-step guided workflow surfaces what needs action now: upload bank file → upload invoices → Auto Match → Needs Attention → Review → Approve Reconciliation → Posting Export. No digging through tables.</p></div>
         <div class="feature-card"><div class="feature-icon">🔗</div><h3>Advanced matching logic</h3><p>Match by Invoice #, PO #, Sales Order #, Delivery #, Tracking #, and amount tolerance — in automatic priority order. Upload a Delivery Report to enrich invoices with tracking data for remittances that arrive without invoice numbers.</p></div>
+        <div class="feature-card"><div class="feature-icon">🚚</div><h3>SAP delivery bridge — no bank file needed</h3><p>When a customer's remittance quotes its own shipment IDs or carrier tracking numbers instead of your invoice numbers, ARMP walks the chain: tracking / shipment ref → Delivery Report → sales order → open invoice. Match invoices, delivery report, and remittance advice together — a bank file is optional, and cash stays flagged unconfirmed until you reconcile it.</p></div>
         <div class="feature-card"><div class="feature-icon">🤖</div><h3>Match Confidence &amp; AI suggestions</h3><p>Every match shows confidence % and Matched By signals (Invoice #, Amount, Customer Account, Tracking #, etc.). Needs Attention exceptions get suggested resolutions — Cash on Account, Bank Fee, Write-off, Chase Customer, and more.</p></div>
       </div>
     </div>
@@ -778,7 +783,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="lead-header">
       <div class="lead-header-mark">AR</div>
       <h3>Start Your 30-Day Pro Trial</h3>
-      <p>Tell us about your AR workflow. Our team reviews each request to ensure we can deliver a 90-100% match rate for your team — we'll email your personalized trial link within 24-48 hours.</p>
+      <p>Tell us about your AR workflow. We review each request to confirm ARMP is a strong fit for your remittance formats and ERP data, then benchmark the auto-match rate on your own files during the trial. We'll email your personalized trial link within 24-48 hours.</p>
     </div>
     <div id="lead-form-wrap">
       <div class="lead-body">
@@ -889,7 +894,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px 16px;margin-bottom:18px;text-align:left">
         <div style="font-size:11.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">What happens next</div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#334155;line-height:1.55">
-          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">1.</span>We review your AR setup and confirm we can deliver a 90–100% match rate.</div>
+          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">1.</span>We review your AR setup and run ARMP against a sample of your real files, so you see the auto-match rate on your own data before you commit.</div>
           <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">2.</span>You receive a personalized Stripe trial link via email. Credit card required.</div>
           <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">3.</span>30 days full Pro access. Auto-converts to $4,599/mo on day 31 unless cancelled.</div>
         </div>
