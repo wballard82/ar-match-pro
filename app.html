@@ -6814,24 +6814,32 @@ function armpParseRemittanceOCRText(text, opts){
     var body = line.slice(0, amtM.index).trim();
     if(!body) return;
 
-    // Classify the remaining tokens by SHAPE, not position.
-    var trkM = body.match(/1Z[A-Z0-9]{16}/i);
-    var ssM  = body.match(/S\s?[S5]\s?[\dOol]{6}\s?-\s?[A-Z]{2}\s?[\dOol]{1,2}\s?\(?\s?TK-?F\s?\)?/i);
-    var invM = body.match(/\b[5S][\dOol]{9}(?:\s*,\s*[\dOol]{1,12})*\b/);   // 510… incl. shorthand tail
-    var delM = body.match(/\b[7][\dOol]{9}\b/);
+    // Classify the remaining tokens by SHAPE, not position. Patterns are written
+    // against REAL OCR output, where "SS" often reads "$S"/"5S" and "1Z" may lose
+    // characters. Anything recovered is then snapped to the customer's own
+    // delivery-report dictionary.
+    var ssDict  = window._OCR_SS_DICT  || [];
+    var trkDict = window._OCR_TRK_DICT || [];
+
+    var trkM = body.match(/1\s?[Z2]\s?[A-Z0-9]{14,18}/i);
+    var ssM  = body.match(/[\$S5][S5]\s?[\dOolI]{6}\s?[-:]\s?[A-Z]{2}\s?[\dOolI]{1,2}\s?\([A-Z\-_}]{2,6}\)?/i);
+    var invM = body.match(/\b[5S][\dOolI]{9}(?:\s*,\s*[\dOolI]{1,12})*\b/);
+    var delM = body.match(/\b7[\dOolI]{9}\b/);
 
     var invNo = invM ? _fixNumeric(invM[0]) : '';
-    // Shipment refs are alphanumeric: normalize spacing/case, repair only the
-    // numeric run in the middle, and leave the SS prefix and suffix alone.
-    var poNo = '';
+    var poNo  = '';
     if(ssM){
-      poNo = ssM[0].replace(/\s+/g,'').toUpperCase();
-      poNo = poNo.replace(/^S[S5]/, 'SS')
-                 .replace(/^SS([A-Z0-9]{6})/, function(_m,g){ return 'SS' + _fixDigits(g); })
-                 .replace(/-([A-Z]{2})([A-Z0-9]{1,2})\(/, function(_m,a,b){ return '-' + a + _fixDigits(b) + '('; })
-                 .replace(/\(TKF\)$/, '(TK-F)');
+      poNo = _normalizeShipmentRef(ssM[0]);
+      // repair the digit run after "SS" and the sequence digit before "("
+      poNo = poNo.replace(/^SS([A-Z0-9]{6})/, function(_m,g){ return 'SS' + _fixDigits(g); })
+                 .replace(/-([A-Z]{2})([A-Z0-9]{1,2})\(/, function(_m,a,b){ return '-' + a + _fixDigits(b) + '('; });
+      if(ssDict.length) poNo = _ocrSnap(poNo, ssDict, 3);
     }
-    var trkNo = trkM ? trkM[0].toUpperCase().replace(/\s+/g,'') : '';
+    var trkNo = '';
+    if(trkM){
+      trkNo = trkM[0].toUpperCase().replace(/\s+/g,'').replace(/^12/, '1Z');
+      if(trkDict.length) trkNo = _ocrSnap(trkNo, trkDict, 3);
+    }
     var delNo = delM ? _fixNumeric(delM[0]) : '';
     if(!invNo && !poNo && !trkNo && !delNo) return;   // nothing identifiable
 
@@ -6859,6 +6867,77 @@ function armpParseRemittanceOCRText(text, opts){
     tiesOut: totalSeen !== null && Math.abs(total - totalSeen) < 0.01,
     ocrDerived: true
   };
+}
+
+// Build dictionaries of every VALID shipment reference and tracking number the
+// customer's delivery report contains. OCR output can then be snapped to the
+// nearest real value — the customer's own data acts as an error-correcting code.
+function armpBuildOcrDictionaries(){
+  var ss = new Set(), trk = new Set();
+  try{
+    (DELIV||[]).forEach(function(d){
+      var hay = String(d.logMemo||'') + ' ' + String(d.poNo||'');
+      var m = hay.match(/SS[0-9]{6}-[A-Z]{2}[0-9]{1,2}\(TK-F\)/ig);
+      if(m) m.forEach(function(x){ ss.add(x.toUpperCase()); });
+      if(d.trackingNo) trk.add(String(d.trackingNo).toUpperCase());
+      var bm = String(d.rawBOL||'').match(/1Z[A-Z0-9]{16}/ig);
+      if(bm) bm.forEach(function(x){ trk.add(x.toUpperCase()); });
+    });
+  }catch(e){}
+  window._OCR_SS_DICT = Array.from(ss);
+  window._OCR_TRK_DICT = Array.from(trk);
+  return { ss: window._OCR_SS_DICT, trk: window._OCR_TRK_DICT };
+}
+
+function _levenshtein(a, b){
+  if(a === b) return 0;
+  if(!a.length) return b.length;
+  if(!b.length) return a.length;
+  var prev = new Array(b.length + 1);
+  for(var j=0;j<=b.length;j++) prev[j] = j;
+  for(var i=1;i<=a.length;i++){
+    var cur = [i];
+    for(var k=1;k<=b.length;k++){
+      cur[k] = Math.min(prev[k] + 1, cur[k-1] + 1, prev[k-1] + (a[i-1] === b[k-1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// Snap an OCR token to the nearest dictionary entry when it's close enough AND
+// unambiguous. If two real references are equally close (e.g. "KB8" sits one
+// edit from both "KB1" and "KB3"), we must NOT guess — picking either would post
+// cash against the wrong shipment. Return the token untouched and let it fail
+// loudly into review instead.
+function _ocrSnap(token, dict, maxDist){
+  if(!token || !dict || !dict.length) return token;
+  var up = token.toUpperCase();
+  if(dict.indexOf(up) >= 0) return up;
+  var best = null, bestD = Infinity, tied = 0;
+  for(var i=0;i<dict.length;i++){
+    var cand = dict[i];
+    if(Math.abs(cand.length - up.length) > maxDist) continue;
+    var dst = _levenshtein(up, cand);
+    if(dst < bestD){ bestD = dst; best = cand; tied = 1; if(dst === 0) break; }
+    else if(dst === bestD){ tied++; }
+  }
+  if(!best || bestD > maxDist) return token;   // nothing close enough
+  if(tied > 1) return token;                   // ambiguous — refuse to guess
+  return best;
+}
+
+// Repair the systematic character confusions OCR makes on these refs.
+// Measured on real screenshots: "SS" reads as "$S" / "5S" / "S5",
+// and "(TK-F)" reads as "(TICF)" / "(TKF)" / "(TK-F}".
+function _normalizeShipmentRef(raw){
+  var t = String(raw||'').toUpperCase().replace(/\s+/g,'');
+  t = t.replace(/^[\$S5][S5]/, 'SS');
+  t = t.replace(/\((TICF|TKF|TK-F\}|TK_F|TKF\)|TIC-F)\)?$/, '(TK-F)');
+  t = t.replace(/\(TK-F\}$/, '(TK-F)');
+  if(!/\(TK-F\)$/.test(t)) t = t.replace(/\([^)]*\)?$/, '(TK-F)');
+  t = t.replace(/[:]/g, '-');
+  return t;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -15827,11 +15906,55 @@ var _OCR = {
     });
     return this.loading;
   },
+  // Preprocess for table OCR. Measured on real remittance screenshots:
+  //   raw image, default PSM ........ 26/40 amounts, 5/40 refs
+  //   white-composite + 2x + grayscale, PSM 4 (columns of text) ... 40/40, 31/31
+  // Upscaling beyond 2x degrades accuracy on screen-resolution captures.
+  _preprocess: function(imageFile){
+    return new Promise(function(resolve){
+      try{
+        var img = new Image();
+        var url = URL.createObjectURL(imageFile);
+        img.onload = function(){
+          try{
+            var SCALE = 2;
+            var cv = document.createElement('canvas');
+            cv.width = img.naturalWidth * SCALE;
+            cv.height = img.naturalHeight * SCALE;
+            var ctx = cv.getContext('2d');
+            if(!ctx){ URL.revokeObjectURL(url); return resolve(imageFile); }
+            // Flatten transparency onto white — an alpha channel wrecks OCR.
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, cv.width, cv.height);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, cv.width, cv.height);
+            // Grayscale (no thresholding — binarizing screen captures loses strokes)
+            var d = ctx.getImageData(0, 0, cv.width, cv.height);
+            var px = d.data;
+            for(var i=0;i<px.length;i+=4){
+              var g = (px[i]*0.299 + px[i+1]*0.587 + px[i+2]*0.114)|0;
+              px[i]=px[i+1]=px[i+2]=g;
+            }
+            ctx.putImageData(d, 0, 0);
+            URL.revokeObjectURL(url);
+            cv.toBlob(function(b){ resolve(b || imageFile); }, 'image/png');
+          }catch(e){ URL.revokeObjectURL(url); resolve(imageFile); }
+        };
+        img.onerror = function(){ URL.revokeObjectURL(url); resolve(imageFile); };
+        img.src = url;
+      }catch(e){ resolve(imageFile); }
+    });
+  },
   recognize: async function(imageFile){
     var Tess = await this.ensureLoaded();
+    var prepped = await this._preprocess(imageFile);
     var worker = await Tess.createWorker('eng');
     try {
-      var result = await worker.recognize(imageFile);
+      // PSM 4 = "assume a single column of text of variable sizes" — the mode
+      // that actually reads tabular remittances. The default (3) mangles them.
+      try{ await worker.setParameters({ tessedit_pageseg_mode: '4' }); }catch(e){}
+      var result = await worker.recognize(prepped);
       return result.data.text || '';
     } finally {
       try { await worker.terminate(); } catch(e){}
@@ -18767,6 +18890,7 @@ async function handleFile(inp){
             return;
           }
           try{ armpBuildCustomerDirectory(); }catch(e){}
+          try{ armpBuildOcrDictionaries(); }catch(e){}
           var _rdCust = { a:'', c:'' };
           try{ _rdCust = armpResolveCustomer(_rdOcrText + ' \n ' + f.name); }catch(e){}
           var _rdParsed = armpParseRemittanceOCRText(_rdOcrText, {
