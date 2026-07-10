@@ -6532,6 +6532,27 @@ function _buildDelivIndexes(){
 // resolver used by both bank-file and remittance-only matching.
 // ════════════════════════════════════════════════════════════════════════════
 
+// Normalize a date-ish value ("4/9/26", "04/09/2026", Date) → "2026-04-09".
+// Two-digit years map to 2000+. Returns '' when unparseable.
+function _normDateKey(v){
+  if(!v && v!==0) return '';
+  if(v instanceof Date && !isNaN(v)) {
+    return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
+  }
+  var s = String(v).trim();
+  if(!s) return '';
+  var m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(m){
+    var yy = parseInt(m[3],10); if(yy < 100) yy += 2000;
+    return yy+'-'+String(parseInt(m[1],10)).padStart(2,'0')+'-'+String(parseInt(m[2],10)).padStart(2,'0');
+  }
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return m[1]+'-'+String(parseInt(m[2],10)).padStart(2,'0')+'-'+String(parseInt(m[3],10)).padStart(2,'0');
+  var dt = new Date(s);
+  if(!isNaN(dt)) return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+  return '';
+}
+
 // Expand SAP invoice shorthand: "5105205708, 09, 5105196931, 32"
 //   → ["5105205708","5105205709","5105196931","5105196932"]
 // A short token (1-3 digits) inherits the prefix of the previous full number.
@@ -6563,11 +6584,13 @@ function armpBuildRemittanceIndexes(){
       var hay = String(d.logMemo||'') + ' ' + String(d.poNo||'');
       var m = hay.match(/SS[0-9]{6}-[A-Z]{2}[0-9]{1,2}\(TK-F\)/ig);
       if(m){
-        m.forEach(function(ss){
-          var k = ss.toUpperCase();
+        // NOTE: do NOT deduplicate. Repeated delivery rows are distinct billing
+        // line items; their Planned Billing Amounts must all be summed for the
+        // shipment total to tie to the remittance.
+        var uniqRefs = Array.from(new Set(m.map(function(x){ return x.toUpperCase(); })));
+        uniqRefs.forEach(function(k){
           if(!ssBridge.has(k)) ssBridge.set(k, []);
-          var arr = ssBridge.get(k);
-          if(!arr.some(function(x){ return x.deliveryNo===d.deliveryNo && x.salesOrder===d.salesOrder; })) arr.push(d);
+          ssBridge.get(k).push(d);
         });
       }
     });
@@ -6640,52 +6663,76 @@ function armpResolveRemittanceLine(line){
       }
     }
 
-    // ── 2b. Narrow candidates: invoices whose Reference Key 3 matches the
-    // delivery's sales order AND whose Payment reference matches the delivery's
-    // customer PO. Intersecting both keys cuts false candidates substantially.
-    var refdocs = new Set(delRows.map(function(d){ return String(d.salesOrder||'').trim(); }).filter(Boolean));
-    var custPOs = new Set(delRows.map(function(d){ return String(d.poNo||'').trim(); }).filter(Boolean));
+    // ── 2b. SO + BILLING-DATE GROUPING (validated against real SAP data) ──
+    // A shipment's delivery rows carry a Planned Billing Amount each. Group them
+    // by (sales order, billing date) — that group is exactly what one invoice
+    // bills. Find the invoice under that sales order, dated that billing date,
+    // whose amount equals the group total. Duplicate delivery rows are REAL line
+    // items and must be summed, not deduplicated.
+    var groups = new Map();     // "so|billingDate" → {so, bd, total}
+    delRows.forEach(function(d){
+      var so = String(d.salesOrder||'').trim();
+      var bd = d.billingDate || '';
+      var pa = parseFloat(d.amount||0) || 0;
+      if(!so || !pa) return;
+      var k = so + '|' + bd;
+      if(!groups.has(k)) groups.set(k, { so:so, bd:bd, total:0 });
+      groups.get(k).total += pa;
+    });
+
+    var picked = [], used = new Set(), allOk = groups.size > 0;
+    groups.forEach(function(g){
+      if(!allOk) return;
+      var pool = (invByRef3.get(g.so)||[]).filter(function(v){
+        if(v.s || used.has(String(v.i))) return false;
+        return !g.bd || !v.dt2 || _normDateKey(v.dt2) === g.bd;
+      });
+      var ex = pool.filter(function(v){ return Math.abs((v.amt||0) - g.total) < 0.01; });
+      if(ex.length === 1){ picked.push(ex[0]); used.add(String(ex[0].i)); return; }
+      var sub = (typeof _enumDistinctSubsets==='function') ? _enumDistinctSubsets(pool, g.total, 0.01, 2) : [];
+      if(sub.length === 1){ sub[0].forEach(function(v){ picked.push(v); used.add(String(v.i)); }); return; }
+      allOk = false;
+    });
+    if(allOk && picked.length){
+      var pTot = picked.reduce(function(s,v){ return s+(v.amt||0); },0);
+      if(Math.abs(pTot - amt) < 0.01){
+        res.invoices = picked;
+        res.method = 'Delivery bridge — sales order + billing date';
+        res.confidence = 95;
+        return res;
+      }
+    }
+
+    // ── 2c. Fall back to candidates under the shipment's sales orders ──
+    var refdocs = new Set(); groups.forEach(function(g){ refdocs.add(g.so); });
+    if(!refdocs.size) delRows.forEach(function(d){ if(d.salesOrder) refdocs.add(String(d.salesOrder).trim()); });
     var cands = [], seen = new Set();
     refdocs.forEach(function(rd){
       (invByRef3.get(rd)||[]).forEach(function(v){
-        if(v.s) return;                              // already applied
-        var poOk = !custPOs.size || custPOs.has(String(v.po||'').trim());
-        if(poOk && !seen.has(String(v.i))){ seen.add(String(v.i)); cands.push(v); }
+        if(v.s || seen.has(String(v.i))) return;
+        seen.add(String(v.i)); cands.push(v);
       });
     });
-    if(!cands.length){                               // fallback: sales order only
-      refdocs.forEach(function(rd){
-        (invByRef3.get(rd)||[]).forEach(function(v){
-          if(v.s) return;
-          if(!seen.has(String(v.i))){ seen.add(String(v.i)); cands.push(v); }
-        });
-      });
-    }
     res.candidates = cands;
     if(cands.length){
-      // Disambiguate by exact amount (the remittance states what it's paying)
       var exact = cands.filter(function(v){ return Math.abs((v.amt||0) - amt) < 0.01; });
       if(exact.length === 1){
         res.invoices = exact;
-        res.method = 'Delivery bridge — ' + (ref && ssBridge.has(ref.toUpperCase()) ? 'shipment ref' : 'tracking no');
-        res.confidence = 97;
+        res.method = 'Delivery bridge — exact amount within shipment';
+        res.confidence = 93;
         return res;
       }
       if(exact.length > 1){
         res.method = 'Delivery bridge — ambiguous (' + exact.length + ' invoices share this amount)';
-        res.confidence = 0;
-        res.candidates = exact;
+        res.confidence = 0; res.candidates = exact;
         return res;
       }
-      // No single invoice equals the amount — the shipment was billed across
-      // several invoices. Enumerate distinct combinations; a unique one is safe
-      // to apply, 2+ means a specialist must choose.
-      var pool = cands.slice().sort(function(a,b){ return (a.dt2||'') < (b.dt2||'') ? -1 : 1; }).slice(0, 16);
-      var subsets = (typeof _enumDistinctSubsets === 'function') ? _enumDistinctSubsets(pool, amt, 0.01, 2) : [];
+      var pool2 = cands.slice().sort(function(a,b){ return (b.amt||0)-(a.amt||0); }).slice(0,16);
+      var subsets = (typeof _enumDistinctSubsets === 'function') ? _enumDistinctSubsets(pool2, amt, 0.01, 2) : [];
       if(subsets.length === 1){
         res.invoices = subsets[0];
         res.method = 'Delivery bridge — multi-invoice allocation';
-        res.confidence = 93;
+        res.confidence = 90;
         return res;
       }
       if(subsets.length > 1){
@@ -19315,6 +19362,7 @@ function processImport(){
         rawBOL:     bol,        // original BOL field for fallback matching
         amount:     parseFloat(String(amtVal||'0').replace(/[$,\s]/g,'')) || 0,
         shipDate:   '',
+        billingDate: _normDateKey(_pick(6, ['billingdate','billdate','invoicedate'])),
         rawRow:     r.join(',')
       };
     }).filter(function(d){
@@ -19340,16 +19388,13 @@ function processImport(){
       var _k = String(key).trim().toUpperCase().replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g,'');
       if(!_k) return;
       if(!_trkBridge.has(_k)) _trkBridge.set(_k, []);
-      // Avoid exact duplicates (same deliveryNo + SO)
-      var _arr = _trkBridge.get(_k);
-      var _dup = _arr.some(function(x){ return x.deliveryNo===delRow.deliveryNo && x.salesOrder===delRow.salesOrder; });
-      if(!_dup) _arr.push(delRow);
-      // Also store original casing as fallback
+      // Keep EVERY delivery row: repeated rows are distinct billing line items
+      // whose Planned Billing Amounts must be summed for the shipment to tie.
+      _trkBridge.get(_k).push(delRow);
       var _korig = String(key).trim();
       if(_korig !== _k){
         if(!_trkBridge.has(_korig)) _trkBridge.set(_korig, []);
-        var _arr2 = _trkBridge.get(_korig);
-        if(!_arr2.some(function(x){ return x.deliveryNo===delRow.deliveryNo; })) _arr2.push(delRow);
+        _trkBridge.get(_korig).push(delRow);
       }
     }
 
