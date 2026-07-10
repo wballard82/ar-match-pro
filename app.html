@@ -15,7 +15,7 @@
      real HTTP response headers at the CDN/host (Netlify _headers file):
        Content-Security-Policy, X-Content-Type-Options: nosniff,
        X-Frame-Options: DENY, Strict-Transport-Security, Referrer-Policy. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://js.stripe.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: data: https://api.anthropic.com https://api.stripe.com https://cdnjs.cloudflare.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://js.stripe.com; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: data: https://api.anthropic.com https://api.stripe.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://tessdata.projectnaptha.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
@@ -2777,19 +2777,20 @@ body.app-active #app {
       <div class="armp-setup-step" id="armp-setup-step-3" data-state="pending">
         <div class="armp-setup-step-circle"><span class="armp-setup-step-num">3</span><span class="armp-setup-step-check">✓</span></div>
         <div class="armp-setup-step-text">
-          <div class="armp-setup-step-label">Upload Remittance Details</div>
-          <div class="armp-setup-step-sub">Customer remittance advice — contains Invoice #, PO #, Sales Order #, Tracking #, amounts, and remarks</div>
-        </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Upload Remittance Details</button>
-      </div>
-      <div class="armp-setup-step" id="armp-setup-step-4" data-state="pending">
-        <div class="armp-setup-step-circle"><span class="armp-setup-step-num">4</span><span class="armp-setup-step-check">✓</span></div>
-        <div class="armp-setup-step-text">
           <div class="armp-setup-step-label">Upload Delivery Report</div>
           <div class="armp-setup-step-sub">Delivery, tracking, bill of lading, logistics memo, PO, and sales order bridge — XLSX, CSV</div>
           <div id="armp-deliv-status" style="font-size:11px;color:var(--g-t);margin-top:4px"></div>
         </div>
-        <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Delivery Report</button>
+        <button class="btn btn-outline btn-xs" id="armp-setup-skip-3" onclick="armpSetupSkipDelivery()" style="margin-right:8px" title="Match without the delivery bridge — shipment references will not resolve to invoices">Skip</button>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-3" onclick="armpSetupClickStep(3)">Upload Delivery Report</button>
+      </div>
+      <div class="armp-setup-step" id="armp-setup-step-4" data-state="pending">
+        <div class="armp-setup-step-circle"><span class="armp-setup-step-num">4</span><span class="armp-setup-step-check">✓</span></div>
+        <div class="armp-setup-step-text">
+          <div class="armp-setup-step-label">Upload Remittance Details</div>
+          <div class="armp-setup-step-sub">Customer remittance advice — Invoice #, PO #, Sales Order #, Tracking #, amounts, remarks. CSV, XLSX, or screenshot</div>
+        </div>
+        <button class="armp-setup-step-cta" id="armp-setup-cta-4" onclick="armpSetupClickStep(4)">Upload Remittance Details</button>
       </div>
       <!-- Dynamic recommendation area -->
       <div id="armp-setup-recommendation" style="display:none;padding:0 4px"></div>
@@ -9186,7 +9187,9 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
   // A remittance that quotes invoice numbers throughout needs no delivery report,
   // so its summary shows immediately.
   var _needsDelivery = lines.some(function(l){ return !l.invNo; });
-  if(_needsDelivery && (typeof DELIV==='undefined' || !DELIV || !DELIV.length)){
+  var _deliverySkipped = false;
+  try{ _deliverySkipped = !!(workflowState && workflowState._deliverySkipped); }catch(e){}
+  if(_needsDelivery && !_deliverySkipped && (typeof DELIV==='undefined' || !DELIV || !DELIV.length)){
     try{ workflowState._pendingRemSummary = _rdSummaryHtml; }catch(e){}
     toast('Imported '+lines.length+' remittance lines ($'+$f(remTotal)+'). Add the Delivery Report to bridge tracking numbers to invoices — the import summary will open once it loads.','info');
     try{ armpUpdateSetupState(); }catch(e){}
@@ -11257,9 +11260,12 @@ function _updateWorkflowState(){
   workflowState.remittanceDetailsLoaded=!!(typeof REM_DETAIL!=='undefined' && REM_DETAIL.length>0) || !!(typeof ERS_LINES!=='undefined' && ERS_LINES.length>0) || !!(typeof VMI_LINES!=='undefined' && VMI_LINES.length>0) || !!workflowState._remittanceSkipped || !!workflowState._remittanceImagePending;
   workflowState.autoMatchRun          = autoMatchHasRun;
   // Sequential: 1→2→3→4→5→6. Optional steps (2,4) skippable but still shown.
-  if(!workflowState.invoiceReportLoaded)         workflowState.activeStep = 1;
-  else if(!workflowState.deliveryReportLoaded)   workflowState.activeStep = 2;
-  else if(!workflowState.bankFileLoaded)          workflowState.activeStep = 3;
+  // Order: 1 Invoice → 2 Bank → 3 Delivery (skippable) → 4 Remittance → 5 Auto Match.
+  // Delivery precedes remittance so the tracking→invoice bridge exists before the
+  // remittance is parsed, which is what lets the import summary be meaningful.
+  if(!workflowState.invoiceReportLoaded)          workflowState.activeStep = 1;
+  else if(!workflowState.bankFileLoaded && !workflowState._bankSkipped) workflowState.activeStep = 2;
+  else if(!workflowState.deliveryReportLoaded && !workflowState._deliverySkipped) workflowState.activeStep = 3;
   else if(!workflowState.remittanceDetailsLoaded) workflowState.activeStep = 4;
   else if(!workflowState.autoMatchRun)            workflowState.activeStep = 5;
   else                                            workflowState.activeStep = 6;
@@ -11272,8 +11278,8 @@ function armpUpdateSetupState(){
     var steps = [
       {id:'armp-setup-step-1', done:ws.invoiceReportLoaded,    sub_done:ws._invoiceSkipped?'Skipped — upload anytime':INV.length.toLocaleString()+' invoice'+(INV.length===1?'':'s')+' imported',         sub_pending:'Open invoices / account open items — XLSX, CSV, or image'},
       {id:'armp-setup-step-2', done:ws.bankFileLoaded,          sub_done:(PAY.length>0?PAY.length+' bank payment'+(PAY.length===1?'':'s')+' loaded':(ws._bankImagePending?'Image uploaded — extraction pending':(ws._bankSkipped?'Skipped — upload anytime':'Pending'))), sub_pending:'BAI2, CSV, Excel, PDF, or bank summary screenshot'},
-      {id:'armp-setup-step-3', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(ws._remittanceImagePending?'Screenshot uploaded — extraction pending':((typeof ERS_LINES!=='undefined'&&ERS_LINES.length>0?ERS_LINES.length+' ERS':'')+(typeof VMI_LINES!=='undefined'&&VMI_LINES.length>0?(ERS_LINES.length>0?' + ':'')+VMI_LINES.length+' VMI':'')+(REM_DETAIL&&REM_DETAIL.length?((ERS_LINES.length||VMI_LINES.length)?' + ':'')+REM_DETAIL.length+' remittance':''))+' lines loaded'), sub_pending:'Optional — remittance with invoice, tracking, PO refs'},
-      {id:'armp-setup-step-4', done:ws.deliveryReportLoaded,   sub_done:ws._deliverySkipped?'Skipped — upload anytime':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Optional — tracking, BOL, PO, sales order bridge data'}
+      {id:'armp-setup-step-3', done:ws.deliveryReportLoaded || !!ws._deliverySkipped, sub_done:ws._deliverySkipped?'Skipped — shipment refs will not bridge to invoices':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Bridges tracking / BOL / shipment refs to sales orders and invoices'},
+      {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(ws._remittanceImagePending?'Screenshot uploaded — extraction pending':((typeof ERS_LINES!=='undefined'&&ERS_LINES.length>0?ERS_LINES.length+' ERS':'')+(typeof VMI_LINES!=='undefined'&&VMI_LINES.length>0?(ERS_LINES.length>0?' + ':'')+VMI_LINES.length+' VMI':'')+(REM_DETAIL&&REM_DETAIL.length?((ERS_LINES.length||VMI_LINES.length)?' + ':'')+REM_DETAIL.length+' remittance':''))+' lines loaded'), sub_pending:'Invoice, tracking, PO refs — CSV, XLSX, or screenshot'}
     ];
     for(var si=0;si<steps.length;si++){
       var el=document.getElementById(steps[si].id);
@@ -11375,6 +11381,31 @@ function armpSkipCurrentStep(){
   }
   armpUpdateSetupState();
 }
+// Skip the Delivery Report. Matching still runs, but shipment references
+// (tracking numbers, SS refs, BOL) can no longer be bridged to sales orders and
+// invoices — those lines will land in exceptions rather than auto-matching. Say
+// so plainly rather than letting the operator discover it in the results.
+function armpSetupSkipDelivery(){
+  try{
+    workflowState._deliverySkipped = true;
+    var _needBridge = (typeof REM_DETAIL!=='undefined' && REM_DETAIL && REM_DETAIL.some(function(l){ return !l.invNo; }));
+    toast(_needBridge
+      ? 'Delivery Report skipped. Remittance lines that quote only a shipment or tracking reference cannot be matched to invoices — expect them in Needs Attention.'
+      : 'Delivery Report skipped — upload it anytime to enable tracking → invoice bridging.','warn');
+    addAudit('Setup', 'Delivery Report skipped by user');
+    // A remittance summary held back waiting for the bridge should now be shown,
+    // because the operator has decided there will not be one.
+    try{
+      if(workflowState._pendingRemSummary){
+        var html = workflowState._pendingRemSummary;
+        workflowState._pendingRemSummary = null;
+        showModal('Remittance Details — Import Summary', html);
+      }
+    }catch(e){}
+    armpUpdateSetupState();
+  }catch(e){ console.warn('[skip delivery]', e); }
+}
+
 function armpSetupClickStep(n){
   try{
     // Trigger the OS file picker directly and import in the background — no
@@ -11383,8 +11414,8 @@ function armpSetupClickStep(n){
     var cfg = {
       1:{type:'inv',      bank:false},
       2:{type:'rem',      bank:true },
-      3:{type:'remdetail',bank:false},
-      4:{type:'del',      bank:false}
+      3:{type:'del',      bank:false},
+      4:{type:'remdetail',bank:false}
     }[n];
     if(!cfg) return;
     IMP_TYPE = cfg.type;
@@ -13064,6 +13095,10 @@ function armpClearEverythingCore(){
     workflowState._remittanceImagePending=false;
     workflowState._remittanceOcrPending=false;
     workflowState._pendingRemSummary=null;
+    workflowState._deliverySkipped=false;
+    workflowState._bankSkipped=false;
+    workflowState._remittanceSkipped=false;
+    workflowState._invoiceSkipped=false;
   } }catch(e){}
   try{ _invalidateInvIndexes(); }catch(e){}
   try{ if(typeof _resetWorkflowState==='function') _resetWorkflowState(); }catch(e){}
@@ -16007,11 +16042,32 @@ var _OCR = {
       }catch(e){ resolve(imageFile); }
     });
   },
-  recognize: async function(imageFile){
-    var Tess = await this.ensureLoaded();
+  recognize: async function(imageFile, onStage){
+    var stage = function(s){ try{ if(onStage) onStage(s); }catch(e){} };
+    var Tess;
+    stage('Loading OCR engine…');
+    try{
+      Tess = await this.ensureLoaded();
+    }catch(e){
+      throw new Error('OCR_LIBRARY: the OCR library could not load from the CDN. '+
+        'Check the network and that the Content-Security-Policy allows cdnjs.cloudflare.com. ('+e.message+')');
+    }
+    stage('Preparing image…');
     var prepped = await this._preprocess(imageFile);
-    var worker = await Tess.createWorker('eng');
+    stage('Starting OCR worker…');
+    var worker;
+    try{
+      // Tesseract downloads its WASM core (jsdelivr) and language data
+      // (tessdata.projectnaptha.com) on first use. If CSP blocks either origin,
+      // this is where it fails — so name it explicitly.
+      worker = await Tess.createWorker('eng');
+    }catch(e){
+      throw new Error('OCR_WORKER: the OCR engine could not start. It downloads its WASM core and '+
+        'English language data on first use; the Content-Security-Policy must allow '+
+        'cdn.jsdelivr.net and tessdata.projectnaptha.com. ('+e.message+')');
+    }
     try {
+      stage('Reading text…');
       // PSM 4 = "assume a single column of text of variable sizes" — the mode
       // that actually reads tabular remittances. The default (3) mangles them.
       try{ await worker.setParameters({ tessedit_pageseg_mode: '4' }); }catch(e){}
@@ -18969,12 +19025,27 @@ async function handleFile(inp){
           // from an unverified read.
           var _rdOcrText = '';
           try{
-            showProgress('Reading remittance screenshot…', 40);
-            _rdOcrText = await _OCR.recognize(f);
+            showProgress('Reading remittance screenshot…', 20);
+            _rdOcrText = await _OCR.recognize(f, function(st){
+              try{ showProgress(st, 45); }catch(e){}
+            });
           }catch(err){
             hideProgress();
             workflowState._remittanceImagePending = true;
-            toast('Could not read the remittance screenshot (OCR unavailable). Upload it as .csv or .xlsx to run Auto Match.','warn');
+            console.error('[remittance OCR]', err);
+            var _why = String(err && err.message || err);
+            showModal('Could not read the remittance screenshot',
+              '<div style="font-size:13px;color:var(--t2);line-height:1.55">'+
+                '<p style="margin:0 0 10px">ARMP tried to read <strong>'+_escapeHtml(f.name)+'</strong> with on-device OCR and could not start the engine.</p>'+
+                '<div style="background:var(--surface2);border:1px solid var(--bdr);border-radius:8px;padding:10px;font-family:var(--mono);font-size:11.5px;color:var(--t3);white-space:pre-wrap;margin-bottom:12px">'+
+                  _escapeHtml(_why)+
+                '</div>'+
+                '<p style="margin:0 0 6px"><strong>What to do now</strong></p>'+
+                '<ul style="margin:0 0 10px 18px;padding:0">'+
+                  '<li>Export the remittance as <strong>.csv</strong> or <strong>.xlsx</strong> and import it — matching is identical and more accurate.</li>'+
+                  '<li>If this persists, the OCR engine is being blocked by the network or the site\'s Content-Security-Policy.</li>'+
+                '</ul>'+
+              '</div>');
             var _mo0=document.getElementById('imp-modal'); if(_mo0)_mo0.classList.remove('open');
             return;
           }
