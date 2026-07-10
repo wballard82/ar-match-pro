@@ -15,7 +15,7 @@
      real HTTP response headers at the CDN/host (Netlify _headers file):
        Content-Security-Policy, X-Content-Type-Options: nosniff,
        X-Frame-Options: DENY, Strict-Transport-Security, Referrer-Policy. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com https://api.stripe.com https://cdnjs.cloudflare.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://js.stripe.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: data: https://api.anthropic.com https://api.stripe.com https://cdnjs.cloudflare.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
@@ -6753,7 +6753,211 @@ function armpResolveRemittanceLine(line){
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// TWO-PASS REMITTANCE ALLOCATOR
+// REMITTANCE SCREENSHOT PARSER
+//
+// Turns raw OCR text of a remittance table into detail lines. Screenshots are a
+// legitimate input — customers paste them into email constantly — but OCR is
+// lossy, so every line produced here is marked `_ocrDerived` and the batch is
+// held for review before any cash posts. The parser is anchored on the ONE token
+// OCR reads most reliably: the trailing money amount. Everything else on the row
+// is then classified by shape rather than by column position, which survives the
+// column drift OCR introduces.
+// ════════════════════════════════════════════════════════════════════════════
+function armpParseRemittanceOCRText(text, opts){
+  opts = opts || {};
+  var lines = String(text||'').split(/\r?\n/);
+  var out = [];
+  var total = 0, totalSeen = null;
+
+  // OCR confuses these characters, but ONLY repair tokens that are meant to be
+  // all-digits. Applying letter→digit fixes to an alphanumeric reference like
+  // "SS260409-KB3" would corrupt it (the second S sits before digits).
+  function _fixDigits(s){
+    return String(s||'')
+      .replace(/[Oo]/g,'0')
+      .replace(/[lI]/g,'1')
+      .replace(/[Ss]/g,'5');
+  }
+  function _fixNumeric(tok){
+    var t = String(tok||'').replace(/\s+/g,'');
+    // Only touch it if it is already dominated by digits.
+    var digits = (t.match(/\d/g)||[]).length;
+    return (digits >= Math.ceil(t.replace(/[,]/g,'').length * 0.6)) ? _fixDigits(t) : t;
+  }
+  function _money(tok){
+    var m = String(tok).replace(/[$\s]/g,'').match(/^-?\(?\d{1,3}(?:,\d{3})*(?:\.\d{2})?\)?$|^-?\(?\d+(?:\.\d{2})?\)?$/);
+    if(!m) return null;
+    var neg = /^\(|\)$/.test(tok);
+    var v = parseFloat(String(tok).replace(/[$,()\s]/g,''));
+    if(isNaN(v)) return null;
+    return neg ? -v : v;
+  }
+
+  lines.forEach(function(raw){
+    var line = raw.replace(/\s+/g,' ').trim();
+    if(!line) return;
+
+    // Grand-total row — capture for tie-out, don't emit as a detail line.
+    if(/\btotal\b/i.test(line)){
+      var tm = line.match(/([\d,]+\.\d{2}|\d{1,3}(?:,\d{3})+)\s*$/);
+      if(tm) totalSeen = _money(tm[1]);
+      return;
+    }
+    // Header row
+    if(/\b(inv\s*no|invoice\s*#|amount|remarks|supplier)\b/i.test(line) && !/\d{4}/.test(line)) return;
+
+    // Anchor: the last money-looking token on the row.
+    var amtM = line.match(/(\(?\$?\s?\d{1,3}(?:,\d{3})*\.\d{2}\)?|\(?\$?\s?\d{1,3}(?:,\d{3})+\)?)\s*$/);
+    if(!amtM) return;
+    var amt = _money(amtM[1]);
+    if(amt === null || Math.abs(amt) < 0.005) return;
+    var body = line.slice(0, amtM.index).trim();
+    if(!body) return;
+
+    // Classify the remaining tokens by SHAPE, not position.
+    var trkM = body.match(/1Z[A-Z0-9]{16}/i);
+    var ssM  = body.match(/S\s?[S5]\s?[\dOol]{6}\s?-\s?[A-Z]{2}\s?[\dOol]{1,2}\s?\(?\s?TK-?F\s?\)?/i);
+    var invM = body.match(/\b[5S][\dOol]{9}(?:\s*,\s*[\dOol]{1,12})*\b/);   // 510… incl. shorthand tail
+    var delM = body.match(/\b[7][\dOol]{9}\b/);
+
+    var invNo = invM ? _fixNumeric(invM[0]) : '';
+    // Shipment refs are alphanumeric: normalize spacing/case, repair only the
+    // numeric run in the middle, and leave the SS prefix and suffix alone.
+    var poNo = '';
+    if(ssM){
+      poNo = ssM[0].replace(/\s+/g,'').toUpperCase();
+      poNo = poNo.replace(/^S[S5]/, 'SS')
+                 .replace(/^SS([A-Z0-9]{6})/, function(_m,g){ return 'SS' + _fixDigits(g); })
+                 .replace(/-([A-Z]{2})([A-Z0-9]{1,2})\(/, function(_m,a,b){ return '-' + a + _fixDigits(b) + '('; })
+                 .replace(/\(TKF\)$/, '(TK-F)');
+    }
+    var trkNo = trkM ? trkM[0].toUpperCase().replace(/\s+/g,'') : '';
+    var delNo = delM ? _fixNumeric(delM[0]) : '';
+    if(!invNo && !poNo && !trkNo && !delNo) return;   // nothing identifiable
+
+    out.push({
+      custName: opts.custName || '',
+      custAcct: opts.custAcct || '',
+      invNo: invNo, poNo: poNo, trkNo: trkNo, delNo: delNo,
+      soNo:'', creditMemo:'', debitMemo:'',
+      paymentDate: opts.payDate || '', invDate:'', paymentRef:'', bankRef:'',
+      currency:'USD', amt: amt, notes:'',
+      srcFile: opts.fileName || 'screenshot', srcRow: out.length + 1,
+      confidence: 0.6,
+      status:'Pending review',
+      docClass: invNo ? 'Invoice' : delNo ? 'Delivery' : poNo ? 'PO' : 'Tracking',
+      _ocrDerived: true,
+      _raw: line
+    });
+    total += amt;
+  });
+
+  return {
+    lines: out,
+    total: total,
+    statedTotal: totalSeen,
+    tiesOut: totalSeen !== null && Math.abs(total - totalSeen) < 0.01,
+    ocrDerived: true
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CUSTOMER DIRECTORY & RESOLVER
+//
+// Identity must come from the customer's OWN data, never from a filename
+// convention. Different sources carry different halves of the identity:
+//   • Invoice report    → account number (often no name at all)
+//   • Delivery report   → account number AND customer name
+//   • Remittance detail → account and/or name
+//   • Existing payments → names seen on prior bank files
+// The directory unions them, so any source that has ever supplied a name can
+// identify a payer on a screenshot, a wire memo, or an OCR blob.
+// ════════════════════════════════════════════════════════════════════════════
+function _custNorm(s){ return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+function _custTokens(s){
+  return String(s||'').toUpperCase()
+    .replace(/\b(CORPORATION|CORP|COMPANY|CO|INC|INCORPORATED|LTD|LIMITED|LLC|GMBH|SA|NV|BV|PLC|KK|AG)\b/g,' ')
+    .split(/[^A-Z0-9]+/).filter(function(t){ return t.length>1; });
+}
+
+function armpBuildCustomerDirectory(){
+  var dir = new Map();   // account → { a, c, names:Set }
+  var byName = [];       // [{ a, c, norm, tokens }]
+  function add(acct, name){
+    acct = String(acct||'').trim();
+    name = String(name||'').trim();
+    if(!acct && !name) return;
+    var key = acct || ('name:' + _custNorm(name));
+    if(!dir.has(key)) dir.set(key, { a: acct, c: name, names: new Set() });
+    var rec = dir.get(key);
+    if(name){ rec.names.add(name); if(!rec.c) rec.c = name; }
+    if(acct && !rec.a) rec.a = acct;
+  }
+  try{ (INV||[]).forEach(function(v){ add(v.a, v.c); }); }catch(e){}
+  try{ (DELIV||[]).forEach(function(d){ add(d.custAcct, d.custName); }); }catch(e){}
+  try{ (REM_DETAIL||[]).forEach(function(r){ add(r.custAcct, r.custName); }); }catch(e){}
+  try{ (PAY||[]).forEach(function(p){ if(p.c) add(p.a, p.c); }); }catch(e){}
+
+  dir.forEach(function(rec){
+    rec.names.forEach(function(n){
+      byName.push({ a: rec.a, c: n, norm: _custNorm(n), tokens: _custTokens(n) });
+    });
+    if(!rec.names.size && rec.a) byName.push({ a: rec.a, c: '', norm: '', tokens: [] });
+  });
+  window._CUST_DIR = { byAccount: dir, byName: byName };
+  return window._CUST_DIR;
+}
+
+// Resolve a payer from free text (OCR output, wire memo, or a filename).
+// Returns { a, c, score, via } — score 0..100. Account hits beat name hits.
+function armpResolveCustomer(text){
+  if(!window._CUST_DIR) armpBuildCustomerDirectory();
+  var dir = window._CUST_DIR;
+  var out = { a:'', c:'', score:0, via:'' };
+  if(!text) return out;
+  var raw = String(text);
+  var normText = _custNorm(raw);
+
+  // 1. An account number appearing verbatim is definitive.
+  var best = null;
+  dir.byAccount.forEach(function(rec, key){
+    if(!rec.a || rec.a.length < 4) return;
+    if(raw.indexOf(rec.a) >= 0){
+      if(!best || rec.a.length > best.a.length) best = rec;
+    }
+  });
+  if(best) return { a: best.a, c: best.c, score: 100, via: 'account number' };
+
+  // 2. Full normalized customer name contained in the text.
+  var nameHit = null;
+  dir.byName.forEach(function(cand){
+    if(!cand.norm || cand.norm.length < 4) return;
+    if(normText.indexOf(cand.norm) >= 0){
+      if(!nameHit || cand.norm.length > nameHit.norm.length) nameHit = cand;
+    }
+  });
+  if(nameHit) return { a: nameHit.a, c: nameHit.c, score: 95, via: 'customer name' };
+
+  // 3. Token overlap — survives OCR noise, suffixes, and truncation.
+  var textTokens = _custTokens(raw);
+  if(!textTokens.length) return out;
+  var bestTok = null, bestScore = 0;
+  dir.byName.forEach(function(cand){
+    if(!cand.tokens.length) return;
+    var hits = 0;
+    cand.tokens.forEach(function(t){
+      for(var i=0;i<textTokens.length;i++){
+        var u = textTokens[i];
+        if(u === t || (t.length >= 5 && (u.indexOf(t) >= 0 || t.indexOf(u) >= 0))){ hits++; return; }
+      }
+    });
+    if(!hits) return;
+    var score = Math.round((hits / cand.tokens.length) * 90);
+    if(score > bestScore){ bestScore = score; bestTok = cand; }
+  });
+  if(bestTok && bestScore >= 45) return { a: bestTok.a, c: bestTok.c, score: bestScore, via: 'name tokens' };
+  return out;
+}
 //
 // Mirrors how an AR specialist actually clears a customer remittance:
 //
@@ -8776,6 +8980,8 @@ function _confirmRemDetailImport(matchedBankTotal){
   }
 
   REM_DETAIL = parsed.lines;
+  // Real remittance data has arrived — lift the "image only" block on Auto Match.
+  try{ if(typeof workflowState!=='undefined' && workflowState) workflowState._remittanceImagePending=false; }catch(e){}
   _saveParserProfileFromReview();
   ParserLearningProfile.reinforce(parsed.custName, parsed.lines.length, parsed.lines.length);
 
@@ -15608,8 +15814,15 @@ var _OCR = {
       var s = document.createElement('script');
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js';
       s.crossOrigin = 'anonymous';
-      s.onload = function(){ self.loaded = true; resolve(window.Tesseract); };
-      s.onerror = function(){ self.loading = null; reject(new Error('OCR library failed to load')); };
+      var _settled = false;
+      // A blocked, slow, or CSP-refused CDN must never hang the file import.
+      var _to = setTimeout(function(){
+        if(_settled) return;
+        _settled = true; self.loading = null;
+        reject(new Error('OCR library load timed out'));
+      }, 12000);
+      s.onload = function(){ if(_settled) return; _settled=true; clearTimeout(_to); self.loaded = true; resolve(window.Tesseract); };
+      s.onerror = function(){ if(_settled) return; _settled=true; clearTimeout(_to); self.loading = null; reject(new Error('OCR library failed to load')); };
       document.head.appendChild(s);
     });
     return this.loading;
@@ -16915,6 +17128,19 @@ function allocateMultiSource(payment, invIndex, tolerance){
 }
 
 async function runMatch(){
+  // A remittance screenshot was uploaded but no machine-readable remittance
+  // exists. Without detail lines there is nothing to allocate — say so plainly
+  // rather than running and reporting a zero match rate.
+  if(typeof workflowState!=='undefined' && workflowState && workflowState._remittanceImagePending
+     && (typeof REM_DETAIL==='undefined' || !REM_DETAIL || !REM_DETAIL.length)){
+    toast('Remittance was uploaded as an image — ARMP cannot read amounts or invoice references from a picture. Re-upload it as .csv or .xlsx, then run Auto Match.','warn');
+    return;
+  }
+  // Delivery-bridge matching needs the delivery report. Warn before running.
+  if(typeof REM_DETAIL!=='undefined' && REM_DETAIL && REM_DETAIL.length && (!DELIV || !DELIV.length)){
+    toast('Remittance loaded without a Delivery Report — shipment references cannot be bridged to invoices. Upload the Delivery Report for full matching.','warn');
+  }
+
   // ── Remittance-only mode ──────────────────────────────────────────────────
   // A bank file is NOT required. If the customer's remittance advice has been
   // imported, synthesize payment lines from it so invoices + delivery report +
@@ -16984,6 +17210,10 @@ async function runMatch(){
           var rd = REM_DETAIL[a.remIdx] || {};
           var _pay = PAY.find(function(p){ return p._remIdx === a.remIdx; });
           var refTxt = String(rd.invNo || rd.poNo || rd.delNo || rd.trkNo || '');
+          // Lines read from a screenshot are never trusted at full confidence.
+          // The reference and amount may be mis-read, so the allocation is
+          // capped and marked for human verification before posting.
+          if(rd._ocrDerived && a.confidence > 75) a.confidence = 75;
           if(a.allocations.length){
             a.allocations.forEach(function(al){
               var v = al.inv;
@@ -18451,9 +18681,19 @@ async function handleFile(inp){
           console.warn('[OCR] failed, falling back to filename:', err);
         }
 
-        // Filename fallbacks (used when OCR doesn't yield a value)
-        var _fnAmtM = f.name.match(/\$?([\d,]+\.\d{2})/);
-        var _fnAmtFromName = _fnAmtM ? parseFloat(_fnAmtM[1].replace(/,/g,'')) : 0;
+        // Filename fallbacks (used when OCR doesn't yield a value).
+        // Real files look like "TK-Fujikin_Payment__2_305_295.png" — the amount is
+        // group-separated with underscores and has no cents. Accept underscore or
+        // comma separators, with or without a decimal part.
+        var _fnAmtFromName = 0;
+        var _fnAmtM = f.name.match(/(\d{1,3}(?:[,_]\d{3})+(?:\.\d{2})?)/) || f.name.match(/\$\s*(\d+(?:\.\d{2})?)/);
+        if(_fnAmtM){
+          _fnAmtFromName = parseFloat(_fnAmtM[1].replace(/[,_]/g,'')) || 0;
+        }
+        // Payer from filename: leading token before the first underscore/space,
+        // e.g. "TK-Fujikin_Payment__…" → "TK-Fujikin"
+        var _fnPayerM = f.name.match(/^([A-Za-z][A-Za-z0-9.\-&' ]{2,40}?)[_\s]/);
+        var _fnPayer = _fnPayerM ? _fnPayerM[1].trim() : '';
         var _fnDateM = f.name.match(/(\d{1,2})[\-\/_](\d{1,2})[\-\/_](\d{2,4})/);
         var _fnDateFromName = '';
         if(_fnDateM){
@@ -18466,9 +18706,18 @@ async function handleFile(inp){
         var _fnAmt = (_ocrFields && _ocrFields.amount) || _fnAmtFromName;
         var _payDate = (_ocrFields && _ocrFields.date) || _fnDateFromName || new Date().toISOString().slice(0,10);
 
+        // Identify the payer from the customer's OWN data (invoice / delivery /
+        // remittance / prior payments) using the OCR text first, then the wire
+        // memo, then the filename. Never rely on a filename convention.
+        try{ armpBuildCustomerDirectory(); }catch(e){}
+        var _idText = [(_ocrText||''), (_ocrFields && _ocrFields.payer)||'', f.name].join(' \n ');
+        var _resolved = { a:'', c:'', score:0, via:'' };
+        try{ _resolved = armpResolveCustomer(_idText); }catch(e){}
+
         var _imgPay = {
-          bankAcct:'', bankId:(_ocrFields && _ocrFields.origId) || '', a:'',
-          c:(_ocrFields && _ocrFields.payer) || '',
+          bankAcct:'', bankId:(_ocrFields && _ocrFields.origId) || '',
+          a:_resolved.a || '',
+          c:_resolved.c || (_ocrFields && _ocrFields.payer) || _fnPayer || '',
           amt:_fnAmt,
           i:'', po:'', so:'',
           m:(_ocrFields && _ocrFields.method) || 'ACH',
@@ -18485,7 +18734,9 @@ async function handleFile(inp){
           _imageSource:f.name,
           _ocrText:_ocrText,
           _ocrFields:_ocrFields,
-          _needsManualReview:!_ocrFields  // OCR-extracted payments don't need manual review
+          _payerVia:_resolved.via || (_fnPayer ? 'filename' : ''),
+          _payerScore:_resolved.score || 0,
+          _needsManualReview:!_ocrFields || _resolved.score < 90
         };
         // Dedupe check — use amount + source file since customer may be empty
         var _imgKey = (_imgPay.payDate||'')+'|'+(_imgPay.amt||0)+'|'+(_imgPay._imageSource||'');
@@ -18500,8 +18751,50 @@ async function handleFile(inp){
           ? 'Bank payment created from image: $'+$f(_fnAmt)+' — verify details in Payment Queue.'
           : 'Bank image accepted: '+f.name+' — enter payment details in Payment Queue.','info');
       } else {
-        if(IMP_TYPE==='remdetail') workflowState._remittanceImagePending=true;
-        toast('Remittance screenshot accepted: '+f.name+' — extraction pending or manual review may be required.','info');
+        if(IMP_TYPE==='remdetail'){
+          // Remittance screenshots ARE supported. Run OCR, parse the table, and
+          // hold the result for review — OCR is lossy and cash must never post
+          // from an unverified read.
+          var _rdOcrText = '';
+          try{
+            showProgress('Reading remittance screenshot…', 40);
+            _rdOcrText = await _OCR.recognize(f);
+          }catch(err){
+            hideProgress();
+            workflowState._remittanceImagePending = true;
+            toast('Could not read the remittance screenshot (OCR unavailable). Upload it as .csv or .xlsx to run Auto Match.','warn');
+            var _mo0=document.getElementById('imp-modal'); if(_mo0)_mo0.classList.remove('open');
+            return;
+          }
+          try{ armpBuildCustomerDirectory(); }catch(e){}
+          var _rdCust = { a:'', c:'' };
+          try{ _rdCust = armpResolveCustomer(_rdOcrText + ' \n ' + f.name); }catch(e){}
+          var _rdParsed = armpParseRemittanceOCRText(_rdOcrText, {
+            custName:_rdCust.c, custAcct:_rdCust.a, fileName:f.name
+          });
+          hideProgress();
+          if(!_rdParsed.lines.length){
+            workflowState._remittanceImagePending = true;
+            toast('No remittance lines could be read from that screenshot. Try a higher-resolution image, or upload the file as .csv/.xlsx.','warn');
+            var _mo1=document.getElementById('imp-modal'); if(_mo1)_mo1.classList.remove('open');
+            return;
+          }
+          REM_DETAIL = _rdParsed.lines;
+          workflowState._remittanceImagePending = false;
+          workflowState._remittanceOcrPending = true;   // requires user verification
+          try{ saveToStorage(); }catch(e){}
+          try{ _updateUploadStatus(); }catch(e){}
+          var _tieMsg = _rdParsed.statedTotal === null
+            ? 'No total row found to verify against.'
+            : (_rdParsed.tiesOut
+                ? 'Lines tie to the stated total of $'+$f(_rdParsed.statedTotal)+'.'
+                : 'WARNING: lines total $'+$f(_rdParsed.total)+' but the screenshot states $'+$f(_rdParsed.statedTotal)+'.');
+          addAudit('Remittance screenshot', _rdParsed.lines.length+' lines read via OCR · '+_tieMsg);
+          toast('Read '+_rdParsed.lines.length+' remittance lines from the screenshot ($'+$f(_rdParsed.total)+'). '+_tieMsg+' Verify before posting.',
+                _rdParsed.tiesOut ? 'info' : 'warn');
+        } else {
+          toast('Image accepted: '+f.name+' — extraction pending or manual review may be required.','info');
+        }
       }
       if(autoMatchHasRun) workflowState.newDataSinceLastMatch=true;
       try{_updateUploadStatus();}catch(e){}
