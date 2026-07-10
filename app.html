@@ -7563,6 +7563,9 @@ function enrichOpenItemsWithDeliveryReport(){
   var msg = 'Delivery Report synced: ' + enriched + ' open items enriched';
   if(unmatched > 0) msg += ', ' + unmatched + ' delivery rows unmatched';
   toast(msg);
+  // A remittance was imported earlier and its summary was held back because the
+  // delivery bridge did not exist yet. It exists now — show it.
+  try{ setTimeout(function(){ armpFlushPendingRemSummary(); }, 350); }catch(e){}
   return { enriched: enriched, unmatched: unmatched };
 }
 
@@ -9158,7 +9161,7 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
   }).join('');
   var more = lines.length>80?'<tr><td colspan="9" style="text-align:center;color:var(--t3);font-size:11px;padding:6px">+'+(lines.length-80)+' more rows</td></tr>':'';
 
-  showModal('Remittance Details — Import Summary',
+  var _rdSummaryHtml = (
     tkDiagHtml + varHtml+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
       '<div style="font-size:12.5px;color:var(--t2)"><strong>'+lines.length+'</strong> lines · $'+$f(remTotal)+'  · '+classSummary+'</div>'+
@@ -9175,6 +9178,33 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
       : '✓ Run <strong>Auto Match</strong>. Invoice #, PO #, SO #, Delivery #, Tracking all used as match signals.')+
     '</div>'
   );
+
+  // The summary describes matching that runs Tracking# → Delivery Report → Invoice.
+  // Showing it before the Delivery Report exists promises a bridge that cannot be
+  // built. Hold it, ask for the Delivery Report, and present it once that lands.
+  // The bridge is only needed for lines that DON'T name an invoice directly.
+  // A remittance that quotes invoice numbers throughout needs no delivery report,
+  // so its summary shows immediately.
+  var _needsDelivery = lines.some(function(l){ return !l.invNo; });
+  if(_needsDelivery && (typeof DELIV==='undefined' || !DELIV || !DELIV.length)){
+    try{ workflowState._pendingRemSummary = _rdSummaryHtml; }catch(e){}
+    toast('Imported '+lines.length+' remittance lines ($'+$f(remTotal)+'). Add the Delivery Report to bridge tracking numbers to invoices — the import summary will open once it loads.','info');
+    try{ armpUpdateSetupState(); }catch(e){}
+    return;
+  }
+  showModal('Remittance Details — Import Summary', _rdSummaryHtml);
+}
+
+// Present a remittance summary that was deferred until the Delivery Report arrived.
+function armpFlushPendingRemSummary(){
+  try{
+    if(!workflowState || !workflowState._pendingRemSummary) return false;
+    if(!DELIV || !DELIV.length) return false;
+    var html = workflowState._pendingRemSummary;
+    workflowState._pendingRemSummary = null;
+    showModal('Remittance Details — Import Summary', html);
+    return true;
+  }catch(e){ return false; }
 }
 
 // Chunk size for large-file async processing
@@ -12984,6 +13014,41 @@ function clearInvData(){
 // (ENG_PAY), payment queue, exceptions, review, reconcile, export, onboarding.
 // Leaves the workspace in a true zero state.
 // ════════════════════════════════════════════════════════════════════════
+// Blank every surface of the allocation workspace. engResetUI() resets the
+// engine's internal state but leaves the header, allocation strip, totals and
+// audit trail painted with the last payment — which is why a cleared session
+// still showed "$2,305,295.00" and "Engine suggests…". Nothing may survive a
+// Clear All: stale figures on a cash-application screen are a posting hazard.
+function _engClearAllocationUI(){
+  var dash = '—', zero = '$0.00';
+  var txt = {
+    'eng-h-cust': dash, 'eng-h-acct': dash, 'eng-h-inv': dash, 'eng-h-date': dash,
+    'eng-h-amt': zero,  'eng-h-applied': zero, 'eng-h-rem': zero,
+    'cas-cust': dash,   'cas-amt': zero, 'cas-applied': zero, 'cas-rem': zero,
+    'at-payment': zero, 'at-applied': zero, 'at-rem': zero
+  };
+  Object.keys(txt).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.textContent = txt[id];
+  });
+  ['eng-audit-list','eng-audit-right','eng-ai-list','eng-grid-wrap'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.innerHTML = '';
+  });
+  ['eng-ai-bar','eng-dup-warn','eng-full-badge'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+  var sel = document.getElementById('eng-pay-sel');
+  if(sel) sel.selectedIndex = 0;
+  var empty = document.getElementById('eng-empty');
+  if(empty) empty.style.display = 'flex';
+  // The TK validation panel and any open modal also hold last-session figures.
+  var tkp = document.getElementById('tk-validation-panel');
+  if(tkp){ tkp.style.display = 'none'; var tkb = document.getElementById('tk-val-body'); if(tkb) tkb.innerHTML = ''; }
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+}
+
 function armpClearEverythingCore(){
   INV=[];PAY=[];RES=[];EXC=[];
   try{ DELIV=[]; REM_DETAIL=[]; REM_ADVICE=[]; ERS_LINES=[]; VMI_LINES=[]; }catch(e){}
@@ -12991,6 +13056,15 @@ function armpClearEverythingCore(){
   // Allocation workspace / expanded payment card (the lingering $X.XX row)
   try{ ENG_PAY=null; ENG_PAY_IDX=-1; ENG_ROWS=[]; ENG_LOCKED=false; }catch(e){}
   try{ if(typeof engResetUI==='function') engResetUI(); }catch(e){}
+  try{ _engClearAllocationUI(); }catch(e){}
+  // Derived caches that would otherwise repopulate the UI on the next render
+  try{ window._REM_ALLOC=null; window._CUST_DIR=null; window._OCR_SS_DICT=null; window._OCR_TRK_DICT=null; }catch(e){}
+  try{ _remDetailParsed=null; }catch(e){}
+  try{ if(typeof workflowState!=='undefined' && workflowState){
+    workflowState._remittanceImagePending=false;
+    workflowState._remittanceOcrPending=false;
+    workflowState._pendingRemSummary=null;
+  } }catch(e){}
   try{ _invalidateInvIndexes(); }catch(e){}
   try{ if(typeof _resetWorkflowState==='function') _resetWorkflowState(); }catch(e){}
   try{ if(typeof _clearDeliveryIndexNow==='function') _clearDeliveryIndexNow(); }catch(e){}
@@ -13789,46 +13863,22 @@ function _excActionLabels(action){
 }
 
 function excActionOpen(idx, action){
-  // Items 3+4 (v16): clear typeahead state on open so the modal starts BLANK.
-  // No pre-populated customer/account, no auto-loaded invoices.
+  // Clear stale typeahead state on open. The freshly rendered inputs carry the
+  // correct prefilled values, so this must reset only the SELECTION state and the
+  // dropdowns — never blank the inputs, which would erase the reference and
+  // account ARMP already resolved from the remittance.
   try{
     _excActionCust = null;
     _excActionInv = null;
     _excActionInvList = [];
-    // Also clear the source EXC entry's a/c so the modal doesn't auto-populate them
-    // (excActionOpen reads from EXC[idx] to render the typeahead "current selection")
     setTimeout(function(){
-      // Items 1+2 (v17): respect the conditional pre-fill above.
-      // If we have a confidently-matched customer, populate the cust input + status.
-      // Otherwise blank everything. Invoice field is ALWAYS blank on open (user must type).
-      var custIn = document.getElementById('_excA-cust');
-      var custStatus = document.getElementById('_excA-cust-status');
-      if(_excActionCtx && _excActionCtx.custAcct){
-        // Pre-fill with matched customer
-        var label = _excActionCtx.custAcct + (_excActionCtx.custName ? ' — ' + _excActionCtx.custName : '');
-        if(custIn) custIn.value = label;
-        if(custStatus){
-          custStatus.textContent = 'Auto-matched: ' + label + ' (you can clear or overwrite)';
-          custStatus.style.display = '';
-        }
-      } else {
-        // No confident match — start blank
-        if(custIn) custIn.value = '';
-        if(custStatus){ custStatus.textContent = ''; custStatus.style.display = 'none'; }
-      }
-      // Always clear invoice field + dropdowns + inv status (user must type to search)
-      var invIn = document.getElementById('_excA-inv');
-      if(invIn) invIn.value = '';
       var custDrop = document.getElementById('_excA-cust-drop');
       if(custDrop){ custDrop.innerHTML = ''; custDrop.style.display = 'none'; }
       var invDrop = document.getElementById('_excA-inv-drop');
       if(invDrop){ invDrop.innerHTML = ''; invDrop.style.display = 'none'; }
-      var invStatus = document.getElementById('_excA-inv-status');
-      if(invStatus){ invStatus.textContent = ''; invStatus.style.display = 'none'; }
     }, 30);
   }catch(e){console.warn('[excActionOpen clear]',e);}
 
-  
   var ex = EXC[idx];
   if(!ex){toast('Exception not found','warn');return;}
   var lbl = _excActionLabels(action);
@@ -13848,12 +13898,18 @@ function excActionOpen(idx, action){
       if(_invHit) _matchedName = _invHit.c || '';
     }
   }
+  // Pre-fill the reference the exception already carries. The operator should
+  // never retype an invoice, delivery, PO or sales-order number that ARMP read
+  // off the remittance. Prefer the most specific identifier available.
+  var _prefRef = String(ex.invRef || ex.delRef || ex.poRef || ex.soRef || ex.ref || '').trim();
+  if(_prefRef === '—') _prefRef = '';
+
   _excActionCtx = {
     idx: idx,
     action: action,
     custAcct: _hasConfidentCust ? ex.a : '',
     custName: _hasConfidentCust ? _matchedName : '',
-    invI: ''
+    invI: (typeof INV!=='undefined' && INV.some(function(v){return String(v.i)===_prefRef;})) ? _prefRef : ''
   };
   
   showModal(lbl.title,
@@ -13884,12 +13940,17 @@ function excActionOpen(idx, action){
       '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Invoice'+(action==='bankfee'||action==='cash'?' <span style="font-weight:400;text-transform:none;color:var(--t3)">(optional)</span>':'')+'</div>'+
       '<div style="position:relative">'+
         '<input type="text" id="_excA-inv" autocomplete="off" placeholder="Type invoice number or click to browse…" '+
+          'value="'+_escapeAttr(_prefRef)+'" '+
           'oninput="_excActionInvSearch(this.value)" '+
           'onfocus="if(this.value)_excActionInvSearch(this.value)" '+
           'style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box">'+
         '<div id="_excA-inv-drop" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--bdr2);border-radius:8px;box-shadow:var(--shadow-md);z-index:30;max-height:200px;overflow-y:auto;margin-top:3px;display:none"></div>'+
       '</div>'+
-      '<div id="_excA-inv-status" style="font-size:11px;color:var(--t3);margin-top:3px;display:none"></div>'+
+      '<div id="_excA-inv-status" style="font-size:11px;color:var(--t3);margin-top:3px;'+(_prefRef?'':'display:none')+'">'+
+        (_prefRef ? 'From remittance: '+_escapeHtml(_prefRef)+
+          (ex.soRef ? ' · sales order '+_escapeHtml(ex.soRef) : '')+
+          (ex.trkRef && ex.trkRef!==_prefRef ? ' · tracking '+_escapeHtml(ex.trkRef) : '') : '')+
+      '</div>'+
     '</div>'+
     
     // Amount
@@ -17333,6 +17394,30 @@ async function runMatch(){
           var rd = REM_DETAIL[a.remIdx] || {};
           var _pay = PAY.find(function(p){ return p._remIdx === a.remIdx; });
           var refTxt = String(rd.invNo || rd.poNo || rd.delNo || rd.trkNo || '');
+          // Resolve the payer from the customer's own data. A remittance file may
+          // carry no account column at all, but the delivery report does — without
+          // this the exception opens as "Unknown payer" and the operator has to
+          // retype an account ARMP already knows.
+          var _rc = { a: rd.custAcct||'', c: rd.custName||'' };
+          if(!_rc.a){
+            try{
+              var _r = armpResolveCustomer([rd.custName, rd.custAcct, (_pay&&_pay.c)||'', (_pay&&_pay.a)||''].join(' '));
+              if(_r.a){ _rc.a = _r.a; _rc.c = _rc.c || _r.c; }
+            }catch(e){}
+          }
+          // Single-customer dataset: the account is unambiguous.
+          if(!_rc.a){
+            try{
+              var _accts = Array.from(new Set(INV.map(function(v){ return v.a; }).filter(Boolean)));
+              if(_accts.length === 1) _rc.a = _accts[0];
+            }catch(e){}
+          }
+          if(!_rc.c && _rc.a){
+            try{
+              var _dh = (DELIV||[]).find(function(d){ return String(d.custAcct)===String(_rc.a) && d.custName; });
+              if(_dh) _rc.c = _dh.custName;
+            }catch(e){}
+          }
           // Lines read from a screenshot are never trusted at full confidence.
           // The reference and amount may be mis-read, so the allocation is
           // capped and marked for human verification before posting.
@@ -17343,7 +17428,7 @@ async function runMatch(){
               var full = Math.abs(al.applied - (v.amt||0)) < 0.01;
               v.s = full ? 'Exact' : 'Partial';
               RES.push({
-                c: v.c || (rd.custName||''), a: v.a || (rd.custAcct||''),
+                c: v.c || _rc.c || '', a: v.a || _rc.a || '',
                 i: v.i, po: v.po, so: v.so || v.refKey3, d: v.d,
                 oa: v.amt, pd: al.applied, vr: al.applied - (v.amt||0),
                 st: full ? 'Exact' : 'Partial',
@@ -17363,14 +17448,18 @@ async function runMatch(){
               });
             });
             if(a.applied + 0.005 < a.amount){
-              EXC.push({ id:'EXC-'+String(ec++).padStart(3,'0'), a: rd.custAcct||'', c: rd.custName||'',
+              EXC.push({ id:'EXC-'+String(ec++).padStart(3,'0'), a: _rc.a, c: _rc.c,
                 amt: a.amount - a.applied, ref: refTxt, type:'Short pay',
+                invRef: rd.invNo||'', delRef: rd.delNo||'', poRef: rd.poNo||'', trkRef: rd.trkNo||'',
                 detail:'Remittance line '+$f(a.amount)+' — only '+$f(a.applied)+' could be applied to open invoices',
                 action:'Review residual', dec:'', s:'Open', confidence:0 });
             }
           } else {
-            EXC.push({ id:'EXC-'+String(ec++).padStart(3,'0'), a: rd.custAcct||'', c: rd.custName||'',
+            EXC.push({ id:'EXC-'+String(ec++).padStart(3,'0'), a: _rc.a, c: _rc.c,
               amt: a.amount, ref: refTxt,
+              invRef: rd.invNo||'', delRef: rd.delNo||'', poRef: rd.poNo||'', trkRef: rd.trkNo||'',
+              soRef: (function(){ try{ var dr=armpFindDeliveryRowsForRef(rd.poNo||'', rd.trkNo||'');
+                       return Array.from(new Set(dr.map(function(d){return d.salesOrder;}).filter(Boolean))).join(', '); }catch(e){ return ''; } })(),
               type: /no delivery row/i.test(a.method) ? 'Unmatched' : 'Cash on Account',
               detail: a.method, action:'Review', dec:'', s:'Open', confidence:0,
               unconfirmedCash: !!(_pay && _pay.unconfirmedCash) });
