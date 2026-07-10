@@ -6752,10 +6752,209 @@ function armpResolveRemittanceLine(line){
   return res;
 }
 
-// Synthesize PAY rows from remittance detail lines so matching can run WITHOUT a
-// bank file. Each line becomes a payment application carrying `unconfirmedCash`,
-// because the remittance is the customer's ADVICE — the cash has not been proven
-// received until a bank file is reconciled against it.
+// ════════════════════════════════════════════════════════════════════════════
+// TWO-PASS REMITTANCE ALLOCATOR
+//
+// Mirrors how an AR specialist actually clears a customer remittance:
+//
+//   PASS 1  The customer quoted an invoice number → apply it. An explicit
+//           instruction always wins and must run BEFORE any inference,
+//           otherwise inference consumes the very invoices the customer named.
+//   PASS 1b The customer quoted a delivery document (7xxxxxxxxx) → resolve it
+//           through the delivery report to its sales orders.
+//   PASS 2  The customer quoted only a shipment ref / carrier tracking number.
+//           Filter the delivery report's Bill of Lading + Logistics Memo for it
+//           to obtain the related sales orders, then clear the open invoices
+//           under those sales orders:
+//             a. one invoice matching the amount exactly   → deterministic
+//             b. one unique combination summing to amount  → deterministic
+//             c. otherwise oldest-invoice-first within the sales-order scope
+//
+// A shared ledger prevents any invoice being applied twice across lines.
+// ════════════════════════════════════════════════════════════════════════════
+function armpFindDeliveryRowsForRef(ref, trk){
+  var out = [];
+  if(!DELIV || !DELIV.length) return out;
+  var key = String(trk||'').replace(/\s*\/.*$/,'').trim().toUpperCase();
+  var m = key.match(/1Z[A-Z0-9]{16}/); if(m) key = m[0];
+  var sref = String(ref||'').trim().toUpperCase();
+  for(var i=0;i<DELIV.length;i++){
+    var d = DELIV[i];
+    var hay = (String(d.rawBOL||'') + ' ' + String(d.logMemo||'') + ' ' + String(d.trackingNo||'')).toUpperCase();
+    if(key && hay.indexOf(key) >= 0){ out.push(d); continue; }
+  }
+  if(!out.length && sref){
+    for(var j=0;j<DELIV.length;j++){
+      var d2 = DELIV[j];
+      var hay2 = (String(d2.rawBOL||'') + ' ' + String(d2.logMemo||'') + ' ' + String(d2.poNo||'')).toUpperCase();
+      if(hay2.indexOf(sref) >= 0) out.push(d2);
+    }
+  }
+  return out;
+}
+
+function armpAllocateRemittanceLines(){
+  if(!REM_DETAIL || !REM_DETAIL.length || !INV || !INV.length) return null;
+  if(!window._INV_BY_REFKEY3) armpBuildRemittanceIndexes();
+  var invByRef3 = window._INV_BY_REFKEY3 || new Map();
+  var byDelivery = new Map();
+  (DELIV||[]).forEach(function(d){
+    var k = String(d.deliveryNo||'').trim();
+    if(!k) return;
+    if(!byDelivery.has(k)) byDelivery.set(k, []);
+    byDelivery.get(k).push(d);
+  });
+  var invByNum = new Map();
+  INV.forEach(function(v){ invByNum.set(String(v.i).trim(), v); });
+
+  var ledger = new Map();  // invoice # → amount applied so far
+
+  // The remittance parser routes a shipment ref (SS…) to poNo, a delivery doc
+  // (7xxxxxxxxx) to delNo, and an invoice to invNo — and it keeps only the FIRST
+  // token of a multi-invoice cell ("5105205708, 09, 5105196931, 32"). Recover the
+  // full original cell from the raw row so shorthand expansion sees every number.
+  function _invoiceCell(rd){
+    var cell = String(rd.invNo||'').trim();
+    var raw = String(rd._raw||'');
+    if(raw && cell){
+      var parts = raw.split('|');
+      for(var i=0;i<parts.length;i++){
+        var t = parts[i].trim();
+        if(t.indexOf(cell) === 0 && t.length > cell.length && /[,;]/.test(t)) return t;
+      }
+    }
+    return cell;
+  }
+  function _shipmentRef(rd){ return String(rd.poNo || rd.invNo || '').trim(); }
+  function _trackingRef(rd){ return String(rd.trkNo || rd.poNo || '').trim(); }
+  function _deliveryDoc(rd){
+    var d = String(rd.delNo||'').trim();
+    if(/^7\d{9}$/.test(d)) return d;
+    var i = String(rd.invNo||'').trim();
+    return /^7\d{9}$/.test(i) ? i : '';
+  }
+
+  function remaining(v){ return (v.amt||0) - (ledger.get(String(v.i))||0); }
+  function take(v, want){
+    var avail = remaining(v);
+    var t = Math.min(avail, want);
+    if(t > 0.005) ledger.set(String(v.i), (ledger.get(String(v.i))||0) + t);
+    return t > 0.005 ? t : 0;
+  }
+  function fifo(pool, want){
+    var used = [], left = want;
+    pool = pool.filter(function(v){ return remaining(v) > 0.005; })
+               .sort(function(a,b){
+                 var da = _normDateKey(a.dt2)||'9999', db = _normDateKey(b.dt2)||'9999';
+                 return da < db ? -1 : da > db ? 1 : 0;
+               });
+    for(var i=0;i<pool.length && left > 0.005;i++){
+      var t = take(pool[i], left);
+      if(t){ used.push({ inv: pool[i], applied: t }); left -= t; }
+    }
+    return { used: used, applied: want - left };
+  }
+  function poolForSalesOrders(sos){
+    var seen = new Set(), pool = [];
+    sos.forEach(function(so){
+      (invByRef3.get(so)||[]).forEach(function(v){
+        var n = String(v.i);
+        if(!seen.has(n)){ seen.add(n); pool.push(v); }
+      });
+    });
+    return pool;
+  }
+
+  var results = [];   // { remIdx, amount, allocations:[{inv,applied}], method, confidence }
+  var handled = new Set();
+
+  // ── PASS 1: explicit invoice numbers (incl. shorthand tails) ──
+  REM_DETAIL.forEach(function(rd, idx){
+    var ref = _invoiceCell(rd);
+    var amt = parseFloat(rd.amt||0)||0;
+    if(!amt) return;
+    if(/^7\d{9}$/.test(ref)) return;          // delivery doc, handled in pass 1b
+    var nums = armpExpandInvoiceShorthand(ref);
+    if(!nums.length) return;
+    var all = nums.every(function(n){ return invByNum.has(n); });
+    if(!all) return;
+    var left = amt, alloc = [];
+    nums.forEach(function(n){
+      var t = take(invByNum.get(n), left);
+      if(t){ alloc.push({ inv: invByNum.get(n), applied: t }); left -= t; }
+    });
+    results.push({ remIdx: idx, amount: amt, allocations: alloc, applied: amt-left,
+      method: nums.length>1 ? 'Remittance — multi-invoice reference' : 'Remittance — direct invoice',
+      confidence: 99 });
+    handled.add(idx);
+  });
+
+  // ── PASS 1b: delivery document number quoted (7xxxxxxxxx) ──
+  REM_DETAIL.forEach(function(rd, idx){
+    if(handled.has(idx)) return;
+    var ref = _deliveryDoc(rd);
+    var amt = parseFloat(rd.amt||0)||0;
+    if(!amt || !ref || !byDelivery.has(ref)) return;
+    var sos = Array.from(new Set(byDelivery.get(ref).map(function(d){ return String(d.salesOrder||'').trim(); }).filter(Boolean)));
+    var r = fifo(poolForSalesOrders(sos), amt);
+    if(r.applied > 0.005){
+      results.push({ remIdx: idx, amount: amt, allocations: r.used, applied: r.applied,
+        method: 'Delivery document → sales order', confidence: 92 });
+      handled.add(idx);
+    }
+  });
+
+  // ── PASS 2: shipment ref / tracking → sales orders → invoices ──
+  REM_DETAIL.forEach(function(rd, idx){
+    if(handled.has(idx)) return;
+    var ref = _shipmentRef(rd);
+    var trk = _trackingRef(rd);
+    var amt = parseFloat(rd.amt||0)||0;
+    if(!amt) return;
+    var delRows = armpFindDeliveryRowsForRef(ref, trk);
+    if(!delRows.length){
+      results.push({ remIdx: idx, amount: amt, allocations: [], applied: 0,
+        method: 'Unresolved — no delivery row for this shipment reference', confidence: 0 });
+      handled.add(idx);
+      return;
+    }
+    var sos = Array.from(new Set(delRows.map(function(d){ return String(d.salesOrder||'').trim(); }).filter(Boolean)));
+    var pool = poolForSalesOrders(sos);
+    var openPool = pool.filter(function(v){ return remaining(v) > 0.005; });
+
+    // (a) exactly one open invoice equals the amount → deterministic
+    var exact = openPool.filter(function(v){ return Math.abs(remaining(v) - amt) < 0.01; });
+    if(exact.length === 1){
+      var t = take(exact[0], amt);
+      results.push({ remIdx: idx, amount: amt, allocations: [{inv:exact[0], applied:t}], applied: t,
+        method: 'Delivery bridge — exact invoice amount', confidence: 97 });
+      handled.add(idx); return;
+    }
+    // (b) one unique combination sums to the amount → deterministic
+    var sub = (typeof _enumDistinctSubsets==='function')
+      ? _enumDistinctSubsets(openPool.slice().sort(function(a,b){return remaining(b)-remaining(a);}).slice(0,16), amt, 0.01, 2)
+      : [];
+    if(sub.length === 1){
+      var alloc = [], left = amt;
+      sub[0].forEach(function(v){ var t = take(v, left); if(t){ alloc.push({inv:v, applied:t}); left -= t; } });
+      results.push({ remIdx: idx, amount: amt, allocations: alloc, applied: amt-left,
+        method: 'Delivery bridge — unique invoice combination', confidence: 95 });
+      handled.add(idx); return;
+    }
+    // (c) allocate oldest-first within the sales-order scope
+    var r = fifo(openPool, amt);
+    results.push({ remIdx: idx, amount: amt, allocations: r.used, applied: r.applied,
+      method: r.applied > 0.005
+        ? 'Delivery bridge — sales order scope, oldest invoice first'
+        : 'Unresolved — no open invoice under the related sales orders',
+      confidence: r.applied > 0.005 ? (Math.abs(r.applied-amt)<0.005 ? 88 : 70) : 0 });
+    handled.add(idx);
+  });
+
+  results.sort(function(a,b){ return a.remIdx - b.remIdx; });
+  window._REM_ALLOC = results;
+  return results;
+}
 function armpSynthesizePaymentsFromRemittance(){
   if(!REM_DETAIL || !REM_DETAIL.length) return 0;
   var made = 0;
@@ -16732,6 +16931,7 @@ async function runMatch(){
   // Build the SS-reference + Reference-Key-3 indexes the remittance bridge needs
   try{ armpBuildRemittanceIndexes(); }catch(e){ console.warn('[remittance indexes]', e); }
 
+
   // Fix 1: Mark Auto Match as explicitly run — Review section now shows results
   autoMatchHasRun = true;
   workflowState.newDataSinceLastMatch = false;
@@ -16771,6 +16971,85 @@ async function runMatch(){
   RES=[];EXC=[];INV.forEach(v=>v.s='');
   const tol=(typeof cfgGetTol==='function')?cfgGetTol():(parseFloat(document.getElementById('s-tol')?.value)||1);
   let ec=1;
+
+  // ── Two-pass remittance allocation (explicit invoices → delivery bridge) ──
+  // Runs before the per-payment loop so explicit customer instructions claim
+  // their invoices first and inference cannot steal them.
+  var _remHandled = new Set();
+  if(typeof REM_DETAIL!=='undefined' && REM_DETAIL && REM_DETAIL.length && DELIV && DELIV.length){
+    try{
+      var _alloc = armpAllocateRemittanceLines();
+      if(_alloc && _alloc.length){
+        _alloc.forEach(function(a){
+          var rd = REM_DETAIL[a.remIdx] || {};
+          var _pay = PAY.find(function(p){ return p._remIdx === a.remIdx; });
+          var refTxt = String(rd.invNo || rd.poNo || rd.delNo || rd.trkNo || '');
+          if(a.allocations.length){
+            a.allocations.forEach(function(al){
+              var v = al.inv;
+              var full = Math.abs(al.applied - (v.amt||0)) < 0.01;
+              v.s = full ? 'Exact' : 'Partial';
+              RES.push({
+                c: v.c || (rd.custName||''), a: v.a || (rd.custAcct||''),
+                i: v.i, po: v.po, so: v.so || v.refKey3, d: v.d,
+                oa: v.amt, pd: al.applied, vr: al.applied - (v.amt||0),
+                st: full ? 'Exact' : 'Partial',
+                m: a.method,
+                n: 'Remittance ref ' + refTxt + ((_pay && _pay.unconfirmedCash) ? ' · cash unconfirmed' : ''),
+                confidence: a.confidence,
+                // Structured reasons + score version so the generic scorer does not
+                // overwrite the allocator's confidence (it is derived from the
+                // resolution method, which the scorer cannot see).
+                matchReasons: [
+                  { type:'bridge', label:'Matched by', value:a.method, w:a.confidence },
+                  { type:'ref', label:'Remittance ref', value:refTxt, w:0 }
+                ],
+                _scoreV: 4,
+                scenario: 'REM_ALLOC',
+                unconfirmedCash: !!(_pay && _pay.unconfirmedCash)
+              });
+            });
+            if(a.applied + 0.005 < a.amount){
+              EXC.push({ id:'EXC-'+String(ec++).padStart(3,'0'), a: rd.custAcct||'', c: rd.custName||'',
+                amt: a.amount - a.applied, ref: refTxt, type:'Short pay',
+                detail:'Remittance line '+$f(a.amount)+' — only '+$f(a.applied)+' could be applied to open invoices',
+                action:'Review residual', dec:'', s:'Open', confidence:0 });
+            }
+          } else {
+            EXC.push({ id:'EXC-'+String(ec++).padStart(3,'0'), a: rd.custAcct||'', c: rd.custName||'',
+              amt: a.amount, ref: refTxt,
+              type: /no delivery row/i.test(a.method) ? 'Unmatched' : 'Cash on Account',
+              detail: a.method, action:'Review', dec:'', s:'Open', confidence:0,
+              unconfirmedCash: !!(_pay && _pay.unconfirmedCash) });
+          }
+          if(_pay) _pay._preMatched = true;
+          _remHandled.add(a.remIdx);
+        });
+        try{ _invalidateInvIndexes(); }catch(e){}
+        // ── Reconcile the actual bank receipt against the remittance ──
+        // The remittance detail lines have now been applied. If a real bank
+        // payment covers those same lines, it must NOT be matched again by the
+        // per-payment loop or the cash would post twice. Tie it out and mark it.
+        try{
+          var _remTotal = _alloc.reduce(function(s,a){ return s + a.amount; }, 0);
+          var _remCust  = String((REM_DETAIL[0]||{}).custName||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
+          PAY.forEach(function(p){
+            if(p._fromRemittance || p._preMatched) return;
+            var _pc = String(p.c||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
+            var _custOk = !_remCust || !_pc || _pc.indexOf(_remCust)>=0 || _remCust.indexOf(_pc)>=0;
+            if(_custOk && Math.abs((p.amt||0) - _remTotal) < 0.01){
+              p._preMatched = true;
+              p._reconciledToRemittance = true;
+              addAudit('Bank reconciliation', 'Wire '+$f(p.amt)+' ties exactly to remittance advice — detail lines applied, cash confirmed');
+              // Cash is now confirmed: clear the unconfirmed flag on applied rows
+              RES.forEach(function(r){ if(r.scenario==='REM_ALLOC') r.unconfirmedCash = false; });
+            }
+          });
+        }catch(e){ console.warn('[bank reconciliation]', e); }
+        addAudit('Remittance allocation', _alloc.length+' remittance lines processed via two-pass allocator');
+      }
+    }catch(e){ console.warn('[remittance allocation]', e); }
+  }
   const useInv=document.getElementById('s-inv')?.checked!==false;
   const usePO =document.getElementById('s-po')?.checked!==false;
   const useSO =document.getElementById('s-so')?.checked!==false;
@@ -17082,6 +17361,8 @@ async function runMatch(){
 
     for(var pi=start;pi<end;pi++){
       const p=PAY[pi];
+      // Already cleared by the two-pass remittance allocator — don't double-apply.
+      if(p._preMatched) continue;
       if(p.coa){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a,c:p.c,amt:p.amt,ref:p.po||p.i||'—',type:'Unapplied payment',detail:'Unapplied payment — $'+$f(p.amt)+' received, no invoice reference',action:'Cash on Account or apply to oldest open invoice',dec:'',s:'Open',notes:p.n||''});continue;}
       if(!p.a&&!p.c&&!p.i&&!p.po){EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),a:p.a||'?',c:p.c||'',amt:p.amt,ref:'—',type:'Unmatched',detail:'No valid account, customer, or reference — unknown payer',action:'Contact bank to identify payer',dec:'',s:'Open',notes:p.n||''});continue;}
 
