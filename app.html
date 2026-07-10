@@ -3023,6 +3023,18 @@ body.app-active #app {
   </div>
 </div>
 
+<!-- Page-level upload progress. The setup-step buttons open the OS file picker
+     directly (no import modal), so progress must live outside that modal or the
+     user sees nothing while a 1,600-row file parses or OCR runs. -->
+<div id="armp-global-progress" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--surface);border-bottom:1px solid var(--bdr2);box-shadow:var(--shadow-md);padding:10px 18px">
+  <div style="display:flex;align-items:center;gap:12px;max-width:1100px;margin:0 auto">
+    <div id="armp-gp-msg" style="font-size:12.5px;font-weight:600;color:var(--t1);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Reading file…</div>
+    <div id="armp-gp-pct" style="font-size:12px;font-weight:700;color:var(--p);font-family:var(--mono);min-width:44px;text-align:right">0%</div>
+  </div>
+  <div style="height:5px;background:var(--bdr);border-radius:3px;overflow:hidden;margin-top:7px;max-width:1100px;margin-left:auto;margin-right:auto">
+    <div id="armp-gp-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--p),var(--g));border-radius:3px;transition:width .25s ease"></div>
+  </div>
+</div>
 <div class="mo-overlay" id="imp-modal">
   <div class="mo-box">
     <div class="mo-header">
@@ -6794,19 +6806,10 @@ function armpParseRemittanceOCRText(text, opts){
     return neg ? -v : v;
   }
 
-  lines.forEach(function(raw){
-    var line = raw.replace(/\s+/g,' ').trim();
-    if(!line) return;
-
-    // Grand-total row — capture for tie-out, don't emit as a detail line.
-    if(/\btotal\b/i.test(line)){
-      var tm = line.match(/([\d,]+\.\d{2}|\d{1,3}(?:,\d{3})+)\s*$/);
-      if(tm) totalSeen = _money(tm[1]);
-      return;
-    }
-    // Header row
-    if(/\b(inv\s*no|invoice\s*#|amount|remarks|supplier)\b/i.test(line) && !/\d{4}/.test(line)) return;
-
+  // Emit one detail row from a single line of OCR text. Returns true if a row
+  // was produced. Kept separate so a line that OCR merged (e.g. the last data
+  // row running into the "Total" row) can be split and re-fed through it.
+  function _emit(line){
     // Anchor: the last money-looking token on the row.
     var amtM = line.match(/(\(?\$?\s?\d{1,3}(?:,\d{3})*\.\d{2}\)?|\(?\$?\s?\d{1,3}(?:,\d{3})+\)?)\s*$/);
     if(!amtM) return;
@@ -6859,6 +6862,27 @@ function armpParseRemittanceOCRText(text, opts){
       _raw: line
     });
     total += amt;
+  }
+
+  lines.forEach(function(raw){
+    var line = raw.replace(/\s+/g,' ').trim();
+    if(!line) return;
+
+    // Grand-total row. OCR often glues the final data row onto it, so split at
+    // the word "Total": everything before it may still be a real remittance line.
+    var tIdx = line.search(/\btotals?\b/i);
+    if(tIdx >= 0){
+      var post = line.slice(tIdx);
+      var tm = post.match(/([\d,]+\.\d{2}|\d{1,3}(?:,\d{3})+)\s*$/);
+      if(tm) totalSeen = _money(tm[1]);
+      var pre = line.slice(0, tIdx).trim();
+      if(pre) _emit(pre);
+      return;
+    }
+    // Header row (no data on it)
+    if(/\b(inv\s*no|invoice\s*#|amount|remarks|supplier)\b/i.test(line) && !/\d{4}/.test(line)) return;
+
+    _emit(line);
   });
 
   return {
@@ -11281,6 +11305,11 @@ function armpUpdateSetupState(){
       {id:'armp-setup-step-3', done:ws.deliveryReportLoaded || !!ws._deliverySkipped, sub_done:ws._deliverySkipped?'Skipped — shipment refs will not bridge to invoices':DELIV.length.toLocaleString()+' delivery rows loaded', sub_pending:'Bridges tracking / BOL / shipment refs to sales orders and invoices'},
       {id:'armp-setup-step-4', done:ws.remittanceDetailsLoaded, sub_done:ws._remittanceSkipped?'Skipped — upload anytime':(ws._remittanceImagePending?'Screenshot uploaded — extraction pending':((typeof ERS_LINES!=='undefined'&&ERS_LINES.length>0?ERS_LINES.length+' ERS':'')+(typeof VMI_LINES!=='undefined'&&VMI_LINES.length>0?(ERS_LINES.length>0?' + ':'')+VMI_LINES.length+' VMI':'')+(REM_DETAIL&&REM_DETAIL.length?((ERS_LINES.length||VMI_LINES.length)?' + ':'')+REM_DETAIL.length+' remittance':''))+' lines loaded'), sub_pending:'Invoice, tracking, PO refs — CSV, XLSX, or screenshot'}
     ];
+    // The Skip control is only meaningful while the Delivery Report is still
+    // missing. Once it is loaded (or explicitly skipped) it must disappear.
+    var _skipBtn = document.getElementById('armp-setup-skip-3');
+    if(_skipBtn) _skipBtn.style.display = (ws.deliveryReportLoaded || ws._deliverySkipped) ? 'none' : '';
+
     for(var si=0;si<steps.length;si++){
       var el=document.getElementById(steps[si].id);
       if(!el) continue;
@@ -12995,7 +13024,8 @@ function showConfirm(msg,onYes,yesLabel,yesClass){
   return true;
 }
 function showProgress(msg,pct){
-  // Show new progress area, hide file picker
+  pct = Math.max(0, Math.min(100, Math.round(pct||0)));
+  // In-modal progress (used when the import modal is open)
   const pa=document.getElementById('imp-progress-area');
   const fa=document.getElementById('imp-file-area');
   if(pa)pa.style.display='block';
@@ -13003,8 +13033,21 @@ function showProgress(msg,pct){
   const pm=document.getElementById('imp-progress-msg');if(pm)pm.textContent=msg;
   const pb=document.getElementById('imp-progress-bar');if(pb)pb.style.width=Math.max(5,pct)+'%';
   const pp=document.getElementById('imp-progress-pct');if(pp)pp.textContent=pct+'%';
+  // Page-level progress (the setup-step buttons never open the modal)
+  const gp=document.getElementById('armp-global-progress');
+  if(gp){
+    gp.style.display='block';
+    const gm=document.getElementById('armp-gp-msg');   if(gm)gm.textContent=msg;
+    const gb=document.getElementById('armp-gp-bar');   if(gb)gb.style.width=pct+'%';
+    const gpp=document.getElementById('armp-gp-pct');  if(gpp)gpp.textContent=pct+'%';
+  }
 }
 function hideProgress(){
+  const gp=document.getElementById('armp-global-progress');
+  if(gp){
+    const gb=document.getElementById('armp-gp-bar'); if(gb)gb.style.width='100%';
+    setTimeout(function(){ gp.style.display='none'; if(gb)gb.style.width='0%'; }, 220);
+  }
   const pa=document.getElementById('imp-progress-area');if(pa)pa.style.display='none';
   const fa=document.getElementById('imp-file-area');if(fa)fa.style.display='block';
 }
@@ -13117,6 +13160,12 @@ function armpClearEverythingCore(){
   try{ if(typeof updateCfoSummary==='function') updateCfoSummary(); }catch(e){}
   try{ if(typeof updWorkflow==='function') updWorkflow(); }catch(e){}
   try{ if(typeof armpRefreshExportBlocker==='function') armpRefreshExportBlocker(); }catch(e){}
+  // Repaint the onboarding panel in place — the user must not have to navigate
+  // away and back to see that the data is gone.
+  try{ var _ds=document.getElementById('armp-deliv-status'); if(_ds) _ds.innerHTML=''; }catch(e){}
+  try{ if(typeof _updateUploadStatus==='function') _updateUploadStatus(); }catch(e){}
+  try{ if(typeof armpUpdateSetupState==='function') armpUpdateSetupState(); }catch(e){}
+  try{ if(typeof updateKPIs==='function') updateKPIs(); }catch(e){}
   try{ updDash(); updTop(); refreshStatus(); }catch(e){}
   try{ if(typeof updateArSummary==='function') updateArSummary(); }catch(e){}
   try{
@@ -16043,31 +16092,47 @@ var _OCR = {
     });
   },
   recognize: async function(imageFile, onStage){
-    var stage = function(s){ try{ if(onStage) onStage(s); }catch(e){} };
+    var stage = function(s, pct){ try{ if(onStage) onStage(s, pct); }catch(e){} };
     var Tess;
-    stage('Loading OCR engine…');
+    stage('Loading OCR engine…', 5);
     try{
       Tess = await this.ensureLoaded();
     }catch(e){
       throw new Error('OCR_LIBRARY: the OCR library could not load from the CDN. '+
         'Check the network and that the Content-Security-Policy allows cdnjs.cloudflare.com. ('+e.message+')');
     }
-    stage('Preparing image…');
+    stage('Preparing image…', 15);
     var prepped = await this._preprocess(imageFile);
-    stage('Starting OCR worker…');
+    stage('Starting OCR worker…', 20);
     var worker;
     try{
       // Tesseract downloads its WASM core (jsdelivr) and language data
       // (tessdata.projectnaptha.com) on first use. If CSP blocks either origin,
       // this is where it fails — so name it explicitly.
-      worker = await Tess.createWorker('eng');
+      // The logger reports genuine progress: downloading, loading, recognizing.
+      worker = await Tess.createWorker('eng', 1, {
+        logger: function(m){
+          try{
+            if(!m || typeof m.progress !== 'number') return;
+            var pctOf = Math.round(m.progress * 100);
+            var label = ({
+              'loading tesseract core':'Loading OCR engine',
+              'initializing tesseract':'Initializing OCR',
+              'loading language traineddata':'Downloading language data',
+              'initializing api':'Initializing OCR',
+              'recognizing text':'Reading remittance text'
+            })[m.status] || (m.status || 'Working');
+            stage(label + '… ' + pctOf + '%', pctOf);
+          }catch(e){}
+        }
+      });
     }catch(e){
       throw new Error('OCR_WORKER: the OCR engine could not start. It downloads its WASM core and '+
         'English language data on first use; the Content-Security-Policy must allow '+
         'cdn.jsdelivr.net and tessdata.projectnaptha.com. ('+e.message+')');
     }
     try {
-      stage('Reading text…');
+      stage('Reading remittance text…', 60);
       // PSM 4 = "assume a single column of text of variable sizes" — the mode
       // that actually reads tabular remittances. The default (3) mangles them.
       try{ await worker.setParameters({ tessedit_pageseg_mode: '4' }); }catch(e){}
@@ -19026,8 +19091,8 @@ async function handleFile(inp){
           var _rdOcrText = '';
           try{
             showProgress('Reading remittance screenshot…', 20);
-            _rdOcrText = await _OCR.recognize(f, function(st){
-              try{ showProgress(st, 45); }catch(e){}
+            _rdOcrText = await _OCR.recognize(f, function(st, pct){
+              try{ showProgress(st, (typeof pct==='number') ? pct : 40); }catch(e){}
             });
           }catch(err){
             hideProgress();
@@ -19074,8 +19139,29 @@ async function handleFile(inp){
                 ? 'Lines tie to the stated total of $'+$f(_rdParsed.statedTotal)+'.'
                 : 'WARNING: lines total $'+$f(_rdParsed.total)+' but the screenshot states $'+$f(_rdParsed.statedTotal)+'.');
           addAudit('Remittance screenshot', _rdParsed.lines.length+' lines read via OCR · '+_tieMsg);
-          toast('Read '+_rdParsed.lines.length+' remittance lines from the screenshot ($'+$f(_rdParsed.total)+'). '+_tieMsg+' Verify before posting.',
-                _rdParsed.tiesOut ? 'info' : 'warn');
+          if(_rdParsed.statedTotal !== null && !_rdParsed.tiesOut){
+            // The read is provably incomplete. Never let this pass as a toast —
+            // matching on short lines produces a variance the operator has to
+            // chase later, which is exactly what happened in production.
+            var _short = _rdParsed.statedTotal - _rdParsed.total;
+            showModal('Screenshot did not read completely',
+              '<div style="font-size:13px;color:var(--t2);line-height:1.6">'+
+                '<p style="margin:0 0 10px">ARMP read <strong>'+_rdParsed.lines.length+' lines</strong> totalling '+
+                '<strong>$'+$f(_rdParsed.total)+'</strong>, but the screenshot\'s own Total row says '+
+                '<strong>$'+$f(_rdParsed.statedTotal)+'</strong>.</p>'+
+                '<div style="background:var(--surface2);border-left:3px solid var(--w);border-radius:6px;padding:10px 12px;margin-bottom:12px">'+
+                  '<strong style="color:var(--w-t)">'+(_short>0?'Missing':'Excess')+' $'+$f(Math.abs(_short))+'</strong>'+
+                  '<div style="font-size:12px;margin-top:3px">At least one row was not read correctly.</div>'+
+                '</div>'+
+                '<p style="margin:0 0 6px"><strong>The lines have been imported and flagged for review.</strong> '+
+                'Auto Match will still run, but the difference will surface as a variance exception — do not force-match it.</p>'+
+                '<p style="margin:0">For a clean read, import the remittance as <strong>.csv</strong> or <strong>.xlsx</strong>, '+
+                'or supply a higher-resolution screenshot.</p>'+
+              '</div>');
+          } else {
+            toast('Read '+_rdParsed.lines.length+' remittance lines from the screenshot ($'+$f(_rdParsed.total)+'). '+_tieMsg+' Verify before posting.',
+                  _rdParsed.statedTotal===null ? 'warn' : 'info');
+          }
         } else {
           toast('Image accepted: '+f.name+' — extraction pending or manual review may be required.','info');
         }
