@@ -6569,15 +6569,28 @@ function _normDateKey(v){
 // Expand SAP invoice shorthand: "5105205708, 09, 5105196931, 32"
 //   → ["5105205708","5105205709","5105196931","5105196932"]
 // A short token (1-3 digits) inherits the prefix of the previous full number.
+// Expand a remittance invoice cell such as "5105205708, 09, 5105196931, 32"
+// into four full document numbers. What counts as a "full" number is taken from
+// the customer's own invoice numbering, not a fixed length — invoice numbers are
+// 10 digits at one customer and 7 at another.
 function armpExpandInvoiceShorthand(raw){
   var out = [];
   if(!raw) return out;
+
+  var prof = null;
+  try{ prof = _docProfile(); }catch(e){}
+  var minFull = 8;   // fallback when nothing has been imported yet
+  if(prof && prof.invShape && prof.invShape.lens && prof.invShape.lens.length){
+    minFull = Math.min.apply(null, prof.invShape.lens);
+  }
+
   var parts = String(raw).split(/[,;/]+/).map(function(s){ return s.trim(); }).filter(Boolean);
   var lastFull = '';
   parts.forEach(function(p){
     var digits = p.replace(/[^0-9]/g,'');
     if(!digits) return;
-    if(digits.length >= 8){            // a full document number
+    var isFull = digits.length >= minFull || (prof && prof.invSet && prof.invSet.has(digits));
+    if(isFull){                        // a full document number
       out.push(digits);
       lastFull = digits;
     } else if(lastFull){               // shorthand tail — inherit prefix
@@ -6590,13 +6603,18 @@ function armpExpandInvoiceShorthand(raw){
 
 // Build SS-reference and Reference-Key-3 indexes used by the remittance bridge.
 function armpBuildRemittanceIndexes(){
+  try{ armpBuildDocProfile(); }catch(e){}
   var ssBridge = new Map();   // SS reference (upper) → DELIV[]
   var invByRef3 = new Map();  // Reference Key 3     → INV[]
   try{
     (DELIV||[]).forEach(function(d){
+      // Harvest reference tokens generically: any alphanumeric token that is not
+      // a carrier tracking number. No customer-specific pattern.
       var hay = String(d.logMemo||'') + ' ' + String(d.poNo||'');
-      var m = hay.match(/SS[0-9]{6}-[A-Z]{2}[0-9]{1,2}\(TK-F\)/ig);
-      if(m){
+      var m = (hay.toUpperCase().split(/[\s,;|]+/)
+                 .map(function(t){ return t.replace(/^[^A-Z0-9(]+|[^A-Z0-9)]+$/g,''); })
+                 .filter(function(t){ return t.length>=5 && /[A-Z]/.test(t) && /[0-9]/.test(t) && !_looksLikeTracking(t); }));
+      if(m.length){
         // NOTE: do NOT deduplicate. Repeated delivery rows are distinct billing
         // line items; their Planned Billing Amounts must all be summed for the
         // shipment total to tie to the remittance.
@@ -6652,9 +6670,16 @@ function armpResolveRemittanceLine(line){
   var delRows = [];
   if(ref && ssBridge.has(ref.toUpperCase())) delRows = ssBridge.get(ref.toUpperCase()).slice();
   if(!delRows.length && trk){
-    // tracking may carry trailing notes, e.g. "1Z2... / 'RMA"
-    var trkClean = (trk.match(/1Z[A-Z0-9]{16}/) || [trk])[0];
+    // Tracking may carry trailing notes, e.g. "1Z2... / 'RMA". Isolate the
+    // carrier number for ANY carrier, not just UPS.
+    var trkClean = String(trk).trim().toUpperCase();
+    for(var _bi=0; _bi<_TRK_PATTERNS.length; _bi++){
+      _TRK_PATTERNS[_bi].lastIndex = 0;
+      var _bm = trkClean.match(_TRK_PATTERNS[_bi]);
+      if(_bm && _bm.length){ trkClean = _bm[0]; break; }
+    }
     if(trkBridge.has(trkClean)) delRows = trkBridge.get(trkClean).slice();
+    else if(trkBridge.has(String(trk).trim())) delRows = trkBridge.get(String(trk).trim()).slice();
   }
   if(delRows.length){
     // ── 2a. DETERMINISTIC: if the invoice import carried a delivery number
@@ -6818,33 +6843,63 @@ function armpParseRemittanceOCRText(text, opts){
     var body = line.slice(0, amtM.index).trim();
     if(!body) return;
 
-    // Classify the remaining tokens by SHAPE, not position. Patterns are written
-    // against REAL OCR output, where "SS" often reads "$S"/"5S" and "1Z" may lose
-    // characters. Anything recovered is then snapped to the customer's own
-    // delivery-report dictionary.
-    var ssDict  = window._OCR_SS_DICT  || [];
-    var trkDict = window._OCR_TRK_DICT || [];
+    // Classify the remaining tokens against the CUSTOMER'S OWN vocabulary.
+    // No customer-specific pattern appears here: membership in the learned
+    // dictionaries decides what a token is, and OCR damage is corrected by
+    // snapping to the nearest real value (refusing ambiguous matches).
+    var _p      = _docProfile() || {};
+    var ssDict  = _p.ssDict  || [];
+    var trkDict = _p.trkDict || [];
 
-    var trkM = body.match(/1\s?[Z2]\s?[A-Z0-9]{14,18}/i);
-    var ssM  = body.match(/[\$S5][S5]\s?[\dOolI]{6}\s?[-:]\s?[A-Z]{2}\s?[\dOolI]{1,2}\s?\([A-Z\-_}]{2,6}\)?/i);
-    var invM = body.match(/\b[5S][\dOolI]{9}(?:\s*,\s*[\dOolI]{1,12})*\b/);
-    var delM = body.match(/\b7[\dOolI]{9}\b/);
+    var invNo = '', poNo = '', trkNo = '', delNo = '';
 
-    var invNo = invM ? _fixNumeric(invM[0]) : '';
-    var poNo  = '';
-    if(ssM){
-      poNo = _normalizeShipmentRef(ssM[0]);
-      // repair the digit run after "SS" and the sequence digit before "("
-      poNo = poNo.replace(/^SS([A-Z0-9]{6})/, function(_m,g){ return 'SS' + _fixDigits(g); })
-                 .replace(/-([A-Z]{2})([A-Z0-9]{1,2})\(/, function(_m,a,b){ return '-' + a + _fixDigits(b) + '('; });
-      if(ssDict.length) poNo = _ocrSnap(poNo, ssDict, 3);
+    var toks = body.split(/[\s|]+/).filter(Boolean).map(function(t){
+      return t.replace(/^[^A-Z0-9$(]+/i,'').replace(/[^A-Z0-9)]+$/i,'');
+    });
+
+    toks.forEach(function(tok){
+      if(!tok) return;
+      var up  = tok.toUpperCase();
+      var num = _fixNumeric(up);
+
+      // 1. Carrier tracking — dictionary first, then generic carrier shapes.
+      if(!trkNo){
+        var tSnap = trkDict.length ? _ocrSnap(up.replace(/^12(?=[A-Z0-9]{16}$)/,'1Z'), trkDict, 3) : up;
+        if(trkDict.indexOf(tSnap) >= 0){ trkNo = tSnap; return; }
+        if(_looksLikeTracking(up) && !_profileIsInvoice(num) && !_profileIsDelivery(num) && !_profileIsPO(up)){ trkNo = up; return; }
+      }
+      // 2. Invoice number (authoritative membership, or the customer's shape).
+      if(!invNo && _profileIsInvoice(num)){ invNo = num; return; }
+      // 3. Delivery document.
+      if(!delNo && _profileIsDelivery(num)){ delNo = num; return; }
+      // 4. Shipment reference — anything alphanumeric that snaps to the dictionary.
+      if(!poNo && ssDict.length && /[A-Z]/i.test(up) && /[0-9]/.test(up)){
+        var sSnap = _normalizeShipmentRef(up, ssDict);
+        if(ssDict.indexOf(sSnap) >= 0){ poNo = sSnap; return; }
+      }
+    });
+
+    // A multi-invoice cell ("5105205708, 09, 5105196931, 32") is split across
+    // tokens above; recover it from the raw row so shorthand tails survive.
+    if(invNo){
+      var mm = body.match(new RegExp(invNo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(?:\\s*,\\s*[\\dOolI]{1,12})+'));
+      if(mm) invNo = _fixNumeric(mm[0].replace(/\s+/g,''));
     }
-    var trkNo = '';
-    if(trkM){
-      trkNo = trkM[0].toUpperCase().replace(/\s+/g,'').replace(/^12/, '1Z');
-      if(trkDict.length) trkNo = _ocrSnap(trkNo, trkDict, 3);
+
+    // Last resort: an alphanumeric token that resembles a reference but is not in
+    // any dictionary (e.g. no delivery report loaded yet). Keep it — with safe
+    // character repair only — so the line is never silently dropped. Matching will
+    // route it to review rather than guessing.
+    if(!invNo && !poNo && !trkNo && !delNo){
+      for(var ti=0; ti<toks.length; ti++){
+        var cand = toks[ti].toUpperCase();
+        if(cand.length >= 6 && /[A-Z]/.test(cand) && /[0-9]/.test(cand)){
+          poNo = _normalizeShipmentRef(cand);
+          break;
+        }
+      }
     }
-    var delNo = delM ? _fixNumeric(delM[0]) : '';
+
     if(!invNo && !poNo && !trkNo && !delNo) return;   // nothing identifiable
 
     out.push({
@@ -6885,33 +6940,262 @@ function armpParseRemittanceOCRText(text, opts){
     _emit(line);
   });
 
+  var _ties = totalSeen !== null && Math.abs(total - totalSeen) < 0.01;
   return {
     lines: out,
     total: total,
     statedTotal: totalSeen,
-    tiesOut: totalSeen !== null && Math.abs(total - totalSeen) < 0.01,
+    tiesOut: _ties,
+    // When the read does NOT tie, expose the exact gap. If OCR dropped a single
+    // line, this is that line's amount, and the delivery report can often
+    // reconstruct which shipment it was — turning a hard failure into a recovery.
+    shortfall: (totalSeen !== null && !_ties) ? (totalSeen - total) : 0,
     ocrDerived: true
   };
 }
 
-// Build dictionaries of every VALID shipment reference and tracking number the
-// customer's delivery report contains. OCR output can then be snapped to the
-// nearest real value — the customer's own data acts as an error-correcting code.
-function armpBuildOcrDictionaries(){
-  var ss = new Set(), trk = new Set();
+// ════════════════════════════════════════════════════════════════════════════
+// DROPPED-LINE RECOVERY
+//
+// OCR occasionally loses a single remittance row on a low-quality capture. The
+// row is gone, but its AMOUNT is known exactly: statedTotal − sum(read lines).
+// The delivery report usually contains a shipment whose billing amount equals
+// that gap and whose reference was NOT already read — so we can reconstruct the
+// missing line deterministically instead of failing the whole screenshot.
+//
+// This is conservative by design: it only fires when the gap maps to exactly ONE
+// unambiguous shipment. If two shipments share the gap amount, or none do, it
+// declines and the tie-out warning stands. Recovered lines are marked so they
+// are never treated as clean OCR.
+function armpRecoverDroppedRemittanceLine(parsed){
   try{
-    (DELIV||[]).forEach(function(d){
-      var hay = String(d.logMemo||'') + ' ' + String(d.poNo||'');
-      var m = hay.match(/SS[0-9]{6}-[A-Z]{2}[0-9]{1,2}\(TK-F\)/ig);
-      if(m) m.forEach(function(x){ ss.add(x.toUpperCase()); });
-      if(d.trackingNo) trk.add(String(d.trackingNo).toUpperCase());
-      var bm = String(d.rawBOL||'').match(/1Z[A-Z0-9]{16}/ig);
-      if(bm) bm.forEach(function(x){ trk.add(x.toUpperCase()); });
+    if(!parsed || parsed.tiesOut || !parsed.shortfall || parsed.shortfall <= 0) return null;
+    if(!(DELIV && DELIV.length)) return null;
+
+    var gap = Math.round(parsed.shortfall * 100) / 100;
+
+    // References already present in the read, so we don't re-add a covered line.
+    var seenRefs = {};
+    (parsed.lines||[]).forEach(function(l){
+      [l.poNo, l.invNo, l.trkNo, l.delNo].forEach(function(r){
+        if(r) seenRefs[String(r).toUpperCase()] = true;
+      });
     });
-  }catch(e){}
-  window._OCR_SS_DICT = Array.from(ss);
-  window._OCR_TRK_DICT = Array.from(trk);
-  return { ss: window._OCR_SS_DICT, trk: window._OCR_TRK_DICT };
+
+    // Group delivery rows by shipment reference and sum their billing amounts
+    // (repeated rows for one shipment are distinct billing line items).
+    var byRef = {};
+    armpBuildRemittanceIndexes();
+    var prof = _docProfile() || {};
+    (DELIV||[]).forEach(function(d){
+      var hay = (String(d.logMemo||'') + ' ' + String(d.rawBOL||'') + ' ' + String(d.poNo||'')).toUpperCase();
+      var ref = null;
+      (prof.ssDict||[]).forEach(function(s){ if(!ref && hay.indexOf(s) >= 0) ref = s; });
+      if(!ref) return;
+      var amt = parseFloat(d.amount != null ? d.amount : (d.plannedBillingAmt || d.billingAmt || 0)) || 0;
+      if(!byRef[ref]) byRef[ref] = { ref: ref, amt: 0, trk: (d.trackingNo||'') };
+      byRef[ref].amt += amt;
+    });
+
+    // Find shipment references, not already read, whose total equals the gap.
+    var hits = [];
+    Object.keys(byRef).forEach(function(ref){
+      if(seenRefs[ref.toUpperCase()]) return;
+      if(Math.abs(byRef[ref].amt - gap) < 0.01) hits.push(byRef[ref]);
+    });
+
+    // Only recover when the mapping is unambiguous.
+    if(hits.length !== 1) return null;
+
+    var h = hits[0];
+    return {
+      poNo: h.ref,
+      trkNo: h.trk || '',
+      invNo: '',
+      delNo: '',
+      amt: gap,
+      supplierName: (parsed.lines[0]||{}).supplierName || '',
+      _ocrDerived: true,
+      _recovered: true,
+      status: 'Pending review'
+    };
+  }catch(e){ return null; }
+}
+
+// Every customer numbers things differently. TK-Fujikin invoices start "510…",
+// deliveries "710…", shipments look like "SS260409-KB3(TK-F)" and ship UPS.
+// The next customer will not. So ARMP LEARNS the vocabulary from the files the
+// customer supplies, and uses their own data as an error-correcting code for OCR.
+//
+//   invSet / delSet / soSet  — exact document numbers from the invoice + delivery
+//                              reports (authoritative membership tests)
+//   ssDict                   — every shipment reference seen in the delivery
+//                              report's Logistics Memo / Bill of Lading
+//   trkDict                  — every carrier tracking number seen
+//   invShape / delShape      — lengths + leading prefixes, for numbers not yet
+//                              in the file (a new invoice on a remittance)
+// ════════════════════════════════════════════════════════════════════════════
+
+// Multi-carrier tracking shapes. UPS is alphanumeric and unambiguous; the others
+// are pure digits, so they are only trusted when the delivery report confirms
+// them or they cannot be confused with an invoice / delivery / sales-order number.
+var _TRK_PATTERNS = [
+  /\b1Z[A-Z0-9]{16}\b/g,                 // UPS
+  /\b[A-Z]{2}[0-9]{9}[A-Z]{2}\b/g,       // USPS / international S10
+  /\b[0-9]{12}\b/g,                      // FedEx Express
+  /\b[0-9]{15}\b/g,                      // FedEx Ground
+  /\b[0-9]{18}\b/g,                      // FedEx / SmartPost
+  /\b[0-9]{20,22}\b/g                    // USPS / DHL eCommerce
+];
+
+function _looksLikeTracking(tok){
+  if(!tok) return false;
+  var t = String(tok).toUpperCase();
+  for(var i=0;i<_TRK_PATTERNS.length;i++){
+    _TRK_PATTERNS[i].lastIndex = 0;
+    if(new RegExp('^(?:' + _TRK_PATTERNS[i].source.replace(/\\b/g,'') + ')$').test(t)) return true;
+  }
+  return false;
+}
+
+function _shapeOf(values){
+  var lens = new Set(), prefixes = new Set();
+  values.forEach(function(v){
+    v = String(v||'').trim();
+    if(!v || !/^\d+$/.test(v)) return;
+    lens.add(v.length);
+    prefixes.add(v.slice(0, Math.min(3, v.length)));
+  });
+  return { lens: Array.from(lens), prefixes: Array.from(prefixes) };
+}
+function _matchesShape(tok, shape){
+  if(!shape || !shape.lens.length) return false;
+  var t = String(tok||'');
+  if(!/^\d+$/.test(t)) return false;
+  if(shape.lens.indexOf(t.length) < 0) return false;
+  return shape.prefixes.some(function(p){ return t.indexOf(p) === 0; });
+}
+
+function armpBuildDocProfile(){
+  var ss = new Set(), trk = new Set();
+  var invSet = new Set(), delSet = new Set(), soSet = new Set(), poSet = new Set();
+
+  try{ (INV||[]).forEach(function(v){
+    if(v.i) invSet.add(String(v.i).trim());
+    if(v.refKey3) soSet.add(String(v.refKey3).trim());
+    if(v.so) soSet.add(String(v.so).trim());
+    if(v.po) poSet.add(String(v.po).trim());
+  }); }catch(e){}
+
+  try{ (DELIV||[]).forEach(function(d){
+    if(d.deliveryNo) delSet.add(String(d.deliveryNo).trim());
+    if(d.salesOrder) soSet.add(String(d.salesOrder).trim());
+    if(d.poNo) poSet.add(String(d.poNo).trim());
+  }); }catch(e){}
+
+  // Document numbers the customer already uses can never be tracking numbers or
+  // shipment references, no matter what shape they happen to have. A 12-digit
+  // customer PO looks exactly like a FedEx tracking number.
+  function _isDocNumber(t){
+    return invSet.has(t) || delSet.has(t) || soSet.has(t) || poSet.has(t);
+  }
+
+  try{ (DELIV||[]).forEach(function(d){
+    if(d.trackingNo){
+      var tn = String(d.trackingNo).toUpperCase().trim();
+      if(tn && !_isDocNumber(tn)) trk.add(tn);
+    }
+    var hay = (String(d.logMemo||'') + ' ' + String(d.rawBOL||'')).toUpperCase();
+
+    // Pull carrier tracking numbers out FIRST. Real memos often run the shipment
+    // reference straight into the tracking number with no separator, e.g.
+    // "SS260107-KB4(TK-F)1Z9998V60498846713" — splitting on whitespace alone
+    // would produce one meaningless glued token.
+    for(var pi=0; pi<_TRK_PATTERNS.length; pi++){
+      var re = new RegExp(_TRK_PATTERNS[pi].source.replace(/\\b/g,''), 'g');
+      var mm;
+      while((mm = re.exec(hay)) !== null){
+        var cand = mm[0];
+        if(!_isDocNumber(cand)) trk.add(cand);
+      }
+    }
+    // Remove the tracking numbers, then harvest what remains as shipment refs.
+    var rest = hay;
+    trk.forEach(function(t){ if(rest.indexOf(t) >= 0) rest = rest.split(t).join(' '); });
+
+    rest.split(/[\s,;|]+/).forEach(function(t){
+      t = t.replace(/^[^A-Z0-9(]+|[^A-Z0-9)]+$/g,'');
+      if(t.length < 8) return;                       // too short to be a real reference
+      var digits = (t.match(/[0-9]/g)||[]).length;
+      if(digits < 4) return;
+      if(!/[A-Z]/.test(t)) return;                   // must carry letters too
+      if(_isDocNumber(t)) return;
+      ss.add(t);
+    });
+  }); }catch(e){}
+
+  var profile = {
+    ssDict: Array.from(ss),
+    trkDict: Array.from(trk),
+    invSet: invSet,
+    delSet: delSet,
+    soSet: soSet,
+    poSet: poSet,
+    invShape: _shapeOf(Array.from(invSet)),
+    delShape: _shapeOf(Array.from(delSet))
+  };
+  profile._fp = _docFingerprint();
+  window._DOC_PROFILE = profile;
+  // Back-compat aliases
+  window._OCR_SS_DICT  = profile.ssDict;
+  window._OCR_TRK_DICT = profile.trkDict;
+  return profile;
+}
+
+// Retained name — builds the same learned profile.
+function armpBuildOcrDictionaries(){
+  var p = armpBuildDocProfile();
+  return { ss: p.ssDict, trk: p.trkDict };
+}
+
+// The profile is a cache of ONE customer's vocabulary. It must be dropped the
+// moment the underlying data changes, or a second customer processed in the same
+// session would be parsed with the first customer's invoice/delivery shapes.
+function armpInvalidateDocProfile(){
+  try{ window._DOC_PROFILE = null; window._OCR_SS_DICT = null; window._OCR_TRK_DICT = null; }catch(e){}
+}
+
+// Fingerprint of the data the profile was built from. Cheap to compute, and it
+// makes a stale profile impossible to serve even if some future import path
+// forgets to invalidate: the cache validates itself on every read.
+function _docFingerprint(){
+  var iv = (typeof INV!=='undefined' && INV) ? INV : [];
+  var dv = (typeof DELIV!=='undefined' && DELIV) ? DELIV : [];
+  return iv.length + ':' + dv.length + ':' +
+         (iv.length ? String(iv[0].i)+'|'+String(iv[iv.length-1].i) : '') + ':' +
+         (dv.length ? String(dv[0].deliveryNo)+'|'+String(dv[dv.length-1].deliveryNo) : '');
+}
+function _docProfile(){
+  var fp = _docFingerprint();
+  if(!window._DOC_PROFILE || window._DOC_PROFILE._fp !== fp){
+    try{ armpBuildDocProfile(); }catch(e){ return null; }
+  }
+  return window._DOC_PROFILE;
+}
+function _profileIsInvoice(tok){
+  var p = _docProfile(); if(!p) return false;
+  var t = String(tok||'').trim();
+  return p.invSet.has(t) || _matchesShape(t, p.invShape);
+}
+function _profileIsPO(tok){
+  var p = _docProfile(); if(!p || !p.poSet) return false;
+  return p.poSet.has(String(tok||'').trim());
+}
+function _profileIsDelivery(tok){
+  var p = _docProfile(); if(!p) return false;
+  var t = String(tok||'').trim();
+  if(p.invSet.has(t)) return false;          // an invoice is never a delivery doc
+  return p.delSet.has(t) || _matchesShape(t, p.delShape);
 }
 
 function _levenshtein(a, b){
@@ -6952,16 +7236,23 @@ function _ocrSnap(token, dict, maxDist){
   return best;
 }
 
-// Repair the systematic character confusions OCR makes on these refs.
-// Measured on real screenshots: "SS" reads as "$S" / "5S" / "S5",
-// and "(TK-F)" reads as "(TICF)" / "(TKF)" / "(TK-F}".
-function _normalizeShipmentRef(raw){
+// Repair the character confusions OCR makes, WITHOUT assuming any customer's
+// reference format. Only universally-safe substitutions are applied ($→S, }→),
+// etc.); the actual correction comes from snapping to the customer's own
+// delivery-report dictionary, which refuses ambiguous matches.
+function _normalizeShipmentRef(raw, dict){
   var t = String(raw||'').toUpperCase().replace(/\s+/g,'');
-  t = t.replace(/^[\$S5][S5]/, 'SS');
-  t = t.replace(/\((TICF|TKF|TK-F\}|TK_F|TKF\)|TIC-F)\)?$/, '(TK-F)');
-  t = t.replace(/\(TK-F\}$/, '(TK-F)');
-  if(!/\(TK-F\)$/.test(t)) t = t.replace(/\([^)]*\)?$/, '(TK-F)');
-  t = t.replace(/[:]/g, '-');
+  t = t.replace(/^\$/, 'S')       // "$S260409…" — a leading S read as a dollar sign
+       .replace(/[{\[]/g, '(')
+       .replace(/[}\]]/g, ')')
+       .replace(/[:;]/g, '-')
+       .replace(/[—–]/g, '-');
+  var d = dict || (_docProfile() ? _docProfile().ssDict : null);
+  if(d && d.length){
+    var snapped = _ocrSnap(t, d, 3);
+    if(snapped !== t) return snapped;
+    if(d.indexOf(t) >= 0) return t;
+  }
   return t;
 }
 
@@ -7083,8 +7374,14 @@ function armpResolveCustomer(text){
 function armpFindDeliveryRowsForRef(ref, trk){
   var out = [];
   if(!DELIV || !DELIV.length) return out;
+  // Strip trailing annotations the customer adds ("… / 'RMA") and, if the token
+  // contains a recognisable carrier tracking number, isolate it. Carrier-agnostic.
   var key = String(trk||'').replace(/\s*\/.*$/,'').trim().toUpperCase();
-  var m = key.match(/1Z[A-Z0-9]{16}/); if(m) key = m[0];
+  for(var _ti=0; _ti<_TRK_PATTERNS.length; _ti++){
+    _TRK_PATTERNS[_ti].lastIndex = 0;
+    var _m = key.match(_TRK_PATTERNS[_ti]);
+    if(_m && _m.length){ key = _m[0]; break; }
+  }
   var sref = String(ref||'').trim().toUpperCase();
   for(var i=0;i<DELIV.length;i++){
     var d = DELIV[i];
@@ -7137,9 +7434,9 @@ function armpAllocateRemittanceLines(){
   function _trackingRef(rd){ return String(rd.trkNo || rd.poNo || '').trim(); }
   function _deliveryDoc(rd){
     var d = String(rd.delNo||'').trim();
-    if(/^7\d{9}$/.test(d)) return d;
+    if(d && (byDelivery.has(d) || _profileIsDelivery(d))) return d;
     var i = String(rd.invNo||'').trim();
-    return /^7\d{9}$/.test(i) ? i : '';
+    return (i && !invByNum.has(i) && (byDelivery.has(i) || _profileIsDelivery(i))) ? i : '';
   }
 
   function remaining(v){ return (v.amt||0) - (ledger.get(String(v.i))||0); }
@@ -7181,7 +7478,7 @@ function armpAllocateRemittanceLines(){
     var ref = _invoiceCell(rd);
     var amt = parseFloat(rd.amt||0)||0;
     if(!amt) return;
-    if(/^7\d{9}$/.test(ref)) return;          // delivery doc, handled in pass 1b
+    if(ref && !invByNum.has(ref) && _profileIsDelivery(ref)) return;   // delivery doc → pass 1b
     var nums = armpExpandInvoiceShorthand(ref);
     if(!nums.length) return;
     var all = nums.every(function(n){ return invByNum.has(n); });
@@ -7506,7 +7803,7 @@ function _buildInvIndexes(){
 }
 
 // Call this after INV is populated (import, sample load, etc.)
-function _invalidateInvIndexes(){ _INV_IDX={byInv:null,byPO:null,bySO:null,byAcct:null,byName:null,byTrk:null,byDel:null}; }
+function _invalidateInvIndexes(){ _INV_IDX={byInv:null,byPO:null,bySO:null,byAcct:null,byName:null,byTrk:null,byDel:null}; try{ armpInvalidateDocProfile(); }catch(e){} }
 function _ensureInvIndexes(){ if(!_INV_IDX.byInv){ _buildInvIndexes(); } }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -7585,6 +7882,7 @@ function enrichOpenItemsWithDeliveryReport(){
   // Update status panel
   _updateUploadStatus();
 
+  try{ armpInvalidateDocProfile(); }catch(e){}
   var msg = 'Delivery Report synced: ' + enriched + ' open items enriched';
   if(unmatched > 0) msg += ', ' + unmatched + ' delivery rows unmatched';
   toast(msg);
@@ -9199,7 +9497,7 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
     '</tr></thead><tbody>'+tableRows+more+'</tbody></table></div>'+
     '<div style="margin-top:10px;font-size:11.5px;color:var(--t3)">'+
     (_isTkFFormat
-      ? '🏭 TK-Fujikin format: Customer/Payer = <strong>'+_escapeHtml(_custName)+'</strong> · Supplier = <strong>'+_escapeHtml(_supplierName)+'</strong>. Matching uses Tracking# → Delivery Report → Invoice.'
+      ? '🏭 Supplier-format remittance: Customer/Payer = <strong>'+_escapeHtml(_custName)+'</strong> · Supplier = <strong>'+_escapeHtml(_supplierName)+'</strong>. Matching uses Tracking # → Delivery Report → Invoice.'
       : '✓ Run <strong>Auto Match</strong>. Invoice #, PO #, SO #, Delivery #, Tracking all used as match signals.')+
     '</div>'
   );
@@ -13132,7 +13430,8 @@ function armpClearEverythingCore(){
   try{ if(typeof engResetUI==='function') engResetUI(); }catch(e){}
   try{ _engClearAllocationUI(); }catch(e){}
   // Derived caches that would otherwise repopulate the UI on the next render
-  try{ window._REM_ALLOC=null; window._CUST_DIR=null; window._OCR_SS_DICT=null; window._OCR_TRK_DICT=null; }catch(e){}
+  try{ window._REM_ALLOC=null; window._CUST_DIR=null; }catch(e){}
+  try{ armpInvalidateDocProfile(); }catch(e){}
   try{ _remDetailParsed=null; }catch(e){}
   try{ if(typeof workflowState!=='undefined' && workflowState){
     workflowState._remittanceImagePending=false;
@@ -17471,7 +17770,7 @@ async function runMatch(){
   var _isTkFSess = REM_DETAIL&&REM_DETAIL.length>0&&REM_DETAIL[0]&&REM_DETAIL[0].supplierName&&
                    (REM_DETAIL[0].isSapSupplierFormat === true || REM_DETAIL[0].isHoriba === true);
   if(_isTkFSess && (!DELIV||!DELIV.length||!REM_DETAIL||!REM_DETAIL.length)){
-    toast('TK-Fujikin matching requires Remittance Details and Delivery Report for best results.','warn');
+    toast('Shipment-reference matching needs Remittance Details and a Delivery Report for best results.','warn');
   } else if(!DELIV||!DELIV.length||!REM_DETAIL||!REM_DETAIL.length){
     if(PAY.length>0&&INV.length>0){
       // Soft warning — match will still run
@@ -17990,7 +18289,21 @@ async function runMatch(){
         var _brRef = String(p.i||'').trim();
         var _brTrk = String(p.trkNo || p.po || '').trim();
         // Only engage when the reference is NOT a plain invoice number already handled above
-        var _looksBridged = /SS[0-9]{6}-/i.test(_brRef) || /1Z[A-Z0-9]{16}/i.test(_brTrk) || /^[0-9]{10}$/.test(_brRef);
+        // Engage the delivery bridge whenever the reference is NOT one of this
+        // customer's invoice numbers but IS something the delivery report knows
+        // about (a shipment reference, a delivery document, or a tracking number).
+        var _looksBridged = false;
+        try{
+          var _pp = _docProfile();
+          var _refIsInvoice = _brRef && _pp && (_pp.invSet.has(_brRef) || _profileIsInvoice(_brRef));
+          var _refKnown = _brRef && _pp && (
+              (_pp.ssDict && _pp.ssDict.indexOf(_brRef.toUpperCase()) >= 0) ||
+              _profileIsDelivery(_brRef));
+          var _trkKnown = _brTrk && _pp && (
+              (_pp.trkDict && _pp.trkDict.indexOf(_brTrk.toUpperCase()) >= 0) ||
+              _looksLikeTracking(_brTrk));
+          _looksBridged = (!_refIsInvoice) && (_refKnown || _trkKnown);
+        }catch(e){ _looksBridged = false; }
         if(_looksBridged){
           var _br = armpResolveRemittanceLine({ ref:_brRef, tracking:_brTrk, amount:p.amt, account:p.a });
           if(_br.invoices && _br.invoices.length){
@@ -19131,15 +19444,47 @@ async function handleFile(inp){
           REM_DETAIL = _rdParsed.lines;
           workflowState._remittanceImagePending = false;
           workflowState._remittanceOcrPending = true;   // requires user verification
+
+          // If the read is short by exactly one deducible line, try to recover it
+          // from the delivery report before surfacing a failure. The gap amount is
+          // known precisely; if it maps to exactly one un-read shipment, we can
+          // reconstruct the missing line and the screenshot ties out after all.
+          var _recovered = null;
+          if(_rdParsed.statedTotal !== null && !_rdParsed.tiesOut){
+            _recovered = armpRecoverDroppedRemittanceLine(_rdParsed);
+            if(_recovered){
+              REM_DETAIL.push(_recovered);
+              _rdParsed.lines = REM_DETAIL;
+              _rdParsed.total = REM_DETAIL.reduce(function(s,r){ return s + (r.amt||0); }, 0);
+              _rdParsed.tiesOut = Math.abs(_rdParsed.total - _rdParsed.statedTotal) < 0.01;
+              _rdParsed.shortfall = 0;
+            }
+          }
           try{ saveToStorage(); }catch(e){}
           try{ _updateUploadStatus(); }catch(e){}
           var _tieMsg = _rdParsed.statedTotal === null
             ? 'No total row found to verify against.'
             : (_rdParsed.tiesOut
-                ? 'Lines tie to the stated total of $'+$f(_rdParsed.statedTotal)+'.'
+                ? (_recovered
+                    ? 'One line was reconstructed from the Delivery Report; lines now tie to $'+$f(_rdParsed.statedTotal)+'.'
+                    : 'Lines tie to the stated total of $'+$f(_rdParsed.statedTotal)+'.')
                 : 'WARNING: lines total $'+$f(_rdParsed.total)+' but the screenshot states $'+$f(_rdParsed.statedTotal)+'.');
           addAudit('Remittance screenshot', _rdParsed.lines.length+' lines read via OCR · '+_tieMsg);
-          if(_rdParsed.statedTotal !== null && !_rdParsed.tiesOut){
+          if(_recovered){
+            // Recovered, but the reconstructed line still needs a human to confirm.
+            showModal('One line recovered from the Delivery Report',
+              '<div style="font-size:13px;color:var(--t2);line-height:1.6">'+
+                '<p style="margin:0 0 10px">OCR missed one line on this screenshot, but its amount '+
+                '(<strong>$'+$f(_recovered.amt)+'</strong>) matched a single shipment in your Delivery Report, '+
+                'so ARMP reconstructed it:</p>'+
+                '<div style="background:var(--surface2);border-left:3px solid var(--g);border-radius:6px;padding:10px 12px;margin-bottom:12px">'+
+                  '<strong style="color:var(--g-t)">'+_escapeHtml(_recovered.poNo||_recovered.trkNo||'shipment')+'</strong>'+
+                  '<div style="font-size:12px;margin-top:3px">$'+$f(_recovered.amt)+' — flagged for review</div>'+
+                '</div>'+
+                '<p style="margin:0">The screenshot now ties to <strong>$'+$f(_rdParsed.statedTotal)+'</strong>. '+
+                'Please confirm this line before posting, or re-import as .csv/.xlsx for a clean read.</p>'+
+              '</div>');
+          } else if(_rdParsed.statedTotal !== null && !_rdParsed.tiesOut){
             // The read is provably incomplete. Never let this pass as a toast —
             // matching on short lines produces a variance the operator has to
             // chase later, which is exactly what happened in production.
