@@ -7528,7 +7528,19 @@ function armpAllocateRemittanceLines(){
     var r = fifo(poolForSalesOrders(sos), amt);
     if(r.applied > 0.005){
       results.push({ remIdx: idx, amount: amt, allocations: r.used, applied: r.applied,
-        method: 'Delivery document → sales order', confidence: 92 });
+        method: 'Delivery document → sales order', confidence: 92,
+        deliveries: [ref], salesOrders: sos });
+      handled.add(idx);
+    } else {
+      // The delivery document IS in the delivery report but its sales order has
+      // no open invoice (typical for RMAs / not-yet-billed shipments). This is
+      // the best possible diagnosis — record the resolved chain so the exception
+      // can recommend the posting instead of a bare "unresolved". Marking it
+      // handled also stops PASS 2 from re-diagnosing via the (possibly
+      // OCR-mangled) tracking number and losing the chain.
+      results.push({ remIdx: idx, amount: amt, allocations: [], applied: 0,
+        method: 'Delivery bridge — shipment found, no open invoice posted yet',
+        confidence: 0, deliveries: [ref], salesOrders: sos });
       handled.add(idx);
     }
   });
@@ -7572,11 +7584,13 @@ function armpAllocateRemittanceLines(){
     }
     // (c) allocate oldest-first within the sales-order scope
     var r = fifo(openPool, amt);
+    var _chainDels = Array.from(new Set(delRows.map(function(d){ return String(d.deliveryNo||'').trim(); }).filter(Boolean)));
     results.push({ remIdx: idx, amount: amt, allocations: r.used, applied: r.applied,
       method: r.applied > 0.005
         ? 'Delivery bridge — sales order scope, oldest invoice first'
         : 'Unresolved — no open invoice under the related sales orders',
-      confidence: r.applied > 0.005 ? (Math.abs(r.applied-amt)<0.005 ? 88 : 70) : 0 });
+      confidence: r.applied > 0.005 ? (Math.abs(r.applied-amt)<0.005 ? 88 : 70) : 0,
+      deliveries: _chainDels, salesOrders: sos });
     handled.add(idx);
   });
 
@@ -10408,11 +10422,31 @@ function armpGetSuggestedResolution(ex){
     else           rule = { action:'chase_customer',label:'Chase Customer', rationale:'Review with customer before posting.',           confidence:50 };
   }
 
+  // When the exception carries a resolved shipment chain (delivery / sales
+  // order), the recommendation must cite it — a generic type rationale hides
+  // exactly the reference the AR clerk needs to post the COA note.
+  var rationale = rule.rationale;
+  var conf = rule.confidence;
+  if(ex.soRef || ex.delRef){
+    var _chain = ex.delRef && ex.soRef ? 'Delivery '+ex.delRef+' → SO '+ex.soRef
+               : ex.delRef ? 'Delivery '+ex.delRef
+               : 'SO '+ex.soRef;
+    if(rule.action === 'cash_on_account'){
+      rationale = 'Shipment resolved ('+_chain+') but no open invoice is posted yet — '
+                + 'post as Cash on Account with note "'
+                + (ex.notes || ('COA for ' + (ex.soRef ? 'SO '+ex.soRef : 'delivery '+ex.delRef)))
+                + '".';
+      conf = Math.max(conf, 90);
+    } else {
+      rationale = rationale + ' Resolved shipment reference: ' + _chain + '.';
+    }
+  }
+
   return {
     action:     rule.action,
     label:      rule.label,
-    rationale:  rule.rationale,
-    confidence: rule.confidence,
+    rationale:  rationale,
+    confidence: conf,
     // AI hook placeholder — will carry prompt context in future release
     _aiHook:    { ready: false, model: null, promptVersion: null }
   };
@@ -18093,13 +18127,38 @@ async function runMatch(){
                 action:'Review residual', dec:'', s:'Open', confidence:0 });
             }
           } else {
+            // Build the recommendation from the resolved chain when we have one.
+            // "Delivery 7105659040 → SO 2104446473 — no open invoice posted yet"
+            // is actionable; a bare "unresolved" is not.
+            var _delList = (a.deliveries||[]).filter(Boolean).join(', ');
+            var _soList  = (a.salesOrders||[]).filter(Boolean).join(', ');
+            if(!_soList){
+              try{ var _dr=armpFindDeliveryRowsForRef(rd.poNo||'', rd.trkNo||'');
+                _soList = Array.from(new Set(_dr.map(function(d){return d.salesOrder;}).filter(Boolean))).join(', ');
+                if(!_delList) _delList = Array.from(new Set(_dr.map(function(d){return String(d.deliveryNo||'').trim();}).filter(Boolean))).join(', ');
+              }catch(e){}
+            }
+            var _hasChain = !!(_delList || _soList);
+            var _chainTxt = _delList && _soList ? 'Delivery '+_delList+' → SO '+_soList
+                          : _delList ? 'Delivery '+_delList
+                          : 'SO '+_soList;
+            var _noteSug = _hasChain
+              ? ('COA for ' + (_soList ? 'SO '+_soList : 'delivery '+_delList) +
+                 (_soList && _delList ? ' (delivery '+_delList+')' : ''))
+              : '';
             EXC.push({ id:'EXC-'+String(ec++).padStart(3,'0'), a: _rc.a, c: _rc.c,
               amt: a.amount, ref: refTxt,
-              invRef: rd.invNo||'', delRef: rd.delNo||'', poRef: rd.poNo||'', trkRef: rd.trkNo||'',
-              soRef: (function(){ try{ var dr=armpFindDeliveryRowsForRef(rd.poNo||'', rd.trkNo||'');
-                       return Array.from(new Set(dr.map(function(d){return d.salesOrder;}).filter(Boolean))).join(', '); }catch(e){ return ''; } })(),
+              invRef: rd.invNo||'', delRef: rd.delNo||_delList||'', poRef: rd.poNo||'', trkRef: rd.trkNo||'',
+              soRef: _soList,
               type: /no delivery row/i.test(a.method) ? 'Unmatched' : 'Cash on Account',
-              detail: a.method, action:'Review', dec:'', s:'Open', confidence:0,
+              detail: _hasChain
+                ? (_chainTxt + ' — shipment found, no open invoice posted yet')
+                : a.method,
+              action: _hasChain
+                ? ('Post $'+$f(a.amount)+' as Cash on Account — note "'+_noteSug+'"')
+                : 'Review',
+              notes: _noteSug,
+              dec:'', s:'Open', confidence:0,
               unconfirmedCash: !!(_pay && _pay.unconfirmedCash) });
           }
           if(_pay) _pay._preMatched = true;
