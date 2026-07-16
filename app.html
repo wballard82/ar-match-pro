@@ -3059,6 +3059,10 @@ body.app-active #app {
           <span class="fmt-badge purple">BAI2</span>
           <span class="fmt-badge purple">CAMT.053</span>
         </div>
+        <div id="imp-template-row" style="display:none;text-align:center;margin-top:12px">
+          <button class="btn btn-outline btn-sm" onclick="armpDownloadImportTemplate()" style="font-size:12px">⬇ Download ARMP Invoice Template (.xlsx)</button>
+          <div style="font-size:11px;color:var(--t3);margin-top:5px">Required columns: Account · Invoice · Amount. SAP FBL5N exports are accepted as-is.</div>
+        </div>
       </div>
 
       <!-- Progress area — shown while processing -->
@@ -3886,7 +3890,7 @@ body.app-active #app {
             <div style="font-size:12px;color:var(--t3)" id="review-ct">0 matched records</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-p btn-sm" id="review-approve-all-btn" onclick="approveAllReviewItems()">✓ Approve All</button>
-              <button class="btn btn-r btn-sm" onclick="armpClearEverything()">Clear all</button>
+              <button class="btn btn-r btn-sm" onclick="clearReviewSection()" title="Clears only the Review section — imported invoices, payments, and exceptions are untouched">Clear all</button>
               <button class="btn btn-p btn-sm" onclick="exportPost()">↓ Export posting file</button>
             </div>
           </div>
@@ -5867,6 +5871,17 @@ function renderWsReview(){
   const groups = groupOrder.map(k=>groupsMap[k]);
   
   if(ct)ct.textContent=ap.length+' allocation'+(ap.length!==1?'s':'')+' across '+groups.length+' payment'+(groups.length!==1?'s':'');
+
+  // Approve All ↔ Unselect All toggle label (excludes exported/locked rows)
+  try{
+    var _aaBtn=document.getElementById('review-approve-all-btn');
+    if(_aaBtn){
+      var _togglable=ap.filter(function(r){return r.exported!==true;});
+      var _allAppr=_togglable.length>0&&_togglable.every(function(r){return _armpIsReviewApproved(r);});
+      _aaBtn.innerHTML=_allAppr?'↩ Unselect All':'✓ Approve All';
+      _aaBtn.title=_allAppr?'Un-approve every allocation in Review':'Approve every allocation in Review';
+    }
+  }catch(e){}
   
   if(!ap.length){
     list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-t">No matched records to review</div><div class="empty-s">${(typeof PAY!=='undefined'&&PAY.length>0&&typeof INV!=='undefined'&&INV.length>0)?'All allocations approved. Ready for the next step.':'Import payments and invoices to begin.'}</div>${(typeof PAY!=='undefined'&&PAY.length>0&&typeof INV!=='undefined'&&INV.length>0)?`<div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="sp('cash-app');setTimeout(function(){setCaTab('recon',document.getElementById('ca-tab-recon'));},80)" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div>`:''}</div>`;return;
@@ -5897,8 +5912,9 @@ function renderWsReview(){
     var confColor = confNum >= 90 ? 'var(--g-t)' : confNum >= 70 ? 'var(--am-t)' : 'var(--r-t)';
     
     // Approval state — Item 5
-    // A group is "approved" if every item has r.approved=true (user explicitly approved)
-    var allApproved = items.every(function(r){return r.approved===true||r.fromAlloc===true;});
+    // A group is "approved" if every item is approved per _armpIsReviewApproved
+    // (explicit approval or allocation provenance, minus a bulk Unselect)
+    var allApproved = items.every(function(r){return (typeof _armpIsReviewApproved==='function')?_armpIsReviewApproved(r):(r.approved===true||r.fromAlloc===true);});
     var ws = wsBadge[headerStatus]||'Review';
     var wsClass = headerStatus==='Exact'||headerStatus==='Resolved'||headerStatus==='Subset exact'?'ws-badge-ready':headerStatus==='Short pay'||headerStatus==='Overpay'?'ws-badge-review':'ws-badge-pending';
     
@@ -6626,10 +6642,18 @@ function armpBuildRemittanceIndexes(){
       }
     });
     (INV||[]).forEach(function(v){
-      if(!v.refKey3) return;
-      var k = String(v.refKey3).trim();
-      if(!invByRef3.has(k)) invByRef3.set(k, []);
-      invByRef3.get(k).push(v);
+      // Key the sales-order index on BOTH fields: native FBL5N carries the SO in
+      // Reference Key 3, while the ARMP Import Template (and most non-SAP files)
+      // carry it in the Sales Order column. Indexing only refKey3 silently
+      // blanked the delivery bridge for template-format imports.
+      var _soKeys = new Set();
+      if(v.refKey3) _soKeys.add(String(v.refKey3).trim());
+      if(v.so)      _soKeys.add(String(v.so).trim());
+      _soKeys.forEach(function(k){
+        if(!k) return;
+        if(!invByRef3.has(k)) invByRef3.set(k, []);
+        invByRef3.get(k).push(v);
+      });
     });
   }catch(e){ console.warn('[armpBuildRemittanceIndexes]', e); }
   window._SS_BRIDGE = ssBridge;
@@ -12148,31 +12172,123 @@ function wfCtaClick(){
 // ── Item 4: Approve All Reconciled — marks all reconciled RES as ready-to-post, navigates to Export
 
 // ── Item 7: Approve all visible Review entries at once ──
+function _armpIsReviewApproved(r){
+  // Single source of truth for "is this review row approved". fromAlloc doubles
+  // as provenance for allocation-workspace rows, so a bulk Unselect marks
+  // r.unapproved=true instead of destroying fromAlloc when the row's presence
+  // in Review depends on it.
+  return (r.approved===true || r.fromAlloc===true) && r.unapproved!==true;
+}
+function _armpReviewableRows(){
+  if(typeof RES==='undefined' || !RES.length) return [];
+  return RES.filter(function(r){
+    return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay';
+  });
+}
+// ── Clear ONLY the Review section ─────────────────────────────────────
+// Removes the matched allocations shown in Review from RES and reopens their
+// invoices. Imported invoices, payments, exceptions, remittance, and delivery
+// data are untouched — unlike armpClearEverything. Exported (locked) rows are
+// skipped; unlock first via Unlock & Edit.
+function clearReviewSection(){
+  var reviewable=_armpReviewableRows();
+  var clearable=reviewable.filter(function(r){return r.exported!==true;});
+  if(!clearable.length){
+    if(typeof toast==='function')toast('Review section is already empty','info');
+    return;
+  }
+  var lockedCount=reviewable.length-clearable.length;
+  armpStyledConfirm({
+    title:'Clear the Review section?',
+    message:'This removes '+clearable.length+' matched allocation'+(clearable.length===1?'':'s')+' from Review and reopens their invoices.'+(lockedCount?' '+lockedCount+' exported (locked) row'+(lockedCount===1?' is':'s are')+' kept.':'')+' Imported invoices, payments, and exceptions are NOT touched.',
+    footnote:'Run Auto Match again to regenerate matches.',
+    confirmLabel:'Clear Review',
+    danger:true,
+    onConfirm:function(){
+      var n=0;
+      for(var i=RES.length-1;i>=0;i--){
+        var r=RES[i];
+        if(clearable.indexOf(r)<0)continue;
+        try{
+          var inv=INV.find(function(v){return v.i===r.i;});
+          if(inv)inv.s='';
+        }catch(e){}
+        RES.splice(i,1);n++;
+      }
+      try{saveToStorage();}catch(e){}
+      try{if(typeof renderWsReview==='function')renderWsReview();}catch(e){}
+      try{if(typeof rPost==='function')rPost();}catch(e){}
+      try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+      try{if(typeof renderWsRecon==='function')renderWsRecon();}catch(e){}
+      try{updDash();updTop();}catch(e){}
+      try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
+      try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+      try{if(typeof armpRefreshExportBlocker==='function')armpRefreshExportBlocker();}catch(e){}
+      try{addAudit('Cleared Review section',n+' allocation'+(n===1?'':'s')+' removed');}catch(e){}
+      if(typeof toast==='function')toast('Review cleared — '+n+' allocation'+(n===1?'':'s')+' removed; imports untouched');
+    }
+  });
+}
+
 function approveAllReviewItems(){
   if(!RoleManager.canApprove()){ RoleManager.requireRole('manager','Approve All'); return; }
-  if(typeof RES==='undefined'||!RES.length){
+  var reviewable=_armpReviewableRows();
+  if(!reviewable.length){
     if(typeof toast==='function')toast('Nothing to approve','warn');
     return;
   }
-  // Find rows that ARE in Review (same filter as renderWsReview)
-  var reviewable=RES.filter(function(r){
-    return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay';
-  });
-  // Exclude already-approved
-  var toApprove=reviewable.filter(function(r){return !(r.approved===true||r.fromAlloc===true);});
-  if(!toApprove.length){
-    if(typeof toast==='function')toast('All already approved','info');
+  var toApprove=reviewable.filter(function(r){return !_armpIsReviewApproved(r) && r.exported!==true;});
+  if(toApprove.length){
+    // ── APPROVE ALL ──────────────────────────────────────────────────────
+    toApprove.forEach(function(r){
+      // Stash prior flags so a follow-up Unselect All restores the exact state
+      r._preBulk={approved:r.approved===true, fromAlloc:r.fromAlloc===true};
+      r.approved=true;r.fromAlloc=true;delete r.unapproved;
+      try{armpAuditStamp(r,"approve");}catch(e){}
+    });
+    try{saveToStorage();}catch(e){}
+    try{if(typeof rPost==='function')rPost();}catch(e){}
+    try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
+    try{updDash();updTop();}catch(e){}
+    try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
+    try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
+    try{addAudit('Approve all review items',toApprove.length+' allocations');}catch(e){}
+    if(typeof toast==='function')toast('Approved '+toApprove.length+' allocation'+(toApprove.length===1?'':'s')+' — click again to unselect');
+    if(typeof renderWsReview==='function')renderWsReview();
     return;
   }
-  toApprove.forEach(function(r){r.approved=true;r.fromAlloc=true;});
+  // ── UNSELECT ALL (second click) ────────────────────────────────────────
+  var toUnselect=reviewable.filter(function(r){return _armpIsReviewApproved(r) && r.exported!==true;});
+  if(!toUnselect.length){
+    if(typeof toast==='function')toast('Nothing to unselect','info');
+    return;
+  }
+  var _qualifiesWithoutAlloc=function(r){
+    return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.st==='Resolved'||r.st==='Amount match'||r.st==='Short pay'||r.st==='Overpay';
+  };
+  toUnselect.forEach(function(r){
+    if(r._preBulk){
+      // Restore the exact pre-bulk state
+      r.approved=r._preBulk.approved;
+      r.fromAlloc=r._preBulk.fromAlloc;
+      delete r._preBulk;
+      if(r.approved||r.fromAlloc)r.unapproved=true; else delete r.unapproved;
+    } else if(_qualifiesWithoutAlloc(r)){
+      r.approved=false;r.fromAlloc=false;delete r.unapproved;
+    } else {
+      // Row lives in Review only via fromAlloc — keep provenance, mark unapproved
+      r.approved=false;r.unapproved=true;
+    }
+    try{armpAuditStamp(r,"unapprove");}catch(e){}
+  });
   try{saveToStorage();}catch(e){}
   try{if(typeof rPost==='function')rPost();}catch(e){}
   try{if(typeof renderPayQueue==='function')renderPayQueue();}catch(e){}
   try{updDash();updTop();}catch(e){}
   try{if(typeof updateCfoSummary==='function')updateCfoSummary();}catch(e){}
   try{if(typeof updWorkflow==='function')updWorkflow();}catch(e){}
-  try{addAudit('Approve all review items',toApprove.length+' allocations');}catch(e){}
-  if(typeof toast==='function')toast('Approved '+toApprove.length+' allocation'+(toApprove.length===1?'':'s'));
+  try{addAudit('Unselect all review items',toUnselect.length+' allocations');}catch(e){}
+  if(typeof toast==='function')toast('Unselected '+toUnselect.length+' allocation'+(toUnselect.length===1?'':'s'));
   if(typeof renderWsReview==='function')renderWsReview();
 }
 
@@ -12209,7 +12325,7 @@ function exportPostAndLock(){  // Item 4: Guard — block export when there are 
     }
     // Mark all exportable rows as exported
     var exportable=(typeof RES!=='undefined')?RES.filter(function(r){
-      return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc;
+      return r.st==='Exact'||r.st==='Subset exact'||r.fromExc||(r.fromAlloc&&r.unapproved!==true);
     }):[];
     exportable.forEach(function(r){r.exported=true; try{ armpAuditStamp(r, "export"); }catch(e){}});
     try{saveToStorage();}catch(e){}
@@ -13184,11 +13300,88 @@ function openImport(t){
     if(lbl)lbl.textContent=t==='inv'?'Invoice CSV — Customer, Account, Invoice, PO, SO, Amount, Doc Type, Date, Due, Document #':'Remittance CSV — Account, Customer, Amount, PO Ref, Invoice Ref, Method, Notes';
   }
   const ta=document.getElementById('mo-ta');if(ta)ta.value='';
+  try{var _tplRow=document.getElementById('imp-template-row');if(_tplRow)_tplRow.style.display=(t==='inv')?'block':'none';}catch(e){}
   hideProgress();
   if(ARMP_SILENT_IMPORT) return; // setup flow imports in background — no modal
   var _impM=document.getElementById('imp-modal');if(_impM)_impM.classList.add('open');
 }
 function closeMo(){var m=document.getElementById('imp-modal');if(m)m.classList.remove('open');}
+
+// ── ARMP Invoice Import Template ──────────────────────────────────────────
+// Canonical column set for open-invoice imports. Every column resolves 1:1
+// through the existing header-alias mapper, and SAP FBL5N exports (Billing
+// Document = Invoice / Payment reference = PO / Reference Key 3) resolve to
+// the same fields — so both the template and native FBL5N pass validation.
+var ARMP_IMPORT_TEMPLATE_COLUMNS = [
+  'Account','Customer Name','Invoice','PO Number','Sales Order','Amount',
+  'Currency','Document Type','Document Date','Net Due Date','Document Number','Text',
+  'Delivery #','Bill of Lading','Logistics Memo - Internal Header'
+];
+function armpDownloadImportTemplate(){
+  if(typeof XLSX==='undefined'){ if(typeof toast==='function')toast('Template requires SheetJS (offline?) — see docs for the column list','warn'); return; }
+  try{
+    var rows=[
+      ARMP_IMPORT_TEMPLATE_COLUMNS,
+      ['40017108','Sample Customer Inc','5105169920','4521570557','2104396495','4125.00','USD','RV','2026-03-27','2026-05-26','1000126696','','7100001234','1Z9998V01234567890','SS260409-KB3'],
+      ['40016800','Sample Customer Inc','5105189855','4521448079','2104374644','8400.00','USD','RV','2026-04-10','2026-06-09','1000148480','','7100001235','3/12/2026 DHL 5213011672','']
+    ];
+    var instructions=[
+      ['ARMP Invoice Import Template'],
+      [''],
+      ['REQUIRED columns (import is rejected without them):'],
+      ['  Account','Customer account number in your ERP (e.g. SAP Kunnr)'],
+      ['  Invoice','Open invoice / billing document number'],
+      ['  Amount','Open amount in document currency (negative = credit)'],
+      [''],
+      ['RECOMMENDED columns (drive matching quality):'],
+      ['  PO Number','Customer purchase order — used for remittance PO matching'],
+      ['  Sales Order','Sales order — used for COA notes when a PO has no exact-amount invoice'],
+      ['  Document Type','e.g. RV (invoice), DZ (payment) — non-invoice rows are handled correctly'],
+      ['  Document Date / Net Due Date','Aging and FIFO tie-breaking'],
+      ['  Document Number','Accounting document (audit trail)'],
+      ['  Customer Name','Display name; ARMP falls back to filename when absent'],
+      [''],
+      ['OPTIONAL shipment columns (enable shipment-reference matching):'],
+      ['  Delivery #','SAP delivery document tied to this invoice'],
+      ['  Bill of Lading','Carrier tracking (UPS 1Z…, DHL numeric) — date/carrier prefixes are OK'],
+      ['  Logistics Memo - Internal Header','Internal shipment refs (e.g. SS… references) quoted on remittances'],
+      [''],
+      ['SAP FBL5N exports are accepted natively: "Billing Document = Invoice",'],
+      ['"Payment reference = Purchase Order = PO", and "Reference Key 3" (Sales Order)'],
+      ['map automatically. Delete the two SAMPLE rows before importing real data.']
+    ];
+    var wb=XLSX.utils.book_new();
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=ARMP_IMPORT_TEMPLATE_COLUMNS.map(function(c){return {wch:Math.max(14,c.length+4)};});
+    XLSX.utils.book_append_sheet(wb,ws,'Open Invoices');
+    var wsI=XLSX.utils.aoa_to_sheet(instructions);
+    wsI['!cols']=[{wch:32},{wch:70}];
+    XLSX.utils.book_append_sheet(wb,wsI,'Instructions');
+    XLSX.writeFile(wb,'ARMP_Invoice_Import_Template.xlsx');
+    try{addAudit('Template downloaded','ARMP invoice import template');}catch(e){}
+    if(typeof toast==='function')toast('Template downloaded — required: Account, Invoice, Amount');
+  }catch(e){
+    console.error('[template]',e);
+    if(typeof toast==='function')toast('Template generation failed: '+e.message,'warn');
+  }
+}
+// Validation-failure modal: names exactly which required columns are missing
+// and offers the template. Import is aborted; existing data is untouched.
+function armpShowImportValidation(missing, foundHeaders){
+  var _missHtml=missing.map(function(m){return '<li style="margin:4px 0"><strong>'+m.label+'</strong> <span style="color:var(--t3)">— e.g. '+m.hint+'</span></li>';}).join('');
+  var _fh=(foundHeaders||[]).filter(Boolean).slice(0,12).join(', ');
+  showModal('Import needs the ARMP template format',
+    '<div style="font-size:13px;color:var(--t2);line-height:1.55">'+
+      '<div style="margin-bottom:10px">This file is missing required column'+(missing.length===1?'':'s')+':</div>'+
+      '<ul style="margin:0 0 12px 18px;padding:0">'+_missHtml+'</ul>'+
+      (_fh?'<div style="font-size:12px;color:var(--t3);margin-bottom:12px">Headers found: '+_escapeHtml(_fh)+(foundHeaders.length>12?'…':'')+'</div>':'')+
+      '<div>All ARMP invoice imports use the standard template (SAP FBL5N exports qualify automatically). Nothing was imported.</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">'+
+      '<button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>'+
+      '<button class="btn btn-p btn-sm" onclick="armpDownloadImportTemplate()">⬇ Download ARMP Template</button>'+
+    '</div>');
+}
 function closeWelcome(){const m=document.getElementById('mo-welcome');if(m)m.style.display='none';}
 function closeUpgrade(){
   var u=document.getElementById('upgrade-modal');if(u)u.classList.remove('open');
@@ -14284,7 +14477,17 @@ function excActionOpen(idx, action){
   // Pre-fill the reference the exception already carries. The operator should
   // never retype an invoice, delivery, PO or sales-order number that ARMP read
   // off the remittance. Prefer the most specific identifier available.
-  var _prefRef = String(ex.invRef || ex.delRef || ex.poRef || ex.soRef || ex.ref || '').trim();
+  // ex.ref is the payment's bank transaction reference (ACH trace, ACC ref,
+  // RCVR/ORIG IDs on legacy records) — it is NOT an invoice. Only prefill it
+  // when it verifiably matches an open invoice in the imported aging.
+  var _prefRef = String(ex.invRef || ex.delRef || ex.poRef || ex.soRef || '').trim();
+  if(!_prefRef){
+    var _exBankRef = String(ex.ref || '').trim();
+    if(_exBankRef && _exBankRef !== '—' && typeof INV !== 'undefined' &&
+       INV.some(function(v){ return String(v.i) === _exBankRef; })){
+      _prefRef = _exBankRef;
+    }
+  }
   if(_prefRef === '—') _prefRef = '';
 
   _excActionCtx = {
@@ -15951,7 +16154,7 @@ function approveResultGroup(idxs){
   var n=0;
   idxs.sort(function(a,b){return b-a;}).forEach(function(i){
     var r=RES[i];
-    if(r){r.approved=true;r.fromAlloc=true;try{armpAuditStamp(r,"approve");}catch(e){}n++;}
+    if(r){r.approved=true;r.fromAlloc=true;delete r.unapproved;delete r._preBulk;try{armpAuditStamp(r,"approve");}catch(e){}n++;}
   });
   try{saveToStorage();}catch(e){}
   try{if(typeof rPost==='function')rPost();}catch(e){}
@@ -17118,11 +17321,26 @@ function matchERSGrouped(payAmount, custAccount, idx, tol){
         _ld.forEach(function(d){ _sos.push(String(d.salesOrder)); });
       }
     });
+    // ── Aging fallback (generic, all customers) ─────────────────────────
+    // When no delivery report is loaded (or it has no row for this PO), the
+    // aging itself resolves PO → Sales Order: FBL5N carries the SO in the
+    // Sales Order column or in Reference Key 3. The open items for this PO
+    // also identify the correct posting ACCOUNT for the COA — "listed in the
+    // aging report" is the source of truth, not the payment header guess.
+    var _agingAccts = [];
+    var _poInvs = (idx && idx.byPO) ? (idx.byPO.get(norm(g.poNumber)) || []) : [];
+    _poInvs.forEach(function(inv){
+      if(inv.a) _agingAccts.push(String(inv.a).trim());
+      if(_sos.length) return; // delivery bridge already resolved the SO
+      var _soCand = detectSalesOrder(inv.so) || detectSalesOrder(inv.refKey3);
+      if(_soCand) _sos.push(_soCand);
+    });
     unmatchedGroups.push({
       po: g.poNumber,
       total: g.total,
       lines: g.lines || [],
-      salesOrders: Array.from(new Set(_sos)) // unique SOs found via delivery bridge
+      salesOrders: Array.from(new Set(_sos)), // unique SOs (delivery bridge, then aging fallback)
+      agingAccounts: Array.from(new Set(_agingAccts)) // account(s) holding this PO's open items in the aging
     });
   }
 
@@ -17954,14 +18172,18 @@ async function runMatch(){
       if(!po || !idx.byPO) return [];
       return idx.byPO.get(norm(po)) || [];
     }
-    // Helper: pick best INV from list by amount proximity
+    // Helper: pick best INV from list by amount — EXACT AMOUNT ONLY.
+    // The previous fallback to open[0] (first open invoice regardless of amount)
+    // over-applied catastrophically: a multi-box shipment's tracking maps to many
+    // delivery rows, and each row grabbed an arbitrary invoice under its SO —
+    // one real remittance applied $14M against a $2.3M payment. Same rule as the
+    // ERS matcher: never guess-apply; a non-tying line routes to COA instead.
     function _pickInv(candidates, amt){
       if(!candidates.length) return null;
       var open = candidates.filter(function(v){ return !v.s; });
       if(!open.length) return null;
-      // Prefer exact amount match
       var exact = open.find(function(v){ return Math.abs(v.amt-amt)<=tol; });
-      return exact || open[0];
+      return exact || null;
     }
     // Helper: add to matched without duplicating
     function _addMatch(inv, chain){
@@ -18601,12 +18823,16 @@ async function runMatch(){
               _ersMatch.unmatchedGroups.forEach(function(grp){
                 var _grpSo = (grp.salesOrders && grp.salesOrders.length > 0) ? grp.salesOrders[0] : '';
                 var _noteRef = _grpSo ? ('COA for SO ' + _grpSo) : ('COA for PO ' + grp.po);
+                // COA posts to the account that holds this PO's open items in the
+                // AGING (source of truth) — falls back to the payment's resolved
+                // account only when the PO has no aging rows at all.
+                var _grpAcct = (grp.agingAccounts && grp.agingAccounts.length > 0) ? grp.agingAccounts[0] : (p.a || '');
                 // One EXC per ERS line within the unmatched group
                 (grp.lines || []).forEach(function(line){
                   var _lineAmt = line.amount || 0;
                   if(_lineAmt <= 0) return;
                   EXC.push({id:'EXC-'+String(ec++).padStart(3,'0'),
-                    a:p.a, c:p.c||'', amt:_lineAmt,
+                    a:_grpAcct, c:p.c||'', amt:_lineAmt,
                     ref:p.txId||p.bankRef||'—',
                     type:'Cash on Account',
                     po: grp.po,
@@ -19368,8 +19594,13 @@ async function handleFile(inp){
           i:'', po:'', so:'',
           m:(_ocrFields && _ocrFields.method) || 'ACH',
           baiCode:'',
-          txId:(_ocrFields && _ocrFields.rcvrId) || '',
+          // txId = the bank's transaction reference (ACC-xxxxx). The ACH RCVR ID
+          // is a company identifier, not a transaction/invoice reference — using
+          // it as txId leaked bank IDs into invoice fields downstream.
+          txId:(_ocrFields && _ocrFields.accRef) || '',
           bankRef:(_ocrFields && _ocrFields.accRef) || '',
+          originatorId:(_ocrFields && _ocrFields.origId) || '',
+          receiverId:(_ocrFields && _ocrFields.rcvrId) || '',
           custRef:'',
           payDate:_payDate,
           ccy:'USD',
@@ -20433,7 +20664,42 @@ function processImport(){
   }
   if(IMP_TYPE==='inv'){
     var _invT0 = Date.now();
+    // Capture the filename NOW — multi-file imports overwrite the global while
+    // the chunked loop below is still running, which previously made the
+    // customer-name fallback read the WRONG file's name (e.g. the next ERS/VMI
+    // file) and silently break customer resolution and VMI matching.
+    var _importFileName = window._lastImportFileName || '';
     showProgress('Importing invoice report…', 10);
+
+    // ── ARMP Import Template validation (all invoice imports) ────────────
+    // Required fields must resolve through the header aliases BEFORE anything
+    // is mutated. Alias lists mirror the INV.push mapping below exactly, so a
+    // file that validates always maps. FBL5N and the ARMP template both pass.
+    var _vAcct = col(
+      'account','acct','customerid','customeraccount','accountnumber',
+      'customeraccount','debtornumber','debtoraccount','kunnr',
+      'accountingdocument','customer','customernumber','partnernumber',
+      'entityid','externalid','accountcode','debtorcode','bpnumber');
+    var _vInv = col(
+      'invoice','inv','invoicenum','invoicenumber','invoiceno',
+      'customerinvoice','invoiceid',
+      'billingdocument','billingdocumentinvoice',
+      'documentnumber','docnumber','documentno','belnr','referencedocument',
+      'refdocno','refdoc','reference','invoicedocument',
+      'docno','invoicereference','invoiceref',
+      'tranid','transactionnumber','invoicenumber2','externaldocnum');
+    var _vAmt = col('amountindoccurr','amountindoccurrency','amountindocumentcurrency','amountinlocalcurrency','amountindoccurr.','amount','amt','openamount','balance','invoiceamount','netamount','openbalance','amtlc','outstandingbalance','remainingbalance','arbalance');
+    var _vMissing=[];
+    if(_vAcct<0)_vMissing.push({label:'Account', hint:'Account, Customer Account, Kunnr'});
+    if(_vInv<0)_vMissing.push({label:'Invoice', hint:'Invoice, Billing Document = Invoice, Document No'});
+    if(_vAmt<0)_vMissing.push({label:'Amount', hint:'Amount, Amount in doc. curr., Open Amount'});
+    if(_vMissing.length){
+      hideProgress();
+      try{ addAudit('Invoice import rejected','missing: '+_vMissing.map(function(m){return m.label;}).join(', ')); }catch(e){}
+      try{ armpShowImportValidation(_vMissing, pLine(lines[0])); }catch(e){ toast('Import rejected — missing required columns: '+_vMissing.map(function(m){return m.label;}).join(', '),'warn'); }
+      return;
+    }
+
     // Parse all rows synchronously (fast — just array operations)
     var _rawRows = rows.filter(function(r){ return r.some(function(c){return c;}); });
     showProgress('Normalizing invoice data…', 30);
@@ -20469,13 +20735,15 @@ function processImport(){
           // try to extract customer name from the import filename
           try{
             var _noNameCount = INV.filter(function(v){return !v.c;}).length;
-            if(_noNameCount > INV.length * 0.8 && window._lastImportFileName){
+            if(_noNameCount > INV.length * 0.8 && _importFileName){
               // Extract customer name from filename: "Applied_Materials_Aging_Detail_FBL5N..." → "Applied Materials"
-              var _fnClean = window._lastImportFileName
+              var _fnClean = _importFileName
                 .replace(/\.[^.]+$/, '')                    // remove extension
                 .replace(/[-_]/g, ' ')                      // underscores/dashes to spaces
                 .replace(/\b(Aging|Detail|FBL5N|Report|Open|Items|Invoice|Invoices|AR|\d{2}[\s_]\d{2}[\s_]\d{4})\b/gi, '') // remove common report words
+                .replace(/\b\d{1,2}[.\-]\d{1,2}(?:[.\-]\d{2,4})?[.\-]?(?=\s|$)/g, '') // dotted/dashed date tokens: 06.01.2026, 06.01., 6-1-26
                 .replace(/\d{4,}/g, '')                     // remove long numbers
+                .replace(/[.\-_,]+(?=\s|$)/g, '')           // orphaned punctuation left after date removal
                 .replace(/\s+/g, ' ').trim();
               if(_fnClean.length >= 4){
                 INV.forEach(function(v){ if(!v.c) v.c = _fnClean; });
@@ -20543,7 +20811,7 @@ function processImport(){
           dt2:r[col('invoicedate','docdate','postingdate','documentdate','budat','bldat','date','invoicecreated','createdate','postdate','transactiondate','valuedate','trandate','createddate')]||'',
           due:r[col('duedate','due','netduedate','netduedate','cashdiscountdate1','cashdiscountdate','zfbdt','dueondate','paymentduedate','duedate2','maturitydate','duedate3','paymentdate','dueby')]||'',
           d:r[col('document','docnum','documentnumber','clearingdocument','augbl','clearedwith','referencedocno','xblnr')]||'',
-          t:r[col('tracking','trk','trackingnumber','trackingno')]||'',
+          t:r[col('tracking','trk','trackingnumber','trackingno','billoflading','billofladingnumber','bol')]||'',
           dl:r[col('delivery','del','deliverynumber','deliveryno','vbeln2')]||'',
           logMemo:r[col('logisticsmemo','logisticsmemointernalheader','logmemo','internalmemo','logisticmemo','shippingmemo','freightmemo')]||'',
           // FBL5N-specific fields
@@ -20555,6 +20823,22 @@ function processImport(){
         // ── Parse FBL5N Text field for embedded references ────────────────
         // DZ rows often have text like "5101099588 4507342394 2100956921 price diff"
         var _lastInv = INV[INV.length-1];
+        // FBL5N carries the Sales Order in Reference Key 3 when no explicit SO
+        // column exists. Promote it (validated by SO shape) so PO→SO resolution
+        // and idx.bySO work from the aging alone — for every customer.
+        if(_lastInv && !_lastInv.so && _lastInv.refKey3){
+          var _rk3so = detectSalesOrder(_lastInv.refKey3);
+          if(_rk3so) _lastInv.so = _rk3so;
+        }
+        // Bill of Lading cells often carry date/carrier prefixes
+        // ("3/12/2026 DHL 5213011672", "12/19/25 UPS 1Z…"). Extract the carrier
+        // tracking token so the byTrk index matches clean remittance refs —
+        // same normalization the delivery report import applies.
+        if(_lastInv && _lastInv.t){
+          var _trkClean = detectUPSTracking(_lastInv.t) ||
+                          (typeof detectDHLTracking==='function' ? detectDHLTracking(_lastInv.t) : '');
+          if(_trkClean) _lastInv.t = _trkClean;
+        }
         if(_lastInv && _lastInv.fbl5nText){
           var _textRefs = DeductionHandler.parseTextRefs(_lastInv.fbl5nText);
           // Enrich invoice row with any extracted refs not already populated
@@ -21662,7 +21946,7 @@ function _fbl5nBuildRow(v){
   var balance=v.amt-applied;
   // Is this invoice approved (in Review) or already allocated? If so, show it
   // as approved here too, with a deep-green highlight that stands out.
-  var isApproved = !!(matched && (matched.approved===true || matched.fromAlloc===true || matched.exported===true));
+  var isApproved = !!(matched && (matched.exported===true || ((matched.approved===true || matched.fromAlloc===true) && matched.unapproved!==true)));
   var ENG_ROW=(typeof ENG_ROWS!=='undefined')?ENG_ROWS.find(function(r){return r.inv&&r.inv.i===v.i;}):null;
   var conf=ENG_ROW?ENG_ROW.conf:(ENG_PAY&&typeof engGetConfidence==='function'?engGetConfidence(v,ENG_PAY):0);
   var status=v.s||'Open';
@@ -22266,7 +22550,7 @@ function buildWorklist(){
   }
 
   // Ready to export
-  var exportReady=RES.filter(function(r){ return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported; });
+  var exportReady=RES.filter(function(r){ return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||(r.fromAlloc&&r.unapproved!==true))&&!r.exported; });
   var exportList=document.getElementById('wl-export-list');
   var exportCt=document.getElementById('wl-export-ct');
   if(exportCt){ exportCt.textContent=exportReady.length; exportCt.style.display=exportReady.length?'inline-flex':'none'; }
@@ -23224,7 +23508,7 @@ rAll = function(){
   // Update worklist badge
   var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
   var unalloc=PAY.filter(function(p){var hr=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});var he=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});return !hr&&!he&&!p.dp;});
-  var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
+  var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||(r.fromAlloc&&r.unapproved!==true))&&!r.exported;});
   var tot=urgent.length+unalloc.length+xr.length;
   var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display='none';} // badge permanently hidden
 };
@@ -23262,7 +23546,7 @@ updTop = function(){
   // Refresh worklist badge on every updTop call
   var urgent=EXC.filter(function(e){return !e.s||e.s==='Open';});
   var unalloc=PAY.filter(function(p){var hr=RES.find(function(r){return r.po===p.po||r.i===p.i||(p.a&&r.a===p.a&&Math.abs(r.pd-p.amt)<1);});var he=EXC.find(function(e){return e.a===p.a&&Math.abs(e.amt-p.amt)<0.01;});return !hr&&!he&&!p.dp;});
-  var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||r.fromAlloc)&&!r.exported;});
+  var xr=RES.filter(function(r){return (r.st==='Exact'||r.st==='Subset exact'||r.fromExc||(r.fromAlloc&&r.unapproved!==true))&&!r.exported;});
   var tot=urgent.length+unalloc.length+xr.length;
   var badge=document.getElementById('sb-wl-ct'); if(badge){badge.textContent=tot;badge.style.display='none';} // badge permanently hidden
   // If worklist active, rebuild

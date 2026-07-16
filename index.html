@@ -621,7 +621,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.3);border-radius:20px;color:#34D399">Ready today</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
-          <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">Setup in minutes</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">Import a CSV, run the match, done</div></div></div>
+          <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">Setup in minutes</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">Standardized import template — SAP exports work as-is</div></div></div>
           <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">No ERP integration required</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">Export from SAP/NetSuite, import here</div></div></div>
           <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">Focused on remittance matching</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">One workflow, done exceptionally well</div></div></div>
           <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">Built for Accounting and AR teams</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">Not IT. Not implementation consultants.</div></div></div>
@@ -1055,7 +1055,12 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">What file types are supported?<span class="faq-arrow">+</span></div>
-        <div class="faq-a">CSV and Excel (.xlsx) are fully supported for invoices, bank files, and delivery reports. The import modal auto-detects column headers. Bank statement formats (BAI2, CAMT.053) are also supported.</div>
+        <div class="faq-a">CSV and Excel (.xlsx) are fully supported for invoices, bank files, and delivery reports. Invoice imports use the standardized ARMP Invoice Import Template (downloadable in one click from the import screen) — and native SAP FBL5N exports qualify automatically, no reshaping needed. Bank statement formats (BAI2, CAMT.053), PDFs, and even bank or remittance screenshots are also supported.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Do I need to reformat my ERP exports?<span class="faq-arrow">+</span></div>
+        <div class="faq-a">Usually not. The ARMP Invoice Import Template needs just three required columns — Account, Invoice, and Amount — and SAP FBL5N exports map to it automatically, including the Sales Order carried in Reference Key 3. If a file is missing a required column, the import is rejected before anything changes, with a message naming exactly what’s missing and a one-click template download.</div>
       </div>
 
       <div class="faq-item">
