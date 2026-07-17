@@ -5891,7 +5891,10 @@ function renderWsReview(){
   const stBadge={Exact:'badge-g','Subset exact':'badge-p','Short pay':'badge-am',Overpay:'badge-am',Resolved:'badge-g','Amount match':'badge-pu',Partial:'badge-am','Cash on account':'badge-cy'};
   const wsBadge={Exact:'Ready for Export','Subset exact':'Ready for Export',Resolved:'Awaiting Export','Amount match':'Review Recommended','Short pay':'Requires Review',Overpay:'Requires Review','Cash on account':'Ready for Export'};
   
-  list.innerHTML = groups.map(function(g){
+  // ── WINDOWED RENDER (go-live guardrail) — pages of 50 payment groups ──
+  // At 2,000+ matched payments the single-pass innerHTML freezes the tab.
+  // Grouping is preserved: a payment's allocations always render together.
+  function _rvGroupHtml(g){
     var items=g.items;
     var idxs=g.idxs;
     var isMulti = items.length > 1;
@@ -5999,7 +6002,30 @@ function renderWsReview(){
     return '<div class="review-item-group" style="margin-bottom:8px;border:1px solid var(--bdr);border-radius:10px;overflow:hidden;background:var(--surface)">'+
       headerHtml + rowsHtml +
     '</div>';
-  }).join('');
+  }
+  window._rvGroups = groups;
+  window._rvRenderGroup = _rvGroupHtml;
+  var _RV_PAGE = 50;
+  var _first = groups.slice(0, _RV_PAGE).map(_rvGroupHtml).join('');
+  var _moreBtn = groups.length > _RV_PAGE
+    ? '<div id="rv-load-more" style="padding:10px;text-align:center"><button class="btn btn-outline btn-sm" onclick="loadMoreReview()">Load 50 more payments ('+(groups.length-_RV_PAGE).toLocaleString()+' remaining)</button></div>'
+    : '';
+  window._rvOffset = Math.min(_RV_PAGE, groups.length);
+  list.innerHTML = _first + _moreBtn;
+}
+function loadMoreReview(){
+  var list=document.getElementById('review-list'); if(!list) return;
+  var groups=window._rvGroups||[], off=window._rvOffset||0, PAGE=50;
+  var next=groups.slice(off, off+PAGE).map(window._rvRenderGroup).join('');
+  var btn=document.getElementById('rv-load-more');
+  if(btn){ btn.insertAdjacentHTML('beforebegin', next); }
+  else { list.insertAdjacentHTML('beforeend', next); }
+  window._rvOffset=off+PAGE;
+  var left=groups.length-window._rvOffset;
+  if(btn){
+    if(left>0) btn.querySelector('button').textContent='Load 50 more payments ('+left.toLocaleString()+' remaining)';
+    else btn.remove();
+  }
 }
 
 // ── Premium reconcile ──
@@ -13413,6 +13439,22 @@ function armpDownloadImportTemplate(){
 }
 // Validation-failure modal: names exactly which required columns are missing
 // and offers the template. Import is aborted; existing data is untouched.
+function armpShowImportLimit(kind, rowCount, limit){
+  var _isPay = /payment/.test(kind);
+  showModal('File too large to import safely',
+    '<div style="font-size:13px;color:var(--t2);line-height:1.55">'+
+      '<div style="margin-bottom:10px">This '+kind+' file has <strong>'+rowCount.toLocaleString()+' rows</strong> — above the '+
+      '<strong>'+limit.toLocaleString()+'-row</strong> limit for '+kind+' files. Nothing was imported.</div>'+
+      (_isPay
+        ? '<div style="margin-bottom:10px">Payment volume is what drives browser memory during matching. To stay reliable, '+
+          'split the file into batches of up to '+limit.toLocaleString()+' lines (e.g. by week or by bank account) and run each batch as its own session — '+
+          'the workspace resets weekly, so a weekly cadence usually keeps files under the limit naturally.</div>'
+        : '<div style="margin-bottom:10px">Split the file (e.g. by date range or company code) and import the parts separately.</div>')+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">'+
+      '<button class="btn btn-p btn-sm" onclick="closeModal()">OK</button>'+
+    '</div>');
+}
 function armpShowImportValidation(missing, foundHeaders){
   var _missHtml=missing.map(function(m){return '<li style="margin:4px 0"><strong>'+m.label+'</strong> <span style="color:var(--t3)">— e.g. '+m.hint+'</span></li>';}).join('');
   var _fh=(foundHeaders||[]).filter(Boolean).slice(0,12).join(', ');
@@ -16031,25 +16073,29 @@ function renderPayQueue(){
     return null;
   }
 
-  list.innerHTML=PAY.map((p,i)=>{
-    // Bank account filter
+  // ── WINDOWED RENDER (go-live guardrail) ─────────────────────────────────
+  // At 2,000+ payments a single innerHTML of every card measurably freezes the
+  // tab (measured: 3.2MB of HTML / 8s string-build at 5K). Filter to an index
+  // list first, then render pages of 100 with an appending "Load more" — same
+  // pattern as the open-invoice grid.
+  function _pqPasses(p){
     const _pa=String(p.bankAcct||p.bankAccount||p.statementAccount||'').replace(/[^0-9A-Za-z\-]/g,'').trim();
-    if(bankVal&&_pa!==bankVal)return'';
-    // Currency filter
-    if(ccyVal2&&p.ccy&&p.ccy!==ccyVal2)return'';
-    // Date range filter
-    if(fromD&&p.payDate&&new Date(p.payDate)<fromD)return'';
-    if(toD&&p.payDate&&new Date(p.payDate)>toD)return'';
+    if(bankVal&&_pa!==bankVal)return false;
+    if(ccyVal2&&p.ccy&&p.ccy!==ccyVal2)return false;
+    if(fromD&&p.payDate&&new Date(p.payDate)<fromD)return false;
+    if(toD&&p.payDate&&new Date(p.payDate)>toD)return false;
     const matched=_findMatch(p);
-    const exc=_findExc(p);
-    // Matched/Unmatched tab filter
-    if(_payFilter==='matched'&&!matched)return'';
-    if(_payFilter==='unmatched'&&matched)return'';
-    // Search filter
+    if(_payFilter==='matched'&&!matched)return false;
+    if(_payFilter==='unmatched'&&matched)return false;
     if(_pqSearch){
       const searchable=[p.c,p.a,p.i,p.po,p.txId,String(p.amt||''),p.m,p.n,p.payDate].map(function(x){return String(x==null?'':x).toLowerCase();}).join(' ');
-      if(!searchable.includes(_pqSearch))return'';
+      if(!searchable.includes(_pqSearch))return false;
     }
+    return true;
+  }
+  function _pqRowHtml(p,i){
+    const matched=_findMatch(p);
+    const exc=_findExc(p);
     const isActive=ENG_PAY_IDX===i;
     const stateColor=matched?'var(--g)':exc?'var(--am)':p.dp?'var(--p)':p.coa||p.unapplied?'var(--cy)':'var(--t3)';
     const stateLabel=matched?'Applied':exc?(p.st==='Unapplied Cash'||p.unapplied?'Unapplied':'Exception'):p.dp?'Down Pay':p.coa||p.unapplied?'Unapplied':'Unmatched';
@@ -16065,7 +16111,32 @@ function renderPayQueue(){
         <span style="font-size:10px;padding:1px 6px;border-radius:6px;background:${stateColor}18;color:${stateColor};font-weight:700">${stateLabel}</span>
       </div>
     </div>`;
-  }).join('');
+  }
+  var _pqVisible=[];
+  for(var _pi=0;_pi<PAY.length;_pi++){ if(_pqPasses(PAY[_pi])) _pqVisible.push(_pi); }
+  window._pqVisibleIdx=_pqVisible;
+  window._pqRowHtmlFn=_pqRowHtml;
+  var _PQ_PAGE=100;
+  var _first=_pqVisible.slice(0,_PQ_PAGE).map(function(ix){ return _pqRowHtml(PAY[ix],ix); }).join('');
+  var _more=_pqVisible.length>_PQ_PAGE
+    ? '<div id="pq-load-more" style="padding:10px;text-align:center"><button class="btn btn-outline btn-sm" onclick="loadMorePayQueue()">Load 100 more ('+(_pqVisible.length-_PQ_PAGE).toLocaleString()+' remaining)</button></div>'
+    : '';
+  window._pqOffset=Math.min(_PQ_PAGE,_pqVisible.length);
+  list.innerHTML=_first+_more;
+}
+function loadMorePayQueue(){
+  var list=document.getElementById('pq-list'); if(!list) return;
+  var vis=window._pqVisibleIdx||[], off=window._pqOffset||0, PAGE=100;
+  var next=vis.slice(off,off+PAGE).map(function(ix){ return window._pqRowHtmlFn(PAY[ix],ix); }).join('');
+  var btn=document.getElementById('pq-load-more');
+  if(btn){ btn.insertAdjacentHTML('beforebegin', next); }
+  else { list.insertAdjacentHTML('beforeend', next); }
+  window._pqOffset=off+PAGE;
+  var left=vis.length-window._pqOffset;
+  if(btn){
+    if(left>0) btn.querySelector('button').textContent='Load 100 more ('+left.toLocaleString()+' remaining)';
+    else btn.remove();
+  }
 }
 
 function engLoadPaymentFromQueue(idx){
@@ -19432,7 +19503,81 @@ function loadSampleRemBOA(){
 }
 function loadSampleRem(){loadSampleRemJPM();loadSampleRemBOA();}
 
-function loadDemoData(){loadSampleInv();loadSampleRem();}
+// ── DEMO MODE — 1,000-invoice synthetic book + matching bank file ─────────
+// Deterministic (seeded) so every demo runs identically: ~140 payments with a
+// realistic mix (exact refs, PO-group sums, multi-invoice refs, amount-only,
+// short pays, and a few genuine exceptions so Needs Attention has a story).
+// All company names are fictional.
+function _demoRng(seed){ var s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+function armpGenDemoData(){
+  var names=['Beacon Medical Supply Co','Northlight Electronics Corp','Cascade Industrial Packaging','Harborview Components Inc','Redwood Precision Machining',
+    'Summit Freight Systems','Bluepeak Semiconductor LLC','Ironbridge Automotive Parts','Clearwater Instruments Inc','Stonegate Consumer Goods',
+    'Veridian Aerospace Supply','Lakeshore Chemical Trading','Pinnacle Cold Chain Storage','Copperfield Wholesale Group','Brightline Lab Equipment',
+    'Fairhaven Import Partners','Granite Ridge Fabrication','Silverbrook Distribution Co'];
+  var rng=_demoRng(20260717);
+  var invs=[], pays=[];
+  var po=4523000000, so=2104900000, invNo=9100000000, docNo=1000700000, poLeft=0, curPO='', curSO='';
+  var curCI=0;
+  for(var i=0;i<1000;i++){
+    if(poLeft===0){ poLeft=1+Math.floor(rng()*4); curPO=String(++po); curSO=String(++so); curCI=Math.floor(rng()*names.length); }
+    poLeft--;
+    var ci=curCI;   // one customer per PO — real POs never span customers
+    var acct=String(40200100+ci);
+    var amt=Math.round((80+rng()*24000)*4)/4;   // quarter-dollar amounts look real
+    var mo=2+Math.floor(rng()*5), dy=1+Math.floor(rng()*27);
+    var dt='2026-'+String(mo).padStart(2,'0')+'-'+String(dy).padStart(2,'0');
+    invs.push({c:names[ci],a:acct,i:String(++invNo),po:curPO,so:curSO,amt:amt,dt:'RV',dt2:dt,
+      due:'2026-'+String(mo+1).padStart(2,'0')+'-'+String(dy).padStart(2,'0'),d:String(++docNo),s:''});
+  }
+  var byPO={}; invs.forEach(function(v){ (byPO[v.po]=byPO[v.po]||[]).push(v); });
+  // No invoice is consumed by two payments (else the second becomes a spurious
+  // exception and the demo match rate sags). Amount-only draws use invoices
+  // whose amount is UNIQUE in the whole book so the match is deterministic.
+  var used={};
+  function markPO(poKey){ byPO[poKey].forEach(function(v){ used[v.i]=1; }); }
+  function drawInv(pred){
+    for(var tries=0;tries<200;tries++){
+      var v=invs[Math.floor(rng()*invs.length)];
+      if(used[v.i]) continue;
+      if(pred && !pred(v)) continue;
+      used[v.i]=1; return v;
+    }
+    return null;
+  }
+  var amtFreq={}; invs.forEach(function(v){ amtFreq[v.amt]=(amtFreq[v.amt]||0)+1; });
+  var poGroups=Object.keys(byPO).filter(function(k){ return byPO[k].length>=2; });
+  var tx=1;
+  function T(){ return 'DEMO-'+String(tx++).padStart(4,'0'); }
+  for(var p=0;p<140;p++){
+    var roll=p%35;
+    if(roll<21){ var v=drawInv(); if(!v) continue;
+      pays.push({a:v.a,c:v.c,amt:v.amt,i:v.i,po:'',so:'',m:'ACH',txId:T(),payDate:'06/15/2026',n:'',bank:'',ccy:'USD'}); }
+    else if(roll<27){
+      var gk=null;
+      for(var gt=0;gt<200;gt++){ var cand=poGroups[Math.floor(rng()*poGroups.length)];
+        if(byPO[cand].every(function(v){ return !used[v.i]; })){ gk=cand; break; } }
+      if(!gk) continue;
+      var g=byPO[gk]; markPO(gk);
+      var tot=0; g.forEach(function(v){tot+=v.amt;});
+      pays.push({a:g[0].a,c:g[0].c,amt:Math.round(tot*100)/100,i:'',po:g[0].po,so:'',m:'ACH',txId:T(),payDate:'06/15/2026',n:'',bank:'',ccy:'USD'}); }
+    else if(roll<30){ var v2=drawInv(function(v){ return amtFreq[v.amt]===1; }); if(!v2) continue;
+      pays.push({a:v2.a,c:v2.c,amt:v2.amt,i:'',po:'',so:'',m:'Wire',txId:T(),payDate:'06/16/2026',n:'',bank:'',ccy:'USD'}); }
+    else if(roll<32){ var v3=drawInv(), v4=drawInv(); if(!v3||!v4) continue;
+      pays.push({a:v3.a,c:v3.c,amt:Math.round((v3.amt+v4.amt)*100)/100,i:v3.i+', '+v4.i,po:'',so:'',m:'ACH',txId:T(),payDate:'06/16/2026',n:'',bank:'',ccy:'USD'}); }
+    else if(roll<34){ var v5=drawInv(); if(!v5) continue;
+      pays.push({a:v5.a,c:v5.c,amt:Math.round(v5.amt*0.97*100)/100,i:v5.i,po:'',so:'',m:'Check',txId:T(),payDate:'06/17/2026',n:'Short pay — damaged goods claim',bank:'',ccy:'USD'}); }
+    else { var ci2=Math.floor(rng()*names.length);
+      pays.push({a:String(40200100+ci2),c:names[ci2],amt:Math.round((500+rng()*3000)*100)/100+0.13,i:'',po:'',so:'',m:'Wire',txId:T(),payDate:'06/17/2026',n:'',bank:'',ccy:'USD'}); }
+  }
+  return { invs: invs, pays: pays };
+}
+function loadDemoData(){
+  var d=armpGenDemoData();
+  INV=d.invs; PAY=d.pays;
+  RES=[]; EXC=[];
+  try{ _invalidateInvIndexes(); _ensureInvIndexes(); }catch(e){}
+  try{ armpBuildCustomerDirectory(); }catch(e){}
+}
 
 // ── Remittance row controls ──
 function addRemRowBefore(idx){const blank={a:'',c:'',amt:0,po:'',i:'',so:'',m:'',txId:'',payDate:'',ccy:'USD',dp:false,coa:false,n:'',s:'Pending'};PAY.splice(idx,0,blank);saveToStorage();rRem();}
@@ -19844,7 +19989,15 @@ async function handleFile(inp){
     } else {
       const t=await f.text();const _mt5=document.getElementById('mo-ta');if(_mt5)_mt5.value=t;swTab('paste',document.querySelectorAll('.imp-tab')[0]);processImport();
     }
-  }catch(e){hideProgress();toast('Error reading file: '+e.message,'warn');}
+  }catch(e){
+    hideProgress();
+    var _fm = String(e.message||'');
+    var _friendly = /zip|corrupt|invalid|unsupported|end of data|bad/i.test(_fm)
+      ? 'This file appears corrupted or isn\'t a valid Excel/CSV file. Re-export it from your ERP and try again. ('+_fm+')'
+      : 'Error reading file: '+_fm;
+    toast(_friendly,'warn');
+    try{ addAudit('Import failed', (_lastImportFileName||'file')+' — '+_fm); }catch(_e){}
+  }
   inp.value='';
   const fn2=document.getElementById('imp-file-name');if(fn2)fn2.textContent='';
 }
@@ -20741,11 +20894,50 @@ function getImportTextSafe(){
 
 function processImport(){
   const raw=getImportTextSafe();if(!raw){toast('No data to import','warn');return;}
+  // Corrupted / binary content check: a real CSV or converted sheet is text.
+  // A high ratio of control or replacement characters means the file is binary
+  // junk or mis-encoded — say so plainly instead of reporting missing columns.
+  var _sample = raw.slice(0, 2048);
+  var _badChars = 0, _hasNul = false;
+  for(var _ci = 0; _ci < _sample.length; _ci++){
+    var _cc = _sample.charCodeAt(_ci);
+    if(_cc === 0) _hasNul = true;
+    if((_cc < 9) || (_cc > 13 && _cc < 32) || _cc === 0xFFFD) _badChars++;
+  }
+  // NUL bytes never occur in real CSV/text exports — decisive corruption signal.
+  if(_sample.length > 20 && (_hasNul || _badChars / _sample.length > 0.15)){
+    hideProgress();
+    showModal('This file can\'t be read',
+      '<div style="font-size:13px;color:var(--t2);line-height:1.55">'+
+        '<div style="margin-bottom:10px">The file appears to be corrupted, binary, or in an unexpected encoding — it doesn\'t contain readable table data. Nothing was imported.</div>'+
+        '<div>Try re-exporting it from your ERP or bank portal as CSV or Excel (.xlsx), then import again.</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">'+
+        '<button class="btn btn-p btn-sm" onclick="closeModal()">OK</button>'+
+      '</div>');
+    try{ addAudit('Import rejected', (_lastImportFileName||'file')+' — unreadable/binary content'); }catch(_e){}
+    return;
+  }
   const fl=raw.split('\n')[0],delim=fl.split('\t').length>fl.split(',').length?'\t':',';
   const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);if(lines.length<2){toast('Need header row + at least one data row','warn');return;}
   function pLine(l){if(delim==='\t')return l.split('\t').map(c=>c.trim().replace(/^"|"$/g,''));const res=[];let cur='',inQ=false;for(const c of l){if(c==='"')inQ=!inQ;else if(c===','&&!inQ){res.push(cur.trim());cur='';}else cur+=c;}res.push(cur.trim());return res;}
   const hdrs=pLine(lines[0]).map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,''));
   const rows=lines.slice(1).map(l=>pLine(l));
+  // ── HARD UPLOAD LIMITS (go-live guardrails, measured in load testing) ──
+  // Payments drive memory (~0.5MB each after matching): >2,500 payment rows in
+  // one session approaches browser tab-crash territory, so payment/remittance
+  // files are hard-blocked above that. Invoice and delivery books are cheap
+  // (O(1) indexes; 100K invoices tested) and get far higher ceilings. The block
+  // happens BEFORE any state mutation — nothing is partially imported.
+  var _ROW_LIMITS = { rem: 2500, remdetail: 2500, inv: 100000, del: 200000 };
+  var _rowLimit = _ROW_LIMITS[IMP_TYPE];
+  if(_rowLimit && rows.length > _rowLimit){
+    hideProgress();
+    var _limitKind = (IMP_TYPE==='inv') ? 'invoice' : (IMP_TYPE==='del') ? 'delivery report' : 'payment / remittance';
+    armpShowImportLimit(_limitKind, rows.length, _rowLimit);
+    addAudit('Import rejected', (_lastImportFileName||'file')+' — '+rows.length.toLocaleString()+' rows exceeds the '+_rowLimit.toLocaleString()+'-row '+_limitKind+' limit');
+    return;
+  }
   const isLarge = rows.length > 2000;
   if(isLarge) showProgress('Parsing '+(IMP_TYPE==='inv'?'invoice':'remittance')+' data — '+rows.length.toLocaleString()+' rows…', 10);
   function col(...k){
