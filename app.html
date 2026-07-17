@@ -24762,7 +24762,6 @@ function downloadHelp(e){}
 // ── AI Contact Modal ──
 function openContactModal(){var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='flex';setTimeout(function(){var i=document.getElementById('contact-chat-inp');if(i)i.focus();},100);}
 function closeContactModal(){var o=document.getElementById('contact-modal-overlay');if(o)o.style.display='none';}
-var _cHist=[{role:'user',content:'You are an AR Match Pro support assistant for enterprise AR cash application software. Help with: matching logic, exceptions, short pays, DSO, reconciliation, CFO reporting, settings. Be concise and professional under 120 words per reply.'}];
 // ── AR Match Pro local knowledge base ──────────────────────────────────────
 // Answers common "how do I" questions instantly with no API key. Anything it
 // can't confidently match is referred to the ARMP support email.
@@ -24801,7 +24800,37 @@ var ARMP_KB = [
     a:"In the open-items grid you can use the ↑/↓ arrow keys to navigate invoices. Selection is by checkbox/click." },
   { q:['profile','export profile','erp format','format'],
     a:"Set your ERP export format in <b>Settings → ERP Export Profile</b>. Options: SAP S/4HANA 7.50, SAP ECC (legacy), NetSuite, Generic CSV, and Excel." },
+  // ── Troubleshooting runbooks (numbers from the measured load tests) ──────
+  { q:['file rejected','too large','row limit','2500','2,500','file too big','upload limit','can\'t be read','cant be read','template validation','missing columns','corrupted','rejected'],
+    a:"Two different rejections, two fixes. <b>Too many rows:</b> payment/remittance files are capped at <b>2,500 rows per file</b> — split by week or bank account and import each batch. Invoice books go up to <b>100,000 rows</b>, so your full aging is fine. <b>\"This file can't be read\":</b> the file contains binary/corrupted content — open it in Excel, click <b>Save As → CSV</b>, and re-import the clean copy. Nothing was partially imported in either case." },
+  { q:['freeze','frozen','slow','crash','crashed','tab crashed','memory','out of memory','hangs','hanging','laggy','unresponsive'],
+    a:"This is almost always payment volume in one session. Keep it to <b>≤2,500 payment rows per file</b> (enforced) and about <b>3,000 per session</b> total. To recover: export any approved work, refresh the tab (that clears Chrome's memory), and re-run in smaller batches. The workspace resets every Monday, so a weekly cadence keeps volumes safe naturally. Invoice count is not the issue — 100K invoices run fine." },
+  { q:['ocr slow','ocr taking','taking forever','still processing','stuck on page','scanned pdf slow','how long ocr','reading page'],
+    a:"It hasn't crashed — OCR runs <b>locally in your browser</b> at roughly <b>2.4 seconds per page</b>, so a 100-page scanned remittance takes about <b>4–8 minutes</b> depending on your machine. Watch the <b>\"Reading page X/Y\"</b> progress bar; don't refresh the tab mid-read. Local processing is why your financial data never leaves your machine. Tip: if the customer can send the remittance as Excel/CSV instead of a scan, it imports instantly with no OCR at all." },
+  { q:['auto-save','autosave','auto save','storage limit','local storage','lost my work','session lost','save is off','saving off'],
+    a:"Above roughly <b>13,000 invoices</b>, the browser's ~5MB storage quota is exceeded and auto-save pauses — the app warns you once and keeps working normally in memory. The one rule: <b>export your posting file before closing or refreshing the tab</b>, because a refresh loses an unsaved session. Everything else works exactly the same." },
+  { q:['why exception','why unmatched','won\'t match','wont match','refuses to match','not matching','why needs attention','unapplied payments'],
+    a:"By design, ARMP never guess-applies cash: a line is only auto-applied when the amount ties <b>exactly</b> (or a unique combination ties) on the right customer account — and PO groups never span different customers. Everything else lands in <b>Needs Attention</b> with the research already done: the recommendation names the delivery/SO chain and pre-writes the <b>Cash on Account</b> note in your convention. Work the queue there, or use <b>Review → Approve All</b> for the clean ones. A healthy run leaves roughly 5–10% for human eyes — that's the control working, not a failure." },
+  { q:['integrate','integration','api','connect to sap','connect to netsuite','write to sap','write to netsuite','direct to erp','push to erp'],
+    a:"ARMP doesn't write to your ERP via API — and that's deliberate. It generates clean cash-application <b>import files</b> (SAP F-28, NetSuite Cash Receipt, Dynamics 365 F&O, or Generic CSV) that your team reviews and imports through your ERP's standard process. No IT integration project, no new system access to security-review, live the same day — and your team keeps final control of what posts to the ledger." },
+  { q:['secure','security','privacy','where does my data go','data go','send my data','upload my data','bank data safe','phone home'],
+    a:"Your financial data is processed <b>entirely inside your browser tab</b> — matching, OCR, and exports all run locally, and nothing is uploaded to ARMP servers (there are none in the data path). You can verify it yourself: open DevTools → Network, run a match, and watch — zero requests. Ask us for the Security & Privacy Data Sheet to hand to your IT team: <b>info@armatchpro.com</b>." },
 ];
+
+// Escalation detector: suspected bugs and unresolved problems go straight to a
+// human. Client-side app → the honest mechanism is a pre-filled email.
+function _armpEscalation(query){
+  var q=(query||'').toLowerCase();
+  var bugWords=['bug','broken','error message','wrong number','doesn\'t work','doesnt work','not working','incorrect','wrong amount','mismatch','doesn\'t tie','doesnt tie','blank screen','white screen','lost data'];
+  var hit=bugWords.some(function(kw){ return q.indexOf(kw)>=0; });
+  if(!hit) return null;
+  var subj=encodeURIComponent('ARMP support — '+(query||'').slice(0,80));
+  var body=encodeURIComponent('What happened:\n'+(query||'')+'\n\nWhat I was doing:\n\nRows in my files (approx):\n');
+  return "I want to get this sorted for you immediately — this looks like something the founder should see directly. "+
+    "Email <a href=\"mailto:info@armatchpro.com?subject="+subj+"&body="+body+"\" style=\"color:var(--p);font-weight:600\">info@armatchpro.com</a> "+
+    "(the link pre-fills what you just told me) and include roughly how many rows were in your files. You'll hear back fast. "+
+    "Meanwhile: your data is safe — nothing partially imports on an error, and exporting approved work protects it before any refresh.";
+}
 
 function _armpKbAnswer(query){
   var q=(query||'').toLowerCase();
@@ -24820,10 +24849,11 @@ function sendContactMsg(){
   var msgs=document.getElementById('contact-chat-msgs');if(!msgs)return;
   msgs.innerHTML+=`<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px;border-bottom-right-radius:4px;font-size:13px;max-width:85%;line-height:1.5">${_escapeHtml(msg)}</div></div>`;
   msgs.scrollTop=msgs.scrollHeight;
-  var answer=_armpKbAnswer(msg);
+  var esc=_armpEscalation(msg);
+  var answer=esc || _armpKbAnswer(msg);
   var reply = answer
     ? answer
-    : "I don't have a specific answer for that one. For help beyond the basics, email our team at <b>info@armatchpro.com</b> and a person will get back to you.";
+    : "I don't have a measured answer for that one, and I'd rather connect you with a person than guess. Email <b>info@armatchpro.com</b> with what you're seeing and you'll get a direct reply from the team.";
   msgs.innerHTML+=`<div style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">${reply}</div></div>`;
   msgs.scrollTop=msgs.scrollHeight;
 }
