@@ -10959,6 +10959,13 @@ function saveToStorage(){
     var estMB = (JSON.stringify(INV).length + JSON.stringify(PAY).length) / 1048576;
     if(estMB > _STORAGE_SIZE_WARN_MB){
       console.warn('[saveToStorage] Dataset ~'+estMB.toFixed(1)+'MB — skipping localStorage save to avoid quota error');
+      // A silent skip means a refresh loses the whole session with no warning —
+      // unacceptable during a large POC dataset. Tell the user ONCE per session.
+      if(!window._storageSkipNotified){
+        window._storageSkipNotified = true;
+        try{ toast('⚠️ Large dataset — auto-save is off for this session. Export your work before closing the tab.', 'warn', 9000); }catch(e){}
+        try{ addAudit('Persistence', 'Dataset ~'+estMB.toFixed(1)+'MB exceeds browser storage — session running in-memory only'); }catch(e){}
+      }
       return;
     }
     localStorage.setItem(sk('inv'),JSON.stringify(INV));
@@ -10970,9 +10977,14 @@ function saveToStorage(){
     _lastSaveError = null;
   }catch(e){
     _lastSaveError = e;
-    // Storage quota exceeded — silently continue; app still works in-memory
+    // Storage quota exceeded — continue in-memory, but never silently
     if(e && e.name === 'QuotaExceededError'){
       console.warn('[saveToStorage] Quota exceeded — running in-memory mode');
+      if(!window._storageSkipNotified){
+        window._storageSkipNotified = true;
+        try{ toast('⚠️ Browser storage is full — auto-save is off. Export your work before closing the tab.', 'warn', 9000); }catch(e2){}
+        try{ addAudit('Persistence', 'Browser storage quota exceeded — session running in-memory only'); }catch(e2){}
+      }
     }
   }
 }
