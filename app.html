@@ -11143,6 +11143,56 @@ function _fmtTimeAgo(ms){
   var days=Math.floor(hrs/24);
   return days+' day'+(days===1?'':'s')+' ago';
 }
+// ── Build identity (support conversations need "what version are you on") ──
+var APP_VERSION = '5.2.0 · 2026-07-17';
+
+// ── Client-side error ring buffer (last 20; messages only, never data) ──
+window._ERR_BUF = window._ERR_BUF || [];
+window.addEventListener('error', function(ev){
+  try{ window._ERR_BUF.push({ t:new Date().toISOString(), m:String(ev.message||'').slice(0,200), src:String(ev.filename||'').split('/').pop()+':'+(ev.lineno||0) });
+       if(window._ERR_BUF.length>20) window._ERR_BUF.shift(); }catch(e){}
+});
+window.addEventListener('unhandledrejection', function(ev){
+  try{ window._ERR_BUF.push({ t:new Date().toISOString(), m:'unhandled: '+String(ev.reason&&ev.reason.message||ev.reason||'').slice(0,200) });
+       if(window._ERR_BUF.length>20) window._ERR_BUF.shift(); }catch(e){}
+});
+
+// ── Diagnostic bundle: downloaded locally, attached to a support email by the
+// user. Contains ONLY environment facts, counts, error messages, and audit
+// ACTION names — never customer names, amounts, references, or file content.
+// Zero-egress stays intact: this is a download, not a transmission.
+function armpDownloadDiagnostics(){
+  var d = {
+    version: APP_VERSION,
+    generated: new Date().toISOString(),
+    userAgent: (navigator&&navigator.userAgent)||'',
+    counts: {
+      invoices: (typeof INV!=='undefined')?INV.length:0,
+      payments: (typeof PAY!=='undefined')?PAY.length:0,
+      results:  (typeof RES!=='undefined')?RES.length:0,
+      exceptions:(typeof EXC!=='undefined')?EXC.length:0,
+      delivery: (typeof DELIV!=='undefined')?DELIV.length:0,
+      remitLines:(typeof REM_DETAIL!=='undefined')?REM_DETAIL.length:0
+    },
+    autoSavePaused: !!window._storageSkipNotified,
+    memoryMB: (performance&&performance.memory)?Math.round(performance.memory.usedJSHeapSize/1048576):null,
+    recentErrors: (window._ERR_BUF||[]).slice(-20),
+    auditActions: (function(){
+      try{
+        var a=(typeof AUDIT_LOG!=='undefined')?AUDIT_LOG:(window.AUDIT_LOG||[]);
+        return a.slice(-50).map(function(e){ return { t:e.t||e.time||'', action:e.a||e.action||'' }; });
+      }catch(e){ return []; }
+    })()
+  };
+  var blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var el=document.createElement('a');
+  el.href=url; el.download='armp-diagnostics-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(el); el.click(); el.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  try{ toast('Diagnostics downloaded — attach the file to your support email',''); }catch(e){}
+}
+
 // Returns the timestamp of the most recent Monday at 00:00 local time.
 function _armpMostRecentMonday(){
   var d=new Date();
@@ -11158,13 +11208,26 @@ function armpShowSessionPrompt(){
   var savedAt=0;
   try{ savedAt=parseInt(localStorage.getItem(sk('saved_at'))||'0',10); }catch(e){}
   // Weekly fresh start: if the saved session predates this week's Monday,
-  // clear it automatically instead of offering to restore stale data.
+  // clear it automatically instead of offering to restore stale data —
+  // UNLESS the session contains approved allocations that were never
+  // exported. Silently destroying a Friday's approved-but-unexported work
+  // on Tuesday morning is unacceptable; in that case fall through to the
+  // normal restore prompt with an explicit warning so the user can export
+  // first and start fresh deliberately.
   if(savedAt && savedAt < _armpMostRecentMonday()){
-    try{ if(typeof _armpDoSessionStartFresh==='function'){ _armpDoSessionStartFresh(); }
-         else { INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];REM_ADVICE=[];
-                ['inv','pay','res','exc','remadvice','saved_at'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}}); } }catch(e){}
-    try{ if(typeof toast==='function') toast('New week — started with a fresh workspace',''); }catch(e){}
-    return; // no restore prompt
+    var _unexported = 0;
+    try{
+      var _savedRes = JSON.parse(localStorage.getItem(sk('res'))||'[]');
+      _unexported = _savedRes.filter(function(r){ return r && r.exported !== true; }).length;
+    }catch(e){}
+    if(_unexported === 0){
+      try{ if(typeof _armpDoSessionStartFresh==='function'){ _armpDoSessionStartFresh(); }
+           else { INV=[];PAY=[];RES=[];EXC=[];DELIV=[];REM_DETAIL=[];REM_ADVICE=[];
+                  ['inv','pay','res','exc','remadvice','saved_at'].forEach(function(k){try{localStorage.removeItem(sk(k));}catch(e){}}); } }catch(e){}
+      try{ if(typeof toast==='function') toast('New week — started with a fresh workspace',''); }catch(e){}
+      return; // no restore prompt
+    }
+    window._armpStaleSessionWarn = _unexported; // restore prompt adds the warning line
   }
   var invCount=(typeof INV!=='undefined')?INV.length:0;
   var payCount=(typeof PAY!=='undefined')?PAY.length:0;
@@ -11179,10 +11242,13 @@ function armpShowSessionPrompt(){
 
   var overlay=document.createElement('div');
   overlay.id='armp-session-overlay';
+  var _staleWarnHtml = window._armpStaleSessionWarn
+    ? '<div id="armp-stale-warn" style="background:#FFFBEB;border:1px solid #F59E0B55;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;color:#92400E;line-height:1.55"><strong>⚠️ Last week\'s session has '+window._armpStaleSessionWarn.toLocaleString()+' approved allocation'+(window._armpStaleSessionWarn===1?'':'s')+' that were never exported.</strong> Restore the session and download your posting export before starting this week fresh.</div>'
+    : '';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(5,13,26,.62);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
   overlay.innerHTML=
     '<div style="background:var(--surface,#fff);border:1px solid var(--bdr);border-radius:18px;width:460px;max-width:95vw;box-shadow:0 28px 70px rgba(0,0,0,.32);overflow:hidden">'+
-      '<div style="padding:24px 26px 18px">'+
+      '<div style="padding:24px 26px 18px">'+_staleWarnHtml+
         '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
           '<div style="flex-shrink:0;width:42px;height:42px;border-radius:11px;background:var(--pg,rgba(20,168,216,.12));display:flex;align-items:center;justify-content:center;font-size:22px">📂</div>'+
           '<div><div style="font-size:18px;font-weight:800;color:var(--t1)">Welcome back</div>'+
@@ -19264,6 +19330,23 @@ async function runMatch(){
       var excType, excDetail, excAction;
       if(dupChk.length){
         excType='Duplicate'; excDetail='Possible duplicate — '+dupChk.length+' matching payment(s) found'; excAction='Review for duplicate posting';
+      } else if(p.po && (function(){
+        // The payment quotes a PO — diagnose it before falling back to generic COA.
+        try{
+          _ensureInvIndexes();
+          var _poInvs=(_INV_IDX.byPO.get(norm(p.po))||[]).filter(function(v){ return !v.s; });
+          if(!_poInvs.length) return false;
+          var _accts=Array.from(new Set(_poInvs.map(function(v){ return String(v.a); })));
+          if(_accts.length>1){
+            excType='Cash on Account';
+            excDetail='PO '+p.po+' has open invoices under MULTIPLE customer accounts ('+_accts.join(', ')+') — grouped application blocked for safety. Likely a data-entry error in the aging; verify the account split before applying.';
+            excAction='Verify account assignment for PO '+p.po+', then apply or post $'+$f(p.amt)+' as Cash on Account';
+            return true;
+          }
+          return false;
+        }catch(e){ return false; }
+      })()){
+        // handled above — cross-account PO safety block with a precise diagnosis
       } else if(p.c && p.a){
         // Customer + account identified, but no remittance/invoice signal to allocate.
         // (e.g. $686K Applied Materials payment with no ERS/VMI detail provided.)
@@ -19564,10 +19647,33 @@ function armpGenDemoData(){
       pays.push({a:v2.a,c:v2.c,amt:v2.amt,i:'',po:'',so:'',m:'Wire',txId:T(),payDate:'06/16/2026',n:'',bank:'',ccy:'USD'}); }
     else if(roll<32){ var v3=drawInv(), v4=drawInv(); if(!v3||!v4) continue;
       pays.push({a:v3.a,c:v3.c,amt:Math.round((v3.amt+v4.amt)*100)/100,i:v3.i+', '+v4.i,po:'',so:'',m:'ACH',txId:T(),payDate:'06/16/2026',n:'',bank:'',ccy:'USD'}); }
-    else if(roll<34){ var v5=drawInv(); if(!v5) continue;
+    else if(roll<33){ var v5=drawInv(); if(!v5) continue;
       pays.push({a:v5.a,c:v5.c,amt:Math.round(v5.amt*0.97*100)/100,i:v5.i,po:'',so:'',m:'Check',txId:T(),payDate:'06/17/2026',n:'Short pay — damaged goods claim',bank:'',ccy:'USD'}); }
+    else if(roll<34){ var v6=drawInv(function(v){ return v.amt>150; }); if(!v6) continue;
+      // Flat-$100 short pay — the classic unapplied-deduction pattern
+      pays.push({a:v6.a,c:v6.c,amt:Math.round((v6.amt-100)*100)/100,i:v6.i,po:'',so:'',m:'ACH',txId:T(),payDate:'06/17/2026',n:'Deduction taken — $100 co-op advertising credit',bank:'',ccy:'USD'}); }
     else { var ci2=Math.floor(rng()*names.length);
       pays.push({a:String(40200100+ci2),c:names[ci2],amt:Math.round((500+rng()*3000)*100)/100+0.13,i:'',po:'',so:'',m:'Wire',txId:T(),payDate:'06/17/2026',n:'',bank:'',ccy:'USD'}); }
+  }
+  // ── Engineered showcase exceptions (deterministic, small-dollar) ────────
+  // 1) DUPLICATE PAYMENT: the same invoice paid twice in the batch — the
+  //    engine's same-reference-same-amount duplicate flag gets a story.
+  var dupSrc = pays.filter(function(p){ return p.i && p.i.indexOf(',')<0 && p.amt<2000; })
+                   .sort(function(a,b){ return a.amt-b.amt; })[0];
+  if(dupSrc){ pays.push({a:dupSrc.a,c:dupSrc.c,amt:dupSrc.amt,i:dupSrc.i,po:'',so:'',m:dupSrc.m,
+    txId:T(),payDate:dupSrc.payDate,n:'',bank:'',ccy:'USD'}); }
+  // 2) CROSS-ACCOUNT PO GROUP: simulate the real-world data-entry error where
+  //    one invoice of a PO lands on the wrong account. The payment quotes the
+  //    PO for the full sum — the engine must refuse the cross-customer group
+  //    and flag it, showcasing the safety block instead of a bad posting.
+  var poSmall = Object.keys(byPO).filter(function(k){ return byPO[k].length===2 && byPO[k].every(function(v){ return !used[v.i]; }); })
+    .sort(function(a,b){ var sa=byPO[a][0].amt+byPO[a][1].amt, sb=byPO[b][0].amt+byPO[b][1].amt; return sa-sb; })[0];
+  if(poSmall){
+    var grp=byPO[poSmall]; markPO(poSmall);
+    var wrongCI=(names.indexOf(grp[1].c)+1)%names.length;
+    grp[1].c=names[wrongCI]; grp[1].a=String(40200100+wrongCI);   // the entry error
+    pays.push({a:grp[0].a,c:grp[0].c,amt:Math.round((grp[0].amt+grp[1].amt)*100)/100,i:'',po:poSmall,so:'',
+      m:'ACH',txId:T(),payDate:'06/18/2026',n:'',bank:'',ccy:'USD'});
   }
   return { invs: invs, pays: pays };
 }
@@ -24828,7 +24934,8 @@ function _armpEscalation(query){
   var body=encodeURIComponent('What happened:\n'+(query||'')+'\n\nWhat I was doing:\n\nRows in my files (approx):\n');
   return "I want to get this sorted for you immediately — this looks like something the founder should see directly. "+
     "Email <a href=\"mailto:info@armatchpro.com?subject="+subj+"&body="+body+"\" style=\"color:var(--p);font-weight:600\">info@armatchpro.com</a> "+
-    "(the link pre-fills what you just told me) and include roughly how many rows were in your files. You'll hear back fast. "+
+    "(the link pre-fills what you just told me). Click <a href=\"javascript:void(0)\" onclick=\"armpDownloadDiagnostics()\" style=\"color:var(--p);font-weight:600\">download diagnostics</a> "+
+    "and attach the file — it contains your app version ("+APP_VERSION+"), row counts, and recent error messages, and never any financial data. You'll hear back fast. "+
     "Meanwhile: your data is safe — nothing partially imports on an error, and exporting approved work protects it before any refresh.";
 }
 
@@ -24867,7 +24974,7 @@ function sendContactMsg(){
       <div onclick="closeContactModal()" style="cursor:pointer;font-size:20px;color:var(--t3);padding:4px 8px;border-radius:6px">×</div>
     </div>
     <div id="contact-chat-msgs" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:4px;min-height:200px">
-      <div style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">Hi! I'm the AR Match Pro support assistant. Ask me anything about cash application, matching logic, exceptions, DSO, or settings — or I can log a support ticket for you.</div></div>
+      <div style="display:flex;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🤖</div><div style="background:var(--surface2);padding:10px 14px;border-radius:12px;border-top-left-radius:4px;font-size:13px;color:var(--t1);max-width:85%;line-height:1.5">Hi! I'm the AR Match Pro support assistant (build 5.2.0). Ask me anything about cash application, matching logic, exceptions, DSO, or settings — or I can log a support ticket for you.</div></div>
     </div>
     <div style="padding:12px 16px;border-top:1px solid var(--bdr);display:flex;gap:8px;flex-shrink:0">
       <input id="contact-chat-inp" type="text" placeholder="Ask anything about AR Match Pro…" autocomplete="off"

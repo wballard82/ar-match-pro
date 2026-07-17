@@ -32,7 +32,7 @@ Account,Customer Name,Invoice,PO Number,Amount,Payment Date,Method,Transaction I
 40200114,"Brightline Lab Equipment","9100000906, 9100000092",,23365.75,06/16/2026,ACH,DEMO-0031
 40200102,"Cascade Industrial Packaging","9100000840, 9100000268",,9234.75,06/16/2026,ACH,DEMO-0032
 40200114,"Brightline Lab Equipment","9100000746",,6922.16,06/17/2026,Check,DEMO-0033
-40200108,"Clearwater Instruments Inc","9100000946",,15567.77,06/17/2026,Check,DEMO-0034
+40200108,"Clearwater Instruments Inc","9100000946",,15949.25,06/17/2026,ACH,DEMO-0034
 40200116,"Granite Ridge Fabrication","",,633.61,06/17/2026,Wire,DEMO-0035
 40200110,"Veridian Aerospace Supply","9100000953",,13461.75,06/15/2026,ACH,DEMO-0036
 40200115,"Fairhaven Import Partners","9100000442",,5861.75,06/15/2026,ACH,DEMO-0037
@@ -67,7 +67,7 @@ Account,Customer Name,Invoice,PO Number,Amount,Payment Date,Method,Transaction I
 40200114,"Brightline Lab Equipment","9100000539, 9100000873",,28110.25,06/16/2026,ACH,DEMO-0066
 40200105,"Summit Freight Systems","9100000855, 9100000758",,18783.75,06/16/2026,ACH,DEMO-0067
 40200109,"Stonegate Consumer Goods","9100000370",,21435.3,06/17/2026,Check,DEMO-0068
-40200114,"Brightline Lab Equipment","9100000997",,11588.59,06/17/2026,Check,DEMO-0069
+40200114,"Brightline Lab Equipment","9100000997",,11847,06/17/2026,ACH,DEMO-0069
 40200116,"Granite Ridge Fabrication","",,3465.92,06/17/2026,Wire,DEMO-0070
 40200114,"Brightline Lab Equipment","9100000940",,3826,06/15/2026,ACH,DEMO-0071
 40200114,"Brightline Lab Equipment","9100000942",,5384.25,06/15/2026,ACH,DEMO-0072
@@ -102,7 +102,7 @@ Account,Customer Name,Invoice,PO Number,Amount,Payment Date,Method,Transaction I
 40200110,"Veridian Aerospace Supply","9100000536, 9100000496",,16959,06/16/2026,ACH,DEMO-0101
 40200114,"Brightline Lab Equipment","9100000596, 9100000206",,15372.5,06/16/2026,ACH,DEMO-0102
 40200101,"Northlight Electronics Corp","9100000842",,2920.91,06/17/2026,Check,DEMO-0103
-40200112,"Pinnacle Cold Chain Storage","9100000738",,7478.22,06/17/2026,Check,DEMO-0104
+40200112,"Pinnacle Cold Chain Storage","9100000738",,7609.5,06/17/2026,ACH,DEMO-0104
 40200114,"Brightline Lab Equipment","",,1820.7900000000002,06/17/2026,Wire,DEMO-0105
 40200114,"Brightline Lab Equipment","9100000966",,23579,06/15/2026,ACH,DEMO-0106
 40200103,"Harborview Components Inc","9100000800",,9109,06/15/2026,ACH,DEMO-0107
@@ -137,5 +137,7 @@ Account,Customer Name,Invoice,PO Number,Amount,Payment Date,Method,Transaction I
 40200103,"Harborview Components Inc","9100000169, 9100000947",,8721.5,06/16/2026,ACH,DEMO-0136
 40200110,"Veridian Aerospace Supply","9100000411, 9100000066",,20029.25,06/16/2026,ACH,DEMO-0137
 40200112,"Pinnacle Cold Chain Storage","9100000736",,5371.38,06/17/2026,Check,DEMO-0138
-40200108,"Clearwater Instruments Inc","9100000440",,6006.24,06/17/2026,Check,DEMO-0139
+40200108,"Clearwater Instruments Inc","9100000440",,6092,06/17/2026,ACH,DEMO-0139
 40200109,"Stonegate Consumer Goods","",,1160.8600000000001,06/17/2026,Wire,DEMO-0140
+40200105,"Summit Freight Systems","9100000569",,432.25,06/15/2026,ACH,DEMO-0141
+40200100,"Beacon Medical Supply Co","",4523000304,1449.75,06/18/2026,ACH,DEMO-0142

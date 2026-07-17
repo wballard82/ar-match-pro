@@ -258,6 +258,7 @@ body.modal-open .split-mp{animation-play-state:paused !important}
 
 @media(max-width:980px){
   .nav-links{display:none}
+  .verify-grid{grid-template-columns:1fr 1fr!important}
   .hero-wrap,.cfo-grid{grid-template-columns:1fr}
   .hero-copy h1{font-size:44px}
   .hero-logo{width:340px;height:340px;margin:0 auto;max-width:100%}
@@ -518,6 +519,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <a href="#the-problem">The Problem</a>
       <a href="#differentiation">Why AR Match Pro</a>
       <a href="#cfo-reporting">CFO Reporting</a>
+      <a href="#security">Security</a>
       <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
       <a href="#" onclick="event.preventDefault();openLeadModal()" style="color:var(--p);font-weight:700">Demo</a>
@@ -949,6 +951,54 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   </div>
 </div>
 <!-- PRICING SECTION START -->
+<section id="security" style="background:linear-gradient(180deg,#F8FAFC 0%,#fff 100%);padding:84px 0">
+  <div class="container" style="max-width:1000px">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="eyebrow">Security, Compliance &amp; Privacy</div>
+      <h2 style="font-size:clamp(26px,3.8vw,40px);font-weight:800;color:var(--navy);letter-spacing:-.6px;margin:12px 0 16px">Local processing. Zero server risk.</h2>
+      <p style="font-size:16px;color:var(--muted);max-width:640px;margin:0 auto;line-height:1.7">Your bank files and invoice books are processed entirely inside your browser tab. They are never uploaded, never transmitted, and never stored on our servers — because there are no AR Match Pro servers in the data path. Server-side breach risk isn’t reduced; it’s eliminated at the architectural level.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:40px" class="diff-grid">
+      <div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:28px">
+        <div style="font-size:26px;margin-bottom:12px">🖥️</div>
+        <div style="font-size:15.5px;font-weight:800;color:var(--navy);margin-bottom:8px">Everything runs in your tab</div>
+        <div style="font-size:13.5px;color:var(--muted);line-height:1.7">Matching, OCR, PDF reading, and export generation execute as code in your browser, using your machine's memory. When you import a bank statement, it is read locally by JavaScript — it never leaves your computer. Close the tab and the working memory is gone.</div>
+      </div>
+      <div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:28px">
+        <div style="font-size:26px;margin-bottom:12px">🚫</div>
+        <div style="font-size:15.5px;font-weight:800;color:var(--navy);margin-bottom:8px">Zero outbound financial data — enforced by tests</div>
+        <div style="font-size:13.5px;color:var(--muted);line-height:1.7">No invoice metadata, bank detail, or customer record is ever transmitted to an external server. This isn't a policy sentence — it's an automated assertion in our release tests: any network call during import, matching, review, or export fails the build.</div>
+      </div>
+      <div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:28px">
+        <div style="font-size:26px;margin-bottom:12px">💾</div>
+        <div style="font-size:15.5px;font-weight:800;color:var(--navy);margin-bottom:8px">Storage stays on your machine</div>
+        <div style="font-size:13.5px;color:var(--muted);line-height:1.7">Session auto-save uses your browser's local storage, on your device, scoped to your user. Very large invoice books run in-memory only — the app tells you, and you export before closing. Clearing your browser data removes everything. Nothing exists for us to breach.</div>
+      </div>
+      <div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:28px">
+        <div style="font-size:26px;margin-bottom:12px">🔍</div>
+        <div style="font-size:15.5px;font-weight:800;color:var(--navy);margin-bottom:8px">What does touch the network — fully disclosed</div>
+        <div style="font-size:13.5px;color:var(--muted);line-height:1.7">Three things, all pinned by our Content-Security-Policy: application code and the OCR model load inbound from public CDNs (code in, no data out); subscription billing runs on Stripe's hosted components (we never see card numbers); and an optional AI remittance parser — off by default, requiring your own API key — sends only that one document, only when you click it.</div>
+      </div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,var(--navy),#0F1F3A);border-radius:16px;padding:32px;margin-bottom:28px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;font-size:16px;flex-shrink:0">🛡️</div>
+        <div style="font-size:16px;font-weight:800;color:#fff">Verify it yourself — a two-minute audit for your IT team</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" class="verify-grid">
+        <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:16px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#34D399;font-weight:700;margin-bottom:6px">STEP 1</div><div style="font-size:12.5px;color:rgba(255,255,255,.75);line-height:1.6">Open AR Match Pro in Chrome. Press F12 and select the <b style="color:#fff">Network</b> tab.</div></div>
+        <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:16px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#34D399;font-weight:700;margin-bottom:6px">STEP 2</div><div style="font-size:12.5px;color:rgba(255,255,255,.75);line-height:1.6">Let the page finish loading, then <b style="color:#fff">clear the request log</b>. Page-load requests are code assets from pinned CDNs.</div></div>
+        <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:16px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#34D399;font-weight:700;margin-bottom:6px">STEP 3</div><div style="font-size:12.5px;color:rgba(255,255,255,.75);line-height:1.6">Import a sample payment file (or load Demo Mode), click <b style="color:#fff">Run Auto Match</b>, review exceptions, download an export.</div></div>
+        <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:16px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#34D399;font-weight:700;margin-bottom:6px">STEP 4</div><div style="font-size:12.5px;color:rgba(255,255,255,.75);line-height:1.6">Observe the log: <b style="color:#fff">zero requests</b> during the entire workflow. Your data stayed in the tab.</div></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:13px;color:var(--muted);line-height:1.7;max-width:640px;margin:0 auto">AR Match Pro is currently preparing for SOC 2 Type II examination covering application delivery and corporate controls. Status and the full Security &amp; Privacy Data Sheet are available on request: <a href="mailto:info@armatchpro.com" style="color:var(--p);font-weight:700">info@armatchpro.com</a></div>
+  </div>
+</section>
+
 <section id="pricing" style="background:linear-gradient(160deg,#07111F 0%,#0F2040 60%,#07111F 100%);padding:90px 0">
   <div class="container" style="max-width:1060px">
     <div style="text-align:center;margin-bottom:20px">
