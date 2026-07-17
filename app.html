@@ -18092,7 +18092,10 @@ async function runMatch(){
           }
           // Lines read from a screenshot are never trusted at full confidence.
           // The reference and amount may be mis-read, so the allocation is
-          // capped and marked for human verification before posting.
+          // capped and marked for human verification before posting. The
+          // method's natural score is kept so it can be restored once the
+          // bank receipt independently corroborates the remittance total.
+          a._uncapped = a.confidence;
           if(rd._ocrDerived && a.confidence > 75) a.confidence = 75;
           if(a.allocations.length){
             a.allocations.forEach(function(al){
@@ -18116,6 +18119,8 @@ async function runMatch(){
                 ],
                 _scoreV: 4,
                 scenario: 'REM_ALLOC',
+                _ocrCapped: !!(rd._ocrDerived && a._uncapped > a.confidence),
+                _uncappedConfidence: a._uncapped || a.confidence,
                 unconfirmedCash: !!(_pay && _pay.unconfirmedCash)
               });
             });
@@ -18181,7 +18186,26 @@ async function runMatch(){
               p._reconciledToRemittance = true;
               addAudit('Bank reconciliation', 'Wire '+$f(p.amt)+' ties exactly to remittance advice — detail lines applied, cash confirmed');
               // Cash is now confirmed: clear the unconfirmed flag on applied rows
-              RES.forEach(function(r){ if(r.scenario==='REM_ALLOC') r.unconfirmedCash = false; });
+              // AND restore each line's method confidence. The independent bank
+              // amount tying to the sum of all OCR-read lines to the penny is a
+              // checksum — misread amounts cannot still sum correctly, so the
+              // OCR cap no longer applies. Each score reverts to its auditable
+              // method value (99 direct invoice, 97 exact bridge, 95 unique
+              // combination, …) so reviewers can triage by real match quality.
+              RES.forEach(function(r){
+                if(r.scenario!=='REM_ALLOC') return;
+                r.unconfirmedCash = false;
+                if(r._ocrCapped && r._uncappedConfidence > (r.confidence||0)){
+                  r.confidence = r._uncappedConfidence;
+                  r._ocrCapped = false;
+                  if(r.matchReasons && r.matchReasons.length){
+                    r.matchReasons[0].w = r._uncappedConfidence;
+                    r.matchReasons.push({ type:'verify', label:'Bank-verified',
+                      value:'Wire ties to remittance total — OCR amounts corroborated', w:0 });
+                  }
+                  r.n = (r.n||'') + ' · bank-verified';
+                }
+              });
             }
           });
         }catch(e){ console.warn('[bank reconciliation]', e); }
