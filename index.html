@@ -758,7 +758,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px">All metrics calculated live from your match results</div>
         <div style="font-size:13px;color:#64748B">Updated every time you run Auto Match. Export a PDF for your CFO anytime.</div>
       </div>
-      <button onclick="document.getElementById('video-section').scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 20px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border:none;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">▶ Watch the video</button>
+      <button onclick="document.getElementById('video-section').scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 20px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border:none;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">▶ Watch the 60-second tour</button>
     </div>
   </div>
 </section>
@@ -768,7 +768,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="eyebrow" style="color:#7DD3FC;border-color:rgba(125,211,252,.25);background:rgba(20,168,216,.1);margin-bottom:16px;display:inline-flex">▶ Product Overview</div>
       <h2 style="font-size:clamp(28px,4vw,42px);font-weight:800;color:#fff;letter-spacing:-.5px;margin:12px 0 12px;line-height:1.2">See AR Match Pro in action</h2>
       <p style="font-size:15px;color:#7DD3FC;font-weight:600;margin-bottom:8px">"Match remittance to invoices in minutes — no ERP integration required."</p>
-      <p style="font-size:15px;color:rgba(255,255,255,.45);max-width:520px;margin:0 auto 28px;line-height:1.65">Watch how AR Match Pro automates remittance matching from problem to results in under 60 seconds. Narrated walkthrough.</p>
+      <p style="font-size:15px;color:rgba(255,255,255,.45);max-width:520px;margin:0 auto 28px;line-height:1.65">Watch how AR Match Pro automates remittance matching from problem to results in under 60 seconds. Captions on — narration optional.</p>
 
       <!-- Embedded video player -->
       <div style="position:relative;width:100%;aspect-ratio:16/9;max-width:880px;margin:0 auto;background:#050D1A;border-radius:8px;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,.4),0 24px 80px rgba(0,0,0,.6)">
@@ -776,8 +776,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
 
       <div style="margin-top:28px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-        <a href="#" onclick="event.preventDefault();openLeadModal()" style="padding:13px 26px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;box-shadow:0 8px 20px rgba(20,168,216,.3);transition:.18s;display:inline-flex;align-items:center;gap:8px" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 28px rgba(20,168,216,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 20px rgba(20,168,216,.3)'">▶ Start 30-day free trial</a>
-        <a href="#pricing" style="padding:13px 26px;background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.16);border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.borderColor='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.16)'">View pricing</a>
+        <a href="#pricing" style="padding:13px 26px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;box-shadow:0 8px 20px rgba(20,168,216,.3);transition:.18s;display:inline-flex;align-items:center;gap:8px" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 28px rgba(20,168,216,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 20px rgba(20,168,216,.3)'">View pricing</a>
+        <a href="#" onclick="event.preventDefault();openLeadModal()" style="padding:13px 26px;background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.16);border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.borderColor='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.16)'">▶ Start 30-day free trial</a>
       </div>
       <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.35)">Credit card required · cancel anytime in Settings</div>
     </div>
@@ -1011,7 +1011,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div style="text-align:center;margin-bottom:44px">
       <div style="display:inline-flex;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:4px;border-radius:999px;gap:4px">
         <button id="bill-monthly" onclick="setBilling('monthly')" style="padding:9px 22px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:none;background:transparent;color:rgba(255,255,255,.55);transition:.15s">Month-to-month</button>
-        <button id="bill-annual" onclick="setBilling('annual')" style="padding:9px 22px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:none;background:#fff;color:#0F172A;transition:.15s">Annual <span style="color:#10B981;font-size:12px;font-weight:800">Save 2 months</span></button>
+        <button id="bill-annual" onclick="setBilling('annual')" style="padding:9px 22px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:none;background:#fff;color:#0F172A;transition:.15s">Annual <span style="color:#10B981;font-size:12px;font-weight:800">Save 17%</span></button>
       </div>
     </div>
 

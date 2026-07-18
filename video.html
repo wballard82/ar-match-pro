@@ -26,6 +26,18 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 52px;opacity:0;transition:opacity .55s ease}
 .scene.show{opacity:1}
 
+/* ── CAPTIONS ── */
+.cap-wrap{position:absolute;left:0;right:0;bottom:64px;display:flex;justify-content:center;pointer-events:none;z-index:15;padding:0 40px}
+.cap-box{max-width:78%;background:rgba(3,8,16,.78);backdrop-filter:blur(6px);border:1px solid rgba(20,168,216,.18);border-radius:10px;padding:10px 18px;font-size:15px;line-height:1.5;color:#E2E8F0;font-weight:500;text-align:center;opacity:0;transform:translateY(6px);transition:opacity .3s ease,transform .3s ease;letter-spacing:.1px}
+.cap-box.show{opacity:1;transform:translateY(0)}
+.cap-box .cap-hi{color:#7DD3FC;font-weight:700}
+@media(max-width:560px){.cap-box{font-size:12.5px;padding:8px 12px;max-width:92%}.cap-wrap{bottom:56px}}
+
+/* ── NARRATION TOGGLE ── */
+.nar-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);border-radius:7px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.18s;white-space:nowrap}
+.nar-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+.nar-btn.on{background:rgba(20,168,216,.22);border-color:rgba(20,168,216,.45);color:#7DD3FC}
+
 /* ── PROGRESS ── */
 .prog-wrap{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.08);z-index:20}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--p),#12B886);width:0%;transition:width .25s linear;border-radius:0 2px 2px 0}
@@ -245,7 +257,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 
   <!-- SCENE 0: Brand -->
   <div class="scene show" id="s0" style="background:radial-gradient(ellipse at 50% 60%,#0A1929,#030810)">
-    <div class="particles" id="s0">
+    <div class="particles">
       <div class="pt" style="top:14%;left:7%;animation-delay:0s">INV-1001 · $25,000 · PO-9001</div>
       <div class="pt" style="top:22%;right:8%;animation-delay:1.8s">ACH-882104 · Apex Industrial</div>
       <div class="pt" style="bottom:28%;left:10%;animation-delay:3.2s">Match rate: 82%</div>
@@ -324,11 +336,17 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
     <div class="cta-h">AR matching,<br><span>fully automated.</span></div>
     <div class="cta-sub">30-day free Pro trial — credit card required, cancel anytime.</div>
     <div class="cta-btns-v">
-      <a class="cta-v-p" href="checkout.html?plan=pro">Start 30-day free trial</a>
-      <a class="cta-v-s" href="index.html#pricing" target="_blank">🗓 View all plans</a>
+      <a class="cta-v-p" href="checkout.html?plan=pro" target="_top">Start 30-day free trial</a>
+      <a class="cta-v-s" href="index.html#pricing" target="_top">🗓 View all plans</a>
     </div>
     <div class="domain-v">armatchpro.com</div>
   </div>
+
+  <!-- CAPTIONS -->
+  <div class="cap-wrap"><div class="cap-box" id="cap-box"></div></div>
+
+  <!-- SCENE DOTS -->
+  <div id="dots" style="position:absolute;top:12px;right:14px;display:flex;gap:6px;z-index:16"></div>
 
   <!-- PROGRESS + CONTROLS -->
   <div class="pause-overlay" id="pause-overlay"><div class="pause-icon">⏸</div></div>
@@ -368,8 +386,11 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
         </div>
         <div class="yt-time" id="time-el">0:00 / <span id="dur-el">0:57</span></div>
       </div>
-      <!-- Right: fullscreen -->
+      <!-- Right: narration toggle + fullscreen -->
       <div class="yt-right">
+        <button class="nar-btn" id="nar-btn" onclick="event.stopPropagation();toggleNarration()" title="Toggle voice narration">
+          <span id="nar-icon">🔇</span><span id="nar-label">Narration off</span>
+        </button>
         <button class="yt-btn" onclick="event.stopPropagation();toggleFullscreen()" title="Fullscreen (f)">
           <svg id="fs-icon" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
         </button>
@@ -399,12 +420,74 @@ const SCENE_START=SCENES.reduce((acc,sc,i)=>{acc.push(i===0?0:acc[i-1]+SCENES[i-
 
 // State
 let cur=0, playing=false, muted=false, raf=0;
-// Scene-level timing: when current scene speech started (wall clock)
+// Scene-level timing: when current scene started (wall clock) + accumulated
+// time before the last pause (timer mode needs both to resume mid-scene)
 let sceneStartTs=0, sceneElapsed=0;
-let synth=window.speechSynthesis, utt=null, voiceObj=null;
+let sceneTimer=0;                   // timer-mode advance handle
+let capTimers=[];                   // caption chunk handles
+let NARRATION=false;                // silent-by-default: deterministic on every machine
+let synth=window.speechSynthesis||null, utt=null, voiceObj=null;
+
+// ── CAPTIONS ─────────────────────────────────────────────────────────────
+// Each scene's narration text is split into caption chunks; chunk duration is
+// proportional to its share of the scene's characters. Captions run on the
+// wall-clock scene timeline so they work identically with or without voice.
+function _splitCaps(text){
+  const parts=text.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g)||[text];
+  const merged=[];
+  parts.map(p=>p.trim()).filter(Boolean).forEach(p=>{
+    if(merged.length && (merged[merged.length-1].length+p.length)<70){ merged[merged.length-1]+=' '+p; }
+    else merged.push(p);
+  });
+  return merged;
+}
+let CAPS=[];
+function buildCaps(){
+  CAPS=SCENES.map(sc=>{
+    const chunks=_splitCaps(sc.vo);
+    const totalChars=chunks.reduce((a,c)=>a+c.length,0)||1;
+    let t=0;
+    return chunks.map(c=>{
+      const d=Math.max(1200, Math.round(sc.dur*(c.length/totalChars)));
+      const item={text:c, at:t, dur:d};
+      t+=d;
+      return item;
+    });
+  });
+}
+function _showCap(text){
+  const box=document.getElementById('cap-box');
+  if(!box)return;
+  if(!text){ box.classList.remove('show'); return; }
+  box.classList.remove('show');
+  setTimeout(()=>{ box.textContent=text; box.classList.add('show'); },80);
+}
+function startCaps(n, fromMs){
+  stopCaps();
+  const list=CAPS[n]||[];
+  list.forEach(c=>{
+    const delay=c.at-(fromMs||0);
+    if(delay + c.dur <= 0) return;                 // already passed
+    if(delay<=0){ _showCap(c.text); return; }      // currently active
+    capTimers.push(setTimeout(()=>{ if(playing)_showCap(c.text); }, delay));
+  });
+}
+function stopCaps(){ capTimers.forEach(clearTimeout); capTimers=[]; }
+
+// Recompute totals (also lets the test harness shrink durations legitimately)
+function recomputeTiming(){
+  window.TOTAL_MS=SCENES.reduce((a,sc)=>a+sc.dur,0);
+  window.SCENE_START_MS=SCENES.reduce((acc,sc,i)=>{acc.push(i===0?0:acc[i-1]+SCENES[i-1].dur);return acc;},[]);
+  buildCaps();
+}
+recomputeTiming();
+// Introspection hooks (used by the automated player test-suite; harmless in prod)
+window.SCENES=SCENES;
+window._vidState=function(){ return { playing:playing, cur:cur, narration:NARRATION }; };
 
 // ── VOICE SETUP ──
 function pickVoice(){
+  if(!synth||!synth.getVoices)return null;
   const voices=synth.getVoices();
   if(!voices.length)return null;
   const prefs=[
@@ -427,11 +510,12 @@ function initVoice(){
   const lbl=document.getElementById('voice-label');
   if(lbl)lbl.textContent='';
 }
-if(synth.onvoiceschanged!==undefined)synth.onvoiceschanged=initVoice;
+if(synth&&synth.onvoiceschanged!==undefined)synth.onvoiceschanged=initVoice;
 setTimeout(initVoice,300);
 
 // ── SCENE DOTS ──
 const dotsEl=document.getElementById('dots');
+if(dotsEl)
 SCENES.forEach((_,i)=>{
   const d=document.createElement('div');
   d.className='dot'+(i===0?' on':'');
@@ -448,9 +532,10 @@ function showScene(n){
 // ── PROGRESS: scene-based, not wall-clock ──
 // elapsed = offset within TOTAL based on scene start + time into current scene
 function getElapsed(){
-  if(!playing) return SCENE_START[cur];
-  const intoScene=Math.min(Date.now()-sceneStartTs, SCENES[cur].dur);
-  return SCENE_START[cur]+intoScene;
+  const base=SCENE_START[cur];
+  if(!playing) return base+(sceneElapsed||0);
+  const intoScene=Math.min((sceneElapsed||0)+(Date.now()-sceneStartTs), SCENES[cur].dur);
+  return base+intoScene;
 }
 function updateProg(){
   const elapsed=getElapsed();
@@ -478,40 +563,61 @@ function tick(){
   raf=requestAnimationFrame(tick);
 }
 
-// ── SPEECH ──
-function speakScene(n){
-  synth.cancel();
+// ── PLAYBACK ENGINE — dual mode ──────────────────────────────────────────
+// Default: silent, timer-driven (deterministic on every machine — the browser
+// TTS voice a visitor happens to have installed can never wreck the video).
+// Optional: narration via speechSynthesis (user opts in with the toggle).
+function _advanceFrom(n){
+  if(!playing)return;
+  const next=n+1;
+  if(next<SCENES.length){
+    cur=next; sceneElapsed=0;
+    showScene(next);
+    setTimeout(()=>playScene(next),400);
+  } else { end(); }
+}
+function playScene(n){
+  if(synth)synth.cancel();
+  clearTimeout(sceneTimer);
   sceneStartTs=Date.now();
-  setTimeout(()=>{
-    if(!playing)return;
-    utt=new SpeechSynthesisUtterance(SCENES[n].vo);
-    if(voiceObj)utt.voice=voiceObj;
-    const volSlider=document.getElementById('vol-slider');
-    const vol=volSlider?parseFloat(volSlider.value)/100:1;
-    utt.rate=.78; utt.pitch=1.0; utt.volume=muted?0:vol;
-    utt.onstart=()=>{
-      sceneStartTs=Date.now(); // reset once speech actually starts
-      const d=document.getElementById('voice-dot');if(d)d.classList.add('speaking');
-    };
-    utt.onend=()=>{
-      const d=document.getElementById('voice-dot');if(d)d.classList.remove('speaking');
+  const from=sceneElapsed||0;
+  startCaps(n, from);
+  if(NARRATION && synth && typeof SpeechSynthesisUtterance!=='undefined'){
+    setTimeout(()=>{
       if(!playing)return;
-      const next=n+1;
-      if(next<SCENES.length){
-        cur=next;
-        showScene(next);
-        setTimeout(()=>speakScene(next),400);
-      } else {
-        end();
-      }
-    };
-    utt.onerror=()=>{
-      const next=n+1;
-      if(next<SCENES.length){cur=next;showScene(next);setTimeout(()=>speakScene(next),600);}
-      else end();
-    };
-    synth.speak(utt);
-  },100);
+      utt=new SpeechSynthesisUtterance(SCENES[n].vo);
+      if(voiceObj)utt.voice=voiceObj;
+      const volSlider=document.getElementById('vol-slider');
+      const vol=volSlider?parseFloat(volSlider.value)/100:1;
+      utt.rate=.95; utt.pitch=1.0; utt.volume=muted?0:vol;
+      utt.onstart=()=>{
+        sceneStartTs=Date.now(); sceneElapsed=0;
+        const d=document.getElementById('voice-dot');if(d)d.classList.add('speaking');
+      };
+      utt.onend=()=>{
+        const d=document.getElementById('voice-dot');if(d)d.classList.remove('speaking');
+        _advanceFrom(n);
+      };
+      utt.onerror=()=>{ _advanceFrom(n); };
+      synth.speak(utt);
+    },100);
+  } else {
+    // Timer mode: advance when the remaining scene time elapses
+    const remaining=Math.max(200, SCENES[n].dur-from);
+    sceneTimer=setTimeout(()=>{ sceneElapsed=0; _advanceFrom(n); }, remaining);
+  }
+}
+// Back-compat alias (older handlers may reference speakScene)
+function speakScene(n){ playScene(n); }
+
+// ── NARRATION TOGGLE ──
+function toggleNarration(){
+  NARRATION=!NARRATION;
+  const btn=document.getElementById('nar-btn'), ic=document.getElementById('nar-icon'), lb=document.getElementById('nar-label');
+  if(btn)btn.classList.toggle('on',NARRATION);
+  if(ic)ic.textContent=NARRATION?'🔊':'🔇';
+  if(lb)lb.textContent=NARRATION?'Narration on':'Narration off';
+  if(playing){ sceneElapsed=0; playScene(cur); }   // restart current scene in the new mode
 }
 
 // ── PLAYBACK CONTROLS ──
@@ -522,13 +628,16 @@ function play(){
   const ctrl=document.getElementById('yt-ctrl');
   if(ctrl){ctrl.classList.remove('active');setTimeout(()=>{if(playing)ctrl.classList.remove('active');},3000);}
   document.getElementById('pause-overlay').classList.remove('show');
-  speakScene(cur);
+  playScene(cur);
   raf=requestAnimationFrame(tick);
 }
 function pause(){
   playing=false;
   cancelAnimationFrame(raf);
-  synth.pause();
+  clearTimeout(sceneTimer);
+  stopCaps();
+  sceneElapsed=(sceneElapsed||0)+(Date.now()-sceneStartTs);   // resume point
+  if(synth)synth.pause();
   setPlayBtn(false);
   const ctrl=document.getElementById('yt-ctrl');if(ctrl)ctrl.classList.add('active');
   document.getElementById('pause-overlay').classList.add('show');
@@ -536,7 +645,10 @@ function pause(){
 function end(){
   playing=false;
   cancelAnimationFrame(raf);
-  synth.cancel();
+  clearTimeout(sceneTimer);
+  stopCaps(); _showCap('');
+  sceneElapsed=0;
+  if(synth)synth.cancel();
   setPlayBtn(false);
   document.getElementById('pause-overlay').classList.remove('show');
   const vd=document.getElementById('voice-dot');if(vd)vd.classList.remove('speaking');
@@ -553,8 +665,10 @@ function setPlayBtn(isPlaying){
     :'<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';
 }
 function restartVideo(){
-  synth.cancel();cancelAnimationFrame(raf);
-  playing=false;cur=0;sceneStartTs=0;
+  if(synth)synth.cancel();
+  cancelAnimationFrame(raf);
+  clearTimeout(sceneTimer); stopCaps(); _showCap('');
+  playing=false;cur=0;sceneStartTs=0;sceneElapsed=0;
   SCENES.forEach((_,i)=>{const el=document.getElementById('s'+i);if(el)el.classList.toggle('show',i===0);});
   document.getElementById('grid-bg').classList.remove('show');
   setDots(0);
@@ -571,10 +685,13 @@ function togglePlay(){
 
 // ── JUMP TO SCENE (dot click) ──
 function jumpTo(n){
-  synth.cancel();cancelAnimationFrame(raf);
-  cur=n; sceneStartTs=Date.now();
+  if(synth)synth.cancel();
+  cancelAnimationFrame(raf);
+  clearTimeout(sceneTimer); stopCaps();
+  cur=n; sceneStartTs=Date.now(); sceneElapsed=0;
   showScene(n); updateProg();
-  if(playing){speakScene(n);raf=requestAnimationFrame(tick);}
+  if(playing){playScene(n);raf=requestAnimationFrame(tick);}
+  else _showCap('');
 }
 
 // ── SEEK (scrub to any position within the total) ──
@@ -617,9 +734,10 @@ function onSeekInput(val){
 function onSeekEnd(){
   isSeeking=false;
   if(wasPlayingBeforeSeek){
-    // Start speech from beginning of the target scene and play from there
+    // Start the target scene from its beginning and play from there
+    clearTimeout(sceneTimer); stopCaps();
     playing=true;
-    sceneStartTs=Date.now();
+    sceneStartTs=Date.now(); sceneElapsed=0;
     setPlayBtn(true);
     document.getElementById('pause-overlay').classList.remove('show');
     const ctrl=document.getElementById('yt-ctrl');
