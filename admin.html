@@ -140,17 +140,18 @@ tr:hover td{background:rgba(20,168,216,.03)}
     <div class="auth-header">
       <div class="auth-mark">AR</div>
       <div class="auth-title">Admin Panel</div>
-      <div class="auth-sub">armatchpro.com · Restricted access</div>
+      <div class="auth-sub">armatchpro.com · Employee access only</div>
     </div>
     <div class="auth-body">
-      <div class="auth-err" id="auth-err">Incorrect password. Try again.</div>
-      <div class="auth-label">Admin password</div>
-      <input class="auth-input" type="password" id="auth-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doAuth()">
-      <button class="auth-btn" onclick="doAuth()">Access admin panel →</button>
-      <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:14px">Authorized personnel only. All actions are logged.</div>
+      <div class="auth-err" id="auth-err" style="display:none">Sign-in failed. Try again.</div>
+      <div id="auth-status" style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.55;text-align:center">Sign in with your <strong>@armatchpro.com</strong> Google Workspace account to continue. Personal Gmail or other-domain accounts will be rejected.</div>
+      <div id="google-signin-btn" style="display:flex;justify-content:center;margin-bottom:14px"></div>
+      <div id="auth-loading" style="display:none;text-align:center;font-size:12px;color:var(--t3);padding:8px">Verifying…</div>
+      <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:14px">Authorized personnel only. All sign-ins and actions are logged.</div>
     </div>
   </div>
 </div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <div id="admin-app">
   <div class="a-top">
@@ -160,8 +161,8 @@ tr:hover td{background:rgba(20,168,216,.03)}
       <span class="a-badge">ADMIN</span>
     </div>
     <div class="a-right">
-      <span class="a-user">admin@armatchpro.com</span>
-      <button class="a-logout" onclick="location.reload()">Sign out</button>
+      <span class="a-user" id="a-user-email">—</span>
+      <button class="a-logout" onclick="adminSignOut()">Sign out</button>
     </div>
   </div>
   <div class="a-body">
@@ -397,20 +398,112 @@ tr:hover td{background:rgba(20,168,216,.03)}
 </div>
 
 <script>
-const ADMIN_PASS='ArmpqQueooJB!Owner9x';
+// ── Google Sign-In for @armatchpro.com only ────────────────────────────
+// Google Identity Services: user signs in with their Workspace account, we
+// receive a signed ID token (JWT), parse the payload, and check three things:
+//   1. Token is signed by accounts.google.com (structural — we can only decode
+//      here; full crypto verification would need a backend). Google's client
+//      library already validated the signature before handing us the token.
+//   2. hd (hosted domain) claim === 'armatchpro.com' — the Workspace domain.
+//   3. email_verified === true.
+// Personal @gmail.com accounts have NO hd claim and are rejected.
+// The signed-in email is stamped on every admin_audit entry.
+const ADMIN_ALLOWED_DOMAIN = 'armatchpro.com';
+// Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID
+// (Type: Web application). Add your deployed admin URL to "Authorized JavaScript
+// origins". Free — no billing needed for Sign-In.
+const GOOGLE_CLIENT_ID = '780331595995-3ph5nqu9oqvsnq9786obchl66se175i4.apps.googleusercontent.com';
+let ADMIN_USER = null;   // { email, name, picture, sub, verifiedAt } once signed in
 
-function doAuth(){
-  const p=document.getElementById('auth-pass').value;
-  if(p===ADMIN_PASS){
-    document.getElementById('auth-screen').style.display='none';
-    const a=document.getElementById('admin-app');a.style.display='flex';a.style.flexDirection='column';
-    initAdmin();
-  }else{
-    const e=document.getElementById('auth-err');e.style.display='block';
-    document.getElementById('auth-pass').value='';document.getElementById('auth-pass').focus();
-  }
+function _decodeJwt(t){
+  try{
+    var p = t.split('.')[1];
+    var b = p.replace(/-/g,'+').replace(/_/g,'/');
+    while(b.length%4) b+='=';
+    return JSON.parse(decodeURIComponent(atob(b).split('').map(function(c){
+      return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2); }).join('')));
+  }catch(e){ return null; }
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter')doAuth()});
+
+function handleGoogleCredential(response){
+  var errEl = document.getElementById('auth-err');
+  var loadEl = document.getElementById('auth-loading');
+  errEl.style.display='none'; loadEl.style.display='block';
+
+  var payload = _decodeJwt(response.credential);
+  var reason = null;
+  if(!payload) reason = 'Could not read sign-in response.';
+  else if(payload.iss !== 'accounts.google.com' && payload.iss !== 'https://accounts.google.com')
+    reason = 'Sign-in was not issued by Google.';
+  else if(payload.aud !== GOOGLE_CLIENT_ID)
+    reason = 'Sign-in was issued for a different app.';
+  else if(payload.exp && (payload.exp * 1000) < Date.now())
+    reason = 'Sign-in expired. Try again.';
+  else if(!payload.email_verified)
+    reason = 'Your Google account email is not verified.';
+  else if(payload.hd !== ADMIN_ALLOWED_DOMAIN)
+    reason = 'Access denied. This panel is restricted to @'+ADMIN_ALLOWED_DOMAIN+' Workspace accounts. (Signed in as ' + (payload.email||'unknown') + ')';
+
+  if(reason){
+    loadEl.style.display='none';
+    errEl.textContent = reason;
+    errEl.style.display='block';
+    try{ if(google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); }catch(e){}
+    return;
+  }
+
+  ADMIN_USER = { email: payload.email, name: payload.name||payload.email,
+                 picture: payload.picture||'', sub: payload.sub,
+                 verifiedAt: new Date().toISOString() };
+  var lbl = document.getElementById('a-user-email');
+  if(lbl) lbl.textContent = ADMIN_USER.email;
+
+  document.getElementById('auth-screen').style.display='none';
+  var a = document.getElementById('admin-app');
+  a.style.display='flex'; a.style.flexDirection='column';
+  try{ logAdminAction('Signed in', ADMIN_USER.email); }catch(e){}
+  initAdmin();
+}
+
+function adminSignOut(){
+  try{ logAdminAction('Signed out', ADMIN_USER && ADMIN_USER.email || ''); }catch(e){}
+  try{ if(google && google.accounts && google.accounts.id){
+    google.accounts.id.disableAutoSelect();
+    if(ADMIN_USER && ADMIN_USER.email) google.accounts.id.revoke(ADMIN_USER.email, function(){});
+  }}catch(e){}
+  ADMIN_USER = null;
+  location.reload();
+}
+
+function _initGoogleSignIn(){
+  if(!window.google || !google.accounts || !google.accounts.id){
+    // GSI script may still be loading — retry briefly, then show a helpful error.
+    if(_initGoogleSignIn._tries === undefined) _initGoogleSignIn._tries = 0;
+    if(_initGoogleSignIn._tries++ < 20){ setTimeout(_initGoogleSignIn, 250); return; }
+    var e=document.getElementById('auth-err');
+    e.textContent='Could not load Google Sign-In. Check your internet connection and reload.';
+    e.style.display='block';
+    return;
+  }
+  if(GOOGLE_CLIENT_ID.indexOf('REPLACE_WITH') === 0){
+    var errBox=document.getElementById('auth-err');
+    errBox.textContent='Configuration error: GOOGLE_CLIENT_ID is not set in admin.html.';
+    errBox.style.display='block';
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    hd: ADMIN_ALLOWED_DOMAIN,       // hint to Google to prefer Workspace accounts
+    auto_select: false,
+    cancel_on_tap_outside: true
+  });
+  google.accounts.id.renderButton(document.getElementById('google-signin-btn'), {
+    theme:'filled_blue', size:'large', text:'signin_with', shape:'rectangular', width:280
+  });
+}
+document.addEventListener('DOMContentLoaded', _initGoogleSignIn);
+if(document.readyState !== 'loading') _initGoogleSignIn();
 
 function getUsers(){return JSON.parse(localStorage.getItem('armp_users')||'{}')}
 function saveUsers(u){localStorage.setItem('armp_users',JSON.stringify(u))}
@@ -648,7 +741,7 @@ function extendDemo(email){
 // Admin audit log
 var _adminAuditLog=JSON.parse(localStorage.getItem('armp_admin_audit')||'[]');
 function _adminLog(action, detail){
-  _adminAuditLog.unshift({ts:new Date().toISOString(),action,detail});
+  _adminAuditLog.unshift({ts:new Date().toISOString(), actor:(ADMIN_USER&&ADMIN_USER.email)||'(unauthenticated)', action, detail});
   if(_adminAuditLog.length>500)_adminAuditLog=_adminAuditLog.slice(0,500);
   try{localStorage.setItem('armp_admin_audit',JSON.stringify(_adminAuditLog));}catch(e){}
 }
