@@ -334,10 +334,10 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
   <div class="scene" id="s5">
     <div class="cta-ew">Start today — no ERP required</div>
     <div class="cta-h">AR matching,<br><span>fully automated.</span></div>
-    <div class="cta-sub">30-day free Pro trial — credit card required, cancel anytime.</div>
+    <div class="cta-sub">30-day white-glove pilot — no charge until you convert.</div>
     <div class="cta-btns-v">
-      <a class="cta-v-p" href="checkout.html?plan=pro" target="_top">Start 30-day free trial</a>
-      <a class="cta-v-s" href="index.html#pricing" target="_top">🗓 View all plans</a>
+      <a class="cta-v-p" href="index.html#pricing" target="_top">Start a 30-day pilot</a>
+      <a class="cta-v-s" href="index.html#pricing" target="_top">🗓 View pricing</a>
     </div>
     <div class="domain-v">armatchpro.com</div>
   </div>
@@ -388,9 +388,10 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
       </div>
       <!-- Right: narration toggle + fullscreen -->
       <div class="yt-right">
-        <button class="nar-btn" id="nar-btn" onclick="event.stopPropagation();toggleNarration()" title="Toggle voice narration">
-          <span id="nar-icon">🔇</span><span id="nar-label">Narration off</span>
+        <button class="nar-btn on" id="nar-btn" onclick="event.stopPropagation();toggleNarration()" title="Toggle voice narration">
+          <span id="nar-icon">🔊</span><span id="nar-label">Narration on</span>
         </button>
+        <button class="nar-btn" id="cc-btn" onclick="event.stopPropagation();toggleCaptions()" title="Toggle subtitles">CC</button>
         <button class="yt-btn" onclick="event.stopPropagation();toggleFullscreen()" title="Fullscreen (f)">
           <svg id="fs-icon" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
         </button>
@@ -412,7 +413,7 @@ const SCENES=[
   {id:'s2',dur:11500,vo:"AR Match Pro changes all of that. Import your invoice aging and remittance file. The engine auto-matches by Invoice number, Purchase Order, Sales Order, Delivery, and Tracking — even the shipment references your customers quote instead of invoice numbers — and allocates one payment across multiple invoices automatically. In seconds."},
   {id:'s3',dur:11000,vo:"Drag in your files — the standardized ARMP import template keeps every invoice file clean, and SAP exports work as-is. Run Auto Match. Review exceptions your team actually needs to see. Then download a Posting Export directly to SAP F-28 or NetSuite — no manual entry, no ERP integration required."},
   {id:'s4',dur:8500,vo:"Teams using AR Match Pro see an 82% auto-match rate — well above the industry average. What used to take hours happens in 8 seconds. That is ten thousand dollars or more back in your AR budget every month."},
-  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation and ERP integration, AR Match Pro is live the same day. Start with our 30-day free Pro trial — credit card required, cancel anytime. No installation. No IT approval needed. Start today at AR Match Pro dot com."}
+  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation and ERP integration, AR Match Pro is live the same day. Start with a 30-day white-glove pilot — no charge until you convert. No installation. No IT approval needed. Book your kickoff at AR Match Pro dot com."}
 ];
 const TOTAL=SCENES.reduce((s,sc)=>s+sc.dur,0);
 // Scene start offsets for progress calculations
@@ -425,7 +426,8 @@ let cur=0, playing=false, muted=false, raf=0;
 let sceneStartTs=0, sceneElapsed=0;
 let sceneTimer=0;                   // timer-mode advance handle
 let capTimers=[];                   // caption chunk handles
-let NARRATION=false;                // silent-by-default: deterministic on every machine
+let NARRATION=true;                 // narration on by default (A1)
+let CAPTIONS=false;                 // subtitles optional — forced on if no TTS exists
 let synth=window.speechSynthesis||null, utt=null, voiceObj=null;
 
 // ── CAPTIONS ─────────────────────────────────────────────────────────────
@@ -464,6 +466,7 @@ function _showCap(text){
 }
 function startCaps(n, fromMs){
   stopCaps();
+  if(!CAPTIONS){ _showCap(''); return; }
   const list=CAPS[n]||[];
   list.forEach(c=>{
     const delay=c.at-(fromMs||0);
@@ -481,9 +484,11 @@ function recomputeTiming(){
   buildCaps();
 }
 recomputeTiming();
+// No speech engine in this browser → narration cannot work; fall back to captions
+if(!synth || typeof SpeechSynthesisUtterance==='undefined'){ NARRATION=false; CAPTIONS=true; }
 // Introspection hooks (used by the automated player test-suite; harmless in prod)
 window.SCENES=SCENES;
-window._vidState=function(){ return { playing:playing, cur:cur, narration:NARRATION }; };
+window._vidState=function(){ return { playing:playing, cur:cur, narration:NARRATION, captions:CAPTIONS }; };
 
 // ── VOICE SETUP ──
 function pickVoice(){
@@ -611,14 +616,32 @@ function playScene(n){
 function speakScene(n){ playScene(n); }
 
 // ── NARRATION TOGGLE ──
-function toggleNarration(){
-  NARRATION=!NARRATION;
+function _syncNarBtn(){
   const btn=document.getElementById('nar-btn'), ic=document.getElementById('nar-icon'), lb=document.getElementById('nar-label');
   if(btn)btn.classList.toggle('on',NARRATION);
   if(ic)ic.textContent=NARRATION?'🔊':'🔇';
   if(lb)lb.textContent=NARRATION?'Narration on':'Narration off';
+}
+function toggleNarration(){
+  NARRATION=!NARRATION;
+  if(!NARRATION && !CAPTIONS){ CAPTIONS=true; _syncCcBtn(); }   // never silent AND captionless
+  _syncNarBtn();
   if(playing){ sceneElapsed=0; playScene(cur); }   // restart current scene in the new mode
 }
+
+// ── CAPTIONS TOGGLE (CC) ──
+function _syncCcBtn(){
+  const btn=document.getElementById('cc-btn');
+  if(btn)btn.classList.toggle('on',CAPTIONS);
+}
+function toggleCaptions(){
+  CAPTIONS=!CAPTIONS;
+  _syncCcBtn();
+  if(playing){ startCaps(cur, (sceneElapsed||0)+(Date.now()-sceneStartTs)); }
+  else _showCap('');
+}
+document.addEventListener('DOMContentLoaded',function(){ _syncNarBtn(); _syncCcBtn(); });
+setTimeout(function(){ _syncNarBtn(); _syncCcBtn(); },200);
 
 // ── PLAYBACK CONTROLS ──
 function play(){

@@ -259,7 +259,10 @@ body.modal-open .split-mp{animation-play-state:paused !important}
 @media(max-width:980px){
   .nav-links{display:none}
   .verify-grid{grid-template-columns:1fr 1fr!important}
-  .hero-wrap,.cfo-grid{grid-template-columns:1fr}
+  .proof-grid{grid-template-columns:1fr 1fr!important}
+  .pricing-cards-grid{grid-template-columns:1fr!important}
+
+@media(max-width:1440px){ .verify-grid{grid-template-columns:1fr 1fr!important} }  .hero-wrap,.cfo-grid{grid-template-columns:1fr}
   .hero-copy h1{font-size:44px}
   .hero-logo{width:340px;height:340px;margin:0 auto;max-width:100%}
   .grid-3,.pricing-grid,.footer-grid{grid-template-columns:1fr}
@@ -527,7 +530,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     </nav>
     <div class="nav-actions">
       <a class="btn btn-ghost" href="app.html">Open App</a>
-      <a class="btn btn-primary" href="#pricing">Buy Now</a>
+      <a class="btn btn-primary" href="#pricing">Start a Pilot</a>
     </div>
   </div>
 </header>
@@ -547,10 +550,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <p>Purpose-built for SAP, NetSuite, and Dynamics 365 F&amp;O finance teams. Deterministic matching, multi-invoice allocation, ERS/VMI consolidated payment support, and posting-ready exports — SAP F-28, NetSuite Cash Receipt, Dynamics 365 F&amp;O — live in your browser the same day. No IT project. No integration risk.</p>
         <div class="hero-actions">
           <button class="btn btn-primary" onclick="location.href='#pricing'" style="cursor:pointer">View pricing</button>
-          <button class="btn btn-demo" onclick="openLeadModal()">▶ Start 30-day free trial</button>
+          <button class="btn btn-demo" onclick="openLeadModal()">▶ Start a 30-day pilot</button>
           <button class="btn btn-outline" onclick="window.open('https://calendly.com/armatchpro','_blank')" style="font-size:14px;padding:12px 20px;cursor:pointer">📅 Book a 30-Minute Demo</button>
         </div>
-        <div class="hero-note">30-day free Pro trial · credit card required · cancel anytime</div>
+        <div class="hero-note">30-day white-glove pilot · no charge until you convert · annual plans, ACH or wire</div>
       </div>
       <div class="hero-logo" aria-label="Animated AR Match Pro finance logo">
         <canvas id="heroCanvas" class="hero-canvas"></canvas>
@@ -653,7 +656,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
     <!-- CTA row -->
     <div class="diff-cta-row" style="text-align:center">
-      <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);margin-right:12px">▶ Start 30-day free trial</button>
+      <button onclick="openLeadModal()" style="padding:15px 32px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);margin-right:12px">▶ Start a 30-day pilot</button>
       <button onclick="window.open('https://calendly.com/armatchpro','_blank')" style="padding:15px 32px;background:#fff;color:var(--navy);border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font)">📅 Book a 30-Minute Demo</button>
     </div>
   </div>
@@ -703,6 +706,33 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 </section>
 
 <!-- ══ CFO REPORTING ══ -->
+<section id="proof" style="background:#0A1220;padding:80px 0">
+  <div class="container" style="max-width:1000px">
+    <div style="text-align:center;margin-bottom:44px">
+      <div class="eyebrow">PROOF, NOT PROMISES</div>
+      <h2 style="font-size:clamp(26px,3.8vw,40px);font-weight:800;color:#fff;letter-spacing:-.6px;margin:12px 0 14px">A $2.3M wire, tied out line by line.</h2>
+      <p style="font-size:15.5px;color:rgba(255,255,255,.55);max-width:660px;margin:0 auto;line-height:1.7">Real reference case, real numbers — customer name changed for confidentiality.</p>
+    </div>
+    <div style="background:rgba(255,255,255,.04);border:1.5px solid rgba(20,168,216,.28);border-radius:18px;padding:34px;margin-bottom:22px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+        <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#14A8D8,#12B886);display:grid;place-items:center;font-weight:800;color:#fff;font-size:15px">WE</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#fff">Wayne Enterprises</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.45)">Industrial components · SAP · consolidated wire payments</div>
+        </div>
+      </div>
+      <div style="font-size:14.5px;color:rgba(255,255,255,.78);line-height:1.8;margin-bottom:22px">A single <strong style="color:#fff">$2,305,295 wire</strong> arrived covering <strong style="color:#fff">40 remittance lines</strong> — many quoting shipment and tracking references instead of invoice numbers, including one invoice that had been rebilled under a new number. AR Match Pro applied <strong style="color:#7DD3FC">39 of 40 lines ($2,304,655) automatically</strong>, traced the rebilled invoice through its tracking number → delivery → sales order → reissued invoice, and flagged exactly one legitimate exception: a <strong style="color:#fff">$640 return</strong> with no invoice posted yet — pre-diagnosed, with the Cash on Account note already written. Every allocation carries its audit chain.</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" class="proof-grid">
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#34D399">$2.3M</div><div style="font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">applied from one wire</div></div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#7DD3FC">39/40</div><div style="font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">lines auto-applied</div></div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#F59E0B">1</div><div style="font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">exception — pre-diagnosed</div></div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:800;color:#fff">100%</div><div style="font-size:11.5px;color:rgba(255,255,255,.5);margin-top:4px">auditable chains</div></div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:13px;color:rgba(255,255,255,.45);line-height:1.7">Also on the bench: a <strong style="color:rgba(255,255,255,.75)">$232,050 consolidated payment</strong> matched across <strong style="color:rgba(255,255,255,.75)">37 allocations</strong> from ERS / VMI files — one exception, tied to the penny.</div>
+  </div>
+</section>
+
 <section id="cfo-reporting" style="background:#fff;padding:80px 0">
   <div class="container" style="max-width:960px">
     <div style="text-align:center;margin-bottom:52px">
@@ -756,7 +786,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div style="font-size:20px">📊</div>
       <div style="flex:1;min-width:200px">
         <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px">All metrics calculated live from your match results</div>
-        <div style="font-size:13px;color:#64748B">Updated every time you run Auto Match. Export a PDF for your CFO anytime.</div>
+        <div style="font-size:13px;color:#64748B">Updated every time you run Auto Match. Export a PDF for your CFO anytime. <em style="color:#94A3B8;font-style:normal;font-size:12.5px">Sample dashboard shown — your numbers appear after your first Auto Match run.</em></div>
       </div>
       <button onclick="document.getElementById('video-section').scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 20px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border:none;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">▶ Watch the 60-second tour</button>
     </div>
@@ -768,7 +798,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="eyebrow" style="color:#7DD3FC;border-color:rgba(125,211,252,.25);background:rgba(20,168,216,.1);margin-bottom:16px;display:inline-flex">▶ Product Overview</div>
       <h2 style="font-size:clamp(28px,4vw,42px);font-weight:800;color:#fff;letter-spacing:-.5px;margin:12px 0 12px;line-height:1.2">See AR Match Pro in action</h2>
       <p style="font-size:15px;color:#7DD3FC;font-weight:600;margin-bottom:8px">"Match remittance to invoices in minutes — no ERP integration required."</p>
-      <p style="font-size:15px;color:rgba(255,255,255,.45);max-width:520px;margin:0 auto 28px;line-height:1.65">Watch how AR Match Pro automates remittance matching from problem to results in under 60 seconds. Captions on — narration optional.</p>
+      <p style="font-size:15px;color:rgba(255,255,255,.45);max-width:520px;margin:0 auto 28px;line-height:1.65">Watch how AR Match Pro automates remittance matching from problem to results in under 60 seconds. Narrated — subtitles optional.</p>
 
       <!-- Embedded video player — inlined (no iframe: immune to framing policy,
            host redirects, and CDN header injection) -->
@@ -780,8 +810,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   --p:#14A8D8;--pd:#168DE2;--g:#10B981;--gd:#059669;--am:#F59E0B;--r:#EF4444;--pu:#8B5CF6;
   --navy:#050D1A;--font:'Inter',sans-serif;--mono:'Inter',sans-serif;
 }
-#vp-root ._dropped6{height:100%;background:#000;font-family:var(--font);-webkit-font-smoothing:antialiased}
-#vp-root ._dropped7{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:16px;gap:14px}
 
 /* ── PLAYER ── */
 #vp-root .player{width:100%;max-width:880px;aspect-ratio:16/9;position:relative;background:var(--navy);overflow:hidden;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.3),0 32px 100px rgba(0,0,0,.7);cursor:pointer}
@@ -1103,10 +1131,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   <div class="scene" id="s5">
     <div class="cta-ew">Start today — no ERP required</div>
     <div class="cta-h">AR matching,<br><span>fully automated.</span></div>
-    <div class="cta-sub">30-day free Pro trial — credit card required, cancel anytime.</div>
+    <div class="cta-sub">30-day white-glove pilot — no charge until you convert.</div>
     <div class="cta-btns-v">
-      <a class="cta-v-p" href="checkout.html?plan=pro" target="_top">Start 30-day free trial</a>
-      <a class="cta-v-s" href="index.html#pricing" target="_top">🗓 View all plans</a>
+      <a class="cta-v-p" href="index.html#pricing" target="_top">Start a 30-day pilot</a>
+      <a class="cta-v-s" href="index.html#pricing" target="_top">🗓 View pricing</a>
     </div>
     <div class="domain-v">armatchpro.com</div>
   </div>
@@ -1157,9 +1185,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
       <!-- Right: narration toggle + fullscreen -->
       <div class="yt-right">
-        <button class="nar-btn" id="nar-btn" onclick="event.stopPropagation();toggleNarration()" title="Toggle voice narration">
-          <span id="nar-icon">🔇</span><span id="nar-label">Narration off</span>
+        <button class="nar-btn on" id="nar-btn" onclick="event.stopPropagation();toggleNarration()" title="Toggle voice narration">
+          <span id="nar-icon">🔊</span><span id="nar-label">Narration on</span>
         </button>
+        <button class="nar-btn" id="cc-btn" onclick="event.stopPropagation();toggleCaptions()" title="Toggle subtitles">CC</button>
         <button class="yt-btn" onclick="event.stopPropagation();toggleFullscreen()" title="Fullscreen (f)">
           <svg id="fs-icon" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
         </button>
@@ -1181,7 +1210,7 @@ const SCENES=[
   {id:'s2',dur:11500,vo:"AR Match Pro changes all of that. Import your invoice aging and remittance file. The engine auto-matches by Invoice number, Purchase Order, Sales Order, Delivery, and Tracking — even the shipment references your customers quote instead of invoice numbers — and allocates one payment across multiple invoices automatically. In seconds."},
   {id:'s3',dur:11000,vo:"Drag in your files — the standardized ARMP import template keeps every invoice file clean, and SAP exports work as-is. Run Auto Match. Review exceptions your team actually needs to see. Then download a Posting Export directly to SAP F-28 or NetSuite — no manual entry, no ERP integration required."},
   {id:'s4',dur:8500,vo:"Teams using AR Match Pro see an 82% auto-match rate — well above the industry average. What used to take hours happens in 8 seconds. That is ten thousand dollars or more back in your AR budget every month."},
-  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation and ERP integration, AR Match Pro is live the same day. Start with our 30-day free Pro trial — credit card required, cancel anytime. No installation. No IT approval needed. Start today at AR Match Pro dot com."}
+  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation and ERP integration, AR Match Pro is live the same day. Start with a 30-day white-glove pilot — no charge until you convert. No installation. No IT approval needed. Book your kickoff at AR Match Pro dot com."}
 ];
 const TOTAL=SCENES.reduce((s,sc)=>s+sc.dur,0);
 // Scene start offsets for progress calculations
@@ -1194,7 +1223,8 @@ let cur=0, playing=false, muted=false, raf=0;
 let sceneStartTs=0, sceneElapsed=0;
 let sceneTimer=0;                   // timer-mode advance handle
 let capTimers=[];                   // caption chunk handles
-let NARRATION=false;                // silent-by-default: deterministic on every machine
+let NARRATION=true;                 // narration on by default (A1)
+let CAPTIONS=false;                 // subtitles optional — forced on if no TTS exists
 let synth=window.speechSynthesis||null, utt=null, voiceObj=null;
 
 // ── CAPTIONS ─────────────────────────────────────────────────────────────
@@ -1233,6 +1263,7 @@ function _showCap(text){
 }
 function startCaps(n, fromMs){
   stopCaps();
+  if(!CAPTIONS){ _showCap(''); return; }
   const list=CAPS[n]||[];
   list.forEach(c=>{
     const delay=c.at-(fromMs||0);
@@ -1250,9 +1281,11 @@ function recomputeTiming(){
   buildCaps();
 }
 recomputeTiming();
+// No speech engine in this browser → narration cannot work; fall back to captions
+if(!synth || typeof SpeechSynthesisUtterance==='undefined'){ NARRATION=false; CAPTIONS=true; }
 // Introspection hooks (used by the automated player test-suite; harmless in prod)
 window.SCENES=SCENES;
-window._vidState=function(){ return { playing:playing, cur:cur, narration:NARRATION }; };
+window._vidState=function(){ return { playing:playing, cur:cur, narration:NARRATION, captions:CAPTIONS }; };
 
 // ── VOICE SETUP ──
 function pickVoice(){
@@ -1380,14 +1413,32 @@ function playScene(n){
 function speakScene(n){ playScene(n); }
 
 // ── NARRATION TOGGLE ──
-function toggleNarration(){
-  NARRATION=!NARRATION;
+function _syncNarBtn(){
   const btn=document.getElementById('nar-btn'), ic=document.getElementById('nar-icon'), lb=document.getElementById('nar-label');
   if(btn)btn.classList.toggle('on',NARRATION);
   if(ic)ic.textContent=NARRATION?'🔊':'🔇';
   if(lb)lb.textContent=NARRATION?'Narration on':'Narration off';
+}
+function toggleNarration(){
+  NARRATION=!NARRATION;
+  if(!NARRATION && !CAPTIONS){ CAPTIONS=true; _syncCcBtn(); }   // never silent AND captionless
+  _syncNarBtn();
   if(playing){ sceneElapsed=0; playScene(cur); }   // restart current scene in the new mode
 }
+
+// ── CAPTIONS TOGGLE (CC) ──
+function _syncCcBtn(){
+  const btn=document.getElementById('cc-btn');
+  if(btn)btn.classList.toggle('on',CAPTIONS);
+}
+function toggleCaptions(){
+  CAPTIONS=!CAPTIONS;
+  _syncCcBtn();
+  if(playing){ startCaps(cur, (sceneElapsed||0)+(Date.now()-sceneStartTs)); }
+  else _showCap('');
+}
+document.addEventListener('DOMContentLoaded',function(){ _syncNarBtn(); _syncCcBtn(); });
+setTimeout(function(){ _syncNarBtn(); _syncCcBtn(); },200);
 
 // ── PLAYBACK CONTROLS ──
 function play(){
@@ -1570,26 +1621,27 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateProg();
 });
 
-window.togglePlay=window.togglePlay||togglePlay;
-window.restartVideo=window.restartVideo||restartVideo;
-window.jumpTo=window.jumpTo||jumpTo;
-window.onSeekInput=window.onSeekInput||onSeekInput;
-window.onSeekStart=window.onSeekStart||onSeekStart;
-window.onSeekEnd=window.onSeekEnd||onSeekEnd;
-window.toggleMute=window.toggleMute||toggleMute;
-window.setVolume=window.setVolume||setVolume;
-window.toggleFullscreen=window.toggleFullscreen||toggleFullscreen;
-window.toggleNarration=window.toggleNarration||toggleNarration;
-window.recomputeTiming=window.recomputeTiming||recomputeTiming;
+if(typeof togglePlay!=='undefined')window.togglePlay=window.togglePlay||togglePlay;
+if(typeof restartVideo!=='undefined')window.restartVideo=window.restartVideo||restartVideo;
+if(typeof jumpTo!=='undefined')window.jumpTo=window.jumpTo||jumpTo;
+if(typeof onSeekInput!=='undefined')window.onSeekInput=window.onSeekInput||onSeekInput;
+if(typeof onSeekStart!=='undefined')window.onSeekStart=window.onSeekStart||onSeekStart;
+if(typeof onSeekEnd!=='undefined')window.onSeekEnd=window.onSeekEnd||onSeekEnd;
+if(typeof toggleMute!=='undefined')window.toggleMute=window.toggleMute||toggleMute;
+if(typeof setVolume!=='undefined')window.setVolume=window.setVolume||setVolume;
+if(typeof toggleFullscreen!=='undefined')window.toggleFullscreen=window.toggleFullscreen||toggleFullscreen;
+if(typeof toggleNarration!=='undefined')window.toggleNarration=window.toggleNarration||toggleNarration;
+if(typeof toggleCaptions!=='undefined')window.toggleCaptions=window.toggleCaptions||toggleCaptions;
+if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeTiming||recomputeTiming;
 })();
 </script>
 </div>
 
       <div style="margin-top:28px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
         <a href="#pricing" style="padding:13px 26px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;box-shadow:0 8px 20px rgba(20,168,216,.3);transition:.18s;display:inline-flex;align-items:center;gap:8px" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 28px rgba(20,168,216,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 20px rgba(20,168,216,.3)'">View pricing</a>
-        <a href="#" onclick="event.preventDefault();openLeadModal()" style="padding:13px 26px;background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.16);border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.borderColor='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.16)'">▶ Start 30-day free trial</a>
+        <a href="#" onclick="event.preventDefault();openLeadModal()" style="padding:13px 26px;background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.16);border-radius:11px;font-size:14.5px;font-weight:700;text-decoration:none;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.borderColor='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.16)'">▶ Start a 30-day pilot</a>
       </div>
-      <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.35)">Credit card required · cancel anytime in Settings</div>
+      <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.35)">White-glove pilot · no charge until you convert</div>
     </div>
   </section>
 
@@ -1625,8 +1677,8 @@ window.recomputeTiming=window.recomputeTiming||recomputeTiming;
       </div>
       <div style="text-align:center">
         <p style="color:rgba(255,255,255,.4);font-size:14px;margin-bottom:20px">See it match a real $40,000 multi-invoice payment in under 60 seconds.</p>
-        <button onclick="openLeadModal()" style="display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);transition:all .18s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">▶ Start 30-day free trial</button>
-        <div style="font-size:12px;color:rgba(255,255,255,.25);margin-top:10px">Quick 2-minute qualification · We email your personalized trial link within 24-48 hours</div>
+        <button onclick="openLeadModal()" style="display:inline-flex;align-items:center;gap:8px;padding:15px 30px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(20,168,216,.3);transition:all .18s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">▶ Start a 30-day pilot</button>
+        <div style="font-size:12px;color:rgba(255,255,255,.25);margin-top:10px">Quick 2-minute qualification · we schedule your pilot kickoff within 24–48 hours</div>
       </div>
     </div>
   </section>
@@ -1736,23 +1788,23 @@ window.recomputeTiming=window.recomputeTiming||recomputeTiming;
         <textarea class="lead-input" id="lead-notes" placeholder="Any specific pain points, integration requirements, or context about your team's AR workflow…" rows="3" style="resize:vertical;min-height:70px;font-family:'Inter',sans-serif"></textarea>
 
         <button class="lead-submit" id="lead-submit-btn" onclick="submitLead()">
-          ▶ Request my 30-day Pro trial
+          ▶ Request my 30-day pilot
         </button>
         <div class="lead-privacy">
-          🔒 We review every request within 24-48 hours · Credit card required to activate trial · No spam, ever
+          🔒 We review every request within 24–48 hours · No charge during the pilot · No spam, ever
         </div>
       </div>
     </div>
     <div id="lead-success" class="lead-success" style="display:none">
       <div class="lead-success-icon">✓</div>
-      <h3>Trial request received!</h3>
-      <p style="font-size:14.5px;color:#475569;line-height:1.65;margin-bottom:16px">Thanks <span id="lead-success-name" style="font-weight:700;color:#0F172A"></span>! Our team will review your AR workflow and email your personalized 30-day Pro trial link to <span id="lead-success-email" style="font-weight:700;color:var(--p)"></span> within <strong>24–48 hours</strong>.</p>
+      <h3>Pilot request received!</h3>
+      <p style="font-size:14.5px;color:#475569;line-height:1.65;margin-bottom:16px">Thanks <span id="lead-success-name" style="font-weight:700;color:#0F172A"></span>! Our team will review your AR workflow and reach out to schedule your pilot kickoff at <span id="lead-success-email" style="font-weight:700;color:var(--p)"></span> within <strong>24–48 hours</strong>.</p>
       <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px 16px;margin-bottom:18px;text-align:left">
         <div style="font-size:11.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">What happens next</div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#334155;line-height:1.55">
           <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">1.</span>We review your AR setup and run ARMP against a sample of your real files, so you see the auto-match rate on your own data before you commit.</div>
-          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">2.</span>You receive a personalized Stripe trial link via email. Credit card required.</div>
-          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">3.</span>30 days full Pro access. Auto-converts to $4,599/mo on day 31 unless cancelled.</div>
+          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">2.</span>We schedule a 45-minute kickoff call and set up your workspace together — white-glove, live on day one.</div>
+          <div style="display:flex;gap:9px"><span style="color:var(--p);font-weight:700;flex-shrink:0">3.</span>30 days of full Pro access alongside your current process. Convert on a 1-year plan ($4,599/mo billed annually, invoiced Net-30 via ACH or wire) only if the numbers convince you.</div>
         </div>
       </div>
       <button onclick="closeLeadModal()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Got it</button>
@@ -1819,101 +1871,68 @@ window.recomputeTiming=window.recomputeTiming||recomputeTiming;
 
     <!-- Billing toggle -->
     <div style="text-align:center;margin-bottom:44px">
-      <div style="display:inline-flex;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:4px;border-radius:999px;gap:4px">
-        <button id="bill-monthly" onclick="setBilling('monthly')" style="padding:9px 22px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:none;background:transparent;color:rgba(255,255,255,.55);transition:.15s">Month-to-month</button>
-        <button id="bill-annual" onclick="setBilling('annual')" style="padding:9px 22px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:none;background:#fff;color:#0F172A;transition:.15s">Annual <span style="color:#10B981;font-size:12px;font-weight:800">Save 17%</span></button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:36px">
+        <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:9px 22px;font-size:13.5px;font-weight:700;color:#fff">Billed annually · ACH or wire · Net-30 · 1-year minimum</div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.45)">Every plan starts with a 30-day white-glove pilot — no charge until you convert.</div>
+      </div>
+
+    <!-- Founding customer program -->
+    <div id="founding-banner" style="max-width:760px;margin:0 auto 30px;background:linear-gradient(135deg,rgba(16,185,129,.14),rgba(20,168,216,.1));border:1.5px solid rgba(16,185,129,.4);border-radius:14px;padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="font-size:22px">🏛️</div>
+      <div style="flex:1;min-width:260px">
+        <div style="font-size:14px;font-weight:800;color:#6EE7B7;margin-bottom:2px">Founding Customer Program — first 10 companies</div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.7);line-height:1.55"><strong style="color:#fff">30% off, locked for 3 years — $3,219/mo</strong> in exchange for a case study and one reference call per year.</div>
       </div>
     </div>
 
     <!-- Plan cards -->
-    <div class="pricing-cards-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:32px">
+    <div class="pricing-cards-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:32px;max-width:820px;margin-left:auto;margin-right:auto">
 
-      <!-- Starter -->
-      <div style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;display:flex;flex-direction:column;transition:.2s" onmouseover="this.style.borderColor='rgba(20,168,216,.5)';this.style.background='rgba(20,168,216,.06)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.background='rgba(255,255,255,.05)'">
-        <div style="font-size:18px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;text-align:center">Starter</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">SMB accounting &amp; AR teams · 1–2 users</div>
-        <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
-          <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,.45)">Starting at</span>
-          <span id="price-starter" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$1,999</span>
-          <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
-        </div>
-        <div id="price-starter-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Annual · month-to-month starting at $2,399/mo</div>
-        <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
-        <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Up to 5,000 rows/month</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Invoice &amp; amount matching</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>PO matching</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Manual review queue</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Match confidence pills</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Persistent delivery index</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Keyboard shortcuts</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Basic posting exports (CSV)</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Audit trail</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>AI Remittance Parser <span style="color:rgba(125,211,252,.7);font-size:11px;font-weight:600">· 50 free/mo, then $0.05/parse</span></div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Standard support</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.25)"><span style="flex-shrink:0">–</span>Multi-invoice allocation</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.25)"><span style="flex-shrink:0">–</span>SAP / NetSuite export</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.25)"><span style="flex-shrink:0">–</span>Customer learning &amp; trends dashboard</div>
-        </div>
-        <button onclick="openLeadModal('starter')" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Get Starter</button>
-      </div>
-
-      <!-- Pro (highlighted) -->
+      <!-- Pro -->
       <div style="background:linear-gradient(160deg,rgba(20,168,216,.18),rgba(20,168,216,.08));border:2px solid #14A8D8;border-radius:20px;padding:32px;display:flex;flex-direction:column;position:relative;box-shadow:0 0 60px rgba(20,168,216,.2)">
         <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;font-size:11px;font-weight:800;padding:5px 16px;border-radius:30px;white-space:nowrap;letter-spacing:.04em">MOST POPULAR</div>
         <div style="font-size:18px;font-weight:800;color:#7DD3FC;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;text-align:center">Pro</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">Growing AR teams · mid-market finance</div>
-        <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
-          <span style="font-size:13px;font-weight:700;color:rgba(125,211,252,.65)">Starting at</span>
-          <span id="price-pro" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$3,832</span>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">Mid-market finance &amp; AR teams · SAP, NetSuite, D365</div>
+        <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px;justify-content:center">
+          <span id="price-pro" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$4,599</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px">Annual · month-to-month starting at $4,599/mo</div>
+        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px;text-align:center">$55,188 billed annually · invoiced Net-30 · ACH or wire</div>
         <div style="height:1px;background:rgba(20,168,216,.25);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Starter, plus:</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Unlimited rows processed</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multi-invoice allocation</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SAP Delivery Bridge (deterministic matching)</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Deterministic matching: Invoice #, PO, SO, Delivery, Tracking</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multi-invoice allocation &amp; SAP Delivery Bridge</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>ERS / VMI consolidated payment support</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Per-line Cash on Account postings</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SAP F-28 &amp; NetSuite exports</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SAP F-28, NetSuite Cash Receipt &amp; D365 F&amp;O exports</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span><strong style="color:#7DD3FC">Unlimited AI Remittance Parser</strong></div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Customer learning &amp; profiles</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Historical trends dashboard</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Per-source confidence calibration</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Bulk-approve actions</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Reconciliation workspace</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>CFO dashboards</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multiple bank accounts</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Priority support</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Customer learning, trends &amp; CFO dashboards</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Bulk-approve, reconciliation workspace, audit trail</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>White-glove onboarding &amp; priority support</div>
         </div>
-        <button onclick="openLeadModal('pro')" style="width:100%;padding:15px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(20,168,216,.4);transition:.18s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 36px rgba(20,168,216,.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 28px rgba(20,168,216,.4)'">Get Pro</button>
+        <button onclick="openLeadModal('pro')" style="width:100%;padding:15px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(20,168,216,.4);transition:.18s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 36px rgba(20,168,216,.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 28px rgba(20,168,216,.4)'">Start a 30-day pilot</button>
       </div>
 
-      <!-- Team / Custom -->
-      <div style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;display:flex;flex-direction:column;transition:.2s" onmouseover="this.style.borderColor='rgba(16,185,129,.5)';this.style.background='rgba(16,185,129,.06)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.background='rgba(255,255,255,.05)'">
-        <div style="font-size:18px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;text-align:center">Team / Custom</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">Multi-user teams · enterprise workflows</div>
-        <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px">
-          <span id="price-team" style="font-size:40px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">Custom</span>
+      <!-- Custom -->
+      <div style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;display:flex;flex-direction:column;transition:.2s" onmouseover="this.style.borderColor='rgba(20,168,216,.5)';this.style.background='rgba(20,168,216,.06)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.background='rgba(255,255,255,.05)'">
+        <div style="font-size:18px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;text-align:center">Custom</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">Multi-entity · enterprise workflows · tailored volume</div>
+        <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px;justify-content:center">
+          <span style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">Custom</span>
         </div>
-        <div id="price-team-annual" style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px">Tailored to your team size, integrations &amp; volume</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px;text-align:center">Tailored to your team size, entities &amp; volume</div>
         <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Pro, plus:</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multi-user collaboration</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Role-based permissions</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Advanced approval workflows</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Custom export mapping</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Enterprise workflow configuration</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Dedicated onboarding</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Custom implementation support</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SLA support options</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Priority feature access</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.85)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Volume-based pricing</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multi-user collaboration &amp; role-based permissions</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Advanced approval workflows</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Custom export mapping &amp; platform customization</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Dedicated onboarding &amp; implementation support</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SLA support options &amp; priority feature access</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Volume-based pricing</div>
         </div>
-        <button onclick="window.location.href='mailto:info@armatchpro.com?subject=Team%20%2F%20Custom%20Plan%20Inquiry&body=Hi%2C%20I%27d%20like%20to%20learn%20more%20about%20the%20Team%20%2F%20Custom%20plan%20for%20AR%20Match%20Pro.%0A%0ATeam%20size%3A%20%0AInvoice%20volume%2Fmonth%3A%20%0AERP%20system%3A%20%0APreferred%20call%20time%3A%20%0A%0AThanks%21'" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Contact Sales</button>
+        <button onclick="window.location.href='mailto:info@armatchpro.com?subject=Custom%20Plan%20Inquiry&body=Hi%2C%20I%27d%20like%20to%20learn%20more%20about%20the%20Custom%20plan%20for%20AR%20Match%20Pro.%0A%0ATeam%20size%3A%20%0AInvoice%20volume%2Fmonth%3A%20%0AERP%20system%3A%20%0APreferred%20call%20time%3A%20%0A%0AThanks%21'" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Contact Sales</button>
       </div>
     </div>
 
@@ -1969,7 +1988,12 @@ window.recomputeTiming=window.recomputeTiming||recomputeTiming;
 
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">Which plan should I choose?<span class="faq-arrow">+</span></div>
-        <div class="faq-a">Choose Starter if you have 1–2 users transitioning away from spreadsheets and need invoice, PO, and amount matching with basic posting exports, persistent delivery index, and pay-per-use AI parsing (50 free parses/month, $0.05 each after). Choose Pro if you need multi-invoice allocation, SAP Delivery Bridge deterministic matching for ERS/VMI consolidated payments, per-line Cash on Account postings, customer learning profiles, historical trends dashboard, unlimited AI Remittance Parser, SAP F-28 / NetSuite exports, CFO dashboards, and match confidence calibration. Choose Team / Custom if you need multi-user collaboration, role-based permissions, advanced approval workflows, and dedicated onboarding.</div>
+        <div class="faq-a">Most teams choose <strong>Pro</strong> ($4,599/mo billed annually) — it includes everything: unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, unlimited AI Remittance Parser, all ERP export profiles, CFO dashboards, and white-glove onboarding. Choose <strong>Custom</strong> if you need multi-user collaboration, role-based permissions, advanced approval workflows, platform customization, or volume-based pricing across multiple entities — contact sales and we'll size it together.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Do you offer free pilots?<span class="faq-arrow">+</span></div>
+        <div class="faq-a">Yes — every engagement starts with a <strong>30-day white-glove pilot at no charge</strong>. We run AR Match Pro in parallel with your current process on your own files, your team keeps posting exactly as today, and in week 3 we reconcile the two line by line. You convert to a 1-year plan (invoiced annually, Net-30, ACH or wire) only if your own numbers convince you. A short pilot agreement is signed before day one; no payment details are collected during the pilot.</div>
       </div>
 
       <div class="faq-item">
@@ -2021,15 +2045,15 @@ window.recomputeTiming=window.recomputeTiming||recomputeTiming;
           <li><a href="#cfo-reporting">CFO Reporting</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#faq">FAQ</a></li>
-          <li><a href="javascript:void(0)" onclick="openLeadModal()">Start free trial</a></li>
+          <li><a href="javascript:void(0)" onclick="openLeadModal()">Start a pilot</a></li>
           <li><a href="https://calendly.com/armatchpro" target="_blank">Book a 30-Minute Demo</a></li>
         </ul>
       </div>
       <div>
         <div class="footer-col-head">Legal</div>
         <ul>
-          <li><a href="javascript:void(0)" onclick="openInfoModal('modal-terms')">Terms of use</a></li>
-          <li><a href="javascript:void(0)" onclick="openInfoModal('modal-privacy')">Privacy &amp; Cookies</a></li>
+          <li><a href="terms.html">Terms of use</a></li>
+          <li><a href="privacy.html">Privacy &amp; Cookies</a></li>
           
         </ul>
 
@@ -2067,7 +2091,7 @@ window.recomputeTiming=window.recomputeTiming||recomputeTiming;
 // https://dashboard.stripe.com/payment-links
 // ════════════════════════════════════════════════════════════════════════
 
-// Monthly subscriptions with 30-day free trial (primary signup paths)
+// LEGACY Stripe links — sales-led motion: conversion is by invoice (ACH/wire, Net-30).
 const STRIPE_PRO_TRIAL_URL      = 'https://buy.stripe.com/5kQ6oI5Ewfce062fndcAo03';
 const STRIPE_STARTER_TRIAL_URL  = 'https://buy.stripe.com/6oUaEYgja0hk7yu0sjcAo04';
 
@@ -2075,7 +2099,7 @@ const STRIPE_STARTER_TRIAL_URL  = 'https://buy.stripe.com/6oUaEYgja0hk7yu0sjcAo0
 const STRIPE_PRO_ANNUAL_URL     = 'https://buy.stripe.com/bJedRagjaggi5qm0sjcAo05';
 const STRIPE_STARTER_ANNUAL_URL = 'https://buy.stripe.com/14A28s8QI9RUcSO0sjcAo06';
 
-// Pro Founding Rate — $2,999/mo locked for life, first 10 customers only
+// Pro Founding Rate — $3,219/mo (30% off list), locked 3 years, first 10 customers only
 // Share this URL 1:1 with qualified founding prospects via email — NEVER expose publicly
 const STRIPE_PRO_FOUNDING_URL   = 'https://buy.stripe.com/7sY8wQd6Y9RU3ie6QHcAo07';
 
@@ -2135,13 +2159,13 @@ function qfPick(val,nextState){
       const isPainful=proc.includes('painful')||proc.includes('Manual');
       let msg,cta;
       if(isEnterprise&&isBig){
-        msg=`Perfect fit for Pro or Team. SAP/NetSuite with high volume is exactly what we built for — multi-invoice allocation, PO matching, F-28 export. I'd love to show you a live demo.`;
+        msg=`Perfect fit for Pro. SAP/NetSuite with high volume is exactly what we built for — multi-invoice allocation, PO matching, F-28 export. I'd love to show you a live demo.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else if(isPainful||isBig){
         msg=`Sounds like AR Match Pro would solve your biggest pain points. The live demo takes 5 minutes — no signup, real matching with sample data.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else {
-        msg=`Starter plan is likely the right fit. Invoice and PO matching for smaller volumes — Starter starting at $1,999/month annual or Pro starting at $3,832/month annual. Try the demo first, no commitment.`;
+        msg=`Pro covers you — $4,599/month billed annually with a free 30-day white-glove pilot first, so you see the auto-match rate on your own files before committing. Try the demo first, no commitment.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Start free demo</a>`;
       }
       addBotQMsg(msg+'<br>'+cta);
@@ -2152,20 +2176,7 @@ function qfPick(val,nextState){
   },600);
 }
 
-function setBilling(type){
-  var monthly = type === 'monthly';
-  document.getElementById('bill-monthly').style.background = monthly ? '#fff' : 'transparent';
-  document.getElementById('bill-monthly').style.color = monthly ? '#0F172A' : 'rgba(255,255,255,.55)';
-  document.getElementById('bill-annual').style.background = monthly ? 'transparent' : '#fff';
-  document.getElementById('bill-annual').style.color = monthly ? 'rgba(255,255,255,.55)' : '#0F172A';
-  // Correct prices: Annual is lower (the default shown), Monthly is higher
-  document.getElementById('price-starter').textContent = monthly ? '$2,399' : '$1,999';
-  document.getElementById('price-pro').textContent = monthly ? '$4,599' : '$3,832';
-  // Team is "Custom" — not toggled by annual/monthly. Pricing handled in sales conversation.
-  document.getElementById('price-starter-annual').textContent = monthly ? 'Month-to-month · starting at $2,399/mo' : 'Annual · month-to-month starting at $2,399/mo';
-  document.getElementById('price-pro-annual').textContent = monthly ? 'Month-to-month · starting at $4,599/mo' : 'Annual · month-to-month starting at $4,599/mo';
-}
-setBilling('annual');
+// (billing toggle removed — annual-only, sales-led)
 function dismissCookie(){
   document.getElementById('cookieBanner').style.display='none';
   localStorage.setItem('armp_cookie','1');
@@ -2418,7 +2429,8 @@ function toggleFaq(el){
 <!-- ══ SUPPORT CHAT WIDGET ══ -->
 <!-- SUPPORT CHAT START -->
 <div id="lp-chat-widget" style="position:fixed;bottom:20px;right:20px;z-index:9000;font-family:'Inter',sans-serif">
-  <button id="lp-chat-fab" onclick="toggleLpChat()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#14A8D8,#12B886);border:none;cursor:pointer;box-shadow:0 6px 20px rgba(20,168,216,.4);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;position:relative" aria-label="Support chat">
+  <div id="lp-chat-label" style="position:fixed;bottom:34px;right:84px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:9px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:9998;font-family:'Inter',sans-serif;white-space:nowrap">Ask AR Match Pro<span style="position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:5px solid #0F172A"></span></div>
+  <button id="lp-chat-fab" onclick="document.getElementById('lp-chat-label').style.display='none';toggleLpChat()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#14A8D8,#12B886);border:none;cursor:pointer;box-shadow:0 6px 20px rgba(20,168,216,.4);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;position:relative" aria-label="Support chat">
     💬
     <div style="position:absolute;top:2px;right:2px;width:10px;height:10px;background:#10B981;border:2px solid #fff;border-radius:50%"></div>
   </button>
@@ -2460,9 +2472,9 @@ const LP_FAQ={
   "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP or NetSuite, import it into AR Match Pro, run the match, and export a posting-ready file back. No integration, no IT approval, no setup time.",
   "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
   "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
-  "Which plan?":"Starter (starting at $1,999/mo annual) covers Invoice, PO, and amount matching for up to 5,000 rows/month with persistent delivery index, keyboard shortcuts, and match confidence pills — best for 1–2 user AR teams. AI Remittance Parser includes 50 free parses/month, then $0.05/parse. Pro (starting at $3,832/mo annual) adds unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, customer learning, historical trends dashboard, SAP/NetSuite exports, CFO dashboards, and unlimited AI Remittance Parser. Team / Custom (contact sales for pricing) adds multi-user collaboration, roles, approval workflows, custom integrations, and dedicated onboarding — sized to your team and volume.",
-  "Book demo?":"Click 'Start 30-day free trial' anywhere on this page to request your Pro trial — we review each request within 24-48 hours and email you a personalized Stripe trial link. Credit card required at activation, cancel anytime. Or email info@armatchpro.com to schedule a live walkthrough.",
-  "Pricing?":"Starter starts at $1,999/month annual (month-to-month from $2,399/mo). Pro starts at $3,832/month annual (month-to-month from $4,599/mo). Team / Custom is sized to your team — contact info@armatchpro.com for a quote. All prices are starting prices — customized add-ons may increase pricing."
+  "Which plan?":"Pro ($4,599/mo billed annually — $55,188/yr, invoiced Net-30 via ACH or wire) includes everything: unlimited rows, multi-invoice allocation, SAP Delivery Bridge, ERS/VMI support, per-line Cash on Account postings, unlimited AI Remittance Parser, SAP F-28 / NetSuite / D365 exports, CFO dashboards, and white-glove onboarding. Custom adds multi-user collaboration, roles, approval workflows, platform customization, and volume-based pricing — contact sales. Every plan starts with a free 30-day white-glove pilot.",
+  "Book demo?":"Click 'Start a 30-day pilot' anywhere on this page — we review each request within 24–48 hours and schedule your white-glove kickoff. The 30-day pilot is free; converting to a 1-year plan is invoiced Net-30 via ACH or wire. Or email info@armatchpro.com to schedule a live walkthrough.",
+  "Pricing?":"Pro is $4,599/month billed annually ($55,188/yr), invoiced Net-30 and payable by ACH or wire — 1-year minimum, and every engagement starts with a free 30-day white-glove pilot. The first 10 founding customers get 30% off locked for 3 years ($3,219/mo) in exchange for a case study and one reference call per year. Custom plans are sized to your team — contact info@armatchpro.com."
 };
 let lpChatOpen=false;
 function toggleLpChat(){
