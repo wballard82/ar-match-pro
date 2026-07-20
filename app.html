@@ -2948,7 +2948,7 @@ body.app-active #app {
         <div style="display:flex;flex-direction:column;gap:8px">
           <div style="display:flex;gap:10px;font-size:13px;color:var(--t2)"><span style="color:var(--g);font-weight:700;flex-shrink:0">1.</span>Register with the email you used at checkout</div>
           <div style="display:flex;gap:10px;font-size:13px;color:var(--t2)"><span style="color:var(--g);font-weight:700;flex-shrink:0">2.</span>Your plan activates automatically on your account</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:var(--t2)"><span style="color:var(--g);font-weight:700;flex-shrink:0">3.</span>Import your invoices and remittance — you're live in minutes</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:var(--t2)"><span style="color:var(--g);font-weight:700;flex-shrink:0">3.</span>Import your invoices and remittance — nothing to install, nothing to implement</div>
         </div>
       </div>
       <button onclick="closeWelcome();showRegister()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 8px 20px rgba(14,165,233,.3);margin-bottom:10px">Create my account →</button>
@@ -2967,20 +2967,20 @@ body.app-active #app {
       <div class="upgrade-grid">
         <div class="upgrade-card">
           <div class="upgrade-plan">Starter</div>
-          <div class="upgrade-price" style="font-size:16px">Starting at $1,999<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo annual</span></div>
-          <div class="upgrade-feats">1–2 users · 5,000 rows<br><strong>Invoice + PO matching</strong><br>CSV export · Standard support<br><span style="font-size:11px;color:var(--t3)">Month-to-month: starting at $2,399/mo</span></div>
+          <div class="upgrade-price" style="font-size:16px">Legacy plan<span style="font-size:13px;font-weight:500;color:var(--t3)"> · closed to new signups</span></div>
+          <div class="upgrade-feats">1–2 users · 5,000 rows<br><strong>Invoice + PO matching</strong><br>CSV export · Standard support</div>
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('starter')">Select Starter</button>
         </div>
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
-          <div class="upgrade-price" style="font-size:16px">Starting at $3,832<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo annual</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP F-28 <span style="font-size:10px;color:var(--t3)">(SAP 750)</span> · NetSuite · CSV · CFO dashboards<br><span style="font-size:11px;color:var(--t3)">Month-to-month: starting at $4,599/mo</span></div>
+          <div class="upgrade-price" style="font-size:16px">$4,599<span style="font-size:13px;font-weight:500;color:var(--t3)">/mo billed annually</span></div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI matching<br>SAP · NetSuite · CSV · CFO dashboards<br><span style="font-size:11px;color:var(--t3)">$4,599/mo billed annually</span></div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select Pro</button>
         </div>
         <div class="upgrade-card">
           <div class="upgrade-plan">Team / Custom</div>
           <div class="upgrade-price" style="font-size:16px"><span>Custom</span></div>
-          <div class="upgrade-feats">Multi-user · Roles &amp; permissions<br>Audit logs · <strong>Approval workflows</strong><br>Dedicated onboarding · SLA<br><span style="font-size:11px;color:var(--t3)">Month-to-month: starting at Custom</span></div>
+          <div class="upgrade-feats">Unlimited rows · Multi-invoice<br>SAP · NetSuite · CSV<br><strong>CFO dashboards · Reconcile</strong><br>White-glove onboarding · Priority support</div>
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('team')">Select Team</button>
         </div>
       </div>
@@ -3001,20 +3001,20 @@ body.app-active #app {
       <div class="upgrade-grid">
         <div class="upgrade-card">
           <div class="upgrade-plan">Starter</div>
-          <div class="upgrade-price" style="font-size:16px">Starting at $1,999<span style="font-size:12px;font-weight:500;color:var(--t3)">/mo annual</span></div>
-          <div class="upgrade-feats">1–2 users · 5,000 rows<br><strong>Invoice + PO matching</strong><br>CSV export<br><span style="font-size:11px;color:var(--t3)">Month-to-month: starting at $2,399/mo</span></div>
+          <div class="upgrade-price" style="font-size:16px">Legacy plan<span style="font-size:12px;font-weight:500;color:var(--t3)"> · closed to new signups</span></div>
+          <div class="upgrade-feats">1–2 users · 5,000 rows<br><strong>Invoice + PO matching</strong><br>CSV export</div>
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('starter')">Select</button>
         </div>
         <div class="upgrade-card pop">
           <div class="upgrade-plan">Pro ⭐</div>
-          <div class="upgrade-price" style="font-size:16px">Starting at $3,832<span style="font-size:12px;font-weight:500;color:var(--t3)">/mo annual</span></div>
-          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP F-28 · NetSuite<br>CFO dashboards · Reconcile<br><span style="font-size:11px;color:var(--t3)">Month-to-month: starting at $4,599/mo</span></div>
+          <div class="upgrade-price" style="font-size:16px">$4,599<span style="font-size:12px;font-weight:500;color:var(--t3)">/mo billed annually</span></div>
+          <div class="upgrade-feats"><strong>Unlimited rows</strong><br>Multi-invoice · AI · SAP · NetSuite<br>CFO dashboards · Reconcile<br><span style="font-size:11px;color:var(--t3)">$4,599/mo billed annually</span></div>
           <button class="btn btn-p btn-sm" onclick="goToCheckout('pro')">Select</button>
         </div>
         <div class="upgrade-card">
           <div class="upgrade-plan">Team / Custom</div>
           <div class="upgrade-price" style="font-size:16px"><span>Custom</span></div>
-          <div class="upgrade-feats">Multi-user · Roles · Audit · SLA<br><span style="font-size:11px;color:var(--t3)">Month-to-month: starting at Custom</span></div>
+          <div class="upgrade-feats">Unlimited rows · SAP · NetSuite · CFO dashboards · Priority support</div>
           <button class="btn btn-outline btn-sm" onclick="goToCheckout('team')">Select</button>
         </div>
       </div>
@@ -3061,7 +3061,7 @@ body.app-active #app {
         </div>
         <div id="imp-template-row" style="display:none;text-align:center;margin-top:12px">
           <button class="btn btn-outline btn-sm" onclick="armpDownloadImportTemplate()" style="font-size:12px">⬇ Download ARMP Invoice Template (.xlsx)</button>
-          <div style="font-size:11px;color:var(--t3);margin-top:5px">Required columns: Account · Invoice · Amount. SAP FBL5N exports are accepted as-is.</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:5px">Required columns: Account · Invoice · Amount. Standard SAP open-item exports are accepted as-is.</div>
         </div>
       </div>
 
@@ -3827,7 +3827,7 @@ body.app-active #app {
               </div>
             </div><!-- end ca-top-half -->
             <!-- drag handle removed: split is fixed, no manual resize -->
-            <!-- BOTTOM HALF: SAP FBL5N-style customer open items -->
+            <!-- BOTTOM HALF: SAP-style customer open items -->
             <div class="ca-bottom-half">
               <div class="ca-bottom-header">
                 <div class="ca-bottom-title" style="flex-shrink:0">
@@ -3938,7 +3938,7 @@ body.app-active #app {
               <div id="ws-exc-list"><div class="empty"><div class="empty-icon">✅</div><div class="empty-t">No exceptions</div><div class="empty-s">All payments resolved. Ready for next step.</div><div style="margin-top:14px"><button class="btn btn-p btn-sm" onclick="excEmptyGoReconcile()" style="font-size:13px;padding:9px 18px">Next step: Reconcile</button></div></div></div>
             </div><!-- end exc-top-half -->
 
-            <!-- BOTTOM: FBL5N view for exception context -->
+            <!-- BOTTOM: SAP open-items view for exception context -->
             <div class="exc-bottom-half">
               <div class="ca-bottom-header">
                 <div class="ca-bottom-title">📋 Account Open Items — Exception Context</div>
@@ -4117,10 +4117,10 @@ body.app-active #app {
                   <div id="match-diag-body" style="font-size:12px;color:var(--t2);line-height:1.8"></div>
                 </div>
               </div>
-              <!-- TK-Fujikin Match Validation panel (shown when TK-Fujikin data present) -->
+              <!-- Wayne Enterprises Match Validation panel (shown when the reference dataset is present) -->
               <div id="tk-validation-panel" style="display:none;margin:10px 16px 0;border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden">
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--surface2);border-bottom:1px solid var(--bdr)">
-                  <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">🏭 TK-Fujikin Match Validation</div>
+                  <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">🏭 Wayne Enterprises Match Validation</div>
                   <div id="tk-val-status-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(20,168,216,.1);color:var(--p)">Running…</div>
                 </div>
                 <div id="tk-val-body" style="padding:12px 14px;font-size:12px;color:var(--t2)"></div>
@@ -8103,7 +8103,7 @@ function runTKFujikinValidation(){
       RES.push({
         c:inv.c, a:inv.a, i:inv.i, po:inv.po, so:inv.so, d:inv.d,
         oa:inv.amt, pd:inv.amt, vr:0, st:'Exact',
-        m:'TK-Fujikin bridge',
+        m:'Delivery bridge',
         n:chain, bridgeChain:chain, _valMethod:method
       });
       return true;
@@ -8275,7 +8275,7 @@ function runTKFujikinValidation(){
     var _remaining   = Math.max(0, _bankTotal - _matchedInvTotal);
     var _coverageFmt = _coverage.toFixed(1);
     var _invMatched  = _resInvSet.size;
-    var _delBridged  = RES.filter(function(r){ return r.m&&(r.m.indexOf('bridge')>=0||r.m.indexOf('TK-Fujikin')>=0); }).length;
+    var _delBridged  = RES.filter(function(r){ return r.m&&(r.m.indexOf('bridge')>=0); }).length;
 
     // Count references processed / matched / unmatched across all remittance lines
     var _refsProcessed=0, _refsMatched=0;
@@ -8406,7 +8406,7 @@ function runTKFujikinValidation(){
     var _byPath = { Tracking:0, Delivery:0, SO:0, PO:0, Invoice:0, Other:0 };
     RES.forEach(function(r){
       var _m=r.m||''; var _vm=r._valMethod||'';
-      if(_vm==='UPS tracking'||_vm==='DHL tracking'||_vm==='DHL variable'||_vm==='Tracking fuzzy'||_m.indexOf('Tracking')>=0||_m.indexOf('TK-Fujikin bridge')>=0) _byPath.Tracking++;
+      if(_vm==='UPS tracking'||_vm==='DHL tracking'||_vm==='DHL variable'||_vm==='Tracking fuzzy'||_m.indexOf('Tracking')>=0||_m.indexOf('Delivery bridge')>=0) _byPath.Tracking++;
       else if(_vm==='Delivery#'||_m.indexOf('Delivery')>=0) _byPath.Delivery++;
       else if(_vm==='SO match'||_m.indexOf('SO')>=0)        _byPath.SO++;
       else if(_vm==='PO exact'||_vm==='PO cleaned'||_m.indexOf('PO')>=0) _byPath.PO++;
@@ -9512,7 +9512,7 @@ function _showRemDetailPreview(lines, remTotal, bankTotal){
     var _poCount  = lines.filter(function(l){return l.poNo;}).length;
     var _invCount = lines.filter(function(l){return l.invNo;}).length;
     tkDiagHtml = '<div style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;border-radius:8px;background:rgba(20,168,216,.06);border:1px solid rgba(20,168,216,.18);margin-bottom:10px;font-size:12px">'+
-      '<div><strong style="color:var(--p)">🏭 TK-Fujikin / SAP Supplier Format</strong></div>'+
+      '<div><strong style="color:var(--p)">🏭 SAP Supplier Remittance Format</strong></div>'+
       '<div style="margin-left:auto;display:flex;gap:14px;flex-wrap:wrap">'+
       '<span><strong style="color:var(--t2)">Customer / Payer:</strong> <strong>'+_escapeHtml(_custName)+'</strong></span>'+
       '<span><strong style="color:var(--t2)">Supplier:</strong> <strong>'+_escapeHtml(_supplierName)+'</strong></span>'+
@@ -9687,7 +9687,7 @@ const ARMP_CFG_DEFAULTS = Object.freeze({
       ]
     },
     sap: {
-      name: 'SAP F-28 Import',
+      name: 'SAP',
       format: 'csv',
       delimiter: '|',
       columns: [
@@ -9715,21 +9715,9 @@ const ARMP_CFG_DEFAULTS = Object.freeze({
         { header: 'Memo', source: 'po' },
         { header: 'Currency', value: 'USD' }
       ]
-    },
-    dynamics: {
-      name: 'Dynamics 365 F&O',
-      format: 'csv',
-      delimiter: ',',
-      columns: [
-        { header: 'CustAccount', source: 'a' },
-        { header: 'CustomerName', source: 'c' },
-        { header: 'TransactionDate', source: 'rdate' },
-        { header: 'PaymentReference', source: 'i' },
-        { header: 'PurchaseOrder', source: 'po' },
-        { header: 'AmountCur', source: 'pd', type: 'number' },
-        { header: 'CurrencyCode', value: 'USD' }
-      ]
     }
+    // Dynamics 365 F&O profile removed from the UI for launch (SAP & NetSuite
+    // focus). Re-add here when D365 returns to the roadmap.
   },
   activeExportProfile: 'csv',
   // Performance settings
@@ -10507,8 +10495,8 @@ const EH=['ID','Account','Customer','Amount','Reference','Type','Detail','Action
 // ── Plans ──
 const PLANS={
   demo:   {name:'Demo',    level:0, rows:10000,    price:'Free (7-day)',    features:['invoice','po','amount','so','delivery','tracking','ers','vmi','multi-source']},
-  starter:{name:'Starter', level:1, rows:5000,     price:'Starting at $1,999/mo', features:['invoice','po','amount','manual-queue','csv-export','audit-trail','limited-pdf']},
-  pro:    {name:'Pro',     level:2, rows:Infinity,  price:'Starting at $3,832/mo',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports']},
+  starter:{name:'Starter', level:1, rows:5000,     price:'Legacy plan', features:['invoice','po','amount','manual-queue','csv-export','audit-trail','limited-pdf']},
+  pro:    {name:'Pro',     level:2, rows:Infinity,  price:'$4,599/mo billed annually',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports']},
   team:   {name:'Team / Custom', level:3, rows:Infinity,  price:'Starting at Custom',features:['invoice','po','so','del','trk','amount','multi','sap','netsuite','ai','cfo','reconcile','manual-queue','csv-export','audit-trail','confidence','workflow-approvals','multi-bank','advanced-exports','audit-log','roles','custom-export','onboarding','sla','priority-feature']}
 };
 let USER_PLAN='demo';
@@ -13239,8 +13227,8 @@ function launchApp(user){
           '<div style="font-size:40px;margin-bottom:12px">⏰</div>'+
           '<div style="font-size:15px;color:var(--t2);margin-bottom:20px;line-height:1.6">Your free demo expired on <strong>'+exp.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</strong>.<br>Upgrade to continue using AR Match Pro.</div>'+
           '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
-          '<button class="btn btn-p" onclick="closeModal();goToCheckout(\'pro\')">Get Pro — Starting at $3,832/mo</button>'+
-          '<button class="btn btn-outline" onclick="closeModal();goToCheckout(\'starter\')">Get Starter — Starting at $1,999/mo</button>'+
+          '<button class="btn btn-p" onclick="closeModal();goToCheckout(\'pro\')">Get Pro — $4,599/mo billed annually</button>'+
+          '<button class="btn btn-outline" onclick="closeModal();goToCheckout(\'starter\')">Legacy Starter plan</button>'+
           '</div>'+
           '<div style="margin-top:14px;font-size:12px;color:var(--t3)">Questions? <a href="mailto:info@armatchpro.com" style="color:var(--p)">info@armatchpro.com</a></div>'+
           '</div>'
@@ -13484,7 +13472,7 @@ function armpDownloadImportTemplate(){
       ['  Bill of Lading','Carrier tracking (UPS 1Z…, DHL numeric) — date/carrier prefixes are OK'],
       ['  Logistics Memo - Internal Header','Internal shipment refs (e.g. SS… references) quoted on remittances'],
       [''],
-      ['SAP FBL5N exports are accepted natively: "Billing Document = Invoice",'],
+      ['Standard SAP open-item exports are accepted natively: "Billing Document = Invoice",'],
       ['"Payment reference = Purchase Order = PO", and "Reference Key 3" (Sales Order)'],
       ['map automatically. Delete the two SAMPLE rows before importing real data.']
     ];
@@ -13529,7 +13517,7 @@ function armpShowImportValidation(missing, foundHeaders){
       '<div style="margin-bottom:10px">This file is missing required column'+(missing.length===1?'':'s')+':</div>'+
       '<ul style="margin:0 0 12px 18px;padding:0">'+_missHtml+'</ul>'+
       (_fh?'<div style="font-size:12px;color:var(--t3);margin-bottom:12px">Headers found: '+_escapeHtml(_fh)+(foundHeaders.length>12?'…':'')+'</div>':'')+
-      '<div>All ARMP invoice imports use the standard template (SAP FBL5N exports qualify automatically). Nothing was imported.</div>'+
+      '<div>All ARMP invoice imports use the standard template (standard SAP exports qualify automatically). Nothing was imported.</div>'+
     '</div>'+
     '<div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">'+
       '<button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>'+
@@ -19169,13 +19157,13 @@ async function runMatch(){
           // Mark matched invoices and push results
           _tkResult.matched.forEach(function(inv, _ti){
             inv.s='Exact';
-            var _chain = _tkResult.bridgeChains[_ti]||'TK-Fujikin bridge';
+            var _chain = _tkResult.bridgeChains[_ti]||'Delivery bridge';
             RES.push({
               c:inv.c||_tkCust, a:inv.a||_tkAcct, i:inv.i,
               po:inv.po, so:inv.so, d:inv.d,
               oa:inv.amt, pd:inv.amt, vr:0,
               st:'Exact',
-              m:'TK-Fujikin bridge',
+              m:'Delivery bridge',
               n:_chain,
               bridgeChain:_chain  // shown in UI
             });
@@ -21129,7 +21117,7 @@ function processImport(){
           try{
             var _noNameCount = INV.filter(function(v){return !v.c;}).length;
             if(_noNameCount > INV.length * 0.8 && _importFileName){
-              // Extract customer name from filename: "Applied_Materials_Aging_Detail_FBL5N..." → "Applied Materials"
+              // Extract customer name from filename: "Acme_Corp_Aging_Detail_Open_Items..." → "Acme Corp"
               var _fnClean = _importFileName
                 .replace(/\.[^.]+$/, '')                    // remove extension
                 .replace(/[-_]/g, ' ')                      // underscores/dashes to spaces
@@ -22198,7 +22186,7 @@ function syncMpCheckboxes(){
 // SETTINGS PLANS
 // ═══════════════════════════════════════════════════════════
 function renderSettingsPlans(){
-  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'5,000 rows/month · Invoice + PO · CSV export · Starting at $1,999/mo annual','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP F-28 · NetSuite · CSV · Starting at $3,832/mo annual','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding · Custom — contact sales'};
+  var pf={'demo':'50 rows · Invoice & PO only · No export','starter':'Legacy plan · 5,000 rows/month · Invoice + PO · CSV export','pro':'Unlimited rows · Multi-invoice · SO/Del/Trk · SAP · NetSuite · CSV · $4,599/mo billed annually','team':'Everything in Pro · Multi-user · Audit logs · SLA · Onboarding · Custom — contact sales'};
   var el=document.getElementById('settings-plan-features'); if(el) el.textContent='';
   var lvl=PLANS[USER_PLAN]?PLANS[USER_PLAN].level:0;
   var ub=document.getElementById('settings-upgrade-btn'); if(ub) ub.style.display=lvl>=3?'none':'';
@@ -23080,9 +23068,9 @@ function setCfoPeriod(p,btn){
 function showChangePlanModal(){
   const PLANS_DEF=[
     {key:'demo',name:'Demo',price:'Free (7-day)',desc:'Try all features with sample data. No billing.',color:'var(--t3)',features:'Sample data only · 50 rows · Invoice + PO matching'},
-    {key:'starter',name:'Starter',price:'Starting at $1,999/mo annual',desc:'For SMB AR teams transitioning from spreadsheets.',color:'var(--cy)',features:'Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support · Month-to-month: starting at $2,399/mo'},
-    {key:'pro',name:'Pro',price:'Starting at $3,832/mo annual',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP F-28 · NetSuite · CFO dashboards · Reconcile · Priority support · Month-to-month: starting at $4,599/mo'},
-    {key:'team',name:'Team / Custom',price:'Custom — contact sales',desc:'Multi-user collaboration, enterprise workflows, dedicated onboarding.',color:'var(--pu)',features:'All Pro features · Multi-user · Roles & permissions · Audit logs · Approval workflows · Custom exports · SLA · Month-to-month: starting at Custom'},
+    {key:'starter',name:'Starter (legacy)',price:'Legacy plan',desc:'Closed to new signups.',color:'var(--cy)',features:'Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support'},
+    {key:'pro',name:'Pro',price:'$4,599/mo billed annually',desc:'Advanced matching, AI insights, CFO dashboards, full export.',color:'var(--p)',features:'Unlimited rows · Multi-invoice · AI matching · SAP · NetSuite · CFO dashboards · Reconcile · Priority support'},
+    {key:'team',name:'Custom',price:'Custom — contact sales',desc:'Private deployment, custom mappings, security-driven teams.',color:'var(--pu)',features:'All Pro features · Private deployment on your own infrastructure · Custom file mappings & export profiles · Security-questionnaire support · Month-end priority windows · QBRs · Volume-based pricing'},
   ];
   const levels={demo:0,starter:1,pro:2,team:3};
   const cur=USER_PLAN||'demo';
@@ -24570,7 +24558,7 @@ var HELP_CONTENT = {
         <tr><td>Unapplied Cash</td><td>Payments received but not yet matched to an invoice.</td></tr>
         <tr><td>Short Pay</td><td>Payment less than the invoice amount — variance requires resolution.</td></tr>
         <tr><td>Exception</td><td>Payment that could not be auto-matched — needs manual review.</td></tr>
-        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP F-28, NetSuite, or any ERP via CSV) to post cash entries.</td></tr>
+        <tr><td>Posting Export</td><td>Final file exported to ERP (SAP, NetSuite, or any ERP via CSV) to post cash entries.</td></tr>
         </tbody></table>`
     },
     {
@@ -24716,8 +24704,8 @@ var HELP_CONTENT = {
         <h3>Change Plan</h3>
         <table><thead><tr><th>Plan</th><th>Price</th><th>Features</th></tr></thead><tbody>
         <tr><td>Demo</td><td>Free</td><td>Sample data only · Explore all features</td></tr>
-        <tr><td>Starter</td><td>Starting at $1,999/mo annual</td><td>Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support</td></tr>
-        <tr><td>Pro</td><td>Starting at $3,832/mo annual</td><td>Unlimited rows · Multi-invoice · AI matching · SAP F-28 <span style="font-size:10px;color:var(--t3)">(SAP 750)</span> · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
+        <tr><td>Starter <span style="font-size:10px;color:var(--t3)">(legacy)</span></td><td>Closed to new signups</td><td>Up to 5,000 rows · Invoice + PO matching · CSV export · Standard support</td></tr>
+        <tr><td>Pro</td><td>$4,599/mo billed annually</td><td>Unlimited rows · Multi-invoice · AI matching · SAP · NetSuite · CSV · CFO dashboards · Reconcile · Priority support</td></tr>
         <tr><td>Team / Custom</td><td>Custom — contact sales</td><td>All Pro + Multi-user · Roles &amp; permissions · Audit logs · Approval workflows · Custom exports · SLA</td></tr>
         </tbody></table>`
     },
@@ -24918,7 +24906,7 @@ var ARMP_KB = [
   { q:['why exception','why unmatched','won\'t match','wont match','refuses to match','not matching','why needs attention','unapplied payments'],
     a:"By design, ARMP never guess-applies cash: a line is only auto-applied when the amount ties <b>exactly</b> (or a unique combination ties) on the right customer account — and PO groups never span different customers. Everything else lands in <b>Needs Attention</b> with the research already done: the recommendation names the delivery/SO chain and pre-writes the <b>Cash on Account</b> note in your convention. Work the queue there, or use <b>Review → Approve All</b> for the clean ones. A healthy run leaves roughly 5–10% for human eyes — that's the control working, not a failure." },
   { q:['integrate','integration','api','connect to sap','connect to netsuite','write to sap','write to netsuite','direct to erp','push to erp'],
-    a:"ARMP doesn't write to your ERP via API — and that's deliberate. It generates clean cash-application <b>import files</b> (SAP F-28, NetSuite Cash Receipt, Dynamics 365 F&O, or Generic CSV) that your team reviews and imports through your ERP's standard process. No IT integration project, no new system access to security-review, live the same day — and your team keeps final control of what posts to the ledger." },
+    a:"ARMP doesn't write to your ERP via API — and that's deliberate. It generates clean cash-application <b>import files</b> built for SAP and NetSuite, with Generic CSV for any other system, that your team reviews and imports through your ERP's standard process. No IT integration project, no new system access to security-review, nothing to implement — and your team keeps final control of what posts to the ledger." },
   { q:['secure','security','privacy','where does my data go','data go','send my data','upload my data','bank data safe','phone home'],
     a:"Your financial data is processed <b>entirely inside your browser tab</b> — matching, OCR, and exports all run locally, and nothing is uploaded to ARMP servers (there are none in the data path). You can verify it yourself: open DevTools → Network, run a match, and watch — zero requests. Ask us for the Security & Privacy Data Sheet to hand to your IT team: <b>info@armatchpro.com</b>." },
 ];

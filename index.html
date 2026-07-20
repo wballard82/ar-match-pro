@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <!-- Enterprise security headers. Also set as real HTTP headers via the Netlify _headers file. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTRBOEQ4Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMTJCODg2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IiNmZmZmZmYiPkFSPC90ZXh0Pjwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBGMTcyQSIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkludGVyLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9InVybCgjZykiPkFSPC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzYwYTVmYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E3OGJmYSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg==">
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>AR Match Pro — Browser-based AR Cash Application Platform for SAP &amp; NetSuite Shops</title>
-<meta name="description" content="AR Match Pro is the Browser-based AR Cash Application Platform purpose-built for SAP and NetSuite shops. Deterministic matching, multi-invoice allocation, ERS/VMI support, and SAP F-28 / NetSuite posting exports — live in minutes, no IT integration required."/>
+<meta name="description" content="AR Match Pro is the Browser-based AR Cash Application Platform purpose-built for SAP and NetSuite shops. Deterministic matching, multi-invoice allocation, ERS/VMI support, and posting-ready SAP & NetSuite exports — nothing to implement, no IT integration required."/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -343,7 +343,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
   /* Pricing section (inline styles) */
   #pricing .container{padding:0 12px}
-  #pricing [style*="grid-template-columns:repeat(3,1fr)"],
+  #pricing [style*="grid-template-columns:repeat(2,1fr);max-width:760px;margin-left:auto;margin-right:auto"],
   #pricing [style*="display:grid"]{
     display:flex!important;
     flex-direction:column!important;
@@ -547,7 +547,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         </div>
         <div class="pill">⚡ Browser-based AR Cash Application Platform</div>
         <h1>Match remittance to invoices in minutes — no ERP integration required.</h1>
-        <p>Purpose-built for SAP, NetSuite, and Dynamics 365 F&amp;O finance teams. Deterministic matching, multi-invoice allocation, ERS/VMI consolidated payment support, and posting-ready exports — SAP F-28, NetSuite Cash Receipt, Dynamics 365 F&amp;O — live in your browser the same day. No IT project. No integration risk.</p>
+        <p>Purpose-built for SAP and NetSuite finance teams. Deterministic matching, multi-invoice allocation, ERS/VMI consolidated payment support, and posting-ready SAP &amp; NetSuite exports. Onboarding and white-glove setup: included — because there’s nothing to implement. No IT project. No integration risk.</p>
         <div class="hero-actions">
           <button class="btn btn-primary" onclick="location.href='#pricing'" style="cursor:pointer">View pricing</button>
           <button class="btn btn-demo" onclick="openLeadModal()">▶ Start a 30-day pilot</button>
@@ -578,8 +578,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <strong>Built for finance and AR teams running:</strong>
       <div class="trust-logos">
         <span class="trust-chip">SAP</span><span class="trust-chip">NetSuite</span>
-        <span class="trust-chip">Dynamics 365 F&amp;O</span>
-        <span class="trust-chip">Bank Lockbox</span>
+                <span class="trust-chip">Bank Lockbox</span>
         <span class="trust-chip">ACH / Wire</span><span class="trust-chip">CSV / Excel</span>
       </div>
     </div>
@@ -624,10 +623,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
           <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--p),#12B886);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">AR</div>
           <div style="font-size:16px;font-weight:800;color:#fff">AR Match Pro</div>
-          <div style="margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.3);border-radius:20px;color:#34D399">Ready today</div>
+          <div style="margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.3);border-radius:20px;color:#34D399">Nothing to implement</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
-          <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">Setup in minutes</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">Standardized import template — SAP exports work as-is</div></div></div>
+          <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">Onboarding &amp; white-glove setup: included</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">Because there’s nothing to implement — SAP exports work as-is</div></div></div>
           <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">No ERP integration required</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">Export from SAP/NetSuite, import here</div></div></div>
           <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">Focused on remittance matching</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">One workflow, done exceptionally well</div></div></div>
           <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#34D399;font-weight:700;flex-shrink:0;margin-top:1px">✓</span><div><span style="font-size:13.5px;font-weight:600;color:#fff">Built for Accounting and AR teams</span><div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">Not IT. Not implementation consultants.</div></div></div>
@@ -677,8 +676,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#14A8D8,#168DE2)"></div>
         <div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:#7DD3FC;text-transform:uppercase;margin-bottom:10px">SAP ECC &amp; S/4HANA</div>
         <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-.3px">Cash application without the module price tag</div>
-        <p style="font-size:13.5px;color:rgba(255,255,255,.6);line-height:1.7;margin-bottom:14px">Component manufacturers — tier-2 automotive, industrial packaging, aerospace — run lean AR teams against heavy invoice volume. FBL5N exports import as-is, and matched cash exports as clean, posting-ready SAP F-28 files. No SAP Cash Application module. No BASIS ticket.</p>
-        <div style="font-size:12px;color:#34D399;font-weight:600">FBL5N in → F-28 out</div>
+        <p style="font-size:13.5px;color:rgba(255,255,255,.6);line-height:1.7;margin-bottom:14px">Component manufacturers — tier-2 automotive, industrial packaging, aerospace — run lean AR teams against heavy invoice volume. Your standard SAP open-item exports import as-is, and matched cash exports as clean, posting-ready SAP files. No SAP Cash Application module. No BASIS ticket.</p>
+        <div style="font-size:12px;color:#34D399;font-weight:600">SAP export in → SAP posting file out</div>
       </div>
 
       <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:28px;position:relative;overflow:hidden">
@@ -689,13 +688,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div style="font-size:12px;color:#34D399;font-weight:600">Remittance in → Cash Receipt out</div>
       </div>
 
-      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:28px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#818CF8,#A78BFA)"></div>
-        <div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:#C4B5FD;text-transform:uppercase;margin-bottom:10px">Dynamics 365 F&amp;O · Logistics</div>
-        <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-.3px">Multi-line freight settlements, handled</div>
-        <p style="font-size:13.5px;color:rgba(255,255,255,.6);line-height:1.7;margin-bottom:14px">Freight forwarders, intermodal carriers, and cold-chain operators settle hundred-line advices where every line references a shipment, not an invoice. AR Match Pro parses high-volume line items, allocates across invoices by shipment reference, and exports a Dynamics 365 F&amp;O–ready posting file.</p>
-        <div style="font-size:12px;color:#34D399;font-weight:600">Settlement advice in → D365 F&amp;O posting out</div>
-      </div>
 
     </div>
 
@@ -744,20 +736,20 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div style="background:linear-gradient(135deg,#07111F,#0F172A);border-radius:14px;padding:22px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#12B886,#14A8D8)"></div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Cash Matched</div>
-        <div style="font-size:36px;font-weight:800;color:#34D399;font-family:'Inter',sans-serif;font-feature-settings:normal;letter-spacing:-2px;line-height:1;margin-bottom:6px">$55,000</div>
-        <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Ready for posting export</div>
+        <div style="font-size:36px;font-weight:800;color:#34D399;font-family:'Inter',sans-serif;font-feature-settings:normal;letter-spacing:-2px;line-height:1;margin-bottom:6px">$2,304,655</div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Applied from a single Wayne Enterprises wire</div>
       </div>
       <div style="background:linear-gradient(135deg,#07111F,#0F172A);border-radius:14px;padding:22px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#14A8D8,#8B5CF6)"></div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Auto-Match Rate</div>
-        <div style="font-size:36px;font-weight:800;color:#7DD3FC;font-family:'Inter',sans-serif;font-feature-settings:normal;letter-spacing:-2px;line-height:1;margin-bottom:6px">82%</div>
-        <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Manual review reduced</div>
+        <div style="font-size:36px;font-weight:800;color:#7DD3FC;font-family:'Inter',sans-serif;font-feature-settings:normal;letter-spacing:-2px;line-height:1;margin-bottom:6px">97.5%</div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.4)">39 of 40 remittance lines auto-applied</div>
       </div>
       <div style="background:linear-gradient(135deg,#07111F,#0F172A);border-radius:14px;padding:22px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#F59E0B,#EF4444)"></div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Unapplied Cash Risk</div>
-        <div style="font-size:36px;font-weight:800;color:#F59E0B;font-family:'Inter',sans-serif;font-feature-settings:normal;letter-spacing:-2px;line-height:1;margin-bottom:6px">$1,000</div>
-        <div style="font-size:12.5px;color:rgba(255,255,255,.4)">Open exceptions requiring action</div>
+        <div style="font-size:36px;font-weight:800;color:#F59E0B;font-family:'Inter',sans-serif;font-feature-settings:normal;letter-spacing:-2px;line-height:1;margin-bottom:6px">$640</div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.4)">1 open exception — pre-diagnosed Cash on Account</div>
       </div>
     </div>
     <div class="cfo-stat-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:36px">
@@ -810,6 +802,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   --p:#14A8D8;--pd:#168DE2;--g:#10B981;--gd:#059669;--am:#F59E0B;--r:#EF4444;--pu:#8B5CF6;
   --navy:#050D1A;--font:'Inter',sans-serif;--mono:'Inter',sans-serif;
 }
+#vp-root ._d{height:100%;background:#000;font-family:var(--font);-webkit-font-smoothing:antialiased}
+#vp-root ._d{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:16px;gap:14px}
 
 /* ── PLAYER ── */
 #vp-root .player{width:100%;max-width:880px;aspect-ratio:16/9;position:relative;background:var(--navy);overflow:hidden;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.3),0 32px 100px rgba(0,0,0,.7);cursor:pointer}
@@ -1057,9 +1051,9 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="particles">
       <div class="pt" style="top:14%;left:7%;animation-delay:0s">INV-1001 · $25,000 · PO-9001</div>
       <div class="pt" style="top:22%;right:8%;animation-delay:1.8s">ACH-882104 · Apex Industrial</div>
-      <div class="pt" style="bottom:28%;left:10%;animation-delay:3.2s">Match rate: 82%</div>
-      <div class="pt" style="bottom:18%;right:9%;animation-delay:1.1s">SAP F-28 export ready</div>
-      <div class="pt" style="top:55%;left:4%;animation-delay:2.4s">$55,000 cleared today</div>
+      <div class="pt" style="bottom:28%;left:10%;animation-delay:3.2s">39/40 lines auto-applied</div>
+      <div class="pt" style="bottom:18%;right:9%;animation-delay:1.1s">SAP posting export ready</div>
+      <div class="pt" style="top:55%;left:4%;animation-delay:2.4s">$2.3M wire applied</div>
       <div class="pt" style="top:68%;right:5%;animation-delay:.7s">INV-1003 · Short pay detected</div>
     </div>
     <div class="logo-lockup">
@@ -1112,7 +1106,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="how-step"><div class="how-ico">📁</div><div class="how-lbl">Import data</div><div class="how-desc">ARMP template, CSV, Excel, PDF or image — SAP exports work as-is</div></div>
       <div class="how-step"><div class="how-ico">⚡</div><div class="how-lbl">Auto Match</div><div class="how-desc">Invoice, PO, SO, Amount matched in seconds</div></div>
       <div class="how-step"><div class="how-ico">🚨</div><div class="how-lbl">Review exceptions</div><div class="how-desc">Short pays flagged — one-click decisions</div></div>
-      <div class="how-step"><div class="how-ico">📤</div><div class="how-lbl">Posting Export</div><div class="how-desc">SAP F-28, NetSuite, CSV — no manual entry</div></div>
+      <div class="how-step"><div class="how-ico">📤</div><div class="how-lbl">Posting Export</div><div class="how-desc">SAP, NetSuite, CSV — no manual entry</div></div>
     </div>
   </div>
 
@@ -1120,7 +1114,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   <div class="scene" id="s4">
     <div class="res-h">Real results, <em>instantly</em></div>
     <div class="kpi-row">
-      <div class="kpi-b gn"><div class="kpi-v gn">82%</div><div class="kpi-l">Average auto-match rate — industry benchmark is 60%</div></div>
+      <div class="kpi-b gn"><div class="kpi-v gn">97.5%</div><div class="kpi-l">Lines auto-applied on a verified $2.3M customer wire</div></div>
       <div class="kpi-b bl"><div class="kpi-v bl">8 sec</div><div class="kpi-l">Match a full remittance batch — down from hours</div></div>
       <div class="kpi-b am"><div class="kpi-v am">$10K+</div><div class="kpi-l">Saved per month in AR team labor</div></div>
     </div>
@@ -1208,9 +1202,9 @@ const SCENES=[
   {id:'s0',dur:7000,vo:"Match remittance to invoices in minutes — no ERP integration required. Welcome to AR Match Pro — cash application, fully automated."},
   {id:'s1',dur:10000,vo:"One payment covers six invoices, but the customer only sends a PO number. Your team spends 30 minutes per payment figuring it out. Short pays sit unresolved for weeks. And unapplied cash? Invisible to your CFO until month end."},
   {id:'s2',dur:11500,vo:"AR Match Pro changes all of that. Import your invoice aging and remittance file. The engine auto-matches by Invoice number, Purchase Order, Sales Order, Delivery, and Tracking — even the shipment references your customers quote instead of invoice numbers — and allocates one payment across multiple invoices automatically. In seconds."},
-  {id:'s3',dur:11000,vo:"Drag in your files — the standardized ARMP import template keeps every invoice file clean, and SAP exports work as-is. Run Auto Match. Review exceptions your team actually needs to see. Then download a Posting Export directly to SAP F-28 or NetSuite — no manual entry, no ERP integration required."},
-  {id:'s4',dur:8500,vo:"Teams using AR Match Pro see an 82% auto-match rate — well above the industry average. What used to take hours happens in 8 seconds. That is ten thousand dollars or more back in your AR budget every month."},
-  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation and ERP integration, AR Match Pro is live the same day. Start with a 30-day white-glove pilot — no charge until you convert. No installation. No IT approval needed. Book your kickoff at AR Match Pro dot com."}
+  {id:'s3',dur:11000,vo:"Drag in your files — the standardized ARMP import template keeps every invoice file clean, and SAP exports work as-is. Run Auto Match. Review exceptions your team actually needs to see. Then download a posting export built for SAP or NetSuite — no manual entry, no ERP integration required."},
+  {id:'s4',dur:10000,vo:"On a verified 2.3 million dollar customer wire, 39 of 40 remittance lines applied automatically — and the one exception arrived pre-diagnosed, with the posting note already written. What used to take hours happens in seconds, putting ten thousand dollars or more back in your AR budget every month."},
+  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation projects, AR Match Pro has nothing to implement. Onboarding and white-glove setup are included. Start with a 30-day pilot on your own data — no charge until you convert. Book your kickoff at AR Match Pro dot com."}
 ];
 const TOTAL=SCENES.reduce((s,sc)=>s+sc.dur,0);
 // Scene start offsets for progress calculations
@@ -1292,13 +1286,21 @@ function pickVoice(){
   if(!synth||!synth.getVoices)return null;
   const voices=synth.getVoices();
   if(!voices.length)return null;
+  // Preference order tuned for the most natural narration each platform offers:
+  // neural "Natural"/"Online" voices (Edge/Windows), Premium/Enhanced (macOS/iOS),
+  // then the best standard voices. Quality is capped by what the visitor's OS
+  // ships — this picks the ceiling available on each machine.
   const prefs=[
-    v=>v.name==='Samantha',
-    v=>v.name.includes('Samantha'),
-    v=>v.name==='Microsoft Jenny Online (Natural)',
-    v=>v.name.includes('Jenny'),
-    v=>v.name.includes('Zira'),
+    v=>/\(Natural\)/i.test(v.name)&&/aria|jenny|michelle|emma|ava/i.test(v.name),
+    v=>/\(Natural\)/i.test(v.name)&&v.lang.startsWith('en'),
+    v=>/Online.*Natural|Natural.*Online/i.test(v.name),
+    v=>/Premium/i.test(v.name)&&v.lang.startsWith('en'),
+    v=>/Enhanced/i.test(v.name)&&v.lang.startsWith('en'),
+    v=>/^Ava/.test(v.name),
+    v=>/^Zoe/.test(v.name),
+    v=>v.name==='Samantha'||v.name.includes('Samantha'),
     v=>v.name==='Google US English',
+    v=>/Jenny|Aria|Michelle/i.test(v.name),
     v=>/female|woman/i.test(v.name)&&v.lang.startsWith('en'),
     v=>v.lang.startsWith('en-US'),
     v=>v.lang.startsWith('en'),
@@ -1621,18 +1623,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateProg();
 });
 
-if(typeof togglePlay!=='undefined')window.togglePlay=window.togglePlay||togglePlay;
-if(typeof restartVideo!=='undefined')window.restartVideo=window.restartVideo||restartVideo;
-if(typeof jumpTo!=='undefined')window.jumpTo=window.jumpTo||jumpTo;
-if(typeof onSeekInput!=='undefined')window.onSeekInput=window.onSeekInput||onSeekInput;
-if(typeof onSeekStart!=='undefined')window.onSeekStart=window.onSeekStart||onSeekStart;
-if(typeof onSeekEnd!=='undefined')window.onSeekEnd=window.onSeekEnd||onSeekEnd;
-if(typeof toggleMute!=='undefined')window.toggleMute=window.toggleMute||toggleMute;
-if(typeof setVolume!=='undefined')window.setVolume=window.setVolume||setVolume;
-if(typeof toggleFullscreen!=='undefined')window.toggleFullscreen=window.toggleFullscreen||toggleFullscreen;
-if(typeof toggleNarration!=='undefined')window.toggleNarration=window.toggleNarration||toggleNarration;
-if(typeof toggleCaptions!=='undefined')window.toggleCaptions=window.toggleCaptions||toggleCaptions;
-if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeTiming||recomputeTiming;
+window.togglePlay=window.togglePlay||(typeof togglePlay!=='undefined'?togglePlay:undefined);
+window.restartVideo=window.restartVideo||(typeof restartVideo!=='undefined'?restartVideo:undefined);
+window.jumpTo=window.jumpTo||(typeof jumpTo!=='undefined'?jumpTo:undefined);
+window.onSeekInput=window.onSeekInput||(typeof onSeekInput!=='undefined'?onSeekInput:undefined);
+window.onSeekStart=window.onSeekStart||(typeof onSeekStart!=='undefined'?onSeekStart:undefined);
+window.onSeekEnd=window.onSeekEnd||(typeof onSeekEnd!=='undefined'?onSeekEnd:undefined);
+window.toggleMute=window.toggleMute||(typeof toggleMute!=='undefined'?toggleMute:undefined);
+window.setVolume=window.setVolume||(typeof setVolume!=='undefined'?setVolume:undefined);
+window.toggleFullscreen=window.toggleFullscreen||(typeof toggleFullscreen!=='undefined'?toggleFullscreen:undefined);
+window.toggleNarration=window.toggleNarration||(typeof toggleNarration!=='undefined'?toggleNarration:undefined);
+window.toggleCaptions=window.toggleCaptions||(typeof toggleCaptions!=='undefined'?toggleCaptions:undefined);
+window.recomputeTiming=window.recomputeTiming||(typeof recomputeTiming!=='undefined'?recomputeTiming:undefined);
 })();
 </script>
 </div>
@@ -1666,11 +1668,11 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
         <div style="padding:28px;background:rgba(16,185,129,.06)">
           <div style="font-size:11px;font-weight:800;color:#34D399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px">✅ After AR Match Pro</div>
           <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.5"><span>⚡</span>82% of payments matched automatically</div>
+            <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.5"><span>⚡</span>97.5% of remittance lines auto-applied on a verified $2.3M wire</div>
             <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.5"><span>🔗</span>Multi-invoice allocation ties to zero</div>
             <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.5"><span>🤖</span>AI suggestions flag duplicates & short pays instantly</div>
             <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.5"><span>📋</span>Today's Work worklist — know exactly what to do next</div>
-            <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.5"><span>📤</span>SAP F-28 / NetSuite posting file ready in seconds</div>
+            <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.5"><span>📤</span>SAP / NetSuite posting file ready in seconds</div>
             <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.5"><span>📈</span>$10K+/month saved in AR team labor</div>
           </div>
         </div>
@@ -1726,7 +1728,6 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
           <option value="SAP">SAP</option>
           <option value="NetSuite">NetSuite</option>
           <option value="Oracle">Oracle</option>
-          <option value="Microsoft Dynamics">Microsoft Dynamics</option>
           <option value="Sage">Sage</option>
           <option value="Epicor">Epicor</option>
           <option value="QuickBooks">QuickBooks</option>
@@ -1761,8 +1762,7 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Wire" style="width:16px;height:16px;cursor:pointer">Wire transfer</label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Check" style="width:16px;height:16px;cursor:pointer">Check</label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Lockbox" style="width:16px;height:16px;cursor:pointer">Lockbox</label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Credit Card" style="width:16px;height:16px;cursor:pointer">Credit card</label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Other" style="width:16px;height:16px;cursor:pointer">Other</label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#334155"><input type="checkbox" class="lead-pmt" value="Other" style="width:16px;height:16px;cursor:pointer">Other</label>
         </div>
 
         <div class="lead-label">How are you matching remittances today? *</div>
@@ -1840,7 +1840,7 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
       <div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:28px">
         <div style="font-size:26px;margin-bottom:12px">🔍</div>
         <div style="font-size:15.5px;font-weight:800;color:var(--navy);margin-bottom:8px">What does touch the network — fully disclosed</div>
-        <div style="font-size:13.5px;color:var(--muted);line-height:1.7">Three things, all pinned by our Content-Security-Policy: application code and the OCR model load inbound from public CDNs (code in, no data out); subscription billing runs on Stripe's hosted components (we never see card numbers); and an optional AI remittance parser — off by default, requiring your own API key — sends only that one document, only when you click it.</div>
+        <div style="font-size:13.5px;color:var(--muted);line-height:1.7">Three things, all pinned by our Content-Security-Policy: application code and the OCR model load inbound from public CDNs (code in, no data out); billing is by annual invoice — no card data is ever collected or processed; and an optional AI remittance parser — off by default, requiring your own API key — sends only that one document, only when you click it.</div>
       </div>
     </div>
 
@@ -1872,7 +1872,7 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
     <!-- Billing toggle -->
     <div style="text-align:center;margin-bottom:44px">
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:36px">
-        <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:9px 22px;font-size:13.5px;font-weight:700;color:#fff">Billed annually · ACH or wire · Net-30 · 1-year minimum</div>
+        <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:9px 22px;font-size:13.5px;font-weight:700;color:#fff">Billed annually · standard Net 30 terms · 1-year minimum</div>
         <div style="font-size:12.5px;color:rgba(255,255,255,.45)">Every plan starts with a 30-day white-glove pilot — no charge until you convert.</div>
       </div>
 
@@ -1892,24 +1892,31 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
       <div style="background:linear-gradient(160deg,rgba(20,168,216,.18),rgba(20,168,216,.08));border:2px solid #14A8D8;border-radius:20px;padding:32px;display:flex;flex-direction:column;position:relative;box-shadow:0 0 60px rgba(20,168,216,.2)">
         <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#14A8D8,#12B886);color:#fff;font-size:11px;font-weight:800;padding:5px 16px;border-radius:30px;white-space:nowrap;letter-spacing:.04em">MOST POPULAR</div>
         <div style="font-size:18px;font-weight:800;color:#7DD3FC;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;text-align:center">Pro</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">Mid-market finance &amp; AR teams · SAP, NetSuite, D365</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">Mid-market finance &amp; AR teams · SAP &amp; NetSuite</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px;justify-content:center">
           <span id="price-pro" style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">$4,599</span>
           <span style="font-size:15px;color:rgba(255,255,255,.35)">/month</span>
         </div>
-        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px;text-align:center">$55,188 billed annually · invoiced Net-30 · ACH or wire</div>
+        <div id="price-pro-annual" style="font-size:11.5px;color:rgba(255,255,255,.35);margin-bottom:24px;text-align:center">$55,188/yr · invoiced upfront on standard Net 30 terms · up to 5,000 payment lines/month</div>
         <div style="height:1px;background:rgba(20,168,216,.25);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Unlimited rows processed</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span><strong style="color:#fff">Onboarding &amp; white-glove setup: included</strong> — because there’s nothing to implement</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Unlimited invoice rows processed</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Deterministic matching: Invoice #, PO, SO, Delivery, Tracking</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multi-invoice allocation &amp; SAP Delivery Bridge</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>ERS / VMI consolidated payment support</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Per-line Cash on Account postings</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SAP F-28, NetSuite Cash Receipt &amp; D365 F&amp;O exports</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SAP &amp; NetSuite posting exports</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span><strong style="color:#7DD3FC">Unlimited AI Remittance Parser</strong></div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Customer learning, trends &amp; CFO dashboards</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Bulk-approve, reconciliation workspace, audit trail</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.9)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>White-glove onboarding &amp; priority support</div>
+        </div>
+        <div style="background:rgba(20,168,216,.07);border:1px solid rgba(20,168,216,.2);border-radius:10px;padding:12px 14px;margin-bottom:16px">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7DD3FC;margin-bottom:7px">Priced by monthly payment-line volume</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75);padding:2px 0"><span>Up to 5,000 lines / month</span><strong style="color:#fff">$4,599/mo</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75);padding:2px 0"><span>5,000 – 10,000 lines / month</span><strong style="color:#fff">$6,499/mo</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.75);padding:2px 0"><span>Above 10,000 lines / month</span><strong style="color:#7DD3FC">Custom</strong></div>
         </div>
         <button onclick="openLeadModal('pro')" style="width:100%;padding:15px;background:linear-gradient(135deg,#14A8D8,#168DE2);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(20,168,216,.4);transition:.18s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 36px rgba(20,168,216,.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 28px rgba(20,168,216,.4)'">Start a 30-day pilot</button>
       </div>
@@ -1917,19 +1924,20 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
       <!-- Custom -->
       <div style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;display:flex;flex-direction:column;transition:.2s" onmouseover="this.style.borderColor='rgba(20,168,216,.5)';this.style.background='rgba(20,168,216,.06)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.background='rgba(255,255,255,.05)'">
         <div style="font-size:18px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;text-align:center">Custom</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">Multi-entity · enterprise workflows · tailored volume</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center">Multi-entity · private deployment · security-driven teams</div>
         <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px;justify-content:center">
           <span style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-2px;font-family:'Inter',sans-serif;line-height:1">Custom</span>
         </div>
-        <div style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px;text-align:center">Tailored to your team size, entities &amp; volume</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.25);margin-bottom:24px;text-align:center">For 10,000+ lines/month, multiple entities, formal security review, or private deployment</div>
         <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:20px"></div>
         <div style="display:flex;flex-direction:column;gap:10px;flex:1;margin-bottom:28px">
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic"><span style="flex-shrink:0">↳</span>Everything in Pro, plus:</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Multi-user collaboration &amp; role-based permissions</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Advanced approval workflows</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Custom export mapping &amp; platform customization</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Dedicated onboarding &amp; implementation support</div>
-          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>SLA support options &amp; priority feature access</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span><strong style="color:#fff">Private deployment</strong> — run AR Match Pro entirely on your own infrastructure, inside your firewall</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Custom file mappings &amp; export profiles for unusual ERP or bank formats</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Name-normalization dictionary built from your customer master</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Security-questionnaire &amp; vendor-assessment support</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Month-end-close priority support windows with defined response times</div>
+          <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Quarterly business reviews &amp; auditor-format export packages</div>
           <div style="display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.75)"><span style="color:#34D399;font-weight:700;flex-shrink:0">✓</span>Volume-based pricing</div>
         </div>
         <button onclick="window.location.href='mailto:info@armatchpro.com?subject=Custom%20Plan%20Inquiry&body=Hi%2C%20I%27d%20like%20to%20learn%20more%20about%20the%20Custom%20plan%20for%20AR%20Match%20Pro.%0A%0ATeam%20size%3A%20%0AInvoice%20volume%2Fmonth%3A%20%0AERP%20system%3A%20%0APreferred%20call%20time%3A%20%0A%0AThanks%21'" style="width:100%;padding:15px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.18s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Contact Sales</button>
@@ -1944,7 +1952,7 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
     <div class="pricing-bottom-row" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:16px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08)">
       <div class="pricing-trust-signals" style="display:flex;gap:24px;flex-wrap:wrap">
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">🔒 No ERP integration required</div>
-        <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">⚡ Live in minutes</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">⚡ Nothing to implement</div>
         <div style="font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px">🌐 Secure browser-based workflow</div>
       </div>
     </div>
@@ -1968,7 +1976,7 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
 
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">Does AR Match Pro integrate with my ERP?<span class="faq-arrow">+</span></div>
-        <div class="faq-a">No direct ERP integration is required or needed. Teams import invoice reports and bank files exported from their ERP, run Auto Match inside AR Match Pro, and export posting-ready files back — SAP F-28, NetSuite Cash Receipt, Dynamics 365 F&amp;O, or Generic CSV for any other system. No IT team, no credentials, no scoping project — you can be live the same day.</div>
+        <div class="faq-a">No direct ERP integration is required or needed. Teams import invoice reports and bank files exported from their ERP, run Auto Match inside AR Match Pro, and export posting-ready files back — built for SAP and NetSuite, with Generic CSV for any other system. No IT team, no credentials, no scoping project.</div>
       </div>
 
       <div class="faq-item">
@@ -1978,19 +1986,23 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
 
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">What file types are supported?<span class="faq-arrow">+</span></div>
-        <div class="faq-a">CSV and Excel (.xlsx) are fully supported for invoices, bank files, and delivery reports. Invoice imports use the standardized ARMP Invoice Import Template (downloadable in one click from the import screen) — and native SAP FBL5N exports qualify automatically, no reshaping needed. Bank statement formats (BAI2, CAMT.053), PDFs, and even bank or remittance screenshots are also supported.</div>
+        <div class="faq-a">CSV and Excel (.xlsx) are fully supported for invoices, bank files, and delivery reports. Invoice imports use the standardized ARMP Invoice Import Template (downloadable in one click from the import screen). Bank statement formats (BAI2, CAMT.053), PDFs, and even bank or remittance screenshots are also supported.</div>
       </div>
 
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">Do I need to reformat my ERP exports?<span class="faq-arrow">+</span></div>
-        <div class="faq-a">Usually not. The ARMP Invoice Import Template needs just three required columns — Account, Invoice, and Amount — and SAP FBL5N exports map to it automatically, including the Sales Order carried in Reference Key 3. If a file is missing a required column, the import is rejected before anything changes, with a message naming exactly what’s missing and a one-click template download.</div>
+        <div class="faq-a">Usually not. The ARMP Invoice Import Template needs just three required columns — Account, Invoice, and Amount. If a file is missing a required column, the import is rejected before anything changes, with a message naming exactly what’s missing and a one-click template download.</div>
       </div>
 
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">Which plan should I choose?<span class="faq-arrow">+</span></div>
-        <div class="faq-a">Most teams choose <strong>Pro</strong> ($4,599/mo billed annually) — it includes everything: unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, unlimited AI Remittance Parser, all ERP export profiles, CFO dashboards, and white-glove onboarding. Choose <strong>Custom</strong> if you need multi-user collaboration, role-based permissions, advanced approval workflows, platform customization, or volume-based pricing across multiple entities — contact sales and we'll size it together.</div>
+        <div class="faq-a">Most teams choose <strong>Pro</strong> ($4,599/mo billed annually) — it includes everything: unlimited rows, multi-invoice allocation, SAP Delivery Bridge deterministic matching, ERS/VMI consolidated payment support, per-line Cash on Account postings, unlimited AI Remittance Parser, SAP & NetSuite posting exports, CFO dashboards, and white-glove onboarding. Choose <strong>Custom</strong> if you need private deployment on your own infrastructure, custom file mappings, security-questionnaire support, month-end priority windows, or volume-based pricing across multiple entities — contact sales and we'll size it together.</div>
       </div>
 
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How do we get started, and how fast are we live?<span class="faq-arrow">+</span></div>
+        <div class="faq-a">When your pilot agreement goes out, the ARMP Invoice Import Template comes with it. Bring your three files to the kickoff call — your open-invoice export, a bank file, and any remittances — and you’re live the same day we have your files: the kickoff itself is the go-live, with your first Auto Match run inside that session. There’s no implementation phase, nothing to install, and no IT project.</div>
+      </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)">Do you offer free pilots?<span class="faq-arrow">+</span></div>
         <div class="faq-a">Yes — every engagement starts with a <strong>30-day white-glove pilot at no charge</strong>. We run AR Match Pro in parallel with your current process on your own files, your team keeps posting exactly as today, and in week 3 we reconcile the two line by line. You convert to a 1-year plan (invoiced annually, Net-30, ACH or wire) only if your own numbers convince you. A short pilot agreement is signed before day one; no payment details are collected during the pilot.</div>
@@ -2020,7 +2032,7 @@ if(typeof recomputeTiming!=='undefined')window.recomputeTiming=window.recomputeT
           <div class="brand-mark">AR</div>
           <span style="color:#fff;font-weight:900">Match <span style="color:var(--p)">Pro</span></span>
         </a>
-        <p class="footer-brand-desc">The Browser-based AR Cash Application Platform purpose-built for SAP and NetSuite shops. Deterministic matching, multi-invoice allocation, and posting-ready exports — live in minutes.</p>
+        <p class="footer-brand-desc">The Browser-based AR Cash Application Platform purpose-built for SAP and NetSuite shops. Deterministic matching, multi-invoice allocation, and posting-ready exports — nothing to implement.</p>
         <div class="socials">
           <a href="https://linkedin.com/company/armatchpro" target="_blank" aria-label="LinkedIn">in</a>
           <a href="https://x.com/armatchpro" target="_blank" aria-label="X">𝕏</a>
@@ -2159,7 +2171,7 @@ function qfPick(val,nextState){
       const isPainful=proc.includes('painful')||proc.includes('Manual');
       let msg,cta;
       if(isEnterprise&&isBig){
-        msg=`Perfect fit for Pro. SAP/NetSuite with high volume is exactly what we built for — multi-invoice allocation, PO matching, F-28 export. I'd love to show you a live demo.`;
+        msg=`Perfect fit for Pro. SAP/NetSuite with high volume is exactly what we built for — multi-invoice allocation, PO matching, posting-ready SAP export. I'd love to show you a live demo.`;
         cta=`<a href="#" onclick="event.preventDefault();openLeadModal()" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:linear-gradient(135deg,var(--p),#168DE2);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">▶ Try live demo</a>`;
       } else if(isPainful||isBig){
         msg=`Sounds like AR Match Pro would solve your biggest pain points. The live demo takes 5 minutes — no signup, real matching with sample data.`;
@@ -2472,7 +2484,7 @@ const LP_FAQ={
   "ERP integration?":"AR Match Pro does not connect directly to your ERP. You export an invoice aging CSV from SAP or NetSuite, import it into AR Match Pro, run the match, and export a posting-ready file back. No integration, no IT approval, no setup time.",
   "Data security?":"Yes, your data is protected. AR Match Pro runs entirely in your browser. Your invoice and payment data is never uploaded to any server — it never leaves your machine. There is nothing to breach because we never see your data.",
   "File types?":"CSV and Excel are fully supported. PDF and image/OCR are available in advanced testing. Drag and drop any file — column headers are detected automatically. No specific template required.",
-  "Which plan?":"Pro ($4,599/mo billed annually — $55,188/yr, invoiced Net-30 via ACH or wire) includes everything: unlimited rows, multi-invoice allocation, SAP Delivery Bridge, ERS/VMI support, per-line Cash on Account postings, unlimited AI Remittance Parser, SAP F-28 / NetSuite / D365 exports, CFO dashboards, and white-glove onboarding. Custom adds multi-user collaboration, roles, approval workflows, platform customization, and volume-based pricing — contact sales. Every plan starts with a free 30-day white-glove pilot.",
+  "Which plan?":"Pro ($4,599/mo billed annually — $55,188/yr, invoiced upfront on standard Net 30 terms) includes everything: unlimited rows, multi-invoice allocation, SAP Delivery Bridge, ERS/VMI support, per-line Cash on Account postings, unlimited AI Remittance Parser, SAP & NetSuite posting exports, CFO dashboards — and onboarding and white-glove setup included, because there's nothing to implement. Custom adds private deployment on your own infrastructure, custom file mappings & export profiles, security-questionnaire support, month-end priority support windows, and volume-based pricing — contact sales. Every plan starts with a free 30-day white-glove pilot.",
   "Book demo?":"Click 'Start a 30-day pilot' anywhere on this page — we review each request within 24–48 hours and schedule your white-glove kickoff. The 30-day pilot is free; converting to a 1-year plan is invoiced Net-30 via ACH or wire. Or email info@armatchpro.com to schedule a live walkthrough.",
   "Pricing?":"Pro is $4,599/month billed annually ($55,188/yr), invoiced Net-30 and payable by ACH or wire — 1-year minimum, and every engagement starts with a free 30-day white-glove pilot. The first 10 founding customers get 30% off locked for 3 years ($3,219/mo) in exchange for a case study and one reference call per year. Custom plans are sized to your team — contact info@armatchpro.com."
 };
@@ -2557,9 +2569,9 @@ document.addEventListener('keydown',function(e){
       <li>Handle multi-invoice payments with automatic subset-sum allocation</li>
       <li>AI suggestions per payment: duplicate detection, short-pay likelihood, confidence scoring</li>
       <li>Flag exceptions: short pays, unapplied cash, bank fees, duplicates, missing PO</li>
-      <li>Customer open items view (FBL5N-style) with aging buckets and inline apply actions</li>
+      <li>Customer open items view (SAP-style) with aging buckets and inline apply actions</li>
       <li>Reconcile tab: write-off and bank fee fields, ties-to-zero status per payment</li>
-      <li>Export posting-ready files for SAP F-28, NetSuite, or any ERP via CSV</li>
+      <li>Export posting-ready files for SAP, NetSuite, or any ERP via CSV</li>
       <li>CFO Summary and Reports dashboard: cash matched, match rate, unapplied risk, short pays</li>
     </ul>
     <h3 style="font-size:16px;font-weight:700;color:#07111F;margin:24px 0 10px">Contact</h3>

@@ -260,9 +260,9 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
     <div class="particles">
       <div class="pt" style="top:14%;left:7%;animation-delay:0s">INV-1001 · $25,000 · PO-9001</div>
       <div class="pt" style="top:22%;right:8%;animation-delay:1.8s">ACH-882104 · Apex Industrial</div>
-      <div class="pt" style="bottom:28%;left:10%;animation-delay:3.2s">Match rate: 82%</div>
-      <div class="pt" style="bottom:18%;right:9%;animation-delay:1.1s">SAP F-28 export ready</div>
-      <div class="pt" style="top:55%;left:4%;animation-delay:2.4s">$55,000 cleared today</div>
+      <div class="pt" style="bottom:28%;left:10%;animation-delay:3.2s">39/40 lines auto-applied</div>
+      <div class="pt" style="bottom:18%;right:9%;animation-delay:1.1s">SAP posting export ready</div>
+      <div class="pt" style="top:55%;left:4%;animation-delay:2.4s">$2.3M wire applied</div>
       <div class="pt" style="top:68%;right:5%;animation-delay:.7s">INV-1003 · Short pay detected</div>
     </div>
     <div class="logo-lockup">
@@ -315,7 +315,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
       <div class="how-step"><div class="how-ico">📁</div><div class="how-lbl">Import data</div><div class="how-desc">ARMP template, CSV, Excel, PDF or image — SAP exports work as-is</div></div>
       <div class="how-step"><div class="how-ico">⚡</div><div class="how-lbl">Auto Match</div><div class="how-desc">Invoice, PO, SO, Amount matched in seconds</div></div>
       <div class="how-step"><div class="how-ico">🚨</div><div class="how-lbl">Review exceptions</div><div class="how-desc">Short pays flagged — one-click decisions</div></div>
-      <div class="how-step"><div class="how-ico">📤</div><div class="how-lbl">Posting Export</div><div class="how-desc">SAP F-28, NetSuite, CSV — no manual entry</div></div>
+      <div class="how-step"><div class="how-ico">📤</div><div class="how-lbl">Posting Export</div><div class="how-desc">SAP, NetSuite, CSV — no manual entry</div></div>
     </div>
   </div>
 
@@ -323,7 +323,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
   <div class="scene" id="s4">
     <div class="res-h">Real results, <em>instantly</em></div>
     <div class="kpi-row">
-      <div class="kpi-b gn"><div class="kpi-v gn">82%</div><div class="kpi-l">Average auto-match rate — industry benchmark is 60%</div></div>
+      <div class="kpi-b gn"><div class="kpi-v gn">97.5%</div><div class="kpi-l">Lines auto-applied on a verified $2.3M customer wire</div></div>
       <div class="kpi-b bl"><div class="kpi-v bl">8 sec</div><div class="kpi-l">Match a full remittance batch — down from hours</div></div>
       <div class="kpi-b am"><div class="kpi-v am">$10K+</div><div class="kpi-l">Saved per month in AR team labor</div></div>
     </div>
@@ -411,9 +411,9 @@ const SCENES=[
   {id:'s0',dur:7000,vo:"Match remittance to invoices in minutes — no ERP integration required. Welcome to AR Match Pro — cash application, fully automated."},
   {id:'s1',dur:10000,vo:"One payment covers six invoices, but the customer only sends a PO number. Your team spends 30 minutes per payment figuring it out. Short pays sit unresolved for weeks. And unapplied cash? Invisible to your CFO until month end."},
   {id:'s2',dur:11500,vo:"AR Match Pro changes all of that. Import your invoice aging and remittance file. The engine auto-matches by Invoice number, Purchase Order, Sales Order, Delivery, and Tracking — even the shipment references your customers quote instead of invoice numbers — and allocates one payment across multiple invoices automatically. In seconds."},
-  {id:'s3',dur:11000,vo:"Drag in your files — the standardized ARMP import template keeps every invoice file clean, and SAP exports work as-is. Run Auto Match. Review exceptions your team actually needs to see. Then download a Posting Export directly to SAP F-28 or NetSuite — no manual entry, no ERP integration required."},
-  {id:'s4',dur:8500,vo:"Teams using AR Match Pro see an 82% auto-match rate — well above the industry average. What used to take hours happens in 8 seconds. That is ten thousand dollars or more back in your AR budget every month."},
-  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation and ERP integration, AR Match Pro is live the same day. Start with a 30-day white-glove pilot — no charge until you convert. No installation. No IT approval needed. Book your kickoff at AR Match Pro dot com."}
+  {id:'s3',dur:11000,vo:"Drag in your files — the standardized ARMP import template keeps every invoice file clean, and SAP exports work as-is. Run Auto Match. Review exceptions your team actually needs to see. Then download a posting export built for SAP or NetSuite — no manual entry, no ERP integration required."},
+  {id:'s4',dur:10000,vo:"On a verified 2.3 million dollar customer wire, 39 of 40 remittance lines applied automatically — and the one exception arrived pre-diagnosed, with the posting note already written. What used to take hours happens in seconds, putting ten thousand dollars or more back in your AR budget every month."},
+  {id:'s5',dur:9000,vo:"Unlike enterprise AR platforms that require long implementation projects, AR Match Pro has nothing to implement. Onboarding and white-glove setup are included. Start with a 30-day pilot on your own data — no charge until you convert. Book your kickoff at AR Match Pro dot com."}
 ];
 const TOTAL=SCENES.reduce((s,sc)=>s+sc.dur,0);
 // Scene start offsets for progress calculations
@@ -495,13 +495,21 @@ function pickVoice(){
   if(!synth||!synth.getVoices)return null;
   const voices=synth.getVoices();
   if(!voices.length)return null;
+  // Preference order tuned for the most natural narration each platform offers:
+  // neural "Natural"/"Online" voices (Edge/Windows), Premium/Enhanced (macOS/iOS),
+  // then the best standard voices. Quality is capped by what the visitor's OS
+  // ships — this picks the ceiling available on each machine.
   const prefs=[
-    v=>v.name==='Samantha',
-    v=>v.name.includes('Samantha'),
-    v=>v.name==='Microsoft Jenny Online (Natural)',
-    v=>v.name.includes('Jenny'),
-    v=>v.name.includes('Zira'),
+    v=>/\(Natural\)/i.test(v.name)&&/aria|jenny|michelle|emma|ava/i.test(v.name),
+    v=>/\(Natural\)/i.test(v.name)&&v.lang.startsWith('en'),
+    v=>/Online.*Natural|Natural.*Online/i.test(v.name),
+    v=>/Premium/i.test(v.name)&&v.lang.startsWith('en'),
+    v=>/Enhanced/i.test(v.name)&&v.lang.startsWith('en'),
+    v=>/^Ava/.test(v.name),
+    v=>/^Zoe/.test(v.name),
+    v=>v.name==='Samantha'||v.name.includes('Samantha'),
     v=>v.name==='Google US English',
+    v=>/Jenny|Aria|Michelle/i.test(v.name),
     v=>/female|woman/i.test(v.name)&&v.lang.startsWith('en'),
     v=>v.lang.startsWith('en-US'),
     v=>v.lang.startsWith('en'),
