@@ -1,0 +1,8 @@
+{
+  "name": "ar-match-pro",
+  "version": "2026.7.21-pilot-auth-r3",
+  "private": true,
+  "description": "AR Match Pro R3 — server-controlled pilot access (Supabase Auth + RLS + Edge Functions + TOTP MFA). Financial data stays local to the browser.",
+  "scripts": { "test": "node tests/run_all.js" },
+  "devDependencies": { "jsdom": "^24.0.0", "xlsx": "^0.18.5" }
+}

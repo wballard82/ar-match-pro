@@ -1,0 +1,3 @@
+# Rollback
+
+Never restore a pre-R2 release (hardcoded credentials) or any release with exposed Stripe identifiers or format-only pilot access. Public website rollback: Netlify → Deploys → publish last-known-good static deploy. Authenticated pilot-app rollback is separate: reverting frontend does not revert the database — migrations need explicit reverse migrations or forward fixes, and RLS changes require tested reverse migrations. Auth/invitation state must not be corrupted. Financial workspace data is browser-local and unaffected. Supabase control-plane metadata requires backup/restore procedures (production). The sanitized rollback baseline is the R2 deploy set (no credentials, no Stripe), NOT anything earlier.
