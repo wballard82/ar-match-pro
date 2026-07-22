@@ -1,0 +1,47 @@
+name: ARMP R3 — Staging Deploy (manual)
+# Deploys migrations + Edge Functions to the STAGING Supabase project ONLY.
+# Manual trigger (workflow_dispatch) with a typed confirmation, so a push can
+# never change the staging database. Secrets are GitHub repo secrets set by the
+# owner (names only here); they are never printed.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type STAGING to confirm you are deploying to the staging project vjxdqmujxnmlfvnksvpy'
+        required: true
+      deploy_migrations:
+        type: boolean
+        description: 'Run supabase db push (migrations)'
+        default: true
+      deploy_functions:
+        type: boolean
+        description: 'Deploy Edge Functions'
+        default: true
+jobs:
+  deploy:
+    if: ${{ github.event.inputs.confirm == 'STAGING' }}
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_PROJECT_REF: vjxdqmujxnmlfvnksvpy    # staging — never a production ref
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: pilot-auth-r3 }
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Confirm target is staging
+        run: echo "Target project ref = $SUPABASE_PROJECT_REF (staging)"
+      - name: Link to staging project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - name: Deploy migrations (db push)
+        if: ${{ github.event.inputs.deploy_migrations == 'true' }}
+        run: supabase db push --linked
+      - name: Deploy Edge Functions
+        if: ${{ github.event.inputs.deploy_functions == 'true' }}
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+      - name: Reminder — set function secrets separately
+        run: |
+          echo "After first deploy, set Edge Function secrets in the dashboard or via:"
+          echo "  supabase secrets set ARMP_BOOTSTRAP_ENABLED=true   (then unset after bootstrap)"
+          echo "Service-role key is injected by Supabase automatically; never set it manually."
