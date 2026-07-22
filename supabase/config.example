@@ -1,0 +1,11 @@
+# Environment variable NAMES used by ARMP (values are never committed)
+# Frontend (public — safe in browser config):
+#   SUPABASE_URL=https://vjxdqmujxnmlfvnksvpy.supabase.co
+#   SUPABASE_PUBLISHABLE_KEY=<publishable key — public>
+# Edge Function environment (secret — set ONLY via `supabase secrets set` or dashboard):
+#   SUPABASE_SERVICE_ROLE_KEY=            # NEVER in frontend, repo, or chat
+#   ARMP_BOOTSTRAP_ENABLED=               # "true" only during first-owner bootstrap, then unset
+# CI (GitHub repo secrets — names only):
+#   SUPABASE_ACCESS_TOKEN=                # CLI auth for migrations/functions deploy
+#   SUPABASE_DB_PASSWORD=                 # db push auth
+#   NETLIFY_AUTH_TOKEN=                   # optional, only if CI deploys the static site

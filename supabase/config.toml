@@ -1,0 +1,33 @@
+# ARMP Supabase configuration — local development
+# Staging project ref: vjxdqmujxnmlfvnksvpy (all staging commands must state this ref explicitly)
+project_id = "ar-match-pro"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public"]
+max_rows = 200
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+enabled = true
+site_url = "http://localhost:8888"
+additional_redirect_urls = ["http://localhost:8888/auth/callback.html"]
+jwt_expiry = 3600
+enable_signup = false            # invitation-only: public signup is DISABLED
+[auth.email]
+enable_signup = false
+double_confirm_changes = true
+enable_confirmations = true
+[auth.mfa]
+max_enrolled_factors = 3
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[edge_runtime]
+enabled = true
