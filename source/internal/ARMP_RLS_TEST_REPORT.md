@@ -1,7 +1,10 @@
-# RLS Test Report (real PostgreSQL 16, local)
+# ARMP RLS Test Report — R3
 
-26/26 assertions. Proven: anonymous cannot read organizations/profiles/memberships/entitlements/invitations/internal-roles/events; customer A sees only its own org + entitlement and cannot read Corp B; customer cannot update pilot dates, activate a pilot, insert an internal role, or change its own membership role; customer B cannot read or update Corp A; internal_notes column is not selectable by customers; ops admin reads across orgs + invitations + internal roles; AAL1 denied and AAL2 authorized via authorize_pilot_session.
+## Method
+`supabase/tests/local_shim.sql` replicates the Supabase runtime surface (`auth.uid()`, `auth.jwt()`, anon/authenticated/service_role roles) on real PostgreSQL 16. All 12 migrations apply, then `rls_test.sql` runs as each role via `SET ROLE` + JWT-claim GUCs — exactly as PostgREST does.
 
-No customer-accessible using(true)/with check(true) policy exists. All mutations are reserved to service-role Edge Functions.
+## Result <span class="badge ok">26 / 26 PASS on real Postgres 16</span>
+Proven: anonymous denied on all 7 protected tables; customer A sees only its own org + entitlement and cannot see or write Corp B; customer cannot change pilot dates/status, insert an internal role, or change own role; `internal_notes` column not selectable by customers; AAL1 denied and AAL2 authorized via `authorize_pilot_session()`; ops admin reads across orgs, invitations, and roles.
 
-**NOT VALIDATED IN STAGING:** the same policies applied to the live Supabase Postgres. The local database replicates auth.uid()/auth.jwt()/roles faithfully, but staging execution is pending.
+## Label
+These are **local-Postgres** results. Re-running RLS against the live staging project is part of the acceptance battery (the CI `staging-tests` workflow reproduces this suite on an ephemeral Postgres and can be pointed at staging).

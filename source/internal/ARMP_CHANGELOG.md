@@ -1,21 +1,24 @@
-# Changelog — ARMP-2026.07.21-PILOT-AUTH-R3
+# ARMP Changelog — ARMP-2026.07.21-PILOT-AUTH-R3
 
-## Added
-- **Supabase control plane:** organizations, profiles, memberships, pilot_entitlements, invitations, internal_role_assignments, security_events, activation_events, admin_action_requests (12 migrations).
-- **Row-Level Security** on every protected table; default-deny; internal_notes column revoked from client roles; all mutations via service-role Edge Functions only.
-- **20 Edge Functions** for privileged operations (org/pilot lifecycle, invitations, user lifecycle, dual-control MFA reset, dashboard, authorize-pilot-session, bootstrap-first-owner).
-- **Mandatory TOTP MFA** (AAL2) for pilot users and the Operations Console.
-- **Auth pages:** invite, callback, setup-mfa (QR + manual key), challenge-mfa, reset-password.
-- **Server-backed app authorization** (ARMP_AUTH): authorize-pilot-session before any real-data workflow; 300s revalidation upper bound; server clock authoritative.
-- **Operations Console** rebuilt on Supabase session + AAL2 + active internal role; Organizations/Users/Invitations/Activity views.
-- New test suites: frontend-security, data-boundary (network-instrumented), R2-migration; expanded prohibited-pattern gate; local RLS suite.
-- Approval-gated CI workflows for staging migrate/deploy/test.
+Fresh release. Supersedes R2 (ARMP-2026.07.21-P1P2-R2). Do not deploy R2 for real-data pilots.
+
+## Added — server-controlled pilot access
+- Supabase Auth (email/password + mandatory TOTP MFA / AAL2), invitation-only (public signup disabled).
+- 12 PostgreSQL migrations: organizations, profiles, memberships, internal roles, pilot entitlements, invitations, security/activation events, admin-action requests; state-transition + seat-limit triggers; `authorize_pilot_session()`.
+- Row-Level Security: default-deny on every protected table; org isolation; internal-notes column protection; no `using(true)`/`with check(true)` on protected tables.
+- 20 Edge Functions for all privileged actions (service-role isolated to the function environment).
+- Five `/auth/` pages: invite, callback, setup-mfa (QR + manual key), challenge-mfa, reset-password.
+- `app.html` server-authorization gate: decision before real-data workflow, ≤300 s revalidation, no Demo fallback on failure, R2-localStorage cannot authorize.
+- `admin.html` Operations Console: Supabase session + AAL2 + internal-role gate (Google domain check removed); Organizations/Users/Invitations/Activity views.
 
 ## Removed
-- **R2 format-only pilot code** (`ARMP-PILOT-XXXX-XXXX` regex, `isValidPilotCode`, login/registration pilot-code paths, the license input field). Self-registration now opens Demo Mode only.
-- Legacy Google-domain-only Operations Console gate (email domain alone grants nothing now).
+- R2 format-only pilot code, `isValidPilotCode`, the license inputs, and client-side pilot-plan grant.
+- Google email-domain console gate.
 
-## Unchanged / preserved
-- Local financial-data boundary: customer files never leave the browser during the core workflow; Supabase receives control-plane traffic only.
-- R2 matching engine and its 503 assertions (retained, unweakened).
-- ACH/wire commercial model; no Stripe anywhere; documented LIMITS (no unlimited).
+## Tests
+- Retained the **503 R2 assertions unweakened**.
+- Added: frontend-security (Suite 10), network-instrumented data-boundary (Suite 11), R2-migration (Suite 12); expanded prohibited-pattern gate (Suite 9, R3, context-aware).
+- Local proofs: RLS 26/26 on real Postgres; Edge Functions type-check under Deno.
+
+## Not built / not validated
+Staging deployment and the 16-step E2E are NOT YET RUN. Paid production remains blocked.

@@ -1,0 +1,154 @@
+[
+  {
+    "source": "README.md",
+    "pdf": "docs/release/README.pdf",
+    "pages": 1,
+    "sha256": "91332abc4a52c290b3e783b7cb7d6abf1723d454bb9fa5632d5c1419c3d1ea6d",
+    "text_chars": 2302,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_CHANGELOG.md",
+    "pdf": "docs/release/ARMP_CHANGELOG.pdf",
+    "pages": 1,
+    "sha256": "5b1e8cfb69bfa0ff5944bfd7b64435871810876925d863294a340a0b81067e2f",
+    "text_chars": 1743,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_KNOWN_LIMITATIONS.md",
+    "pdf": "docs/release/ARMP_KNOWN_LIMITATIONS.pdf",
+    "pages": 1,
+    "sha256": "7bc3f56b77115048b0f33591f5e0316225db056e072e9e9b4a861c3695281583",
+    "text_chars": 995,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_ROLLBACK.md",
+    "pdf": "docs/release/ARMP_ROLLBACK.pdf",
+    "pages": 1,
+    "sha256": "bd0aaac5f75e7a264f9fc8f63b5efa0bdcdd39e66939d0f9587ef2188169a4e3",
+    "text_chars": 1375,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_DEPLOYMENT.md",
+    "pdf": "docs/release/ARMP_DEPLOYMENT.pdf",
+    "pages": 1,
+    "sha256": "d14d175304177a8a2e842db3806b864b2f1abb555c3667eb31a12a9e340ba202",
+    "text_chars": 1597,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_PRODUCT_TRUTH.md",
+    "pdf": "docs/release/ARMP_PRODUCT_TRUTH.pdf",
+    "pages": 1,
+    "sha256": "c30444bcf340801fe724de391f3874cccbfbacefdb1de994fcbb03fa623ab2a5",
+    "text_chars": 941,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_CLAIMS_REGISTER.md",
+    "pdf": "docs/release/ARMP_CLAIMS_REGISTER.pdf",
+    "pages": 1,
+    "sha256": "9653a8e99d2f931a8f6e89e14cc945d5af5e9b13a5c6ea12bb161f2af06083ba",
+    "text_chars": 770,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_FILE_AUDIT.md",
+    "pdf": "docs/release/ARMP_FILE_AUDIT.pdf",
+    "pages": 1,
+    "sha256": "5c0a11ba7d2d82e765d8ca22e3a47e8ae87940ce3182ff2b4a3c2ed2630e93b3",
+    "text_chars": 1066,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_CONSISTENCY_MATRIX.md",
+    "pdf": "docs/release/ARMP_CONSISTENCY_MATRIX.pdf",
+    "pages": 1,
+    "sha256": "a1b2712432d4572f3469cb004ccac4505d79c8b2a75450d650d41ccfe40be71c",
+    "text_chars": 597,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_ARCHITECTURE.md",
+    "pdf": "docs/architecture/ARMP_ARCHITECTURE.pdf",
+    "pages": 1,
+    "sha256": "773d63f8a90ad3aacf77658c87f615f92524e1130584c2ca217fec79dd6ef0a7",
+    "text_chars": 2280,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_SECURITY_REMEDIATION.md",
+    "pdf": "docs/security/ARMP_SECURITY_REMEDIATION.pdf",
+    "pages": 1,
+    "sha256": "bbcd9657a26b73e4a76969c027fb3a4d45d2f670538b85ffe23380b8078bfe75",
+    "text_chars": 1527,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_PILOT_ACCESS_ADMIN_GUIDE.md",
+    "pdf": "docs/operations/ARMP_PILOT_ACCESS_ADMIN_GUIDE.pdf",
+    "pages": 1,
+    "sha256": "fd7f786e4fea564ffe76147f5eed1da40556c4910d32f4c564df1970ce679315",
+    "text_chars": 1502,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_SUPABASE_OWNER_SETUP.md",
+    "pdf": "docs/operations/ARMP_SUPABASE_OWNER_SETUP.pdf",
+    "pages": 1,
+    "sha256": "a31a0fbe812fe529f9e6c41a0f0f6af7e56451e0523a14497364a5d2bc099ea9",
+    "text_chars": 2941,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_SUPPORT_PROCEDURES.md",
+    "pdf": "docs/operations/ARMP_SUPPORT_PROCEDURES.pdf",
+    "pages": 1,
+    "sha256": "9a718d7d75c0f98058c9a4064ba7f2380c82c3f30b1f5e62670a0a1b4193d404",
+    "text_chars": 795,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_INCIDENT_RESPONSE.md",
+    "pdf": "docs/security/ARMP_INCIDENT_RESPONSE.pdf",
+    "pages": 1,
+    "sha256": "32f02e314815d5b2e5622d4a2d0e0bad85b810d0dff3c59c9a96b4365bc01fc4",
+    "text_chars": 1017,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_AUTHENTICATION_TEST_REPORT.md",
+    "pdf": "docs/security/ARMP_AUTHENTICATION_TEST_REPORT.pdf",
+    "pages": 1,
+    "sha256": "90a44ef4efe33caafe9926116cad3315a9cca58cb9950ba941fef8ab92f246fd",
+    "text_chars": 988,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_RLS_TEST_REPORT.md",
+    "pdf": "docs/security/ARMP_RLS_TEST_REPORT.pdf",
+    "pages": 1,
+    "sha256": "6dbc15158b8ab95ea84e775e2568cc22ac8ea05c0f7ecfd6672dcc4727ced788",
+    "text_chars": 976,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_DATA_BOUNDARY_TEST_REPORT.md",
+    "pdf": "docs/security/ARMP_DATA_BOUNDARY_TEST_REPORT.pdf",
+    "pages": 1,
+    "sha256": "03c59ef0df441ee37d24c9e87285a64d36c564ac174109c63148d13ba26f7121",
+    "text_chars": 853,
+    "text_extraction": "PASS"
+  },
+  {
+    "source": "ARMP_STAGING_ACCEPTANCE_REPORT.md",
+    "pdf": "docs/release/ARMP_STAGING_ACCEPTANCE_REPORT.pdf",
+    "pages": 1,
+    "sha256": "ff9ac722e4dc82154f28a92d80bfd2d6898c4d949f50c6e48d5777207f15da16",
+    "text_chars": 1445,
+    "text_extraction": "PASS"
+  }
+]

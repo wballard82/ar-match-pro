@@ -1,8 +1,9 @@
-# Known Limitations — R3
+# ARMP Known Limitations — R3
 
-- **Server authority, bounded revalidation.** Real-data access is decided server-side and revalidated on an interval capped at **300 seconds**. After a suspend/revoke, an already-open session retains access until its next revalidation (≤ 300s) or a forced sign-out. We do **not** claim instantaneous revocation. `revoke-pilot-access` and `disable-user` additionally call a global sign-out server-side, which invalidates refresh tokens immediately; the ≤300s bound covers the access-token window.
-- **Local plan/role values are UX only.** They never grant real-data access. Hidden/disabled buttons are UX, not a security control; the server is authoritative.
-- **MFA recovery** is an admin-driven **dual-control** reset (two distinct internal admins), enforced by a DB constraint. There is no self-service TOTP reset.
-- **Email delivery** on staging uses Supabase's built-in service with low rate limits (~2–4/hour) — adequate for testing only. Production SMTP is documented but not configured.
-- **Staging validation outstanding.** MFA enrollment/challenge, invitation emails/links, session-revocation timing, and the data-boundary capture are **NOT VALIDATED IN STAGING** until the 16-step E2E executes against the supplied project.
-- **Not built:** cleared-funds production activation gating, production Supabase project, backup/recovery validation, Phase 4 modularization.
+- **Staging unvalidated in this package.** Every staging behavior (migrations applied, functions live, MFA, invitations, revocation timing, E2E) is NOT VALIDATED IN STAGING until the acceptance battery runs against project `vjxdqmujxnmlfvnksvpy`.
+- **Revocation latency.** Server-side revocation propagates to an open session at its next revalidation — up to 300 seconds — not instantly.
+- **Browser-local data is visible to the signed-in user.** RLS protects the control plane; it does not (and cannot) hide a user's own organization's financial data on their own screen.
+- **Edge Functions are type-checked, not yet runtime-tested** against live Supabase Auth (invites, MFA factor deletion, global sign-out).
+- **Supabase default email is rate-limited** (~2–4/hour); production SMTP is required for real invitation volume.
+- **Legal drafts require attorney review**; pricing is not final.
+- **No production Supabase project, backup/recovery automation, or monitoring** — all prerequisites for paid production.

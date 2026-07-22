@@ -1,15 +1,15 @@
-# Prohibited-Pattern Sweep — R3
+# ARMP Prohibited-Pattern Sweep — R3
 
-The sweep is an executable release gate: `tests/test_prohibited_terms.js` (Suite 9), **1101/1101**, no whitelist. It scans frontend deployables, generators, SQL migrations, and Edge Functions.
+The sweep is executable: `tests/test_prohibited_terms.js` (Suite 9). Result this build: **1063/1063 PASS**, and a planted-violation negative control correctly failed the gate (1062/1063), proving it is not a no-op.
 
-## §24 distinctions the gate enforces
-- **Variable name vs secret value:** `SUPABASE_SERVICE_ROLE_KEY` as a name is allowed in backend/config examples; a service-role key *value* (JWT literal, `sb_secret_…`, assignment with a real value) fails the build.
-- **Backend reference vs frontend exposure:** `service_role` is permitted only under `supabase/functions/`; any occurrence in `deploy/*` fails.
-- **Search vs use:** this gate file and tests search for patterns; that is distinguished from implementations that use them.
-- **Public vs protected RLS:** `using(true)`/`with check(true)` fails only as a real policy — a comment documenting the ban is exempted by stripping SQL comments before scanning.
+## Zero-tolerance in deployables + generators
+MASTER_ADMIN(_EMAIL/_PASS), VALID_KEYS, ARMP-PILOT-XXXX-XXXX, isValidPilotCode, rows: Infinity, Free (7-day), 7-day demo, free trial, no IT approval, all Stripe domains, stripeCustomerId/SubscriptionId, checkout=success, pk_live_, Stripe price IDs, query-string plan entitlement, localStorage plan authorization.
 
-## Banned set (zero occurrences)
-MASTER_ADMIN, VALID_KEYS, ARMP-PILOT-XXXX-XXXX + isValidPilotCode, rows: Infinity, Free (7-day), 7-day demo, free trial, no IT approval, all Stripe origins/fields, checkout=success, pk_live_, Stripe price IDs, embedded JWT/service-role/db-password/JWT-secret VALUES, GOOGLE_CLIENT_ID (frontend), query-string plan entitlement, localStorage plan authorization.
+## Secret-VALUE patterns (deployables AND backend)
+sb_secret_*, embedded JWT literals, `SUPABASE_SERVICE_ROLE_KEY=<value>`, `database_password=<value>`, `JWT_SECRET=<value>`, SMTP/DB passwords with values.
 
-## Result
-Zero prohibited occurrences. The R2 format-only pilot mechanism is fully removed and server-backed authorization confirmed present.
+## §24 context-awareness (not a naive global scan)
+- `service_role`, `using (true)`, `with check (true)` are **permitted in backend source** and are NOT in the deployable ban list.
+- The gate proves `service_role` appears in backend and in **no** frontend file.
+- It distinguishes a variable **name** from a secret **value**, and a test that **searches** for a pattern from code that **implements** it.
+- No broad whitelists; the only carve-outs are the backend keyword allowances above.

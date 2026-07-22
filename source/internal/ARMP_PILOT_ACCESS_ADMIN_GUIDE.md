@@ -1,18 +1,20 @@
-# Pilot Access — Operations Console Guide
+# ARMP Pilot Access — Operations Console Guide
 
-## Deciding access
-The console lets ARMP Operations control exactly which organizations and users get pilot access, their roles, and when access begins/ends/suspends/extends/revokes.
+The console (`/admin.html`) requires a Supabase session, AAL2 (TOTP), and an active internal role. Owners and Operations Admins can perform write actions; Support and Sales/Read-Only are read-only (the server enforces this regardless of the UI).
 
-## Lifecycle
-1. **Create pilot organization** (status pilot_pending; a pending entitlement is created).
-2. **Approve** (pilot_pending → pilot_approved).
-3. **Activate** with start/end dates (pilot_approved → pilot_active; dates validated; server clock authoritative).
-4. **Invite users** (org must be approved/active). Each invite is single-use, email/org/role-bound, expiring (1–30 days).
-5. User accepts: sets password, enrolls TOTP, verifies — becomes active; entitlement check gates real-data entry.
-6. **Suspend** (access stops at next revalidation ≤300s), **Extend** (forward-only end date; optional restore from suspended), **Complete**, or **Revoke** (terminal; global sign-out of all members).
+## Grant pilot access to a new organization
+1. **Organizations → Create pilot organization** — enter legal/display name, approved ERP, seats. Creates the org in `pilot_pending` with a `pending` entitlement.
+2. **Approve** — moves to `pilot_approved`.
+3. **Activate** — enter pilot start/end dates. Moves to `pilot_active`; access opens automatically at the start date (server clock).
+4. **Invite user** — enter business email, full name, customer role, expiration (1–30 days). The user gets a single-use, email/org/role-bound invitation.
+5. The user sets a password, enrolls TOTP, and enters the pilot app once `authorize_pilot_session()` passes.
 
-## Roles
-Owner / Operations Admin: full lifecycle. Support and Sales/Read-Only: view only — the server rejects mutations regardless of the UI.
+## Lifecycle controls
+- **Suspend** — immediate hold; users lose access within 300 s. **Restore** via Extend (with restore) or reactivation.
+- **Extend** — forward-only new end date.
+- **Complete** — ends the pilot (`pilot_completed`).
+- **Revoke** — terminal; entitlement revoked, org terminated, all member sessions signed out server-side.
+- **Users** — disable/enable, change role, revoke sessions, or start a **dual-control MFA reset** (a different admin must complete it).
 
-## MFA reset (dual control)
-One admin requests; a **different** admin completes (DB-enforced). Completing deletes the user's TOTP factors and signs them out to re-enroll.
+## What the console never shows
+No invoice, bank, remittance, matching, or allocation data — that never leaves the browser and is never stored in Supabase.
