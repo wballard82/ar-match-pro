@@ -16,8 +16,9 @@ button:disabled{opacity:.5;cursor:default}
 .msg{margin-top:14px;font-size:13px;line-height:1.5;display:none;padding:10px 12px;border-radius:8px}
 .msg.err{display:block;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--err)}
 .msg.ok{display:block;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--ok)}
-.qr{background:#fff;border-radius:12px;padding:14px;margin:16px auto;width:216px;height:216px;display:flex;align-items:center;justify-content:center}
-.qr svg,.qr img{width:188px;height:188px}
+.qr{margin:16px auto;display:flex;align-items:center;justify-content:center}
+#mfa-qr-code{display:block;width:min(320px,100%);height:auto;aspect-ratio:1/1;object-fit:contain;background:#fff;padding:16px;border-radius:18px}
+#qr-fallback{display:none;font-size:12.5px;line-height:1.55;color:var(--err);background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:12px 14px;margin:16px auto}
 code.key{display:block;background:#0A1626;border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;font-size:12.5px;word-break:break-all;color:var(--t2)}
 .foot{margin-top:18px;font-size:11.5px;color:#475569;line-height:1.6}
 </style></head><body><div class="card"><div class="logo">AR <span>Match</span> Pro</div>
@@ -25,7 +26,8 @@ code.key{display:block;background:#0A1626;border:1px solid var(--line);border-ra
 <p class="sub">Authenticator verification is required before continuing. Scan the QR code with Google Authenticator, Microsoft Authenticator, 1Password, Authy, or any compatible TOTP app — or enter the setup key manually. SMS is not used.</p>
 <div id="checking" style="font-size:13px;color:var(--t2)">Preparing enrollment…</div>
 <div id="enroll" style="display:none">
-<div class="qr" id="qr"></div>
+<div class="qr" id="qr"><img id="mfa-qr-code" alt="Scan this QR code with your authenticator app" hidden></div>
+<div id="qr-fallback">The QR code could not be displayed. Use the manual setup key below to add the account in your authenticator app.</div>
 <details><summary style="font-size:12.5px;color:var(--t2);cursor:pointer">Can't scan? Manual setup key</summary><code class="key" id="key"></code></details>
 <label>6-digit code from your app</label><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
 <button id="go">Verify &amp; finish setup</button></div>
@@ -38,13 +40,65 @@ code.key{display:block;background:#0A1626;border:1px solid var(--line);border-ra
   function err(t){m.className='msg err';m.textContent=t;}
   var s = await sb.auth.getSession();
   if(!s.data.session){ err('Please sign in first.'); setTimeout(function(){location.href='/app.html';},1200); return; }
-  var e = await sb.auth.mfa.enroll({factorType:'totp', friendlyName:'ARMP TOTP'});
-  if(e.error||!e.data){ err('Could not start enrollment. If you already enrolled, continue to verification.');
-    setTimeout(function(){location.href='/auth/challenge-mfa.html?next='+encodeURIComponent(armpNext());},1500); return; }
+  function detail(x){
+    if(!x) return '';
+    var code = x.code || x.name || ('HTTP '+(x.status||'?'));
+    var msg  = (x.message||'').replace(/[A-Z2-7]{16,}/g,'[redacted]');
+    return ' ['+code+'] '+msg;
+  }
+  function toChallenge(){ location.href='/auth/challenge-mfa.html?next='+encodeURIComponent(armpNext()); }
+
+  // Inspect existing factors before enrolling (avoids duplicate-name enrollment failures).
+  var lf = await sb.auth.mfa.listFactors();
+  if(lf.error){ err('Could not read your authenticator status.'+detail(lf.error)); return; }
+  var allFactors = (lf.data && (lf.data.all || lf.data.totp)) || [];
+  var totpFactors = allFactors.filter(function(f){ return f && f.factor_type==='totp'; });
+  var verifiedTotp = totpFactors.filter(function(f){ return f.status==='verified'; });
+  var staleTotp    = totpFactors.filter(function(f){ return f.status!=='verified'; });
+
+  // Already fully enrolled -> verify instead of re-enrolling.
+  if(verifiedTotp.length){
+    document.getElementById('checking').textContent='Authenticator already set up. Redirecting to verification…';
+    toChallenge(); return;
+  }
+
+  // Clear stale unverified factors left behind by interrupted attempts.
+  var cleanupFailed=null;
+  for(var i=0;i<staleTotp.length;i++){
+    var un = await sb.auth.mfa.unenroll({factorId:staleTotp[i].id});
+    if(un && un.error) cleanupFailed=un.error;
+  }
+
+  async function tryEnroll(name){
+    return await sb.auth.mfa.enroll({factorType:'totp', friendlyName:name});
+  }
+  var e = await tryEnroll('ARMP TOTP');
+  if(e.error||!e.data){
+    // Retry once with a unique name in case a name collision persists.
+    var retryName='ARMP TOTP '+Date.now();
+    var e2 = await tryEnroll(retryName);
+    if(e2.error||!e2.data){
+      var shown=e2.error||e.error||cleanupFailed;
+      err('Could not start enrollment.'+detail(shown)+' If this persists, contact your ARMP representative.');
+      return;
+    }
+    e=e2;
+  }
   factorId=e.data.id;
   document.getElementById('checking').style.display='none';
   document.getElementById('enroll').style.display='block';
-  document.getElementById('qr').innerHTML = e.data.totp.qr_code;
+  var qrImage=document.getElementById('mfa-qr-code');
+  var qrFallback=document.getElementById('qr-fallback');
+  var qrValue=(e.data.totp && typeof e.data.totp.qr_code==='string') ? e.data.totp.qr_code.trim() : '';
+  var qrLooksValid=/^(data:image\/(svg\+xml|png|jpeg|gif|webp)[,;]|https:\/\/)/i.test(qrValue);
+  if(qrLooksValid){
+    qrImage.onerror=function(){ qrImage.hidden=true; qrFallback.style.display='block'; };
+    qrImage.src=qrValue;
+    qrImage.hidden=false;
+  } else {
+    qrImage.hidden=true;
+    qrFallback.style.display='block';
+  }
   document.getElementById('key').textContent = e.data.totp.secret;
   document.getElementById('go').onclick = async function(){
     var code=document.getElementById('code').value.trim();
