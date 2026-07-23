@@ -24628,6 +24628,17 @@ window.ARMP_AUTH = (function(){
   // fires. If a fully-MFA'd session already exists, finish entry here.
   // Server authorization is still REQUIRED: this only re-invokes enter(), which
   // calls authorize-pilot-session and honours its decision (no demo fallback).
+  // Real sign-out. doLogout() historically cleared only the legacy 'armp_session'
+  // field and hid the UI — the Supabase session survived in browser storage, so a
+  // later visit (or the resume path above) would silently re-admit the user. That
+  // is unacceptable on a shared machine. Default scope revokes the refresh token
+  // server-side as well as clearing local storage.
+  async function signOutEverywhere(){
+    stopRevalidation();
+    _decision = null;
+    try { var sb = client(); if (sb) await sb.auth.signOut(); } catch(e){}
+  }
+
   var _resuming = false;
   function resumeAfterMfa(){
     if (_resuming || _decision) return;   // in-flight or already entered: never double-authorize
@@ -24650,6 +24661,7 @@ window.ARMP_AUTH = (function(){
     signIn: signIn, enter: enter, fetchDecision: fetchDecision,
     startRevalidation: startRevalidation, stopRevalidation: stopRevalidation,
     r2MigrationCheck: r2MigrationCheck, messageFor: messageFor,
+    signOut: signOutEverywhere,
     get decision(){ return _decision; },
     set decision(v){ _decision = v; },        // test-harness injection point; server remains authoritative
     _lockOut: lockOut
@@ -24693,6 +24705,17 @@ window.ARMP_AUTH = (function(){
                 : 'ar_specialist';
     }
     return _launchApp(user);
+  };
+})();
+
+// ── doLogout gate: user-initiated sign-out must END the Supabase session, not
+//    just hide the UI. Without this the session persists and the user is
+//    silently re-admitted on the next visit. ──
+(function(){
+  var _legacyLogout = window.doLogout;
+  window.doLogout = function(){
+    try { ARMP_AUTH.signOut(); } catch(e){}
+    if (typeof _legacyLogout === 'function') return _legacyLogout.apply(this, arguments);
   };
 })();
 
