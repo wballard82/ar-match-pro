@@ -167,27 +167,24 @@ tr:hover td{background:rgba(20,168,216,.03)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <div id="admin-app">
-<div id="pilot-ops-wrap" style="padding:18px 22px 6px">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-    <div style="font-size:16px;font-weight:800">Pilot Operations <span style="font-size:11px;font-weight:600;color:var(--t3)">server-controlled · Supabase staging</span></div>
-    <div style="display:flex;gap:10px;align-items:center"><span id="ops-whoami" style="font-size:12px;color:var(--t3)"></span><button class="pbtn" onclick="adminSignOut()">Sign out</button></div>
-  </div>
-  <div id="pilot-ops"></div>
-</div>
 <style>
-.pcard{background:var(--card,#0D1B2E);border:1px solid var(--bdr,#1A2D42);border-radius:12px;padding:14px 16px;margin-bottom:14px;overflow-x:auto}
-.pcard-h{font-size:13.5px;font-weight:800;margin-bottom:10px;display:flex;gap:10px;align-items:center}
-.pmut{font-size:11px;color:var(--t3,#64748B);font-weight:500}
-.ptab{width:100%;border-collapse:collapse;font-size:12px}
-.ptab th{text-align:left;padding:6px 8px;color:var(--t3,#64748B);font-weight:700;border-bottom:1px solid var(--bdr,#1A2D42);white-space:nowrap}
-.ptab td{padding:7px 8px;border-bottom:1px solid rgba(26,45,66,.5);vertical-align:top}
-.ptag{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10.5px;font-weight:700;background:rgba(20,168,216,.15);color:#7DD3FC}
-.ptag.s-pilot_active,.ptag.s-active,.ptag.s-accepted{background:rgba(52,211,153,.15);color:#6EE7B7}
-.ptag.s-pilot_suspended,.ptag.s-suspended,.ptag.s-disabled,.ptag.s-expired{background:rgba(245,158,11,.15);color:#FCD34D}
-.ptag.s-terminated,.ptag.s-revoked{background:rgba(248,113,113,.15);color:#FCA5A5}
-.pbtn{padding:4px 9px;background:rgba(20,168,216,.12);border:1px solid rgba(20,168,216,.35);color:#7DD3FC;border-radius:6px;font-size:10.5px;font-weight:700;cursor:pointer;margin:1px 2px}
-.pbtn:hover{background:rgba(20,168,216,.22)}
-.pbtn.pdanger{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.35);color:#FCA5A5}
+/* Pilot Operations — light theme, matched to the admin dashboard tokens */
+#panel-pilot-ops{color:var(--t1)}
+.pcard{background:var(--surface);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px;margin-bottom:14px;overflow-x:auto;box-shadow:var(--s1)}
+.pcard-h{font-size:13.5px;font-weight:800;margin-bottom:10px;display:flex;gap:10px;align-items:center;color:var(--t1)}
+.pmut{font-size:11px;color:var(--t3);font-weight:500}
+.ptab{width:100%;border-collapse:collapse;font-size:12px;color:var(--t1)}
+.ptab th{text-align:left;padding:6px 8px;color:var(--t3);font-weight:700;border-bottom:1px solid var(--bdr);white-space:nowrap;background:var(--bg);text-transform:uppercase;letter-spacing:.04em;font-size:10.5px}
+.ptab td{padding:7px 8px;border-bottom:1px solid var(--bdr);vertical-align:top;color:var(--t1)}
+.ptab tr:last-child td{border-bottom:none}
+.ptag{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10.5px;font-weight:700;background:#EFF6FF;color:#1D4ED8}
+.ptag.s-pilot_active,.ptag.s-active,.ptag.s-accepted{background:#ECFDF5;color:#065F46}
+.ptag.s-pilot_suspended,.ptag.s-suspended,.ptag.s-disabled,.ptag.s-expired{background:#FEF3C7;color:#92400E}
+.ptag.s-terminated,.ptag.s-revoked{background:#FEF2F2;color:#991B1B}
+.pbtn{padding:4px 9px;background:var(--surface);border:1px solid var(--bdr2);color:#1D4ED8;border-radius:6px;font-size:10.5px;font-weight:700;cursor:pointer;margin:1px 2px}
+.pbtn:hover{background:#EFF6FF;border-color:var(--p)}
+.pbtn.pdanger{background:var(--surface);border-color:#FECACA;color:#991B1B}
+.pbtn.pdanger:hover{background:#FEF2F2;border-color:var(--r)}
 .pacts{white-space:nowrap}
 </style>
   <div class="a-top">
@@ -206,6 +203,10 @@ tr:hover td{background:rgba(20,168,216,.03)}
       <div class="a-sidebar-sec">
         <div class="a-sl">Dashboard</div>
         <div class="a-ni active" onclick="sp('overview',this)">📊 Overview</div>
+      </div>
+      <div class="a-sidebar-sec">
+        <div class="a-sl">Pilot</div>
+        <div class="a-ni" onclick="sp('pilot-ops',this)">🛡 Pilot Operations</div>
       </div>
       <div class="a-sidebar-sec">
         <div class="a-sl">Users</div>
@@ -235,6 +236,15 @@ tr:hover td{background:rgba(20,168,216,.03)}
       <div class="a-footer">AR Match Pro Admin<br>© 2026 armatchpro.com</div>
     </div>
     <div class="a-main">
+
+      <!-- PILOT OPERATIONS (R3) -->
+      <div id="panel-pilot-ops" class="a-panel">
+        <div style="margin-bottom:18px">
+          <div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Pilot Operations</div>
+          <div style="font-size:13px;color:var(--t3);margin-top:2px">server-controlled · Supabase staging<span id="ops-whoami" style="margin-left:10px"></span></div>
+        </div>
+        <div id="pilot-ops"></div>
+      </div>
 
       <!-- OVERVIEW -->
       <div id="panel-overview" class="a-panel active">
@@ -789,6 +799,7 @@ function sp(id,el){
   if(id==='keys')renderGenKeys();
   if(id==='overview')refreshStats();
   if(id==='admin-audit')renderAdminAudit();
+  if(id==='pilot-ops'){ try{ renderPilotOps(); }catch(e){} }
 }
 
 function refreshStats(){
