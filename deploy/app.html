@@ -6,16 +6,14 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- ── Enterprise security headers ──────────────────────────────────────────
-     Content-Security-Policy restricts script/style/connect origins to defend
-     against XSS and unauthorized data exfiltration. Scripts limited to self +
-     vetted public CDNs. connect-src allows the
-     Anthropic API (used by the optional AI-parse feature, Beta). No object/embed,
-     no framing by third parties. For strongest posture, also set these as
-     real HTTP response headers at the CDN/host (Netlify _headers file):
-       Content-Security-Policy, X-Content-Type-Options: nosniff,
-       X-Frame-Options: DENY, Strict-Transport-Security, Referrer-Policy. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com ; worker-src 'self' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: data: https://api.anthropic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://tessdata.projectnaptha.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+<!-- ── Security headers ─────────────────────────────────────────────────────
+     Content-Security-Policy is delivered as a real HTTP response header by the
+     host (Netlify _headers) and is the single authoritative policy. No page-level
+     CSP meta tag is used here: multiple policies are each enforced independently,
+     so a duplicate could only ever further restrict — and silently break — the
+     approved policy. Update deploy/_headers to change CSP.
+     AI-assisted features are planned for a future separately reviewed release
+     and are disabled in R3. -->
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- SheetJS in <head> — guarantees Excel import works before user can trigger it -->
@@ -3081,74 +3079,6 @@ body.app-active #app {
   </div>
 </div>
 
-<!-- ─── AI Remittance Parser modal ─────────────────────────────────────
-     Lets users paste unstructured remittance text (emails, PDF extracts,
-     vendor portals) and have Claude extract structured remittance lines
-     — invoice numbers, amounts, PO refs, notes — into REM_DETAIL.
-     Requires a user-provided Anthropic API key stored in localStorage
-     (keys never leave the user's browser; calls go directly to api.anthropic.com).
-─────────────────────────────────────────────────────────────────────── -->
-<div class="mo-overlay" id="ai-parse-modal">
-  <div class="mo-box wide" style="width:680px;max-width:96vw">
-    <div class="mo-header">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:20px">🤖</span>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:var(--t1)">AI Remittance Parser</div>
-          <div style="font-size:11.5px;color:var(--t3);margin-top:1px">Paste an email, drop a PDF, or upload a scan — AI extracts structured remittance lines</div>
-        </div>
-      </div>
-      <div class="mo-close" onclick="closeAIRemittanceParser()">×</div>
-    </div>
-    <div class="mo-body" style="padding:20px 24px">
-      <div id="ai-parse-step-input">
-        <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Paste remittance text</div>
-        <textarea id="ai-parse-input" rows="10" placeholder="Paste the unstructured remittance text here — e.g. an email from your customer:&#10;&#10;&quot;Hi, please find our payment of $50,000.00 attached. We're applying:&#10;- Invoice 5105123456: $12,500&#10;- Invoice 5105123457: $20,000&#10;- PO 4521000123: $17,750 (less $250 short pay for damaged goods)&#10;&#10;Wire ref: 1234567890. Let us know if any questions.&quot;" style="width:100%;padding:12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;background:var(--surface2);color:var(--t1);outline:none;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5"></textarea>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:11px;color:var(--t3)">
-          <span>or</span>
-          <button class="btn btn-outline btn-xs" onclick="document.getElementById('ai-parse-file').click()">📎 Upload PDF / image</button>
-          <input type="file" id="ai-parse-file" accept=".pdf,.png,.jpg,.jpeg" style="display:none" onchange="_aiHandleFile(event)">
-          <span id="ai-parse-file-name" style="color:var(--t2)"></span>
-        </div>
-        <div id="ai-parse-key-warn" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 12px;margin-top:14px;font-size:12px;color:var(--am-t)">
-          ⚠️ No API key configured. <a href="#" onclick="_showAIKeySetting();return false;" style="color:var(--am-t);font-weight:700;text-decoration:underline">Add your Anthropic API key</a> to enable AI parsing. Keys are stored locally in your browser only.
-        </div>
-        <div id="ai-parse-key-area" style="display:none;background:var(--surface2);border:1px solid var(--bdr);border-radius:8px;padding:14px;margin-top:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">Anthropic API key</div>
-          <input type="password" id="ai-key-input" placeholder="sk-ant-..." style="width:100%;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;background:var(--surface);color:var(--t1);outline:none;box-sizing:border-box;font-family:var(--mono)">
-          <div style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.5">Get a key at <a href="https://console.anthropic.com/" target="_blank" style="color:var(--p)">console.anthropic.com</a>. Stored in this browser only; never sent to any server other than api.anthropic.com.</div>
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-p btn-sm" onclick="_saveAIKey()">Save key</button>
-            <button class="btn btn-outline btn-sm" onclick="_hideAIKeySetting()">Cancel</button>
-          </div>
-        </div>
-      </div>
-      <div id="ai-parse-step-loading" style="display:none;text-align:center;padding:40px 20px">
-        <div class="spinner" style="margin:0 auto 16px;width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--cy);border-radius:50%;animation:spin .8s linear infinite"></div>
-        <div style="font-size:13px;color:var(--t2);font-weight:600">Parsing with Claude…</div>
-        <div style="font-size:11.5px;color:var(--t3);margin-top:4px">Usually takes 3-8 seconds</div>
-      </div>
-      <div id="ai-parse-step-results" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:12.5px;color:var(--g-t);font-weight:700">✓ Parsed <span id="ai-parse-count">0</span> remittance lines</div>
-          <button class="btn btn-outline btn-xs" onclick="_aiResetParser()">← Try another</button>
-        </div>
-        <div id="ai-parse-summary" style="font-size:11.5px;color:var(--t2);background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:10px"></div>
-        <div id="ai-parse-results-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--bdr);border-radius:8px;font-size:12px"></div>
-      </div>
-    </div>
-    <div class="mo-footer" style="display:flex;gap:8px;justify-content:space-between;padding:14px 24px;border-top:1px solid var(--bdr);background:var(--surface)">
-      <div>
-        <button class="btn btn-ghost btn-sm" onclick="_showAIKeySetting()" id="ai-parse-key-btn">⚙️ API key</button>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" onclick="closeAIRemittanceParser()">Cancel</button>
-        <button class="btn btn-p btn-sm" onclick="_aiParseRemittance()" id="ai-parse-go-btn">🤖 Parse with AI</button>
-        <button class="btn btn-p btn-sm" onclick="_aiApplyResults()" id="ai-parse-apply-btn" style="display:none">✓ Add to Remittance</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <style>
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -3603,7 +3533,6 @@ body.app-active #app {
               <button class="btn btn-outline btn-sm" onclick="openImportBank()">+ Bank File</button>
               <button class="btn btn-outline btn-sm" onclick="openImportDelivery()" title="Upload delivery/tracking report to map Tracking # and Delivery # to invoices">+ Delivery Report</button>
               <button class="btn btn-outline btn-sm" onclick="openImportRemDetail()" title="Upload remittance advice / remittance details (e.g. customer remittance with invoice references, PO#, tracking#, amounts)" style="color:var(--pu-t)">+ Remittance Details</button>
-              <button class="btn btn-outline btn-sm" onclick="openAIRemittanceParser()" title="Parse unstructured remittance — paste email text, drop a PDF, or upload a scan. AI extracts structured invoice references and amounts." style="color:var(--cy-t);background:linear-gradient(135deg, rgba(6,182,212,.08), rgba(99,102,241,.06))">🤖 AI Parse</button>
               <button class="btn btn-p btn-sm armp-setup-step-cta" id="btn-auto-match" onclick="runMatch()" style="display:inline-flex;align-items:center;gap:5px;min-width:200px;text-align:center;justify-content:center">⚡ Auto Match</button>
               
             </div>
@@ -23367,300 +23296,6 @@ function _clearMatchHistory(){
   document.head.appendChild(style);
 })();
 
-// ────────────────────────────────────────────────────────────────────────
-// AI Remittance Parser — calls Claude API to extract structured remittance
-// from unstructured input (email text, PDF, scanned image). API key lives
-// in localStorage only; calls go directly browser → api.anthropic.com.
-// ────────────────────────────────────────────────────────────────────────
-var _AI_PARSE_RESULTS = null;
-var _AI_PARSE_PENDING_TEXT = '';
-
-function openAIRemittanceParser(){
-  var modal = document.getElementById('ai-parse-modal');
-  if(!modal) return;
-  _aiResetParser();
-  // Check if API key configured
-  var hasKey = !!_getAIKey();
-  document.getElementById('ai-parse-key-warn').style.display = hasKey ? 'none' : 'block';
-  modal.classList.add('open');
-}
-function closeAIRemittanceParser(){
-  var modal = document.getElementById('ai-parse-modal');
-  if(modal) modal.classList.remove('open');
-}
-function _aiResetParser(){
-  document.getElementById('ai-parse-step-input').style.display = 'block';
-  document.getElementById('ai-parse-step-loading').style.display = 'none';
-  document.getElementById('ai-parse-step-results').style.display = 'none';
-  document.getElementById('ai-parse-go-btn').style.display = '';
-  document.getElementById('ai-parse-apply-btn').style.display = 'none';
-  document.getElementById('ai-parse-input').value = '';
-  document.getElementById('ai-parse-file-name').textContent = '';
-  _AI_PARSE_RESULTS = null;
-  _AI_PARSE_PENDING_TEXT = '';
-}
-function _getAIKey(){ try { return localStorage.getItem('armp_anthropic_key') || ''; } catch(e){ return ''; } }
-function _showAIKeySetting(){
-  document.getElementById('ai-parse-key-area').style.display = 'block';
-  document.getElementById('ai-parse-key-warn').style.display = 'none';
-  var inp = document.getElementById('ai-key-input');
-  if(inp){ inp.value = _getAIKey(); inp.focus(); }
-}
-function _hideAIKeySetting(){ document.getElementById('ai-parse-key-area').style.display = 'none'; }
-function _saveAIKey(){
-  var k = document.getElementById('ai-key-input').value.trim();
-  if(!k){ alert('Enter your Anthropic API key (starts with sk-ant-)'); return; }
-  if(!/^sk-ant-/.test(k)){
-    if(!confirm('That doesn\'t look like an Anthropic API key (should start with sk-ant-). Save anyway?')) return;
-  }
-  try { localStorage.setItem('armp_anthropic_key', k); } catch(e){ alert('Could not save key: ' + e.message); return; }
-  _hideAIKeySetting();
-  document.getElementById('ai-parse-key-warn').style.display = 'none';
-  if(typeof toast === 'function') toast('✓ API key saved locally');
-}
-
-function _aiHandleFile(ev){
-  var file = ev.target.files && ev.target.files[0];
-  if(!file) return;
-  document.getElementById('ai-parse-file-name').textContent = file.name;
-  // Read text content. PDF → use PDF.js if available; image → pass-through to Claude vision
-  if(file.type === 'application/pdf'){
-    _aiReadPdfText(file).then(function(text){
-      document.getElementById('ai-parse-input').value = text;
-      _AI_PARSE_PENDING_TEXT = text;
-    }).catch(function(e){
-      alert('Could not extract text from PDF: ' + e.message + '\n\nTry copying the text manually into the textarea above.');
-    });
-  } else if(file.type.startsWith('image/')){
-    // Store as base64 for vision API
-    var reader = new FileReader();
-    reader.onload = function(){
-      _AI_PARSE_PENDING_TEXT = '[Image: ' + file.name + ']';
-      document.getElementById('ai-parse-input').value = '[Image attached — will be sent to Claude Vision: ' + file.name + ']';
-      _AI_PARSE_PENDING_IMAGE = { dataUrl: reader.result, mediaType: file.type };
-    };
-    reader.readAsDataURL(file);
-  } else {
-    var reader = new FileReader();
-    reader.onload = function(){
-      document.getElementById('ai-parse-input').value = reader.result;
-      _AI_PARSE_PENDING_TEXT = reader.result;
-    };
-    reader.readAsText(file);
-  }
-}
-var _AI_PARSE_PENDING_IMAGE = null;
-
-function _aiReadPdfText(file){
-  // Use existing pdf.js if loaded, else load it
-  return new Promise(function(resolve, reject){
-    var go = function(){
-      var reader = new FileReader();
-      reader.onload = function(){
-        try {
-          window.pdfjsLib.getDocument({ data: reader.result }).promise.then(function(pdf){
-            var pages = [];
-            var promises = [];
-            for(var p=1; p<=pdf.numPages; p++){
-              (function(pageNum){
-                promises.push(pdf.getPage(pageNum).then(function(page){
-                  return page.getTextContent().then(function(c){
-                    pages[pageNum-1] = c.items.map(function(it){return it.str;}).join(' ');
-                  });
-                }));
-              })(p);
-            }
-            Promise.all(promises).then(function(){ resolve(pages.join('\n\n')); }).catch(reject);
-          }).catch(reject);
-        } catch(e){ reject(e); }
-      };
-      reader.onerror = function(){ reject(reader.error); };
-      reader.readAsArrayBuffer(file);
-    };
-    if(window.pdfjsLib){ go(); return; }
-    // Lazy-load PDF.js from CDN
-    var s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload = function(){
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      go();
-    };
-    s.onerror = function(){ reject(new Error('Could not load PDF.js library')); };
-    document.head.appendChild(s);
-  });
-}
-
-function _aiParseRemittance(){
-  var text = document.getElementById('ai-parse-input').value.trim();
-  if(!text && !_AI_PARSE_PENDING_IMAGE){
-    alert('Paste some remittance text or upload a file first');
-    return;
-  }
-  var key = _getAIKey();
-  if(!key){ _showAIKeySetting(); return; }
-
-  document.getElementById('ai-parse-step-input').style.display = 'none';
-  document.getElementById('ai-parse-step-loading').style.display = 'block';
-  document.getElementById('ai-parse-go-btn').style.display = 'none';
-
-  var systemPrompt =
-    "You extract structured remittance lines from unstructured customer payment communications (emails, attachments, vendor portal text). " +
-    "Return a JSON object with this exact schema:\n" +
-    "{\n" +
-    '  "customer": "string (payer name if mentioned)",\n' +
-    '  "paymentTotal": number (total payment amount if stated, else 0),\n' +
-    '  "paymentRef": "string (wire/ACH reference if mentioned)",\n' +
-    '  "paymentDate": "YYYY-MM-DD or empty",\n' +
-    '  "lines": [\n' +
-    '    {\n' +
-    '      "invoiceNo": "string (invoice number, empty if not specified)",\n' +
-    '      "poNo": "string (PO number, empty if not specified)",\n' +
-    '      "salesOrder": "string (sales order number, empty if not specified)",\n' +
-    '      "amount": number (line amount applied, REQUIRED),\n' +
-    '      "shortPay": number (deduction amount if any, else 0),\n' +
-    '      "notes": "string (any reason or comment, e.g. \'short pay for damaged goods\')"\n' +
-    '    }\n' +
-    '  ]\n' +
-    "}\n\n" +
-    "Rules:\n" +
-    "- Output ONLY the JSON object, no other text, no markdown fences.\n" +
-    "- Every line MUST have an amount. Lines without amounts should be omitted.\n" +
-    "- Don't invent data. Use empty string for unknown fields.\n" +
-    "- Recognize common AR terminology: 'short pay', 'discount', 'deduction', 'partial', 'COA', 'Cash on Account'.\n" +
-    "- Customer-PO references like '4521xxxxx' (10 digits) are PO numbers; '5105xxxxxx' (10 digits) and '510xxxxxxx' are typically invoice numbers in SAP shops.";
-
-  var userContent = [];
-  if(_AI_PARSE_PENDING_IMAGE){
-    userContent.push({
-      type: 'image',
-      source: { type:'base64', media_type:_AI_PARSE_PENDING_IMAGE.mediaType, data: _AI_PARSE_PENDING_IMAGE.dataUrl.split(',')[1] }
-    });
-  }
-  userContent.push({
-    type: 'text',
-    text: 'Extract remittance lines from this:\n\n' + (text || '(image attached)')
-  });
-
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userContent }]
-    })
-  }).then(function(r){
-    if(!r.ok){ return r.text().then(function(t){ throw new Error('Claude API error (' + r.status + '): ' + t); }); }
-    return r.json();
-  }).then(function(resp){
-    var textOut = (resp.content && resp.content.map(function(c){return c.text||'';}).join('\n')) || '';
-    var cleaned = textOut.replace(/```json|```/g, '').trim();
-    var parsed;
-    try { parsed = JSON.parse(cleaned); }
-    catch(e){
-      // Try to extract a JSON object from the response
-      var m = cleaned.match(/\{[\s\S]*\}/);
-      if(m){ parsed = JSON.parse(m[0]); }
-      else throw new Error('Could not parse Claude response as JSON. Raw response:\n' + textOut.substring(0, 500));
-    }
-    _AI_PARSE_RESULTS = parsed;
-    _aiShowResults(parsed);
-  }).catch(function(e){
-    document.getElementById('ai-parse-step-loading').style.display = 'none';
-    document.getElementById('ai-parse-step-input').style.display = 'block';
-    document.getElementById('ai-parse-go-btn').style.display = '';
-    alert('AI parsing failed: ' + e.message);
-    console.warn('[AI parse]', e);
-  });
-}
-
-function _aiShowResults(parsed){
-  document.getElementById('ai-parse-step-loading').style.display = 'none';
-  document.getElementById('ai-parse-step-results').style.display = 'block';
-  document.getElementById('ai-parse-apply-btn').style.display = '';
-  document.getElementById('ai-parse-count').textContent = (parsed.lines || []).length;
-
-  var summary = '';
-  if(parsed.customer) summary += '<div><strong>Customer:</strong> ' + _escapeHtml(parsed.customer) + '</div>';
-  if(parsed.paymentTotal) summary += '<div><strong>Payment total:</strong> $' + $f(parsed.paymentTotal) + '</div>';
-  if(parsed.paymentRef) summary += '<div><strong>Reference:</strong> ' + _escapeHtml(parsed.paymentRef) + '</div>';
-  if(parsed.paymentDate) summary += '<div><strong>Date:</strong> ' + _escapeHtml(parsed.paymentDate) + '</div>';
-  document.getElementById('ai-parse-summary').innerHTML = summary || '<em>No header info extracted</em>';
-
-  var lines = parsed.lines || [];
-  if(lines.length === 0){
-    document.getElementById('ai-parse-results-list').innerHTML = '<div style="padding:24px;text-align:center;color:var(--t3)">No remittance lines extracted. Try a clearer input.</div>';
-    return;
-  }
-  var lineTotal = lines.reduce(function(s,l){return s + (l.amount||0);},0);
-  var tableHtml = '<table style="width:100%;border-collapse:collapse">'+
-    '<thead><tr style="background:var(--surface2);text-align:left">'+
-      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Invoice</th>'+
-      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">PO</th>'+
-      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;text-align:right">Amount</th>'+
-      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;text-align:right">Short Pay</th>'+
-      '<th style="padding:8px 10px;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Notes</th>'+
-    '</tr></thead><tbody>'+
-    lines.map(function(l){
-      return '<tr style="border-top:1px solid var(--bdr)">'+
-        '<td style="padding:8px 10px;font-family:var(--mono)">'+_escapeHtml(l.invoiceNo||'—')+'</td>'+
-        '<td style="padding:8px 10px;font-family:var(--mono)">'+_escapeHtml(l.poNo||'—')+'</td>'+
-        '<td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-weight:700">$'+$f(l.amount||0)+'</td>'+
-        '<td style="padding:8px 10px;text-align:right;font-family:var(--mono);color:'+(l.shortPay?'var(--am-t)':'var(--t3)')+'">'+(l.shortPay?'-$'+$f(l.shortPay):'—')+'</td>'+
-        '<td style="padding:8px 10px;color:var(--t2);font-size:11.5px">'+_escapeHtml(l.notes||'')+'</td>'+
-      '</tr>';
-    }).join('')+
-    '<tr style="border-top:2px solid var(--bdr2);background:var(--surface2);font-weight:800">'+
-      '<td colspan="2" style="padding:8px 10px;text-align:right;color:var(--t2);text-transform:uppercase;font-size:10.5px;letter-spacing:.04em">Total</td>'+
-      '<td style="padding:8px 10px;text-align:right;font-family:var(--mono)">$'+$f(lineTotal)+'</td>'+
-      '<td colspan="2"></td>'+
-    '</tr>'+
-    '</tbody></table>';
-  document.getElementById('ai-parse-results-list').innerHTML = tableHtml;
-}
-
-function _aiApplyResults(){
-  if(!_AI_PARSE_RESULTS || !_AI_PARSE_RESULTS.lines || _AI_PARSE_RESULTS.lines.length === 0){
-    alert('No lines to apply');
-    return;
-  }
-  var lines = _AI_PARSE_RESULTS.lines;
-  var custName = _AI_PARSE_RESULTS.customer || '';
-  var payRef = _AI_PARSE_RESULTS.paymentRef || '';
-  var payDate = _AI_PARSE_RESULTS.paymentDate || '';
-  var added = 0;
-  lines.forEach(function(l){
-    REM_DETAIL.push({
-      custName: custName,
-      paymentDate: payDate,
-      invDate: '',
-      invNo: l.invoiceNo || '',
-      invRef: '',
-      poNo: l.poNo || '',
-      soNo: l.salesOrder || '',
-      delNo: '',
-      trkNo: '',
-      remarks: l.notes || '',
-      amt: l.amount || 0,
-      shortPay: l.shortPay || 0,
-      currency: 'USD',
-      paymentRef: payRef,
-      _source: 'ai_parsed'
-    });
-    added++;
-  });
-  if(typeof toast === 'function') toast('✓ Added ' + added + ' remittance lines from AI parsing');
-  closeAIRemittanceParser();
-  // Refresh UI
-  try { if(typeof rAll === 'function') rAll(); } catch(e){}
-  try { if(typeof updTop === 'function') updTop(); } catch(e){}
-}
 
 // Auto-refresh trends when the CFO page is shown
 (function(){
@@ -24972,6 +24607,7 @@ window.ARMP_AUTH = (function(){
 
   // R2 migration notice: legacy local sessions with non-demo plans no longer grant entry.
   function r2MigrationCheck(){
+    try { localStorage.removeItem('armp_anthropic_key'); } catch(e){}   // R3: AI features disabled; purge any key stored by older builds
     try {
       var sess = localStorage.getItem('armp_session');
       if (!sess) return;
