@@ -124,10 +124,6 @@ tr:hover td{background:rgba(20,168,216,.03)}
 .btn-outline{background:var(--surface);color:var(--t2);border-color:var(--bdr2)}.btn-outline:hover{border-color:var(--p);color:var(--pd)}
 .btn-danger{background:var(--surface);color:#991B1B;border-color:rgba(239,68,68,.3)}.btn-danger:hover{background:#FEF2F2}
 .btn-sm{padding:5px 10px;font-size:11.5px}
-.key-card{background:var(--navy);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
-.key-code{font-family:var(--mono);font-size:13px;font-weight:500;color:#7DD3FC;letter-spacing:1px;flex:1}
-.key-plan{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap}
-.key-plan.team{background:rgba(139,92,246,.2);color:#C4B5FD}.key-plan.pro{background:rgba(20,168,216,.2);color:#7DD3FC}.key-plan.starter{background:rgba(16,185,129,.2);color:#6EE7B7}
 .em{text-align:center;padding:36px 20px;color:var(--t3)}
 .em-icon{font-size:26px;margin-bottom:8px;opacity:.4}
 .em-t{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:4px}
@@ -217,7 +213,6 @@ tr:hover td{background:rgba(20,168,216,.03)}
       <div class="a-sidebar-sec">
         <div class="a-sl">Sales</div>
         <div class="a-ni" onclick="sp('leads',this)">🎯 Demo leads <span class="a-nbadge" id="leads-badge">0</span></div>
-        <div class="a-ni" onclick="sp('keys',this)">🔑 Pilot access codes</div>
       </div>
       <div class="a-sidebar-sec">
         <div class="a-sl">Sales Machine</div>
@@ -328,26 +323,6 @@ tr:hover td{background:rgba(20,168,216,.03)}
         <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Title</th><th>Phone</th><th>ERP</th><th>Volume</th><th>Plan</th><th>Trial Expires</th><th>Source</th><th>Date</th><th>Actions</th></tr></thead><tbody id="leads-tbody"><tr><td colspan="12"><div class="em"><div class="em-icon">🎯</div><div class="em-t">No leads yet</div><div style="font-size:12px;color:var(--t3);margin-top:4px">Leads appear here when someone submits the demo form on your landing page.</div></div></td></tr></tbody></table></div></div>
       </div>
 
-      <!-- KEYS -->
-      <div id="panel-keys" class="a-panel">
-        <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px">
-          <div><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">Pilot access codes</div><div style="font-size:13px;color:var(--t3);margin-top:2px">Issue to pilot customers after signing — entered during registration. Pilot-only convenience, not a production security control.</div></div>
-          <div style="margin-left:auto"><button class="btn btn-p btn-sm" onclick="generateKey()">+ Generate key</button></div>
-        </div>
-        <div class="card" style="margin-bottom:14px">
-          <div class="card-h"><div class="card-t">Built-in keys (always valid)</div></div>
-          <div style="padding:14px 16px">
-            <div class="key-card"><div class="key-code">ARMP-STAR-2026-0001</div><span class="key-plan starter">STARTER</span><button class="btn btn-outline btn-sm" onclick="copyKey('ARMP-STAR-2026-0001')">Copy</button></div>
-            <div class="key-card"><div class="key-code">ARMP-PRO0-2026-0001</div><span class="key-plan pro">PRO</span><button class="btn btn-outline btn-sm" onclick="copyKey('ARMP-PRO0-2026-0001')">Copy</button></div>
-            <div class="key-card"><div class="key-code">ARMP-TEAM-2026-0001</div><span class="key-plan team">TEAM</span><button class="btn btn-outline btn-sm" onclick="copyKey('ARMP-TEAM-2026-0001')">Copy</button></div>
-            <div style="font-size:11.5px;color:var(--t3);margin-top:10px;line-height:1.5">These are hardcoded in the app. For unique per-customer keys, use Generate Key.</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-h"><div class="card-t">Generated keys</div><div class="card-a"><span style="font-size:12px;color:var(--t3)" id="gen-keys-count">0 keys</span></div></div>
-          <div style="padding:14px 16px" id="gen-keys-list"><div class="em"><div class="em-icon">🔑</div><div class="em-t">No generated keys yet</div></div></div>
-        </div>
-      </div>
 
     </div>
   
@@ -751,10 +726,9 @@ async function syncNetlifyLeads(silent){
   }
 }
 
-function getGenKeys(){return JSON.parse(localStorage.getItem('armp_gen_keys')||'[]')}
 
 function initAdmin(){
-  refreshStats();renderUsers('');renderLeads();renderGenKeys();
+  refreshStats();renderUsers('');renderLeads();
   // Auto-sync Netlify leads silently on load
   syncNetlifyLeads(true);
 }
@@ -796,7 +770,6 @@ function sp(id,el){
   if(id==='users')renderUsers('');
   if(id==='subscriptions')renderSubscriptions();
   if(id==='leads'){renderLeads();syncNetlifyLeads(true);}
-  if(id==='keys')renderGenKeys();
   if(id==='overview')refreshStats();
   if(id==='admin-audit')renderAdminAudit();
   if(id==='pilot-ops'){ try{ renderPilotOps(); }catch(e){} }
@@ -989,25 +962,6 @@ function exportLeads(){
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='armp_leads_'+new Date().toISOString().split('T')[0]+'.csv';a.click();toast('Leads exported');
 }
 
-function renderGenKeys(){
-  const keys=getGenKeys();document.getElementById('gen-keys-count').textContent=keys.length+' keys';
-  const c=document.getElementById('gen-keys-list');
-  c.innerHTML=keys.length?keys.map((k,i)=>`<div class="key-card"><div class="key-code">${k.key}</div><span class="key-plan ${k.plan}">${k.plan.toUpperCase()}</span><div style="font-size:10px;color:rgba(255,255,255,.35);margin-left:6px">${new Date(k.created).toLocaleDateString('en-US')}</div><button class="btn btn-outline btn-sm" onclick="copyKey('${k.key}')">Copy</button><button class="btn btn-danger btn-sm" onclick="deleteKey(${i})">×</button></div>`).join(''):
-    '<div class="em"><div class="em-icon">🔑</div><div class="em-t">No generated keys yet</div></div>';
-}
-
-function generateKey(){
-  const plan=prompt('Plan for this key:\nType: starter, pro, or team','pro');
-  if(!plan||!['starter','pro','team'].includes(plan.toLowerCase())){if(plan!==null)alert('Invalid plan. Use: starter, pro, or team');return}
-  const p=plan.toLowerCase();
-  const rand=Math.random().toString(36).substring(2,6).toUpperCase();
-  const key='ARMP-'+p.toUpperCase().padEnd(4,'0').slice(0,4)+'-2026-'+rand;
-  const keys=getGenKeys();keys.push({key,plan:p,created:Date.now()});
-  localStorage.setItem('armp_gen_keys',JSON.stringify(keys));
-  renderGenKeys();copyKey(key);toast('Key generated + copied: '+key);
-}
-function deleteKey(i){if(!confirm('Delete this key?'))return;const k=getGenKeys();k.splice(i,1);localStorage.setItem('armp_gen_keys',JSON.stringify(k));renderGenKeys();toast('Key deleted')}
-function copyKey(key){navigator.clipboard?.writeText(key).catch(()=>{});toast('Copied: '+key)}
 
 let _tt;
 function toast(msg){
@@ -1446,7 +1400,7 @@ function exportProspects(){
 // Sales init merged into initAdmin
 const _origInitAdmin=window.initAdmin||function(){};
 function initAdmin(){
-  refreshStats();renderUsers('');renderLeads();renderGenKeys();
+  refreshStats();renderUsers('');renderLeads();
   renderProspects();updatePipeCts();
 }
 
