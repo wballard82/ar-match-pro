@@ -24620,6 +24620,32 @@ window.ARMP_AUTH = (function(){
     } catch(e){}
   }
 
+  // ── Resume entry after the MFA hop ───────────────────────────────────────
+  // signIn() navigates away to /auth/challenge-mfa.html (or /auth/setup-mfa.html)
+  // and returns. When the browser lands back on app.html, signIn() is no longer
+  // running, so nothing completes authorization and the user is shown the sign-in
+  // screen again — the invited→active promotion in authorize-pilot-session never
+  // fires. If a fully-MFA'd session already exists, finish entry here.
+  // Server authorization is still REQUIRED: this only re-invokes enter(), which
+  // calls authorize-pilot-session and honours its decision (no demo fallback).
+  var _resuming = false;
+  function resumeAfterMfa(){
+    if (_resuming || _decision) return;   // in-flight or already entered: never double-authorize
+    _resuming = true;
+    (async function(){
+      try {
+        var sb = client(); if (!sb) return;
+        var s = await sb.auth.getSession();
+        if (!s || !s.data || !s.data.session) return; // anonymous visitor — leave the sign-in screen
+        var aal = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (!aal || !aal.data || aal.data.currentLevel !== 'aal2') return;  // AAL1 — must finish MFA first
+        await enter();
+      } catch(e){} finally { _resuming = false; }
+    })();
+  }
+  if (document.readyState === 'complete') setTimeout(resumeAfterMfa, 0);
+  else window.addEventListener('load', resumeAfterMfa);
+
   return {
     signIn: signIn, enter: enter, fetchDecision: fetchDecision,
     startRevalidation: startRevalidation, stopRevalidation: stopRevalidation,
