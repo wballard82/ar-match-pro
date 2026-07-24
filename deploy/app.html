@@ -24551,9 +24551,27 @@ window.ARMP_AUTH = (function(){
       // Financial workspace data in localStorage is PRESERVED — only the
       // session ends. We never auto-delete customer working data.
       if (typeof CURRENT_USER !== 'undefined') CURRENT_USER = null;
+
+      // 1) Close any open modal overlay, or a dialog (e.g. the onboarding modal,
+      //    z-index 100) stays on screen and the user never sees the lockout.
+      try {
+        var _mos = document.querySelectorAll('.mo-overlay.open');
+        for (var _i = 0; _i < _mos.length; _i++) _mos[_i].classList.remove('open');
+      } catch(e){}
+
+      // 2) Reuse the app's own teardown when available — it also clears the
+      //    in-memory tenant data so a revoked user isn't left staring at rows.
+      try { if (typeof window.doLogout === 'function') window.doLogout(); } catch(e){}
+
+      // 3) Then force the signed-out UI state ourselves, unconditionally. The
+      //    login screen is hidden at launch with visibility / pointer-events /
+      //    z-index / opacity — NOT just display — so clearing display alone
+      //    leaves an invisible login screen and an apparently blank page while
+      //    the stale app remains on screen.
       document.body.classList.remove('app-active');
       var appEl = document.getElementById('app'); if (appEl){ appEl.style.display='none'; appEl.classList.remove('visible'); }
-      var ls = document.getElementById('login-screen'); if (ls) ls.style.display='';
+      var ls = document.getElementById('login-screen');
+      if (ls){ ls.style.display=''; ls.style.visibility=''; ls.style.pointerEvents=''; ls.style.zIndex=''; ls.style.opacity=''; }
     } catch(e){}
     showAuthError(messageFor(reason, decision));
   }
